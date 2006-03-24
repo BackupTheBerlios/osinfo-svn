@@ -200,9 +200,7 @@ function wrong_arg() {
 #   1 else
 validate_arg () {
 	for my_arg in $2; do
-		if [ $my_arg = $1 ]; then
-			return 0
-		fi
+		[ "$my_arg" = "$1" ] && return 0
 	done
 	return 1
 }
