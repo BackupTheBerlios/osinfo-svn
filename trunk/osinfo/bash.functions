@@ -1,22 +1,29 @@
 #!/bin/bash
-##ANSCRIPT: bash.functions (~/etc/bash.functions)
-##ANSCRIPT: size=2858
-##ANSCRIPT:begin
-# bash.functions - Shared defs
+#######
+# bash.functions - shared functions used by some apps.
+# Copyright (C) 2006 Arvid Norlander
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#######
 
-################################################################################
-################################################################################
-#This is free software; see the GPL License for copying conditions. There is NO#
-#warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   #
-################################################################################
-################################################################################
 
 # Got this idea from C
 # Prevents things from messing up
 if [ "$use_bash_functions" != 'use_bash_functions' ]; then
 use_bash_functions='use_bash_functions'
 
-################################################################################
+
 # Set the variable in $2 to the terminal cap $1
 # WARNING: Use this function ONLY for string caps!
 # Parameters:
@@ -37,7 +44,6 @@ check_cap () {
 	fi
 	return $sup_cap
 }
-################################################################################
 
 check_cap bold  tBOLD
 check_cap smul  tbUNDERLINE
@@ -80,7 +86,7 @@ function print_end_start {
 	echo "${tDepWarn}ERROR: print_end_start() is obsolete! Use print_line()!${tSTD}"
 }
 
-################################################################################
+
 # Prints a line of 80 "─" if terminal has caps "enacs" and "smacs"
 # otherwise print a line of "-"
 # Example:
@@ -107,9 +113,8 @@ print_line() {
 		echo
 	fi
 }
-################################################################################
 
-
+# TODO: document
 function print_negative_message() {
 	echo "${tcRED}${1}${tSTD}"
 }
@@ -142,7 +147,6 @@ function print_found_notfound() {
 	fi
 }
 
-################################################################################
 # Aborts program with message
 # Parameters:
 #   1 string   Message
@@ -154,9 +158,7 @@ function do_abort() {
 	print_negative_message 'Aborting'
 	exit $2
 }
-################################################################################
 
-################################################################################
 # Shows message about missing argument(s) and exits with status 1.
 # Parameters:
 #   1 string   Name of option missing an argument(s)
@@ -170,9 +172,7 @@ function missing_arg() {
 		do_abort "${1} requires an argument" 1
 	fi
 }
-################################################################################
 
-################################################################################
 # Shows message about invalid argument(s) and exits with status 1.
 # Parameters:
 #   1 string   Name of option with invalid argument(s)
@@ -187,9 +187,7 @@ function wrong_arg() {
 		do_abort "${2} is an invalid argument to ${1}" 1
 	fi
 }
-################################################################################
 
-################################################################################
 # Check if valid argument
 # Parameters:
 #   1 string   The argument
@@ -203,9 +201,7 @@ validate_arg () {
 	done
 	return 1
 }
-################################################################################
 
-################################################################################
 # Check if arguments are integers/floating point values.
 # Parmeters(*):
 #   * *        string/integer to check
@@ -219,9 +215,7 @@ function AreDecimalNumbers() {
 	done
 	return 0
 }
-################################################################################
 
-################################################################################
 # Check if arguments are strings.
 # Parmeters(*):
 #   * *        string/integer to check
@@ -235,9 +229,7 @@ function AreStrings() {
 	done
 	return 0
 }
-################################################################################
 
-################################################################################
 # Shows a identifier and a value.
 # Parmeters:
 #   1 string   Name
@@ -250,6 +242,5 @@ function print_name_value_pair {
 		echo "${tBOLD}${1}${tSTD}$(tput hpa 20)= $2"
 	fi
 }
+
 fi
-################################################################################
-##ANSCRIPT:end
