@@ -3,7 +3,7 @@
 # List System information                                                      #
 ################################################################################
 # Written by Arvid Norlander                                                   #
-# 	   + Mikael Lammentausta					       #
+# 	   + Mikael Lammentausta                                                   #
 # Some documentation are in Swedish                                            #
 # Some parts are taken from:                                                   #
 #   --Advanced Bash Scripting Guide (ABS)                                      #
@@ -16,6 +16,7 @@ patch_version=0
    dev_status=dev
 
 . bash.functions
+# TODO: Import xml/normal output libs here!
 . osinfo.modules
 #. bash_Debug_functions.sh
 DEBUG=on
@@ -55,7 +56,7 @@ Basename="$(type -p basename)"
 
 
 function PRINT_Help {
-#	print_line
+	print_line
 	echo "${header}${appname} displays information about the system${tSTD}"
 	echo 
 	echo -e "Arguments are names of modules to get info from:"
@@ -79,7 +80,7 @@ function PRINT_Help {
 	echo "  -V, --version           Shows the version of ${tBOLD}${appname}${tSTD}"
 	echo "                            and exits."
 	echo
-#	print_line
+	print_line
 	if [ "$1" ]; then
 		exit $1
 	else
@@ -187,7 +188,7 @@ print_module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
 	else
-#		print_line
+		print_line
 		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
 	fi
 }
