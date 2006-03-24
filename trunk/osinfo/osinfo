@@ -1,0 +1,236 @@
+#!/bin/bash
+################################################################################
+# List System information                                                      #
+################################################################################
+# Written by Arvid Norlander                                                   #
+# 	   + Mikael Lammentausta					       #
+# Some documentation are in Swedish                                            #
+# Some parts are taken from:                                                   #
+#   --Advanced Bash Scripting Guide (ABS)                                      #
+################################################################################
+      appname='osinfo'
+major_version=0
+minor_version=0
+micro_version=2
+patch_version=0
+   dev_status=dev
+
+. bash.functions
+. osinfo.modules
+#. bash_Debug_functions.sh
+DEBUG=on
+
+isverbose=0
+usekdialog=0
+# The root dir.
+# To put this in a variable allows info on non-running systems
+   prefix="/"
+
+export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
+
+# Information gathering
+     Stty="$(type -p stty)"
+    Uname="$(type -p uname)"
+    Lspci="$(type -p lspci)"
+ Ifconfig="$(type -p ifconfig)"
+    Lsmod="$(type -p lsmod)"
+     Last="$(type -p last)"
+       Ls="$(type -p ls)"
+
+# Processing
+     Awk="$(type -p awk)"
+     Sed="$(type -p sed)"
+    Grep="$(type -p grep)"
+    Head="$(type -p head)"
+   Fgrep="$(type -p fgrep)"
+      Tr="$(type -p tr)"
+
+
+# Output
+  Column="$(type -p column)"
+ Kdialog="$(type -p kdialog)"
+
+# Other
+Basename="$(type -p basename)"
+      Rm="$(type -p rm)"
+
+
+function PRINT_Help {
+#	print_line
+	echo "${header}${appname} displays information about the system${tSTD}"
+	echo 
+	echo -e "Arguments are names of modules to get info from:"
+	echo
+	for MODULE in ${MODULES}; do
+		echo -e "\t\t$MODULE"
+	done
+	echo
+	echo "If arguments is \"all\" then list information from all modules."
+	echo
+	echo "${tBOLD}Syntax:${tSTD}"
+	echo "  $($Basename $0) [Options] arguments"
+	echo "  $($Basename $0) [--usage|--help]"
+	echo "${tBOLD}Options:${tSTD}"
+	echo "  -v, --verbose           Show more information"
+	echo "      --kdialog           Show the information using KDialog"
+	echo "                            from KDE. Experimental feature!"
+	echo "                            Not usable yet!"
+	echo "  -P, --prefix     x      Use this dir as root"
+	echo "                            This disables some modules."
+	echo "  -V, --version           Shows the version of ${tBOLD}${appname}${tSTD}"
+	echo "                            and exits."
+	echo
+#	print_line
+	if [ "$1" ]; then
+		exit $1
+	else
+		exit 0
+	fi
+}
+
+if [ $# -gt 0 ]; then # there are arguments to the command
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
+				PRINT_Help
+				;;
+			'-P'|'--prefix')
+				if [ $2 ]; then
+					prefix="$(echo $2 | $Sed 's/\/*$/\//')"
+					shift 2
+				else
+					missing_arg "$1"
+				fi
+				;;
+			'--kdialog')
+				usekdialog=1
+				shift 1
+				;;
+			'-v','--verbose')
+				isverbose=1
+				shift 1
+				;;
+			'--version')
+				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}";
+				echo "Copyright (C) 2005 Arvid Norlander";
+				echo "This is free software; see the source for copying conditions.  There is ${tBOLD}NO"
+				echo "warranty${tSTD}; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+				echo
+				exit 0;
+				;;
+			*)
+				cmdsnames="$cmdsnames $1"
+				shift 1;
+				;;
+		esac
+	done
+else
+	PRINT_Help
+fi
+
+
+
+
+name_value_pair_list=""
+k_title=""
+################################################################################
+# Adds a identifier and a value to "$name_value_pair_list".
+# Parmeters:
+#   1 string   Name
+#   2 string   Value
+# WARNING: Do NOT indent! Uses a TWO line string!
+function add_name_value_pair {
+	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
+
+name_value_pair_list="${name_value_pair_list}$(echo $1:___$2)\n"
+
+#$(echo "$1" | $Tr ' ' '_')Ł$(echo "$2" | $Tr ' ' '_')"
+	# Uses "Ł" (AltGr+L) because it is uncommon
+	#TODO: sed don't work with non Latin space replacement. Why?
+}
+################################################################################
+
+
+
+################################################################################
+# Prints "$name_value_pair_list" then empties the "$name_value_pair_list"
+# Uses colours
+# Uses the "column" tool
+function flush_name_value_pair {
+	if [ "$usekdialog" -eq 1 ]; then # this is completely unmaintained. doesn't work
+		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
+		echo  "$name_value_pair_list" | \
+			$Tr 'Ł' '\t' | \
+			$Tr '_' ' ' > $TMPFILE
+		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
+		$Rm $TMPFILE
+	else
+		echo -e "$name_value_pair_list" | \
+			$Column -ts '_' | \
+			$Sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
+			$Tr '_' '\t'
+	fi
+	name_value_pair_list=""
+	linecount=0
+}
+################################################################################
+
+
+function wrong_module() {
+	do_abort "${1} are not a valid module!" 1
+}
+
+
+################################################################################
+# Print module header
+# Parmeters:
+#   1 string   Module name
+print_module_header() {
+	if [ "$usekdialog" == "1" ]; then
+		k_title="$1"
+	else
+#		print_line
+		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
+	fi
+}
+################################################################################
+
+
+
+for modul in $cmdsnames; do
+	if [ $modul = 'all' ]; then
+		cmdsnames="$MODULES"
+		break;
+	fi
+	validate_arg "$modul" "$MODULES" || wrong_module "$modul"
+done
+
+if [ "$prefix" != '/' ] ; then
+	tmp_cmdsnames="$cmdsnames"
+	cmdsnames=""
+	for modul in $tmp_cmdsnames; do
+		realrootrequired=0
+		for real_root_modul in $MODULES_REAL_ROOT_ONLY; do
+			[ "$modul" == "$real_root_modul" ] && realrootrequired=1
+		done
+		[ $realrootrequired -eq 0 ] && cmdsnames="$cmdsnames $modul"
+	done
+fi
+
+for modul in $cmdsnames; do
+        case $modul in
+#                uname)              eval "Module_Cmd_${modul}";;
+                terminal|\
+                network|\
+                distro|\
+                devices|\
+                users|\
+                processor|\
+                system|\
+		lsmod|\
+                applications) eval "Module_${modul}";;
+        esac
+done
+
+
+[ "$usekdialog" -ne 1 ]  #&& print_line
