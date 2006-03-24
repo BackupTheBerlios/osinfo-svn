@@ -74,7 +74,6 @@ fi
   subheader="${tcBLUE}${tBOLD}"
    tDepWarn="${tBLINK}${tBOLD}${tcRED}"
 
-
 # Parmeters:
 #   NONE
 function print_end_start {

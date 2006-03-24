@@ -11,7 +11,7 @@
       appname='osinfo'
 major_version=0
 minor_version=0
-micro_version=2
+micro_version=3
 patch_version=0
    dev_status=dev
 
@@ -44,7 +44,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
     Head="$(type -p head)"
    Fgrep="$(type -p fgrep)"
       Tr="$(type -p tr)"
-
 
 # Output
   Column="$(type -p column)"
@@ -88,8 +87,8 @@ function PRINT_Help {
 	fi
 }
 
-if [ $# -gt 0 ]; then # there are arguments to the command
-	while [ $# -gt 0 ]; do
+if [ "$#" -gt 0 ]; then # there are arguments to the command
+	while [ "$#" -gt 0 ]; do
 		case "$1" in
 			'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
 				PRINT_Help
@@ -127,7 +126,6 @@ if [ $# -gt 0 ]; then # there are arguments to the command
 else
 	PRINT_Help
 fi
-
 
 
 
@@ -218,18 +216,18 @@ if [ "$prefix" != '/' ] ; then
 fi
 
 for modul in $cmdsnames; do
-        case $modul in
-#                uname)              eval "Module_Cmd_${modul}";;
-                terminal|\
-                network|\
-                distro|\
-                devices|\
-                users|\
-                processor|\
-                system|\
-		lsmod|\
-                applications) eval "Module_${modul}";;
-        esac
+	case $modul in
+#		uname)              eval "Module_Cmd_${modul}";;
+		terminal|\
+			network|\
+			distro|\
+			devices|\
+			users|\
+			processor|\
+			system|\
+			lsmod|\
+			applications) eval "Module_${modul}";;
+	esac
 done
 
 

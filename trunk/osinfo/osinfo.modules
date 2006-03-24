@@ -51,7 +51,7 @@ Module_applications() {
 	for APP in 'bash' 'gcc' 'make' 'find' 'awk' 'sed' 'grep' 'gzip' 'ls' 'php' 'mysql'; do
 		if [ "$(type -p $APP)" ]; then # it is installed
 			add_name_value_pair $APP \
-			"$($APP --version 2>&1 | ${Head} -n 1)" #$Grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
+				"$($APP --version 2>&1 | ${Head} -n 1)" #$Grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
 		fi
 	done
 	flush_name_value_pair
@@ -71,7 +71,7 @@ Module_users() {
 
 Module_lsmod() {
 	print_module_header 'loaded kernel modules'
-
+	
 	for MODULE in `${Lsmod} | ${Awk} {'print $1'} | grep -v Module`; do
 		add_name_value_pair 'module' "$MODULE"
 	done
@@ -81,7 +81,7 @@ Module_lsmod() {
 
 Module_network() {
 	print_module_header 'Network information'
-
+	
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
 	
 	local interface_name="$ETH_DEVICE" # go and grep this from lspci
@@ -91,9 +91,9 @@ Module_network() {
 	add_name_value_pair 'IP'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i inet | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
 	add_name_value_pair 'Broadcast'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i Bcast | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
 	add_name_value_pair 'Netmask'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i Mask | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
-
+	
 	add_name_value_pair 'RX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i 'RX bytes' )"	
-
+	
 
 	flush_name_value_pair
 }
@@ -122,7 +122,7 @@ Module_devices() {
 	if [ "$DEV" ]; then
 		add_name_value_pair 'FireWire controller'	"$DEV"
 	fi
-
+	
 	flush_name_value_pair
 }
 
@@ -134,20 +134,20 @@ Module_distro() {
 		local root_dir="$(echo $prefix | $Sed 's/\/*$//')" || \
 		local root_dir="$prefix"
 	add_name_value_pair 'Root dir'  "$root_dir"
-
+	
 	# Begin searching for distro identifying files
 	local found_files=""
 	local fil
 	for fil in ${prefix}etc/{SuSE-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 		[ -e $fil ] && found_files="$found_files $fil"
 	done
-
+	
 	# Now make a list of distros from the $found_files list above
 	local found_distros=""
 	local distro_ident
 	for distro_ident in $found_files; do
-	    case $distro_ident in
-		"${prefix}etc/SuSE-release")
+		case $distro_ident in
+			"${prefix}etc/SuSE-release")
 		    found_distros="$found_distros SuSE"
 		    break;
 		    ;;
@@ -164,49 +164,49 @@ Module_distro() {
 		    break;
 		    ;;
 		# if nothing previous matches, then use issue
-                "${prefix}etc/issue")
-                    found_distros="$found_distros misc"
-		    break;
-                    ;;
-	    esac
+		"${prefix}etc/issue")
+			found_distros="$found_distros misc"
+			break;
+			;;
+		esac
 	done
 	# Remove beginning spaces.
 	found_distros="$(echo "$found_distros" | $Sed "s/^ *//")"
 
 	# Output distro name
 	case "$found_distros" in
-	'SuSE'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
-		[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
-		add_name_value_pair 'Distro name'         "$found_distros"
-	;;
-	'Topologilinux')
+		'SuSE'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
+			[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
+			add_name_value_pair 'Distro name'         "$found_distros"
+			;;
+		'Topologilinux')
 		# Abort if found Topologilinux but not Slackware.
-		if [ "$usekdialog" == "1" ]; then
-			$Kdialog --error  "Topologilinux is based on Slackware and should contain\n${prefix}etc/slackware-version AND ${prefix}etc/Topologilinux-version.\nThis module will abort."
-		else
-			echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
-			echo "${tcRED}ERROR:${tSTD} contain ${prefix}etc/slackware-version ${tBOLD}AND${tSTD} ${prefix}etc/Topologilinux-version."
-			echo "${tcRED}This module will abort.${tSTD}"
-		fi
-		return 1
-	;;
-	'misc')
-		for DISTRO in 'Ubuntu' 'Red Hat' 'Fedora' 'SUSE'; do
-			if [ "$(${Grep} -i ${DISTRO} ${distro_ident})" ]; then 
-				add_name_value_pair 'Distro name'         "$DISTRO"
+			if [ "$usekdialog" == "1" ]; then
+				$Kdialog --error  "Topologilinux is based on Slackware and should contain\n${prefix}etc/slackware-version AND ${prefix}etc/Topologilinux-version.\nThis module will abort."
+			else
+				echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
+				echo "${tcRED}ERROR:${tSTD} contain ${prefix}etc/slackware-version ${tBOLD}AND${tSTD} ${prefix}etc/Topologilinux-version."
+				echo "${tcRED}This module will abort.${tSTD}"
 			fi
-		done
-	;;
-	'')
-		# Abort if no distro found
-		if [ "$usekdialog" == "1" ]; then
-			$Kdialog --error  "You have zero distros installed or use a distro not recognised by ${appname}\nThis module will abort."
-		else
-			echo "${tcRED}ERROR:${tSTD} You have zero distros installed or use a distro not recognised by ${appname}"
-			echo "${tcRED}This module will abort.${tSTD}"
-		fi
-		return 1
-	;;
+			return 1
+			;;
+		'misc')
+			for DISTRO in 'Ubuntu' 'Red Hat' 'Fedora' 'SUSE'; do
+				if [ "$(${Grep} -i ${DISTRO} ${distro_ident})" ]; then 
+					add_name_value_pair 'Distro name'         "$DISTRO"
+				fi
+			done
+			;;
+		'')
+			# Abort if no distro found
+			if [ "$usekdialog" == "1" ]; then
+				$Kdialog --error  "You have zero distros installed or use a distro not recognised by ${appname}\nThis module will abort."
+			else
+				echo "${tcRED}ERROR:${tSTD} You have zero distros installed or use a distro not recognised by ${appname}"
+				echo "${tcRED}This module will abort.${tSTD}"
+			fi
+			return 1
+			;;
 #	*)
 #		# Abort if more than one distro
 #		if [ "$usekdialog" == "1" ]; then
@@ -221,18 +221,17 @@ Module_distro() {
 	esac
 	# Output distro version
 	case "$found_distros" in
-	    'SuSE')
-		local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
-	    'Slackware')
-		local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
-	    'Topologilinux')
-		local distro_version="$($Fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
-		local  SlackwareBase="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
-	    'Gentoo')
-		local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
-	    'misc')
-		local distro_version="$(grep '.' "${prefix}etc/issue")";;
-	
+		'SuSE')
+			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
+		'Slackware')
+			local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+		'Topologilinux')
+			local distro_version="$($Fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
+			local  SlackwareBase="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+		'Gentoo')
+			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
+		'misc')
+			local distro_version="$(grep '.' "${prefix}etc/issue")";;
 	esac
 	add_name_value_pair 'Distro version' "$distro_version"
 	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"
