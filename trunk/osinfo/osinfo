@@ -16,7 +16,7 @@ patch_version=0
    dev_status=dev
 
 . bash.functions
-# TODO: Import xml/normal output libs here!
+# TODO: Import xml/kdialog/normal output libs here!
 . osinfo.modules
 #. bash_Debug_functions.sh
 DEBUG=on

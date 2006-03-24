@@ -11,6 +11,7 @@
 MODULES='distro applications terminal network devices users processor system lsmod'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe'
 
+# TODO: Use a parameter 
 ETH_DEVICE="eth0"
 
 
@@ -64,7 +65,7 @@ Module_users() {
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | $Awk -F: {'print $1'} | $Sed 's/\n/  /g')"
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
-
+	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
 	flush_name_value_pair
 }
 
@@ -101,8 +102,8 @@ Module_network() {
 
 Module_devices() {
 	print_module_header 'Devices'
-	# the if sentence is there just for to make sure that no output is written for devices that don't exist
-
+	# the if statements is there just for to make sure that no output is written for devices that don't exist
+	# AnMaster: Why "unset DEV" all the time? Is that realy needed?
 	unset DEV; DEV=$(${Lspci} | $Grep -i 'graphic\|vga' | $Awk -F': ' {'print $2'})
 	if [ "$DEV" ]; then
 		add_name_value_pair 'Display adapter' 		"$DEV"
@@ -164,6 +165,7 @@ Module_distro() {
 		    break;
 		    ;;
 		# if nothing previous matches, then use issue
+		# AnMaster: Inform user that this might be very wrong...
 		"${prefix}etc/issue")
 			found_distros="$found_distros misc"
 			break;
