@@ -56,7 +56,7 @@ Module_applications() {
 		fi
 	done
 	flush_name_value_pair
-}		
+}
 
 Module_users() {
 	print_module_header 'Users and processes'
@@ -77,6 +77,15 @@ Module_lsmod() {
 		add_name_value_pair 'module' "$MODULE"
 	done
 	flush_name_value_pair
+}
+
+
+Module_diskinfo() {
+	print_module_header 'Disk information'
+
+	${Fdisk} -l
+	${Df}
+
 }
 
 
@@ -102,8 +111,8 @@ Module_network() {
 
 Module_devices() {
 	print_module_header 'Devices'
-	# the if statements is there just for to make sure that no output is written for devices that don't exist
-	# AnMaster: Why "unset DEV" all the time? Is that realy needed?
+	# the if sentence is there just for to make sure that no output is written for devices that don't exist
+
 	unset DEV; DEV=$(${Lspci} | $Grep -i 'graphic\|vga' | $Awk -F': ' {'print $2'})
 	if [ "$DEV" ]; then
 		add_name_value_pair 'Display adapter' 		"$DEV"
