@@ -1,0 +1,143 @@
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+td {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+th {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.bodystyle {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.small {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 9px;
+}
+
+.medium {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+.big {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+}
+
+.xbig {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 24px;
+}
+
+.expanded {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 24px;
+	letter-spacing: 2px;
+}
+
+.footer {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 9px;
+	padding-top : 0px;
+	margin-top : 0px;
+	background-color: #fff;
+	color: #999999;
+}
+
+.box1 {
+	padding: 3px;
+	border: 1px dashed;
+	border-color: #666666;
+}
+
+.box2 {
+	background-color: #FFFF00;
+	color: #000;
+	word-spacing: 2pt;
+	padding: 3px;
+	border: 1px solid;
+}
+
+.hide {
+	visibility: hidden;
+	background: #fff;
+	color: #fff;
+	clear: both;
+	margin: 0;
+}
+
+.center {
+	text-align: center;
+}
+
+.siteheader {
+	text-align: left;
+	float: left;
+	margin-top: 0px;
+	margin-left: 0px;
+	font-family: Arial, Helvetica, Verdana, sans-serif;
+	font-size: 180%;
+	font-weight: bold;
+	clear: both;
+}
+
+.menu {
+	background: #F3F3DC;
+	color: #000;
+	float: left;
+	width: 19%;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-style: dotted;
+	border-right-style: dotted;
+	border-bottom-style: dotted;
+	border-left-style: dotted;
+	margin: 0px -1px 0px 0px;
+	padding: 2px;
+}
+
+.text {
+	background: #E8E8E8;
+	color: #000;
+	float: left;
+	width: 79%;
+	margin: 0px;
+	border: 1px dotted;
+	padding: 2px;
+}
+
+.footerimage {
+	border: 0;
+	width: 88px;
+	height: 31px;
+}
+
+.berliosimage {
+	border: 0;
+	width: 124px;
+	height: 32px;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:active {
+	text-decoration: underline;
+}
