@@ -23,18 +23,18 @@ ETH_DEVICE="eth0"
 
 Module_system() {
 	print_module_header 'system'
-	add_name_value_pair 'Operating system'      "$(${Uname} --operating-system)"
-	add_name_value_pair 'Network node hostname' "$(${Uname} --nodename)"
-	add_name_value_pair 'Kernel release'        "$(${Uname} --kernel-release)"
-	add_name_value_pair 'Machine hardware name' "$(${Uname} --machine)"
-#	add_name_value_pair 'Kernel version'        "$(${Uname} --kernel-version)" # doesn't work on all distros
+	add_name_value_pair $"Operating system"      "$(${Uname} --operating-system)"
+	add_name_value_pair $"Network node hostname" "$(${Uname} --nodename)"
+	add_name_value_pair $"Kernel release"        "$(${Uname} --kernel-release)"
+	add_name_value_pair $"Machine hardware name" "$(${Uname} --machine)"
+	add_name_value_pair $"Kernel version"        "$(${Uname} --kernel-version)" # doesn't work on all distros
 	flush_name_value_pair
 }
 
 Module_processor() {
 	print_module_header 'processor'
-	add_name_value_pair 'Processor model'       "$(cat /proc/cpuinfo | $Grep 'model name' | $Awk -F': ' {'print $2'})"
-	add_name_value_pair 'Processor frequency'   "$(cat /proc/cpuinfo | $Grep 'cpu MHz' | $Awk -F': ' {'print $2" MHz"'})"
+	add_name_value_pair $"Processor model"       "$(cat /proc/cpuinfo | $Grep 'model name' | $Awk -F': ' {'print $2'})"
+	add_name_value_pair $"Processor frequency"   "$(cat /proc/cpuinfo | $Grep 'cpu MHz' | $Awk -F': ' {'print $2" MHz"'})"
 
 	#TODO: fix double-entries with hyper-threading processors:
 	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
