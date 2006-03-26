@@ -57,9 +57,9 @@ Basename="$(type -p basename)"
 
 function PRINT_Help {
 	print_line
-	echo "${header}${appname} displays information about the system${tSTD}"
+	echo "${header}${appname} "$"displays information about the system""${tSTD}"
 	echo 
-	echo -e "Arguments are names of modules to get info from:"
+	echo -e $"Arguments are names of modules to get info from:"
 	echo
 	for MODULE in ${MODULES}; do
 		echo -e "\t\t$MODULE"
@@ -67,18 +67,18 @@ function PRINT_Help {
 	echo
 	echo $"If arguments is \"all\" then list information from all modules."
 	echo
-	echo $"${tBOLD}Syntax:${tSTD}"
-	echo "  $($Basename $0) [Options] arguments"
-	echo "  $($Basename $0) [--usage|--help]"
-	echo "${tBOLD}Options:${tSTD}"
-	echo "  -v, --verbose           Show more information"
-	echo "      --kdialog           Show the information using KDialog"
-	echo "                            from KDE. Experimental feature!"
-	echo "                            Not usable yet!"
-	echo "  -P, --prefix     x      Use this dir as root"
-	echo "                            This disables some modules."
-	echo "  -V, --version           Shows the version of ${tBOLD}${appname}${tSTD}"
-	echo "                            and exits."
+	echo "${tBOLD}"$"Syntax:""${tSTD}"
+	echo "  $($Basename $0) "$"[Options] arguments"
+	echo "  $($Basename $0) "$"[--usage|--help]"
+	echo "${tBOLD}"$"Options:""${tSTD}"
+	echo "  -v, --verbose           "$"Show more information"
+	echo "      --kdialog           "$"Show the information using KDialog"
+	echo "                            "$"from KDE. Experimental feature!"
+	echo "                            "$"Not usable yet!"
+	echo "  -P, --prefix     x      "$"Use this dir as root"
+	echo "                            "$"This disables some modules."
+	echo "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
+	echo "                            "$"and exits."
 	echo
 	print_line
 	if [ "$1" ]; then
@@ -112,7 +112,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				;;
 			'--version')
 				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}";
-				echo "Copyright (C) 2005 Arvid Norlander";
+				echo "Copyright (C) 2005-2006 Arvid Norlander";
 				echo "This is free software; see the source for copying conditions.  There is ${tBOLD}NO"
 				echo "warranty${tSTD}; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 				echo
@@ -176,7 +176,7 @@ function flush_name_value_pair {
 
 
 function wrong_module() {
-	do_abort "${1} are not a valid module!" 1
+	do_abort $"${1} are not a valid module!" 1
 }
 
 
@@ -189,7 +189,7 @@ print_module_header() {
 		k_title="$1"
 	else
 		print_line
-		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
+		echo "${tcRED}${tUNDERLINE}"$"Report from module""${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
 	fi
 }
 ################################################################################
