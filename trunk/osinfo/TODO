@@ -1,3 +1,5 @@
-XML
+* XML
 To handle XML we need a generic output interface.
 Source a file with with the interface. There should be one file for xml output, one for kdialog output and one for normal.
+
+* Get rid of eval.
