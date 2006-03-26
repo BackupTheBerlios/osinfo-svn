@@ -35,6 +35,10 @@ Module_processor() {
 	print_module_header 'processor'
 	add_name_value_pair 'Processor model'       "$(cat /proc/cpuinfo | $Grep 'model name' | $Awk -F': ' {'print $2'})"
 	add_name_value_pair 'Processor frequency'   "$(cat /proc/cpuinfo | $Grep 'cpu MHz' | $Awk -F': ' {'print $2" MHz"'})"
+
+	#TODO: fix double-entries with hyper-threading processors:
+	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
+
 	flush_name_value_pair
 }
 
@@ -66,6 +70,7 @@ Module_users() {
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
+	# -it has to work with all distros. 
 	flush_name_value_pair
 }
 
@@ -76,6 +81,8 @@ Module_lsmod() {
 	for MODULE in `${Lsmod} | ${Awk} {'print $1'} | grep -v Module`; do
 		add_name_value_pair 'module' "$MODULE"
 	done
+	# TODO: needs more work
+
 	flush_name_value_pair
 }
 
@@ -83,7 +90,7 @@ Module_lsmod() {
 Module_diskinfo() {
 	print_module_header 'Disk information'
 
-	${Fdisk} -l
+	${Fdisk} -l # only works for root/sudoers
 	${Df}
 
 }
@@ -127,6 +134,11 @@ Module_devices() {
 	if [ "$DEV" ]; then
 		add_name_value_pair 'Audio controller' 		"$DEV"
 	fi
+	# TODO: many cards use 'audio' identifier, this needs a fix
+	#Audio controller:     Creative Labs SB Audigy (rev 04) Conexant CX23880/1/2/3 PCI Video and 
+	#Audio Decoder (rev 05) Conexant CX23880/1/2/3 PCI Video and Audio Decoder [MPEG Port] (rev 05) 
+	#Conexant CX23880/1/2/3 PCI Video and Audio Decoder [IR Port] (rev 05)
+
 
 	unset DEV; DEV=$(${Lspci} | $Grep -i 'firewire' | $Awk -F': ' {'print $2'})
 	if [ "$DEV" ]; then
