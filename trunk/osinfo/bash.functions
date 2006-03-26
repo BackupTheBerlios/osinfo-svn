@@ -122,7 +122,7 @@ function print_negative_message() {
 # Parmeters:
 #   NONE
 function print_nothing_found() {
-	print_negative_message '  Nothing found'
+	print_negative_message $"  Nothing found"
 }
 
 # Parmeters:
@@ -141,9 +141,9 @@ function print_nothing_found() {
 #     In both cases "man" will be bold
 function print_found_notfound() {
 	if [ $1 -eq 0 ]; then
-		echo "${tcGREEN}${2}${tSTD}${tBOLD}${4}${tSTD}${tcGREEN}$5 was found!${tSTD}"
+		echo "${tcGREEN}${2}${tSTD}${tBOLD}${4}${tSTD}${tcGREEN}$5 "$"was found!""${tSTD}"
 	elif [ $1 -ne 0 ]; then
-		echo "${tcRED}${3}${tSTD}${tBOLD}${4}${tSTD}${tcRED}$5 was found!${tSTD}"
+		echo "${tcRED}${3}${tSTD}${tBOLD}${4}${tSTD}${tcRED}$5 "$"was found!""${tSTD}"
 	fi
 }
 
@@ -154,8 +154,8 @@ function print_found_notfound() {
 # Returns:
 #   Does not return
 function do_abort() {
-	print_negative_message "${tcRED}Error:${tSTD} ${1}"
-	print_negative_message 'Aborting'
+	print_negative_message "${tcRED}"$"Error:""${tSTD} ${1}"
+	print_negative_message $"Aborting"
 	exit $2
 }
 
@@ -167,9 +167,9 @@ function do_abort() {
 #   Does not return
 function missing_arg() {
 	if [ $2 ]; then
-		do_abort "${1} requires ${2} arguments" 1
+		do_abort $"${1} requires ${2} arguments" 1
 	else
-		do_abort "${1} requires an argument" 1
+		do_abort $"${1} requires an argument" 1
 	fi
 }
 
@@ -182,9 +182,9 @@ function missing_arg() {
 #   Does not return
 function wrong_arg() {
 	if [ $3 ]; then
-		do_abort "${2} are invalid arguments to ${1}" 1
+		do_abort $"${2} are invalid arguments to ${1}" 1
 	else
-		do_abort "${2} is an invalid argument to ${1}" 1
+		do_abort $"${2} is an invalid argument to ${1}" 1
 	fi
 }
 
