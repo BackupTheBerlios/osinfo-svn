@@ -21,28 +21,28 @@
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_start () {
-  echo "<${1}>"
+	echo "<${1}>"
 }
 
 # Simple end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_stop () {
-  echo "</${1}>"
+	echo "</${1}>"
 }
 
 # Simple start-end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_startstop () {
-  echo "<${1} />"
+	echo "<${1} />"
 }
 
 # Unclosed tag
 # Parameters:
 #  1  string  Name of tag
 function xml_opentag_start () {
-  echo -n "<${1}"
+	echo -n "<${1}"
 }
 
 # Paramter for unclosed tag
@@ -50,7 +50,7 @@ function xml_opentag_start () {
 #  1  string  Name of parametre
 #  2  *       Value
 function xml_opentag_param () {
-  echo -n " ${1}=\"${2}\""
+	echo -n " ${1}=\"${2}\""
 }
 
 # Close unclosed tag
@@ -59,11 +59,11 @@ function xml_opentag_param () {
 #                1            = >
 #                anthing else = /> 
 function xml_opentag_stop () {
-  if [[ "$1" -eq 1 ]]; then
-    echo ">"
-  else
-    echo "/>"
-  fi
+	if [[ "$1" -eq 1 ]]; then
+		echo ">"
+	else
+		echo "/>"
+	fi
 }
 
 # Prints XML headder
@@ -73,6 +73,6 @@ function xml_opentag_stop () {
 #               Can be SYSTEM or PUBLIC
 #  3  string  DTD URL
 function xml_doc_start () {
-  echo '<?xml version="1.0"?>'
-  echo "<!DOCTYPE ${1} ${2} \"${3}\">"
+	echo '<?xml version="1.0"?>'
+	echo "<!DOCTYPE ${1} ${2} \"${3}\">"
 }
