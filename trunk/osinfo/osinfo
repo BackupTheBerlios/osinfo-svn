@@ -65,9 +65,9 @@ function PRINT_Help {
 		echo -e "\t\t$MODULE"
 	done
 	echo
-	echo "If arguments is \"all\" then list information from all modules."
+	echo $"If arguments is \"all\" then list information from all modules."
 	echo
-	echo "${tBOLD}Syntax:${tSTD}"
+	echo $"${tBOLD}Syntax:${tSTD}"
 	echo "  $($Basename $0) [Options] arguments"
 	echo "  $($Basename $0) [--usage|--help]"
 	echo "${tBOLD}Options:${tSTD}"
