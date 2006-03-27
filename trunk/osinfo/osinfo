@@ -52,8 +52,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 # Other
 Basename="$(type -p basename)"
-      Rm="$(type -p rm)"
-
 
 function PRINT_Help {
 	print_line
@@ -166,7 +164,7 @@ function flush_name_value_pair {
 			$Tr 'Ł' '\t' | \
 			$Tr '_' ' ' > $TMPFILE
 		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
-		$Rm $TMPFILE
+		rm $TMPFILE
 	elif [ "$usexml" -eq 1 ]; then
 		# TODO: Output XML here
 		echo TODO
@@ -234,7 +232,7 @@ for modul in $cmdsnames; do
 			processor|\
 			system|\
 			lsmod|\
-			applications) eval "Module_${modul}";;
+			applications) Module_${modul};;
 	esac
 done
 
