@@ -65,7 +65,7 @@ Module_applications() {
 Module_users() {
 	print_module_header 'Users and processes'
 	add_name_value_pair 'Last logged in user' 	"$(${Last} | ${Head} -n 1)"
-#	add_name_value_pair 'Users' 			"$(${Ls} /home/)"
+#	add_name_value_pair 'Users' 			"$(ls /home/)"
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | $Awk -F: {'print $1'} | $Sed 's/\n/  /g')"
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest

@@ -36,13 +36,12 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
  Ifconfig="$(type -p ifconfig)"
     Lsmod="$(type -p lsmod)"
      Last="$(type -p last)"
-       Ls="$(type -p ls)"
 
 # Processing
      Awk="$(type -p awk)"
      Sed="$(type -p sed)"
-    Grep="$(type -p grep)"
-    Head="$(type -p head)"
+    Grep="$(type -p grep)" # remove
+    Head="$(type -p head)" # remove
    Fgrep="$(type -p fgrep)"
       Tr="$(type -p tr)"
 
