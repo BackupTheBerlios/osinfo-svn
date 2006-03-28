@@ -152,7 +152,6 @@ fi
 
 ############################################
 # IF OUTPUTTING TO XMLFILE, PRINT HEADER
-# TODO: add xml_doc_start here!
 if [ "$usexml" == 1 ]; then
 	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd"
 	echo "<osinfo>" #> $XMLFILE
