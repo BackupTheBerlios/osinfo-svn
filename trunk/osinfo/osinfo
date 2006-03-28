@@ -21,6 +21,7 @@ patch_version=0
 . xml.functions
 #. bash_Debug_functions.sh
 DEBUG=on
+# TODO: Use a parameter
 XMLFILE="osinfo.xml"
 
 isverbose=0
@@ -138,8 +139,9 @@ fi
 
 ############################################
 # IF OUTPUTTING TO XMLFILE, PRINT HEADER
-
+# TODO: add xml_doc_start here!
 if [ "$usexml" == 1 ]; then
+	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd"
 	echo "<osinfo>" #> $XMLFILE
 fi
 ############################################
