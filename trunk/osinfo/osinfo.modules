@@ -29,6 +29,9 @@ Module_system() {
 	add_name_value_pair $"Machine hardware name" "$(${Uname} --machine)"
 	add_name_value_pair $"Kernel version"        "$(${Uname} --kernel-version)" # doesn't work on all distros
 	add_name_value_pair $"System locale"         "$(echo $LC_LANG)"
+	add_name_value_pair $"System uptime"         "$(${Uptime} | ${Awk} -F, {'print $1'})"
+	# NOTE: uptime isn't accurate, as it cuts from the first ',' 
+	# TODO: find a way to cut from 'up' to 'min'
 
 	flush_name_value_pair
 }

@@ -39,7 +39,8 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
  Ifconfig="$(type -p ifconfig)"
     Lsmod="$(type -p lsmod)"
      Last="$(type -p last)"
-	Fdisk="$(type -p fdisk)"
+    Fdisk="$(type -p fdisk)"
+   Uptime="$(type -p uptime)"
 
 # Processing
      Awk="$(type -p awk)"
@@ -159,7 +160,7 @@ k_title=""
 function add_name_value_pair {
 	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
 
-name_value_pair_list="${name_value_pair_list}$(echo $1___$2)\n"
+name_value_pair_list="${name_value_pair_list}$(echo $1¡¡¡$2)\n"
 
 #$(echo "$1" | $Tr ' ' '_')Å$(echo "$2" | $Tr ' ' '_')"
 	# Uses "Å" (AltGr+L) because it is uncommon
@@ -178,7 +179,7 @@ function flush_name_value_pair {
 		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
 		echo  "$name_value_pair_list" | \
 			$Tr 'Å' '\t' | \
-			$Tr '_' ' ' > $TMPFILE
+			$Tr '¡' ' ' > $TMPFILE
 		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
 		rm $TMPFILE
 	elif [ "$usexml" == 1 ]; then
@@ -192,18 +193,18 @@ function flush_name_value_pair {
 		unset openTag;
 		for value in $(
 			echo  -e "$name_value_pair_list" | \
-			tr -s '_' '\n' | \
-			tr -s ' ' '£'
+			tr -s '¡' '\n' | \
+			tr -s ' ' '¡'
 		# TODO: is it possible to run a for loop with the whitescapes, each line only
 		# constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
 		); do
 
 			if [ ! "${openTag}" ]; then
-				echo -e "\t\t$(xml_tag_start "${value}")" | tr '£' ' '		#>> $XMLFILE		# open tag
+				echo -e "\t\t$(xml_tag_start "${value}")" | tr '¡' ' '		#>> $XMLFILE		# open tag
 				openTag=${value}
 			else 
-				echo -e "\t\t\t${value}"  | tr '£' ' '				#>> $XMLFILE		# write content
-				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '£' ' '	#>> $XMLFILE		# close tag
+				echo -e "\t\t\t${value}"  | tr '¡' ' '				#>> $XMLFILE		# write content
+				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '¡' ' '	#>> $XMLFILE		# close tag
 				unset openTag;
 			fi
 
@@ -212,9 +213,9 @@ function flush_name_value_pair {
 
 	else
 		echo -e "$name_value_pair_list" | \
-			$Column -ts '_' | \
+			$Column -ts '¡' | \
 			$Sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
-			$Tr '_' '\t'
+			$Tr '¡' '\t'
 	fi
 	name_value_pair_list=""
 	linecount=0
