@@ -42,6 +42,8 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
      Last="$(type -p last)"
     Fdisk="$(type -p fdisk)"
    Uptime="$(type -p uptime)"
+   Lpstat="$(type -p lpstat)"
+
 
 # Processing
      Awk="$(type -p awk)"
@@ -293,6 +295,7 @@ for modul in $cmdsnames; do
 			system|\
 			lsmod|\
 			diskinfo|\
+			printers|\
 			applications) Module_${modul};;
 	esac
 done

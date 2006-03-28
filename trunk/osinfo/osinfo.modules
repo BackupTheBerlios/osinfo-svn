@@ -8,8 +8,8 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES='distro applications terminal network devices users processor system lsmod diskinfo'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe diskinfo'
+MODULES='distro applications terminal network devices users processor system lsmod diskinfo printers'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe diskinfo printers'
 
 # TODO: Use a parameter 
 ETH_DEVICE="eth0"
@@ -50,17 +50,32 @@ Module_processor() {
 Module_terminal() {
 	print_module_header 'Terminal info'
 
+
 	add_name_value_pair 'Terminal type'         "$TERM"
 	add_name_value_pair 'Terminal speed'        "$($Stty speed)"
 	add_name_value_pair 'Rows'                  "$($Stty size | $Awk '{print $1}')"
 	add_name_value_pair 'Columns'               "$($Stty size | $Awk '{print $2}')"
+
 	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
+
+Module_printers() {
+	moduleName="Printers"
+	print_module_header "${moduleName}"
+
+	add_name_value_pair 'printer'		"$(${Lpstat} -a | ${Awk} {'print $1'})"
+	# TODO: test in a system with many printers
+
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
 }
 
 Module_applications() {
-	print_module_header 'Application version information'
+	moduleName="Applications"
+	print_module_header "${moduleName}"
 
-	for APP in 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' \
+	for APP in 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' 'cups-config' \
 			'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'X' 'kde-config'; do
 
 		if [ "$(type -p $APP)" ]; then # it is installed
@@ -72,10 +87,13 @@ Module_applications() {
 				"$($APP -V 2>&1 | ${Head} -n 1 )" 
 			elif [ "$APP" == "X" ]; then
 				add_name_value_pair 'X11' \
-				"$(X -version 2>&1 | ${Grep} Revision)"
+				"$($APP -version 2>&1 | ${Grep} Revision)"
 			elif [ "$APP" == "kde-config" ]; then
 				add_name_value_pair 'KDE' \
-				"$(kde-config -version 2>&1 | ${Grep} KDE)"
+				"$($APP -version 2>&1 | ${Grep} KDE)"
+			elif [ "$APP" == "cups-config" ]; then
+				add_name_value_pair 'Cups' \
+				"$($APP --version 2>&1 )"
 			else
 				add_name_value_pair $APP \
 				"$($APP --version 2>&1 | ${Head} -n 1)" 
@@ -84,6 +102,7 @@ Module_applications() {
 		fi
 	done
 	flush_name_value_pair
+	print_module_footer "${moduleName}"
 }
 
 Module_users() {
