@@ -3,3 +3,17 @@ To handle XML we need a generic output interface.
 Source a file with with the interface. There should be one file for xml output, one for kdialog output and one for normal.
 
 * Get rid of eval.
+* update all modules to use print_module_footer and variable $moduleName,
+	before that xml output is crippled
+* is it possible to run a for loop with the whitescapes, each line only
+	constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
+	example:
+		for line in `echo -e "foo\nbar baz"`; do echo $line; done
+	would output:
+		foo
+		bar baz
+	or is the only way to handle this to be creative with tr?
+	This problems occurs in a couple of places in the script
+
+* add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
+* add a function to read data from BIOS. IMPORTANT!!!!

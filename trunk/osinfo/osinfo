@@ -11,15 +11,17 @@
       appname='osinfo'
 major_version=0
 minor_version=0
-micro_version=3
+micro_version=4
 patch_version=0
    dev_status=dev
 
-. bash.functions
 # TODO: Import xml/kdialog/normal output libs here!
+. bash.functions
 . osinfo.modules
+. xml.functions
 #. bash_Debug_functions.sh
 DEBUG=on
+XMLFILE="osinfo.xml"
 
 isverbose=0
 usekdialog=0
@@ -27,6 +29,7 @@ usekdialog=0
 # To put this in a variable allows info on non-running systems
    prefix="/"
 
+# setting PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 # Information gathering
@@ -36,6 +39,7 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
  Ifconfig="$(type -p ifconfig)"
     Lsmod="$(type -p lsmod)"
      Last="$(type -p last)"
+	Fdisk="$(type -p fdisk)"
 
 # Processing
      Awk="$(type -p awk)"
@@ -54,28 +58,29 @@ Basename="$(type -p basename)"
 
 function PRINT_Help {
 	print_line
-	echo "${header}${appname} "$"displays information about the system""${tSTD}"
+	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
 	echo 
-	echo -e $"Arguments are names of modules to get info from:"
+	gettext -s -e $"Arguments are names of modules to get info from:"
 	echo
 	for MODULE in ${MODULES}; do
 		echo -e "\t\t$MODULE"
 	done
 	echo
-	echo $"If arguments is \"all\" then list information from all modules."
+	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
-	echo "${tBOLD}"$"Syntax:""${tSTD}"
+	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
 	echo "  $($Basename $0) "$"[Options] arguments"
 	echo "  $($Basename $0) "$"[--usage|--help]"
-	echo "${tBOLD}"$"Options:""${tSTD}"
-	echo "  -v, --verbose           "$"Show more information"
-	echo "      --kdialog           "$"Show the information using KDialog"
-	echo "                            "$"from KDE. Experimental feature!"
-	echo "                            "$"Not usable yet!"
-	echo "  -P, --prefix     x      "$"Use this dir as root"
-	echo "                            "$"This disables some modules."
-	echo "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
-	echo "                            "$"and exits."
+	gettext -s "${tBOLD}"$"Options:""${tSTD}"
+	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
+	gettext -s "  -v, --verbose           "$"Show more information"
+	gettext -s "      --kdialog           "$"Show the information using KDialog"
+	gettext -s "                            "$"from KDE. Experimental feature!"
+	gettext -s "                            "$"Not usable yet!"
+	gettext -s "  -P, --prefix [dir]      "$"Use this dir as root"
+	gettext -s "                            "$"This disables some modules."
+	gettext -s "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
+	gettext -s "                            "$"and exits."
 	echo
 	print_line
 	if [ "$1" ]; then
@@ -130,19 +135,31 @@ else
 fi
 
 
+############################################
+# IF OUTPUTTING TO XMLFILE, PRINT HEADER
+
+if [ "$usexml" == 1 ]; then
+	echo "<osinfo>" #> $XMLFILE
+fi
+############################################
+
+
 
 name_value_pair_list=""
 k_title=""
+
+
 ################################################################################
 # Adds a identifier and a value to "$name_value_pair_list".
-# Parmeters:
+# Parameters:
 #   1 string   Name
 #   2 string   Value
 # WARNING: Do NOT indent! Uses a TWO line string!
+
 function add_name_value_pair {
 	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
 
-name_value_pair_list="${name_value_pair_list}$(echo $1:___$2)\n"
+name_value_pair_list="${name_value_pair_list}$(echo $1___$2)\n"
 
 #$(echo "$1" | $Tr ' ' '_')Å$(echo "$2" | $Tr ' ' '_')"
 	# Uses "Å" (AltGr+L) because it is uncommon
@@ -164,9 +181,35 @@ function flush_name_value_pair {
 			$Tr '_' ' ' > $TMPFILE
 		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
 		rm $TMPFILE
-	elif [ "$usexml" -eq 1 ]; then
-		# TODO: Output XML here
-		echo TODO
+	elif [ "$usexml" == 1 ]; then
+
+		##############################################
+		# this outputs XML
+		# Operation method: breaks value pair list into components, runs a for loop
+		# and parses the items into xml. needs a variable to aid the process.
+		# Could be better. :)
+
+		unset openTag;
+		for value in $(
+			echo  -e "$name_value_pair_list" | \
+			tr -s '_' '\n' | \
+			tr -s ' ' '£'
+		# TODO: is it possible to run a for loop with the whitescapes, each line only
+		# constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
+		); do
+
+			if [ ! "${openTag}" ]; then
+				echo -e "\t\t$(xml_tag_start "${value}")" | tr '£' ' '		#>> $XMLFILE		# open tag
+				openTag=${value}
+			else 
+				echo -e "\t\t\t${value}"  | tr '£' ' '				#>> $XMLFILE		# write content
+				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '£' ' '	#>> $XMLFILE		# close tag
+				unset openTag;
+			fi
+
+		done
+		##############################################
+
 	else
 		echo -e "$name_value_pair_list" | \
 			$Column -ts '_' | \
@@ -186,14 +229,29 @@ function wrong_module() {
 
 ################################################################################
 # Print module header
-# Parmeters:
+# Parameters:
 #   1 string   Module name
 print_module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
+	elif [ "$usexml" == 1 ]; then
+		echo -e "\t$(xml_tag_start "${1}")"
 	else
 		print_line
 		echo "${tcRED}${tUNDERLINE}"$"Report from module""${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
+	fi
+}
+################################################################################
+
+
+
+################################################################################
+# Print module footer (for xml)
+# Parameters:
+#   1 string   Module name
+print_module_footer() {
+	if [ "$usexml" == 1 ]; then
+		echo -e "\t$(xml_tag_stop "${1}")"
 	fi
 }
 ################################################################################
@@ -231,9 +289,19 @@ for modul in $cmdsnames; do
 			processor|\
 			system|\
 			lsmod|\
+			diskinfo|\
 			applications) Module_${modul};;
 	esac
 done
 
 
 [ "$usekdialog" -ne 1 ]  #&& print_line
+
+
+############################################
+# IF OUTPUTTING TO XMLFILE, PRINT FOOTER
+
+if [ "$usexml" == 1 ]; then
+	echo "</osinfo>" #> $XMLFILE
+fi
+############################################

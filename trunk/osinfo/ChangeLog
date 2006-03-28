@@ -1,0 +1,6 @@
+3/27	Added perl for module_applications
+		Dropped ':' from the end of output id string (makes xml formatting simpler)
+		Added --xml support, prints to stdout for debugging
+		Xml support requires additional print_module_footer function
+
+
