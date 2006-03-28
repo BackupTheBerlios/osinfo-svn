@@ -33,6 +33,12 @@ usekdialog=0
 # setting PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
+
+#####
+##### THIS BIT IS DEPRECATED
+#####  Do not use any more
+#####  For details ask in #osinfo on freenode.net
+#####
 # Information gathering
      Stty="$(type -p stty)"
     Uname="$(type -p uname)"
@@ -59,6 +65,11 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 # Other
 Basename="$(type -p basename)"
+
+####
+#### END OF DEPRECATED
+#### 
+
 
 function PRINT_Help {
 	print_line
