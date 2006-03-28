@@ -30,8 +30,12 @@ usekdialog=0
 # To put this in a variable allows info on non-running systems
    prefix="/"
 
-# setting PATH here allows normal users to run ifconfig and lsmod
+
+######## SETTING USERSPACE VARIABLES 
+# PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
+# LC_ALL makes is possible to print to stdout, due to support for '¡' :)
+[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
 #####
