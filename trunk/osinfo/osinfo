@@ -67,9 +67,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
   Column="$(type -p column)"
  Kdialog="$(type -p kdialog)"
 
-# Other
-Basename="$(type -p basename)"
-
 ####
 #### END OF DEPRECATED
 #### 
@@ -88,8 +85,8 @@ function PRINT_Help {
 	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
 	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
-	echo "  $($Basename $0) "$"[Options] arguments"
-	echo "  $($Basename $0) "$"[--usage|--help]"
+	echo "  $(basename $0) "$"[Options] arguments"
+	echo "  $(basename $0) "$"[--usage|--help]"
 	gettext -s "${tBOLD}"$"Options:""${tSTD}"
 	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
 	gettext -s "  -v, --verbose           "$"Show more information"
