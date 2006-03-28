@@ -75,29 +75,27 @@ Module_applications() {
 	moduleName="Applications"
 	print_module_header "${moduleName}"
 
-	for APP in 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' 'cups-config' \
-			'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'X' 'kde-config'; do
+	for APP in 'X' 'kde-config' 'gconftool' 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' 'cups-config' \
+			'gzip' 'ls' 'perl' 'python' 'php' 'mysql'; do
 
 		if [ "$(type -p $APP)" ]; then # it is installed
 			if [ "$APP" == "perl" ]; then
-				add_name_value_pair $APP \
-				"$($APP --version 2>&1 | ${Head} -n 2 | ${Grep} '\w')" 
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 2 | ${Grep} '\w')" 
 			elif [ "$APP" == "python" ]; then
-				add_name_value_pair $APP \
-				"$($APP -V 2>&1 | ${Head} -n 1 )" 
+				add_name_value_pair $APP 		"$($APP -V 2>&1 | ${Head} -n 1 )" 
 			elif [ "$APP" == "X" ]; then
-				add_name_value_pair 'X11' \
-				"$($APP -version 2>&1 | ${Grep} Revision)"
+				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | ${Grep} Revision)"
 			elif [ "$APP" == "kde-config" ]; then
-				add_name_value_pair 'KDE' \
-				"$($APP -version 2>&1 | ${Grep} KDE)"
+				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | ${Grep} KDE)"
+			elif [ "$APP" == "gconftool" ]; then
+				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "cups-config" ]; then
-				add_name_value_pair 'Cups' \
-				"$($APP --version 2>&1 )"
+				add_name_value_pair 'Cups' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "awk" ]; then
+				add_name_value_pair '$APP' 		"$($APP -W version 2>&1 )"
 			else
-				add_name_value_pair $APP \
-				"$($APP --version 2>&1 | ${Head} -n 1)" 
-					#$Grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 1)" 
+									#$Grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
 			fi
 		fi
 	done
