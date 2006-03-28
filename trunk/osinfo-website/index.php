@@ -31,7 +31,7 @@ else {
 		</a>
 	</div>
 	<div class="text">
-		<p class="medium">osinfo is a script for showing information about Linux systems. It is written in bash. Osinfo will support exporting to XML.</p>
+		<p class="medium">Osinfo is a a script for showing information about Linux systems. It is written in bash. Osinfo supports both colour coded console output and exporting to XML.</p>
 	</div>
 	<hr class="hide" />
 	<div class="center">
