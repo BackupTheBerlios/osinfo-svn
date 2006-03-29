@@ -1,14 +1,21 @@
-3/27	Added perl for module_applications
-		Dropped ':' from the end of output id string (makes xml formatting simpler)
-		Added --xml support, prints to stdout for debugging
-		Xml support requires additional print_module_footer function
+29 Mar 2006; anmaster <anmaster AT users.berlios.de>
+	Sigh. Why can't you:
+        1) use ChangeLog for the right things and the right syntax.
+        2) run svn up before commit on the other computer. That would NOT destroy your changes. It would merge them.
+        3) Read the svn manual...
 
-
-3/29	argh. I did 'svn up' at another location, then 'svn ci' from another. It gave me an error:
-	Transmitting file data .....svn: Commit failed (details follow):
+29 Mar 2006; lamike <lamike AT users.berlios.de>
+	argh. I did 'svn up' at another location, then 'svn ci' from another. It gave me an error:
+        Transmitting file data .....svn: Commit failed (details follow):
 	svn: Out of date: '/trunk/osinfo/ChangeLog' in transaction '40-1'
 	svn: Your commit message was left in a temporary file:
-	svn:    '/mnt/usbflash/scripts/osinfo/svn-commit.3.tmp'
-	so I cp'd the files to hard drive, to the first location of 'svn up'
-	and sent the files. seems the last revisions were overwritten.
-	so that's how version control works :o -Ruxpin
+        svn:    '/mnt/usbflash/scripts/osinfo/svn-commit.3.tmp'
+        so I cp'd the files to hard drive, to the first location of 'svn up'
+        and sent the files. seems the last revisions were overwritten.
+        so that's how version control works :o
+	
+27 Mar 2006; lamike <lamike AT users.berlios.de>
+	Added perl for module_applications
+	Dropped ':' from the end of output id string (makes xml formatting simpler)
+	Added --xml support, prints to stdout for debugging
+	Xml support requires additional print_module_footer function
