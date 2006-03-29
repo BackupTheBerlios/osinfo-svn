@@ -303,12 +303,12 @@ Module_distro() {
 	# Output distro version
 	case "$found_distros" in
 		'SuSE')
-			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
+			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
 		'Slackware')
-			local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
 		'Topologilinux')
-			local distro_version="$($Fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
-			local  SlackwareBase="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$(fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
+			local  SlackwareBase="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
 		'Gentoo')
 			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 		'misc')

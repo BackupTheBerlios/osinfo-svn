@@ -58,8 +58,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # Processing
      Awk="$(type -p awk)"
      Sed="$(type -p sed)"
-    Head="$(type -p head)" # remove
-   Fgrep="$(type -p fgrep)"
       Tr="$(type -p tr)"
 
 # Output
