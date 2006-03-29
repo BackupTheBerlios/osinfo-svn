@@ -34,7 +34,7 @@ usekdialog=0
 ######## SETTING USERSPACE VARIABLES 
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
-# LC_ALL makes is possible to print to stdout, due to support for '¡' :)
+# LC_ALL makes is possible to print to stdout, due to support for '' :)
 [[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
@@ -58,17 +58,11 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # Processing
      Awk="$(type -p awk)"
      Sed="$(type -p sed)"
-    Grep="$(type -p grep)" # remove
-    Head="$(type -p head)" # remove
-   Fgrep="$(type -p fgrep)"
       Tr="$(type -p tr)"
 
 # Output
   Column="$(type -p column)"
  Kdialog="$(type -p kdialog)"
-
-# Other
-Basename="$(type -p basename)"
 
 ####
 #### END OF DEPRECATED
@@ -88,8 +82,8 @@ function PRINT_Help {
 	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
 	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
-	echo "  $($Basename $0) "$"[Options] arguments"
-	echo "  $($Basename $0) "$"[--usage|--help]"
+	echo "  $(basename $0) "$"[Options] arguments"
+	echo "  $(basename $0) "$"[--usage|--help]"
 	gettext -s "${tBOLD}"$"Options:""${tSTD}"
 	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
 	gettext -s "  -v, --verbose           "$"Show more information"
@@ -178,7 +172,7 @@ k_title=""
 function add_name_value_pair {
 	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
 
-name_value_pair_list="${name_value_pair_list}$(echo $1¡¡¡$2)\n"
+name_value_pair_list="${name_value_pair_list}$(echo $1$2)\n"
 
 #$(echo "$1" | $Tr ' ' '_')Å$(echo "$2" | $Tr ' ' '_')"
 	# Uses "Å" (AltGr+L) because it is uncommon
@@ -197,7 +191,7 @@ function flush_name_value_pair {
 		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
 		echo  "$name_value_pair_list" | \
 			$Tr 'Å' '\t' | \
-			$Tr '¡' ' ' > $TMPFILE
+			$Tr '' ' ' > $TMPFILE
 		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
 		rm $TMPFILE
 	elif [ "$usexml" == 1 ]; then
@@ -211,18 +205,18 @@ function flush_name_value_pair {
 		unset openTag;
 		for value in $(
 			echo  -e "$name_value_pair_list" | \
-			tr -s '¡' '\n' | \
-			tr -s ' ' '¡'
+			tr -s '' '\n' | \
+			tr -s ' ' ''
 		# TODO: is it possible to run a for loop with the whitescapes, each line only
 		# constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
 		); do
 
 			if [ ! "${openTag}" ]; then
-				echo -e "\t\t$(xml_tag_start "${value}")" | tr '¡' ' '		#>> $XMLFILE		# open tag
+				echo -e "\t\t$(xml_tag_start "${value}")" | tr '' ' '		#>> $XMLFILE		# open tag
 				openTag=${value}
 			else 
-				echo -e "\t\t\t${value}"  | tr '¡' ' '				#>> $XMLFILE		# write content
-				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '¡' ' '	#>> $XMLFILE		# close tag
+				echo -e "\t\t\t${value}"  | tr '' ' '				#>> $XMLFILE		# write content
+				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '' ' '	#>> $XMLFILE		# close tag
 				unset openTag;
 			fi
 
@@ -231,9 +225,9 @@ function flush_name_value_pair {
 
 	else
 		echo -e "$name_value_pair_list" | \
-			$Column -ts '¡' | \
+			$Column -ts '' | \
 			$Sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
-			$Tr '¡' '\t'
+			$Tr '' '\t'
 	fi
 	name_value_pair_list=""
 	linecount=0
@@ -301,15 +295,16 @@ for modul in $cmdsnames; do
 	case $modul in
 #		uname)              eval "Module_Cmd_${modul}";;
 		terminal|\
-		network|\
-		distro|\
-		devices|\
-		users|\
-		processor|\
-		system|\
-		diskinfo|\
-		printers|\
-		applications) Module_${modul};;
+			network|\
+			distro|\
+			devices|\
+			users|\
+			processor|\
+			system|\
+			lsmod|\
+			diskinfo|\
+			printers|\
+			applications) Module_${modul};;
 	esac
 done
 #		lsmod|\		# is very alpha, do not uncomment
