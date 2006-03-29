@@ -80,7 +80,7 @@ Module_applications() {
 	print_module_header "${moduleName}"
 
 	for APP in 'X' 'kde-config' 'gconftool' 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' 'cups-config' \
-			'udevinfo' 'gzip' 'ls' 'perl' 'python' 'php' 'mysql'; do
+			'udevinfo' 'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'smbd'; do
 
 		if [ "$(type -p $APP)" ]; then # it is installed
 			if [ "$APP" == "perl" ]; then
@@ -95,6 +95,8 @@ Module_applications() {
 				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "cups-config" ]; then
 				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "smbd" ]; then
+				add_name_value_pair 'samba' 		"$($APP -V 2>&1 )"
 			elif [ "$APP" == "udevinfo" ]; then
 				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
 			elif [ "$APP" == "awk" ]; then
@@ -228,7 +230,7 @@ Module_distro() {
 	# Begin searching for distro identifying files
 	local found_files=""
 	local fil
-	for fil in ${prefix}etc/{SuSE-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+	for fil in ${prefix}etc/{SuSE-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 		[ -e $fil ] && found_files="$found_files $fil"
 	done
 	
@@ -239,6 +241,10 @@ Module_distro() {
 		case $distro_ident in
 			"${prefix}etc/SuSE-release")
 		    found_distros="$found_distros SuSE"
+		    break;
+		    ;;
+		"${prefix}etc/redhat-release")
+		    found_distros="$found_distros Red Hat"
 		    break;
 		    ;;
 		"${prefix}etc/slackware-version")
@@ -266,8 +272,9 @@ Module_distro() {
 
 	# Output distro name
 	case "$found_distros" in
-		'SuSE'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
+		'SuSE'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
 			[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
+			[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
 			add_name_value_pair 'Distro name'         "$found_distros"
 			;;
 		'Topologilinux')
@@ -282,7 +289,7 @@ Module_distro() {
 			return 1
 			;;
 		'misc')
-			for DISTRO in 'Ubuntu' 'Red Hat' 'Fedora' 'SUSE'; do
+			for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
 				if [ "$(${Grep} -i ${DISTRO} ${distro_ident})" ]; then 
 					add_name_value_pair 'Distro name'         "$DISTRO"
 				fi
@@ -314,6 +321,9 @@ Module_distro() {
 	case "$found_distros" in
 		'SuSE')
 			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
+		'RedHat')
+#			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/redhat-release        | $Sed 's/VERSION = //'    )" ;;
+			local distro_version="$(cat ${prefix}etc/redhat-release)" ;;
 		'Slackware')
 			local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
 		'Topologilinux')
@@ -322,7 +332,8 @@ Module_distro() {
 		'Gentoo')
 			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 		'misc')
-			local distro_version="$(grep '.' "${prefix}etc/issue")";;
+			local distro_version="$(grep '.' "${prefix}etc/issue" | grep -m 1 '\w'  )";;
+			# TODO: fix the grep 
 	esac
 	add_name_value_pair 'Distro version' "$distro_version"
 	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"
