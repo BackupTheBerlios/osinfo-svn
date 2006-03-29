@@ -153,7 +153,8 @@ Module_diskinfo() {
 	done
 
 	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
-	# is there a way to get the model? a database? read firmware?
+	# use lshw to get the model? is there another way? look into lshw source perhaps.. 
+	# TODO: Is the disk SATA/IDE
 
 	flush_name_value_pair
 	print_module_footer "${moduleName}"

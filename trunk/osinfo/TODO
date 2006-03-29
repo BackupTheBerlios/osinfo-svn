@@ -17,3 +17,6 @@ Source a file with with the interface. There should be one file for xml output, 
 
 * add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
 * add a function to read data from BIOS. IMPORTANT!!!!
+	lshw?
+* add cd/dvd-drives
+* add Motherboard information
