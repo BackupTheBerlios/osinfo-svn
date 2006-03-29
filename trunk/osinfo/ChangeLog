@@ -1,4 +1,8 @@
 29 Mar 2006; anmaster <anmaster AT users.berlios.de>
+	Tried to merge. But some modules says not found
+	To recover them (I don't have time now): read the svn manual!
+	
+29 Mar 2006; anmaster <anmaster AT users.berlios.de>
 	Sigh. Why can't you:
         1) use ChangeLog for the right things and the right syntax.
         2) run svn up before commit on the other computer. That would NOT destroy your changes. It would merge them.
