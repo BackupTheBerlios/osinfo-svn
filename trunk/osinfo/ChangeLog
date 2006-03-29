@@ -8,7 +8,7 @@
         2) run svn up before commit on the other computer. That would NOT destroy your changes. It would merge them.
         3) Read the svn manual...
 
-29 Mar 2006; lamike <lamike AT users.berlios.de>
+29 Mar 2006; lamikae <lamikae AT users.berlios.de>
 	argh. I did 'svn up' at another location, then 'svn ci' from another. It gave me an error:
         Transmitting file data .....svn: Commit failed (details follow):
 	svn: Out of date: '/trunk/osinfo/ChangeLog' in transaction '40-1'
@@ -18,7 +18,7 @@
         and sent the files. seems the last revisions were overwritten.
         so that's how version control works :o
 	
-27 Mar 2006; lamike <lamike AT users.berlios.de>
+27 Mar 2006; lamikae <lamikae AT users.berlios.de>
 	Added perl for module_applications
 	Dropped ':' from the end of output id string (makes xml formatting simpler)
 	Added --xml support, prints to stdout for debugging
