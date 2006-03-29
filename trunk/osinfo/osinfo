@@ -58,11 +58,17 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # Processing
      Awk="$(type -p awk)"
      Sed="$(type -p sed)"
+    Grep="$(type -p grep)" # remove
+    Head="$(type -p head)" # remove
+   Fgrep="$(type -p fgrep)"
       Tr="$(type -p tr)"
 
 # Output
   Column="$(type -p column)"
  Kdialog="$(type -p kdialog)"
+
+# Other
+Basename="$(type -p basename)"
 
 ####
 #### END OF DEPRECATED
@@ -82,8 +88,8 @@ function PRINT_Help {
 	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
 	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
-	echo "  $(basename $0) "$"[Options] arguments"
-	echo "  $(basename $0) "$"[--usage|--help]"
+	echo "  $($Basename $0) "$"[Options] arguments"
+	echo "  $($Basename $0) "$"[--usage|--help]"
 	gettext -s "${tBOLD}"$"Options:""${tSTD}"
 	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
 	gettext -s "  -v, --verbose           "$"Show more information"
@@ -295,19 +301,18 @@ for modul in $cmdsnames; do
 	case $modul in
 #		uname)              eval "Module_Cmd_${modul}";;
 		terminal|\
-			network|\
-			distro|\
-			devices|\
-			users|\
-			processor|\
-			system|\
-			lsmod|\
-			diskinfo|\
-			printers|\
-			applications) Module_${modul};;
+		network|\
+		distro|\
+		devices|\
+		users|\
+		processor|\
+		system|\
+		diskinfo|\
+		printers|\
+		applications) Module_${modul};;
 	esac
 done
-
+#		lsmod|\		# is very alpha, do not uncomment
 
 [ "$usekdialog" -ne 1 ]  #&& print_line
 
