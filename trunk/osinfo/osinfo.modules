@@ -146,8 +146,6 @@ Module_diskinfo() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
 
-	if [ "$(whoami)" == "root" ]; then
-
 	for disk in $(
 		${Fdisk} -l | ${Grep} Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
 	); do
@@ -187,38 +185,6 @@ Module_network() {
 	print_module_footer "${moduleName}"
 }
 
-
-Module_devices() {
-	print_module_header 'Devices'
-	# the if sentence is there just for to make sure that no output is written for devices that don't exist
-
-	unset DEV; DEV=$(${Lspci} | grep -i 'graphic\|vga' | $Awk -F': ' {'print $2'})
-	if [ "$DEV" ]; then
-		add_name_value_pair 'Display adapter' 		"$DEV"
-	fi
-
-	unset DEV; DEV=$(${Lspci} | grep -i 'ethernet' | $Awk -F': ' {'print $2'})
-	if [ "$DEV" ]; then
-		add_name_value_pair 'Ethernet controller'	"$DEV"
-	fi
-
-	unset DEV; DEV=$(${Lspci} | grep -i 'audio' | $Awk -F': ' {'print $2'})
-	if [ "$DEV" ]; then
-		add_name_value_pair 'Audio controller' 		"$DEV"
-	fi
-	# TODO: many cards use 'audio' identifier, this needs a fix
-	#Audio controller:     Creative Labs SB Audigy (rev 04) Conexant CX23880/1/2/3 PCI Video and 
-	#Audio Decoder (rev 05) Conexant CX23880/1/2/3 PCI Video and Audio Decoder [MPEG Port] (rev 05) 
-	#Conexant CX23880/1/2/3 PCI Video and Audio Decoder [IR Port] (rev 05)
-
-
-	unset DEV; DEV=$(${Lspci} | grep -i 'firewire' | $Awk -F': ' {'print $2'})
-	if [ "$DEV" ]; then
-		add_name_value_pair 'FireWire controller'	"$DEV"
-	fi
-	
-	flush_name_value_pair
-}
 
 
 Module_distro() {
@@ -343,3 +309,34 @@ Module_distro() {
 	flush_name_value_pair
 }
 
+Module_devices() {
+	moduleName="Devices"
+	print_module_header "${moduleName}"
+
+	DEV_ARRAY=1;
+	for DEVICE in $(lspci -m | tr ' ' '_'); do 
+
+		devices[$DEV_ARRAY]="$(
+			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
+		)";
+
+		((DEV_ARRAY++))
+	done
+
+	# the devices array now contains the ' ' separated entries from lsmod. 
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+
+	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
+	for DEV_ARRAY in `seq 1 ${#devices[@]}`; do
+		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
+
+			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
+								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+
+		fi
+	done
+
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
