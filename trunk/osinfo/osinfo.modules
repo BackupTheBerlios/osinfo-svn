@@ -80,9 +80,9 @@ Module_applications() {
 
 		if [ "$(type -p $APP)" ]; then # it is installed
 			if [ "$APP" == "perl" ]; then
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 2 | grep '\w')" 
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 2 | grep '\w')" 
 			elif [ "$APP" == "python" ]; then
-				add_name_value_pair $APP 		"$($APP -V 2>&1 | ${Head} -n 1 )" 
+				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
 			elif [ "$APP" == "X" ]; then
 				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
 			elif [ "$APP" == "kde-config" ]; then
@@ -92,9 +92,9 @@ Module_applications() {
 			elif [ "$APP" == "cups-config" ]; then
 				add_name_value_pair 'Cups' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "awk" ]; then
-				add_name_value_pair $APP 		"$($APP -W version 2>&1 | ${Head} -n 1 )"
+				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
 			else
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 1)" 
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 1)" 
 									#grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
 			fi
 		fi
@@ -105,7 +105,7 @@ Module_applications() {
 
 Module_users() {
 	print_module_header 'Users and processes'
-	add_name_value_pair 'Last logged in user' 	"$(${Last} | ${Head} -n 1)"
+	add_name_value_pair 'Last logged in user' 	"$(${Last} | head -n 1)"
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | $Awk -F: {'print $1'} | $Sed 's/\n/  /g')"
 
