@@ -21,29 +21,35 @@ ETH_DEVICE="eth0"
 ################################################################################
 
 Module_system() {
-	print_module_header 'system'
-	add_name_value_pair $"Operating system"      "$(uname --operating-system)"
-	add_name_value_pair $"Network node hostname" "$(uname --nodename)"
-	add_name_value_pair $"Kernel release"        "$(uname --kernel-release)"
-	add_name_value_pair $"Machine hardware name" "$(uname --machine)"
-	add_name_value_pair $"Kernel version"        "$(uname --kernel-version)" # doesn't work on all distros
+	moduleName="System"
+	print_module_header "${moduleName}"
+	add_name_value_pair $"Operating system"      "$(${Uname} --operating-system)"
+	add_name_value_pair $"Network node hostname" "$(${Uname} --nodename)"
+	add_name_value_pair $"Kernel release"        "$(${Uname} --kernel-release)"
+	add_name_value_pair $"Machine hardware name" "$(${Uname} --machine)"
+	add_name_value_pair $"Kernel version"        "$(${Uname} --kernel-version)" # doesn't work on all distros
 	add_name_value_pair $"System locale"         "$(echo $LC_LANG)"
 	add_name_value_pair $"System uptime"         "$(${Uptime} | ${Awk} -F, {'print $1'})"
 	# NOTE: uptime isn't accurate, as it cuts from the first ',' 
 	# TODO: find a way to cut from 'up' to 'min'
 
 	flush_name_value_pair
+	print_module_footer "${moduleName}"
 }
 
 Module_processor() {
-	print_module_header 'processor'
-	add_name_value_pair $"Processor model"       "$(cat /proc/cpuinfo | grep 'model name' | $Awk -F': ' {'print $2'})"
-	add_name_value_pair $"Processor frequency"   "$(cat /proc/cpuinfo | grep 'cpu MHz' | $Awk -F': ' {'print $2" MHz"'})"
+	moduleName="Processor"
+	print_module_header "${moduleName}"
+
+	add_name_value_pair $"Processor model"       "$(cat /proc/cpuinfo | $Grep 'model name' | $Awk -F': ' {'print $2'})"
+	add_name_value_pair $"Processor frequency"   "$(cat /proc/cpuinfo | $Grep 'cpu MHz' | $Awk -F': ' {'print $2" MHz"'})"
 
 	#TODO: fix double-entries with hyper-threading processors:
 	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
+	# update this to use lshw
 
 	flush_name_value_pair
+	print_module_footer "${moduleName}"
 }
 
 Module_terminal() {
@@ -79,18 +85,19 @@ Module_applications() {
 	moduleName="Applications"
 	print_module_header "${moduleName}"
 
-	for APP in 'X' 'kde-config' 'gconftool' 'gcc' 'make' 'bash' 'find' 'awk' 'sed' 'grep' 'cups-config' \
-			'udevinfo' 'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'smbd'; do
+	for APP in 'X' 'kde-config' 'gconftool' 'gcc' 'make' 'bash' 'find' \
+			'awk' 'sed' 'grep' 'cups-config' 'udevinfo' 'lspci' 'lshw' \
+			'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'smbd'; do
 
 		if [ "$(type -p $APP)" ]; then # it is installed
 			if [ "$APP" == "perl" ]; then
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 2 | grep '\w')" 
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 2 | ${Grep} '\w')" 
 			elif [ "$APP" == "python" ]; then
-				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
+				add_name_value_pair $APP 		"$($APP -V 2>&1 | ${Head} -n 1 )" 
 			elif [ "$APP" == "X" ]; then
-				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
+				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | ${Grep} Revision)"
 			elif [ "$APP" == "kde-config" ]; then
-				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
+				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | ${Grep} KDE)"
 			elif [ "$APP" == "gconftool" ]; then
 				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "cups-config" ]; then
@@ -100,10 +107,16 @@ Module_applications() {
 			elif [ "$APP" == "udevinfo" ]; then
 				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
 			elif [ "$APP" == "awk" ]; then
-				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
+				add_name_value_pair $APP 		"$($APP -W version 2>&1 | ${Head} -n 1 )"
 			else
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 1)" 
-									#grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | ${Head} -n 1)" 
+									#$Grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
+			fi
+		else
+			if [ "$APP" == "lspci" ]; then
+				add_name_value_pair 'lspci' 		"PLEASE INSTALL PCIUTILS!"
+			elif [ "$APP" == "lshw" ]; then
+				add_name_value_pair 'lshw' 		"PLEASE INSTALL LSHW!"
 			fi
 		fi
 	done
@@ -113,7 +126,7 @@ Module_applications() {
 
 Module_users() {
 	print_module_header 'Users and processes'
-	add_name_value_pair 'Last logged in user' 	"$(${Last} | head -n 1)"
+	add_name_value_pair 'Last logged in user' 	"$(${Last} | ${Head} -n 1)"
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | $Awk -F: {'print $1'} | $Sed 's/\n/  /g')"
 
@@ -125,7 +138,6 @@ Module_users() {
 
 
 Module_lsmod() {
-	# AnMaster: Why put this in a variable first? Is that realy needed?
 	moduleName="loaded kernel modules"
 	print_module_header "${moduleName}"
 	
@@ -146,6 +158,7 @@ Module_diskinfo() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
 
+
 	for disk in $(
 		${Fdisk} -l | ${Grep} Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
 	); do
@@ -153,8 +166,7 @@ Module_diskinfo() {
 	done
 
 	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
-	# use lshw to get the model? is there another way? look into lshw source perhaps.. 
-	# TODO: Is the disk SATA/IDE
+	# is there a way to get the model? a database? read firmware?
 
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
@@ -175,11 +187,11 @@ Module_network() {
 
 	add_name_value_pair 'Device'	"$interface_name"
 	add_name_value_pair 'MAC'	"$(${Ifconfig} $ETH_DEVICE | grep -Eo '([0-9A-F]{2}:){5}[0-9A-F]{2}')"
-	add_name_value_pair 'IP'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i inet | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Broadcast'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i Bcast | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Netmask'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i Mask | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'RX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i 'RX bytes' | ${Awk} -F: {'print $2'})"	
-	add_name_value_pair 'TX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i 'TX bytes' | ${Awk} -F: {'print $2'})"	
+	add_name_value_pair 'IP'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i inet | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'Broadcast'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i Bcast | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'Netmask'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i Mask | ${Grep} '\w' | ${Grep} -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'RX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i 'RX bytes' | ${Awk} -F: {'print $2'})"	
+	add_name_value_pair 'TX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | ${Grep} -i 'TX bytes' | ${Awk} -F: {'print $2'})"	
 
 	
 	flush_name_value_pair
@@ -187,9 +199,43 @@ Module_network() {
 }
 
 
+Module_devices() {
+	moduleName="Devices"
+	print_module_header "${moduleName}"
+
+	DEV_ARRAY=1;
+	for DEVICE in $(lspci -m | tr ' ' '_'); do 
+
+		devices[$DEV_ARRAY]="$(
+			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
+		)";
+
+		((DEV_ARRAY++))
+	done
+
+	# the devices array now contains the ' ' separated entries from lsmod. 
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+
+	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
+	for DEV_ARRAY in `seq 1 ${#devices[@]}`; do
+		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
+
+			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
+								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+
+		fi
+	done
+
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
+
 
 Module_distro() {
-	print_module_header 'Distro identifier'
+	moduleName="Distribution"
+	print_module_header "${moduleName}"
+
 	# echo the root directory
 	[ "$prefix" != '/' ] && \
 		local root_dir="$(echo $prefix | $Sed 's/\/*$//')" || \
@@ -259,7 +305,7 @@ Module_distro() {
 			;;
 		'misc')
 			for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
-				if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then 
+				if [ "$(${Grep} -i ${DISTRO} ${distro_ident})" ]; then 
 					add_name_value_pair 'Distro name'         "$DISTRO"
 				fi
 			done
@@ -289,15 +335,15 @@ Module_distro() {
 	# Output distro version
 	case "$found_distros" in
 		'SuSE')
-			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
+			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
 		'RedHat')
-#			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/redhat-release        | $Sed 's/VERSION = //'    )" ;;
+#			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/redhat-release        | $Sed 's/VERSION = //'    )" ;;
 			local distro_version="$(cat ${prefix}etc/redhat-release)" ;;
 		'Slackware')
-			local distro_version="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
 		'Topologilinux')
-			local distro_version="$(fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
-			local  SlackwareBase="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$($Fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
+			local  SlackwareBase="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
 		'Gentoo')
 			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 		'misc')
@@ -308,36 +354,6 @@ Module_distro() {
 	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"
 	# echo the whole table
 	flush_name_value_pair
-}
-
-Module_devices() {
-	moduleName="Devices"
-	print_module_header "${moduleName}"
-
-	DEV_ARRAY=1;
-	for DEVICE in $(lspci -m | tr ' ' '_'); do 
-
-		devices[$DEV_ARRAY]="$(
-			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
-		)";
-
-		((DEV_ARRAY++))
-	done
-
-	# the devices array now contains the ' ' separated entries from lsmod. 
-	# [1] device type		# [2] manufacturer		# [3] device name	etc
-	# ${#devices[@]} # is the number of devices in the array
-
-	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in `seq 1 ${#devices[@]}`; do
-		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
-
-			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
-								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
-
-		fi
-	done
-
-	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
+
