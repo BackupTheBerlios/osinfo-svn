@@ -72,7 +72,7 @@ Module_printers() {
 	moduleName="Printers"
 	print_module_header "${moduleName}"
 
-	add_name_value_pair 'printer'		"$(${Lpstat} -a | awk {'print $1'})"
+	add_name_value_pair 'printer'		"$(lpstat -a | awk {'print $1'})"
 	# TODO: test in a system with many printers
 
 	flush_name_value_pair
@@ -110,7 +110,7 @@ Module_applications() {
 				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
 			else
 				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 1)" 
-									#grep  -P '[0-9]+\.[0-9]+' | $Sed 's/^tune2fs //')"
+									#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			fi
 		else
 			if [ "$APP" == "lspci" ]; then
@@ -126,9 +126,9 @@ Module_applications() {
 
 Module_users() {
 	print_module_header 'Users and processes'
-	add_name_value_pair 'Last logged in user' 	"$(${Last} | head -n 1)"
+	add_name_value_pair 'Last logged in user' 	"$(last | head -n 1)"
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
-#	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | $Sed 's/\n/  /g')"
+#	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
@@ -141,7 +141,7 @@ Module_lsmod() {
 	moduleName="loaded kernel modules"
 	print_module_header "${moduleName}"
 	
-	for MODULE in `${Lsmod} | awk {'print $1'} | grep -v Module`; do
+	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
 		add_name_value_pair 'module' "$MODULE"
 	done
 	# TODO: needs more work
@@ -160,7 +160,7 @@ Module_diskinfo() {
 
 
 	for disk in $(
-		${Fdisk} -l | grep Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
+		fdisk -l | grep Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
 	); do
 		add_name_value_pair	'Disk'		"$(echo $disk | awk -F_ {'print $2 $3 $4'})"
 	done
@@ -186,12 +186,12 @@ Module_network() {
 	# TODO: grep this from lspci
 
 	add_name_value_pair 'Device'	"$interface_name"
-	add_name_value_pair 'MAC'	"$(${Ifconfig} $ETH_DEVICE | grep -Eo '([0-9A-F]{2}:){5}[0-9A-F]{2}')"
-	add_name_value_pair 'IP'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i inet | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Broadcast'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i Bcast | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Netmask'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i Mask | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'RX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i 'RX bytes' | awk -F: {'print $2'})"	
-	add_name_value_pair 'TX bytes'	"$(${Ifconfig} $ETH_DEVICE | ${Sed} "s/  /\n/g" | grep -i 'TX bytes' | awk -F: {'print $2'})"	
+	add_name_value_pair 'MAC'	"$(ifconfig $ETH_DEVICE | grep -Eo '([0-9A-F]{2}:){5}[0-9A-F]{2}')"
+	add_name_value_pair 'IP'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i inet | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'Broadcast'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i Bcast | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'Netmask'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i Mask | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
+	add_name_value_pair 'RX bytes'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i 'RX bytes' | awk -F: {'print $2'})"	
+	add_name_value_pair 'TX bytes'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i 'TX bytes' | awk -F: {'print $2'})"	
 
 	
 	flush_name_value_pair
@@ -238,7 +238,7 @@ Module_distro() {
 
 	# echo the root directory
 	[ "$prefix" != '/' ] && \
-		local root_dir="$(echo $prefix | $Sed 's/\/*$//')" || \
+		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
 		local root_dir="$prefix"
 	add_name_value_pair 'Root dir'  "$root_dir"
 	
@@ -283,7 +283,7 @@ Module_distro() {
 		esac
 	done
 	# Remove beginning spaces.
-	found_distros="$(echo "$found_distros" | $Sed "s/^ *//")"
+	found_distros="$(echo "$found_distros" | sed "s/^ *//")"
 
 	# Output distro name
 	case "$found_distros" in
@@ -295,7 +295,7 @@ Module_distro() {
 		'Topologilinux')
 		# Abort if found Topologilinux but not Slackware.
 			if [ "$usekdialog" == "1" ]; then
-				$Kdialog --error  "Topologilinux is based on Slackware and should contain\n${prefix}etc/slackware-version AND ${prefix}etc/Topologilinux-version.\nThis module will abort."
+				kdialog --error  "Topologilinux is based on Slackware and should contain\n${prefix}etc/slackware-version AND ${prefix}etc/Topologilinux-version.\nThis module will abort."
 			else
 				echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
 				echo "${tcRED}ERROR:${tSTD} contain ${prefix}etc/slackware-version ${tBOLD}AND${tSTD} ${prefix}etc/Topologilinux-version."
@@ -313,7 +313,7 @@ Module_distro() {
 		'')
 			# Abort if no distro found
 			if [ "$usekdialog" == "1" ]; then
-				$Kdialog --error  "You have zero distros installed or use a distro not recognised by ${appname}\nThis module will abort."
+				kdialog --error  "You have zero distros installed or use a distro not recognised by ${appname}\nThis module will abort."
 			else
 				echo "${tcRED}ERROR:${tSTD} You have zero distros installed or use a distro not recognised by ${appname}"
 				echo "${tcRED}This module will abort.${tSTD}"
@@ -323,7 +323,7 @@ Module_distro() {
 #	*)
 #		# Abort if more than one distro
 #		if [ "$usekdialog" == "1" ]; then
-#			$Kdialog --error  "You have several distros installed at the same time.\nInstalled distros:\n${found_distros}\nThis module will abort."
+#			kdialog --error  "You have several distros installed at the same time.\nInstalled distros:\n${found_distros}\nThis module will abort."
 #		else
 #			echo "${tcRED}ERROR:${tSTD} You have several distros installed at the same time."
 #			echo "${tcRED}ERROR:${tSTD} ${tBOLD}Installed distros:${tSTD} ${found_distros}"
@@ -335,15 +335,15 @@ Module_distro() {
 	# Output distro version
 	case "$found_distros" in
 		'SuSE')
-			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | $Sed 's/VERSION = //'    )" ;;
+			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
 		'RedHat')
-#			local distro_version="$($Fgrep 'VERSION = '     ${prefix}etc/redhat-release        | $Sed 's/VERSION = //'    )" ;;
+#			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/redhat-release        | sed 's/VERSION = //'    )" ;;
 			local distro_version="$(cat ${prefix}etc/redhat-release)" ;;
 		'Slackware')
-			local distro_version="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 		'Topologilinux')
-			local distro_version="$($Fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | $Sed 's/Topologilinux //')"
-			local  SlackwareBase="$($Fgrep 'Slackware '     ${prefix}etc/slackware-version     | $Sed 's/Slackware //'    )" ;;
+			local distro_version="$(fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | sed 's/Topologilinux //')"
+			local  SlackwareBase="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 		'Gentoo')
 			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 		'misc')

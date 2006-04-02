@@ -37,38 +37,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # LC_ALL makes is possible to print to stdout, due to support for '' :)
 [[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
-
-#####
-##### THIS BIT IS DEPRECATED
-#####  Do not use any more
-#####  For details ask in #osinfo on freenode.net
-#####
-# Information gathering
-     Stty="$(type -p stty)"
-    Uname="$(type -p uname)"
-    Lspci="$(type -p lspci)"
- Ifconfig="$(type -p ifconfig)"
-    Lsmod="$(type -p lsmod)"
-     Last="$(type -p last)"
-    Fdisk="$(type -p fdisk)"
-   Uptime="$(type -p uptime)"
-   Lpstat="$(type -p lpstat)"
-
-
-# Processing
-     Awk="$(type -p awk)"
-     Sed="$(type -p sed)"
-      Tr="$(type -p tr)"
-
-# Output
-  Column="$(type -p column)"
- Kdialog="$(type -p kdialog)"
-
-####
-#### END OF DEPRECATED
-#### 
-
-
 function PRINT_Help {
 	print_line
 	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
@@ -111,7 +79,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				;;
 			'-P'|'--prefix')
 				if [ $2 ]; then
-					prefix="$(echo $2 | $Sed 's/\/*$/\//')"
+					prefix="$(echo $2 | sed 's/\/*$/\//')"
 					shift 2
 				else
 					missing_arg "$1"
@@ -174,7 +142,7 @@ function add_name_value_pair {
 
 name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
 
-#$(echo "$1" | $Tr ' ' '_')Å$(echo "$2" | $Tr ' ' '_')"
+#$(echo "$1" | tr ' ' '_')Å$(echo "$2" | tr ' ' '_')"
 	# Uses "Å" (AltGr+L) because it is uncommon
 	#TODO: sed don't work with non Latin space replacement. Why?
 }
@@ -190,9 +158,9 @@ function flush_name_value_pair {
 	if [ "$usekdialog" -eq 1 ]; then # this is completely unmaintained. doesn't work
 		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
 		echo  "$name_value_pair_list" | \
-			$Tr '¡' '\t' | \
-			$Tr '' ' ' > $TMPFILE
-		$Kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
+			tr '¡' '\t' | \
+			tr '' ' ' > $TMPFILE
+		kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
 		rm $TMPFILE
 	elif [ "$usexml" == 1 ]; then
 
@@ -225,9 +193,9 @@ function flush_name_value_pair {
 
 	else
         echo -e "$name_value_pair_list" | \
-            $Column -ts '¡' | \
-            $Sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
-            $Tr '¡' '\t'
+            column -ts '¡' | \
+            sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
+            tr '¡' '\t'
 	fi
 	name_value_pair_list=""
 	linecount=0
