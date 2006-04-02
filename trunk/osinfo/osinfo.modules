@@ -218,7 +218,7 @@ Module_devices() {
 	# ${#devices[@]} # is the number of devices in the array
 
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in `seq 1 ${#devices[@]}`; do
+	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
 
 			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
