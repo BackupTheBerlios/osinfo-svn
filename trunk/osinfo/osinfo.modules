@@ -99,7 +99,7 @@ Module_applications() {
 			elif [ "$APP" == "kde-config" ]; then
 				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
 			elif [ "$APP" == "gconftool" ]; then
-				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
+#				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "cups-config" ]; then
 				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
 			elif [ "$APP" == "smbd" ]; then
