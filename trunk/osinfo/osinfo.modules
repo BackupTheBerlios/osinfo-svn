@@ -53,8 +53,8 @@ Module_processor() {
 }
 
 Module_terminal() {
-	print_module_header 'Terminal info'
-
+	moduleName="Terminal info"
+	print_module_header "${moduleName}"
 
 	add_name_value_pair 'Terminal type'         "$TERM"
 	add_name_value_pair 'Terminal speed'        "$(stty speed)"
@@ -125,7 +125,9 @@ Module_applications() {
 }
 
 Module_users() {
-	print_module_header 'Users and processes'
+    moduleName="Users and processes"
+    print_module_header "${moduleName}"
+
 	add_name_value_pair 'Last logged in user' 	"$(last | head -n 1)"
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
@@ -133,12 +135,14 @@ Module_users() {
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
 	# -it has to work with all distros. 
+
 	flush_name_value_pair
+	print_module_footer "${moduleName}"
 }
 
 
 Module_lsmod() {
-	moduleName="loaded kernel modules"
+	moduleName="Kernel modules"
 	print_module_header "${moduleName}"
 	
 	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
@@ -155,21 +159,21 @@ Module_diskinfo() {
 	# this module works only for root/sudoers
 	if [ "$(whoami)" == "root" ]; then
 
-	moduleName="Disk information"
-	print_module_header "${moduleName}"
+		moduleName="Disk information"
+		print_module_header "${moduleName}"
 
 
-	for disk in $(
-		fdisk -l | grep Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
-	); do
-		add_name_value_pair	'Disk'		"$(echo $disk | awk -F_ {'print $2 $3 $4'})"
-	done
+		for disk in $(
+			fdisk -l | grep Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
+		); do
+			add_name_value_pair	'Disk'		"$(echo $disk | awk -F_ {'print $2 $3 $4'})"
+		done
 
 	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
 	# is there a way to get the model? a database? read firmware?
 
-	flush_name_value_pair
-	print_module_footer "${moduleName}"
+		flush_name_value_pair
+		print_module_footer "${moduleName}"
 
 	fi
 }
