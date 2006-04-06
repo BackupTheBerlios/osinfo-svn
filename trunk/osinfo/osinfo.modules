@@ -7,8 +7,8 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES='distro applications terminal network devices users processor system lsmod diskinfo printers oem'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe diskinfo printers oem'
+MODULES='distro applications terminal network devices users processor system lsmod hdd printers oem'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 # TODO: Use a parameter 
 ETH_DEVICE="eth0"
@@ -19,6 +19,44 @@ ETH_DEVICE="eth0"
 ## Modules                                                                    ##
 ################################################################################
 ################################################################################
+
+Module_hdd() {
+	moduleName="Disk information"
+	print_module_header "${moduleName}"
+
+	if [ "$(whoami)" == "root" ]; then
+
+	# principle/TODO
+	# use fdisk to get data of what drives are connected to the system
+
+		for DRV in `seq 1 2`; do # <<<< TODO: get the # of drives
+			drives[$DRV]=$(fdisk -l | grep Disk | fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
+		done
+
+	# then print information of each drive
+
+		for drive in `seq 1 ${#drives[@]}`; do
+
+			add_name_value_pair	'$drive'		"-"
+#			add_name_value_pair
+
+		done
+
+
+
+	# free space on /dev/hda:
+	# free space on /dev/sda:
+	# free space on /dev/sdb:
+	# total free space
+
+	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
+	# is there a way to get the model? a database? read firmware?
+
+	fi
+
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
 
 Module_oem() {
 	moduleName="OEM information"
@@ -228,29 +266,6 @@ Module_lsmod() {
 	print_module_footer "${moduleName}"
 }
 
-
-Module_diskinfo() {
-	# this module works only for root/sudoers
-	if [ "$(whoami)" == "root" ]; then
-
-		moduleName="Disk information"
-		print_module_header "${moduleName}"
-
-
-		for disk in $(
-			fdisk -l | grep Disk | tr ' ' '_' #< how to solve the way for is handling this with whitespaces?
-		); do
-			add_name_value_pair	'Disk'		"$(echo $disk | awk -F_ {'print $2 $3 $4'})"
-		done
-
-	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
-	# is there a way to get the model? a database? read firmware?
-
-		flush_name_value_pair
-		print_module_footer "${moduleName}"
-
-	fi
-}
 
 
 Module_network() {

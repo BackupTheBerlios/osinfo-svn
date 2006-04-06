@@ -270,7 +270,7 @@ for modul in $cmdsnames; do
 			processor|\
 			system|\
 			lsmod|\
-			diskinfo|\
+			hdd|\
 			printers|\
 			oem|\
 			applications) Module_${modul};;
