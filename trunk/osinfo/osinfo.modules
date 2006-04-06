@@ -7,8 +7,8 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES='distro applications terminal network devices users processor system lsmod diskinfo printers'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe diskinfo printers'
+MODULES='distro applications terminal network devices users processor system lsmod diskinfo printers oem'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe diskinfo printers oem'
 
 # TODO: Use a parameter 
 ETH_DEVICE="eth0"
@@ -19,6 +19,80 @@ ETH_DEVICE="eth0"
 ## Modules                                                                    ##
 ################################################################################
 ################################################################################
+
+Module_oem() {
+	moduleName="OEM information"
+        print_module_header "${moduleName}"
+
+	tmp="osinfo.tmp"
+	lshw > $tmp
+
+	# principle:
+	# (1) output of lshw is stripped out of newlines, switched spaces with _ and added ¡ to denote a value pair
+	# (2) this is put into hardware array, because bash doesn't support two-dimensional arrays 
+	# (3) a for loop then checks each array element for OUTPUT type node ID.
+	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied, value_name_pair is added
+
+
+	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk" 
+	DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
+
+	[[ "$isverbose" -eq 1 ]] && 
+		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
+
+
+	HW_ARRAY=1;
+	# TODO: fix the sed to cut all whitespaces before first word boundary
+	for HW in `seq 1 $(
+
+		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*-" {'print NF'}
+
+	)`; do
+
+		hardware[$HW_ARRAY]="$(
+
+			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*-" {'print $'$HW' '}
+
+		)" ; ((HW_ARRAY++))
+
+	done
+
+
+	# the hardware array now contains the ' ' separated entries from lsmod. 
+	# [1] node type		# [2,3 ; 4,5 ; ....] value pairs
+	# ${#hardware[@]} # is the number of node types
+
+
+	for HW_ARRAY in $(seq 1 ${#hardware[@]}); do
+
+		if [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $1'} | grep -i $OUTPUT)" ]; then # we want output
+
+			myELEMENT=2;
+
+			while [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print NF'})" -gt "$myELEMENT" ]; do # parse all elements in the array
+
+				if [ ! "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | grep -i $DO_NOT_OUTPUT)" ]; then # not too much information
+
+					add_name_value_pair "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $1'} | tr '_' ' ')" \
+										"$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')" 
+
+				elif [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | grep -i 'description')" ]; then
+
+					add_name_value_pair "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')" "-"
+
+				fi
+
+				((myELEMENT++));
+
+			done
+		fi
+	done
+	
+	rm $tmp -f
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
+
 
 Module_system() {
 	moduleName="System"

@@ -10,8 +10,8 @@
 ################################################################################
       appname='osinfo'
 major_version=0
-minor_version=0
-micro_version=5
+minor_version=1
+micro_version=0
 patch_version=0
    dev_status=dev
 
@@ -34,7 +34,7 @@ usekdialog=0
 ######## SETTING USERSPACE VARIABLES 
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
-# LC_ALL makes is possible to print to stdout, due to support for '' :)
+# LC_ALL makes is possible to print to stdout, due to support for '¡' :)
 [[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 function PRINT_Help {
@@ -93,7 +93,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				usexml=1
 				shift 1
 				;;
-			'-v','--verbose')
+			'-v'|'--verbose')
 				isverbose=1
 				shift 1
 				;;
@@ -272,6 +272,7 @@ for modul in $cmdsnames; do
 			lsmod|\
 			diskinfo|\
 			printers|\
+			oem|\
 			applications) Module_${modul};;
 	esac
 done
