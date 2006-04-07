@@ -23,24 +23,24 @@ ETH_DEVICE="eth0"
 Module_hdd() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
-
+	
 	if [ "$(whoami)" == "root" ]; then
 
 	# principle/TODO
 	# use fdisk to get data of what drives are connected to the system
 	# TODO: SCSI is still unknown
-
+		
 		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
 			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
 		done
 
-	TOTALSIZE=0
+		TOTALSIZE=0
 	TOTALFREE=0
-
+	
 	# then print information of each drive
-
+	
 		for DRV in `seq 1 ${#drives[@]}`; do
-
+			
 			tmp="osinfo.tmp"
 			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 
@@ -80,7 +80,7 @@ Module_hdd() {
 
 			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
 
-				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | dog -l $PARTNR)"
+				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 				# TODO: DOG ISN'T PORTABLE!!!!!!!
 
 				if [ "$(df -Plk | grep $PARTITION)" ]; then
@@ -380,7 +380,7 @@ Module_devices() {
 	# ${#devices[@]} # is the number of devices in the array
 
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
+	for DEV_ARRAY in $(seq -1 ${#devices[@]}); do
 		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
 
 			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
