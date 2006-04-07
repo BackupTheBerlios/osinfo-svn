@@ -28,33 +28,91 @@ Module_hdd() {
 
 	# principle/TODO
 	# use fdisk to get data of what drives are connected to the system
+	# TODO: SCSI is still unknown
 
-		for DRV in `seq 1 2`; do # <<<< TODO: get the # of drives
-			drives[$DRV]=$(fdisk -l | grep Disk | fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
+		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
+			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
 		done
+
+	TOTALSIZE=0
+	TOTALFREE=0
 
 	# then print information of each drive
 
-		for drive in `seq 1 ${#drives[@]}`; do
+		for DRV in `seq 1 ${#drives[@]}`; do
 
-			add_name_value_pair	'$drive'		"-"
-#			add_name_value_pair
+			tmp="osinfo.tmp"
+			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+
+			value_pair_header=${drives[$DRV]}
+#			add_name_value_pair	'Manufacturer'		"$()" # seems not to be available for all drives :(
+#			add_name_value_pair	'Model'				"$(cat $tmp | grep -Ei '(model)' | awk {'print $NF'})"
+			add_name_value_pair	'Model'				"$(hdparm -i ${drives[$DRV]} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
+#			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
+            add_name_value_pair 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+#			add_name_value_pair	'Standard'			"$()" # ATA / SATA / SCSI ...
+#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
+#			add_name_value_pair	'SMART'				"$()" # yes/no
+
+			add_name_value_pair	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+			add_name_value_pair	'Free'				"$(echo)"
+
+			if [ -e "$tmp" ]; then
+				add_name_value_pair	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
+				add_name_value_pair	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
+#				add_name_value_pair	''		"$()"
+#				add_name_value_pair	''		"$()"
+			fi
+
+			flush_name_value_pair
+
+
+			DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
+			DISKFREE=0
+
+			# TODO: an array that's like this:
+			# [partition ID=83] [size on hda1] [size on hda4]
+			# [partition ID=7] [size on hda2] [size on hdb1]
+
+
+			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
+
+				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | dog -l $PARTNR)"
+				# TODO: DOG ISN'T PORTABLE!!!!!!!
+
+				if [ "$(df -Plk | grep $PARTITION)" ]; then
+
+					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
+					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
+					PERCFREE="$(($PARTFREE/$PARTSIZE))" # <<< rounds off improperly, how to fix????
+
+					value_pair_header=$PARTITION
+
+					add_name_value_pair 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
+					add_name_value_pair 'Capacity'		"$(echo $PARTSIZE bytes)"
+					add_name_value_pair 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
+
+					flush_name_value_pair
+
+					DISKFREE=$(($DISKFREE+$PARTFREE))
+
+				fi
+
+			done
+
+			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
+			TOTALFREE=$(($TOTALFREE+$DISKFREE))
 
 		done
 
+		add_name_value_pair	'Total capacity'		"$(echo $TOTALSIZE)"
+		add_name_value_pair	'Total free'			"$(echo -e $TOTALFREE "; xx%" )" 
 
-
-	# free space on /dev/hda:
-	# free space on /dev/sda:
-	# free space on /dev/sdb:
-	# total free space
-
-	# TODO: use smartctl / hdparm to sniff drive ID/SERIAL/FIRMWARE
-	# is there a way to get the model? a database? read firmware?
+		flush_name_value_pair
 
 	fi
 
-	flush_name_value_pair
+	rm $tmp -f
 	print_module_footer "${moduleName}"
 }
 
@@ -83,13 +141,13 @@ Module_oem() {
 	# TODO: fix the sed to cut all whitespaces before first word boundary
 	for HW in `seq 1 $(
 
-		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*-" {'print NF'}
+		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*" {'print NF'}
 
 	)`; do
 
 		hardware[$HW_ARRAY]="$(
 
-			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*-" {'print $'$HW' '}
+			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*" {'print $'$HW' '}
 
 		)" ; ((HW_ARRAY++))
 
@@ -109,14 +167,18 @@ Module_oem() {
 
 			while [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print NF'})" -gt "$myELEMENT" ]; do # parse all elements in the array
 
+
 				if [ ! "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | grep -i $DO_NOT_OUTPUT)" ]; then # not too much information
 
 					add_name_value_pair "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $1'} | tr '_' ' ')" \
 										"$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')" 
 
+
 				elif [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | grep -i 'description')" ]; then
 
-					add_name_value_pair "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')" "-"
+					[[ "$value_pair_header" ]] && flush_name_value_pair
+					value_pair_header="$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')"
+
 
 				fi
 

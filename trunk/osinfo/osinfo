@@ -8,12 +8,12 @@
 # Some parts are taken from:                                                   #
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
-      appname='osinfo'
+appname='osinfo'
 major_version=0
 minor_version=1
-micro_version=0
+micro_version=1
 patch_version=0
-   dev_status=dev
+dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
 . bash.functions
@@ -36,6 +36,7 @@ usekdialog=0
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # LC_ALL makes is possible to print to stdout, due to support for '¡' :)
 [[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
+
 
 function PRINT_Help {
 	print_line
@@ -135,14 +136,22 @@ k_title=""
 # Parameters:
 #   1 string   Name
 #   2 string   Value
+#
 # WARNING: Do NOT indent! Uses a TWO line string!
 
 function add_name_value_pair {
+
+	name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
+
+	# uses a funny character '¡' that later will be parsed.
+	# not very sophisticated. :/
+
+
 	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
 
-name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
+	# kdialog is unmaintained, but left here for future revisions.
 
-#$(echo "$1" | tr ' ' '_')Å$(echo "$2" | tr ' ' '_')"
+	#$(echo "$1" | tr ' ' '_')Å$(echo "$2" | tr ' ' '_')"
 	# Uses "Å" (AltGr+L) because it is uncommon
 	#TODO: sed don't work with non Latin space replacement. Why?
 }
@@ -155,20 +164,16 @@ name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
 # Uses colours
 # Uses the "column" tool
 function flush_name_value_pair {
-	if [ "$usekdialog" -eq 1 ]; then # this is completely unmaintained. doesn't work
-		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
-		echo  "$name_value_pair_list" | \
-			tr '¡' '\t' | \
-			tr '' ' ' > $TMPFILE
-		kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
-		rm $TMPFILE
-	elif [ "$usexml" == 1 ]; then
+
+	if [ "$usexml" == 1 ]; then
 
 		##############################################
 		# this outputs XML
 		# Operation method: breaks value pair list into components, runs a for loop
 		# and parses the items into xml. needs a variable to aid the process.
 		# Could be better. :)
+
+# TODO 		echo -e "\n$value_pair_header"
 
 		unset openTag;
 		for value in $(
@@ -191,13 +196,35 @@ function flush_name_value_pair {
 		done
 		##############################################
 
+	elif [ "$usekdialog" -eq 1 ]; then 
+
+        ##############################################
+        # this outputs to KDIALOG
+		# this is completely unmaintained. doesn't work
+
+		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
+		echo -e "\n$value_pair_header"
+		echo  "$name_value_pair_list" | \
+			tr '¡' '\t' | \
+			tr '' ' ' > $TMPFILE
+		kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
+		rm $TMPFILE
+
 	else
+
+        ##############################################
+        # output to STDOUT
+
+		echo -e "\n$value_pair_header"
         echo -e "$name_value_pair_list" | \
             column -ts '¡' | \
             sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
             tr '¡' '\t'
+
 	fi
-	name_value_pair_list=""
+
+	unset name_value_pair_list
+	unset value_pair_header
 	linecount=0
 }
 ################################################################################
