@@ -120,8 +120,9 @@ fi
 ############################################
 # IF OUTPUTTING TO XMLFILE, PRINT HEADER
 if [ "$usexml" == 1 ]; then
-	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd"
+	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" #> $XMLFILE
 	echo "<osinfo>" #> $XMLFILE
+	XML_INDENT=1
 fi
 ############################################
 
@@ -142,7 +143,6 @@ k_title=""
 function add_name_value_pair {
 
 	name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
-
 	# uses a funny character '¡' that later will be parsed.
 	# not very sophisticated. :/
 
@@ -173,25 +173,66 @@ function flush_name_value_pair {
 		# and parses the items into xml. needs a variable to aid the process.
 		# Could be better. :)
 
-# TODO 		echo -e "\n$value_pair_header"
+
+		#### OUTER OPENING TAG
+		if [ "$value_pair_header" ]; then 
+			for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			done
+			((XML_INDENT++))
+			echo -e "$(xml_tag_start "${value_pair_header}")" 	#>> $XMLFILE		# open tag
+			unset value_pair_header
+		fi
 
 		unset openTag;
+#			tr -s '¡' '\n' | \
 		for value in $(
 			echo  -e "$name_value_pair_list" | \
-			tr -s '¡' '\n' | \
-			tr -s ' ' '¡'
+			tr -s ' ' '¿'
 		# TODO: is it possible to run a for loop with the whitescapes, each line only
 		# constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
 		); do
 
+#echo ${value}
+			value1="$(echo ${value} | awk -F¡ {'print $1'})"
+			value2="$(echo ${value} | awk -F¡ {'print $2'})"
+
+
 			if [ ! "${openTag}" ]; then
-				echo -e "\t\t$(xml_tag_start "${value}")" | tr '¡' ' '		#>> $XMLFILE		# open tag
-				openTag=${value}
-			else 
-				echo -e "\t\t\t${value}"  | tr '¡' ' '				#>> $XMLFILE		# write content
-				echo -e "\t\t$(xml_tag_stop "${openTag}")"  | tr '¡' ' '	#>> $XMLFILE		# close tag
+#echo "new tag"
+#echo $value1
+				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				done
+				((XML_INDENT++))
+				echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '		#>> $XMLFILE		# open tag
+				openTag=${value1}
+
+				if [  "${value2}" ]; then 
+					for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+					done
+#echo "write data"
+#echo $value2
+
+					echo -e "${value2}"  | tr '¿' ' '				#>> $XMLFILE		# write content
+				fi
+
+#echo "close tag"
+#echo $value1
+				((XML_INDENT--))
+				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				done
+				echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	#>> $XMLFILE		# close tag
 				unset openTag;
 			fi
+
+
+		#### OUTER CLOSING TAG 
+		if [ "$value_pair_footer" ]; then 
+			for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			done
+			((XML_INDENT--))
+			echo -e "$(xml_tag_stop "${value_pair_footer}")" 	#>> $XMLFILE		# close
+			unset value_pair_footer
+		fi
 
 		done
 		##############################################

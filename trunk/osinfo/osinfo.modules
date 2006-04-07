@@ -50,12 +50,15 @@ Module_hdd() {
 			add_name_value_pair	'Model'				"$(hdparm -i ${drives[$DRV]} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
 #			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
             add_name_value_pair 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-#			add_name_value_pair	'Standard'			"$()" # ATA / SATA / SCSI ...
-#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
-#			add_name_value_pair	'SMART'				"$()" # yes/no
 
 			add_name_value_pair	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 			add_name_value_pair	'Free'				"$(echo)"
+
+#			add_name_value_pair	'Standard'			"$()" # ATA / SATA / SCSI ...
+#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
+			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
+			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+
 
 			if [ -e "$tmp" ]; then
 				add_name_value_pair	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
@@ -103,10 +106,14 @@ Module_hdd() {
 			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
 			TOTALFREE=$(($TOTALFREE+$DISKFREE))
 
+			value_pair_footer=${drives[$DRV]}
+
 		done
 
-		add_name_value_pair	'Total capacity'		"$(echo $TOTALSIZE)"
-		add_name_value_pair	'Total free'			"$(echo -e $TOTALFREE "; xx%" )" 
+		value_pair_header="Total disk space"
+		add_name_value_pair	'Capacity'		"$(echo $TOTALSIZE)"
+		add_name_value_pair	'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
+		value_pair_footer="Total disk space"
 
 		flush_name_value_pair
 
@@ -118,7 +125,7 @@ Module_hdd() {
 
 Module_oem() {
 	moduleName="OEM information"
-        print_module_header "${moduleName}"
+	print_module_header "${moduleName}"
 
 	tmp="osinfo.tmp"
 	lshw > $tmp
