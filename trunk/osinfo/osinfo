@@ -215,7 +215,7 @@ function flush_name_value_pair {
         ##############################################
         # output to STDOUT
 
-		echo -e "\n$value_pair_header"
+		[[ "$value_pair_header" ]] && echo -e "\n$value_pair_header"
         echo -e "$name_value_pair_list" | \
             column -ts '¡' | \
             sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \

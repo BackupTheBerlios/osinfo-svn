@@ -45,7 +45,7 @@ Module_hdd() {
 			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 
 			value_pair_header=${drives[$DRV]}
-#			add_name_value_pair	'Manufacturer'		"$()" # seems not to be available for all drives :(
+#			add_name_value_pair	'Manufacturer'		"$()" # seems not to be available for all drives :( lshw seems to find this for some drives, is there another way to get this information?
 #			add_name_value_pair	'Model'				"$(cat $tmp | grep -Ei '(model)' | awk {'print $NF'})"
 			add_name_value_pair	'Model'				"$(hdparm -i ${drives[$DRV]} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
 #			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
@@ -502,8 +502,8 @@ Module_distro() {
 		'Gentoo')
 			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 		'misc')
-			local distro_version="$(grep '.' "${prefix}etc/issue" | grep -m 1 '\w'  )";;
-			# TODO: fix the grep 
+			local distro_version="$(grep '.' "${prefix}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
+			# TODO: improve the grep 
 	esac
 	add_name_value_pair 'Distro version' "$distro_version"
 	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"

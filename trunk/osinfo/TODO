@@ -16,6 +16,5 @@ Source a file with with the interface. There should be one file for xml output, 
 	This problems occurs in a couple of places in the script
 
 * add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
-* add a function to read data from BIOS. IMPORTANT!!!!
-   lshw is the best shot for this
 * add --checkdep 
+* fix lspci. old versions (<2.2) don't output the same way. output should be parsed from "lspci" without -m option
