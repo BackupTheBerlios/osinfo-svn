@@ -369,8 +369,7 @@ Module_devices() {
 	for DEVICE in $(lspci -m | tr ' ' '_'); do 
 
 		devices[$DEV_ARRAY]="$(
-			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
-		)";
+			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
 
 		((DEV_ARRAY++))
 	done
