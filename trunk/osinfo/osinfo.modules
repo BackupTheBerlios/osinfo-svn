@@ -41,7 +41,7 @@ Module_hdd() {
 	
 		for DRV in `seq 1 ${#drives[@]}`; do
 			
-			tmp="osinfo.tmp"
+			tmp="$(mktemp -t osinfo.XXXXXX)"
 			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 
 			value_pair_header=${drives[$DRV]}
@@ -127,7 +127,7 @@ Module_oem() {
 	moduleName="OEM information"
 	print_module_header "${moduleName}"
 
-	tmp="osinfo.tmp"
+	tmp="$(mktemp -t osinfo.XXXXXX)"
 	lshw > $tmp
 
 	# principle:
