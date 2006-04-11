@@ -17,6 +17,18 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #######
 
+#### NOTE:
+#''Report from module'' ''System'':
+#''Operating'' system       FreeBSD
+#''Network'' node hostname  client26.openlab
+#''Kernel'' release         6.0-RELEASE
+#''Machine'' hardware name  i386
+#''System'' locale
+#''System'' uptime          up 58 mins
+#
+# FreeBSD cannot handle this color formatting!
+
+
 
 # Got this idea from C
 # Prevents things from messing up
@@ -55,6 +67,7 @@ check_cap sgr0  tSTD
 
 esc=$(echo -ne '\e')
 tab=$(echo -ne '\t')
+
 
 check_cap 'setaf 0' tcBLACK
 check_cap 'setaf 1' tcRED
@@ -244,3 +257,4 @@ function print_name_value_pair {
 }
 
 fi
+

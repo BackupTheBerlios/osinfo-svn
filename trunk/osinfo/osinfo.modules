@@ -1,17 +1,17 @@
 #!/bin/bash
 ################################################################################
 # List System information                                                      #
+#   supports currently only Linux, FreeBSD support under development
 ################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                           #
 # Some parts are taken from:                                                   #
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES='distro applications terminal network devices users processor system lsmod hdd printers oem'
+MODULES_LINUX='distro applications terminal network devices users processor system lsmod hdd printers oem'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
+MODULES_BSD='system applications terminal network devices'
 
-# TODO: Use a parameter 
-ETH_DEVICE="eth0"
 
 
 ################################################################################
@@ -20,9 +20,88 @@ ETH_DEVICE="eth0"
 ################################################################################
 ################################################################################
 
+Module_applications() {
+	moduleName="Applications"
+	print_module_header "${moduleName}"
+
+	if [ "$SYSTEM" == "linux" ] ; then
+
+		APPLICATIONS="X kde-config \
+			bash csh ls \
+			gcc make \
+			awk sed grep gzip \
+			perl python \
+			apache2 php mysql smbd cups-config \
+			udevinfo lspci lshw smartctl hdparm"
+
+	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+		APPLICATIONS="X kde-config \
+			csh bash ksh \
+			gcc grep gzip \
+			perl python \
+			apache2 php mysql smbd cups-config \
+			lspci lshw smartctl hdparm"
+
+	fi
+
+
+	for APP in $APPLICATIONS; do
+
+		if [ "$(type -p $APP)" ]; then # it is installed
+			if [ "$APP" == "perl" ]; then
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep 'perl, v')" 
+			elif [ "$APP" == "python" ]; then
+				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
+			elif [ "$APP" == "X" ]; then
+				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
+			elif [ "$APP" == "kde-config" ]; then
+				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
+			elif [ "$APP" == "gconftool" ]; then
+				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "apache2" ]; then
+				add_name_value_pair '$APP' 		"$($APP -V | head -n 1 | awk -F': ' {'print $2'})"
+			elif [ "$APP" == "cups-config" ]; then
+				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "smbd" ]; then
+				add_name_value_pair 'samba' 		"$($APP -V 2>&1 )"
+			elif [ "$APP" == "udevinfo" ]; then
+				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
+			elif [ "$APP" == "awk" ]; then
+				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
+			else
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep '\w' | head -n 1)" 
+									#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
+			fi
+		else
+			if [ "$APP" == "lspci" ]; then
+				add_name_value_pair 'lspci' 		"PLEASE INSTALL PCIUTILS!"
+			elif [ "$APP" == "lshw" ]; then
+				add_name_value_pair 'lshw' 		"PLEASE INSTALL LSHW!"
+			elif [ "$APP" == "smartctl" ]; then
+				add_name_value_pair 'smartctl' 		"PLEASE INSTALL SMARTMONTOOLS!"
+			fi
+		fi
+	done
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
+
+
+
 Module_hdd() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
+
+	# using the dmesg log file to the fetch drive information. this is based on the
+	# standard Linux way of coding device information. therefore it's not very flexible.
+
+	dmesgtmp="$(mktemp osinfo.XXXXXX)" # mktemp -t isn't portable
+
+	cat /var/log/dmesg | grep -i disk > $dmesgtmp
+	cat dmesg.tmp | grep '^hda' | awk -F': ' {'print $2'}
+
+
 	
 	if [ "$(whoami)" == "root" ]; then
 
@@ -30,19 +109,19 @@ Module_hdd() {
 	# use fdisk to get data of what drives are connected to the system
 	# TODO: SCSI is still unknown
 		
-		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
+		for DRV in `${Seq} 1 $(fdisk -l | grep -i disk | wc -l)`; do 
 			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
 		done
 
-		TOTALSIZE=0
+	TOTALSIZE=0
 	TOTALFREE=0
 	
 	# then print information of each drive
 	
-		for DRV in `seq 1 ${#drives[@]}`; do
+		for DRV in `${Seq} 1 ${#drives[@]}`; do
 			
-			tmp="$(mktemp -t osinfo.XXXXXX)"
-			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+			tmp="$(mktemp  osinfo.XXXXXX)"
+#			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 
 			value_pair_header=${drives[$DRV]}
 #			add_name_value_pair	'Manufacturer'		"$()" # seems not to be available for all drives :( lshw seems to find this for some drives, is there another way to get this information?
@@ -56,8 +135,8 @@ Module_hdd() {
 
 #			add_name_value_pair	'Standard'			"$()" # ATA / SATA / SCSI ...
 #			add_name_value_pair	'DMA'				"$()" # enabled/disabled
-			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
-			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
+#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
 
 			if [ -e "$tmp" ]; then
@@ -78,7 +157,7 @@ Module_hdd() {
 			# [partition ID=7] [size on hda2] [size on hdb1]
 
 
-			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
+			for PARTNR in `${Seq} 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
 
 				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 				# TODO: DOG ISN'T PORTABLE!!!!!!!
@@ -119,6 +198,13 @@ Module_hdd() {
 
 	fi
 
+#FREEBSD: To check the status of drives, use the following:
+
+#        ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
+ #       ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
+
+
+
 	rm $tmp -f
 	print_module_footer "${moduleName}"
 }
@@ -146,7 +232,7 @@ Module_oem() {
 
 	HW_ARRAY=1;
 	# TODO: fix the sed to cut all whitespaces before first word boundary
-	for HW in `seq 1 $(
+	for HW in `${Seq} 1 $(
 
 		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*" {'print NF'}
 
@@ -166,7 +252,7 @@ Module_oem() {
 	# ${#hardware[@]} # is the number of node types
 
 
-	for HW_ARRAY in $(seq 1 ${#hardware[@]}); do
+	for HW_ARRAY in $(${Seq} 1 ${#hardware[@]}); do
 
 		if [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $1'} | grep -i $OUTPUT)" ]; then # we want output
 
@@ -204,15 +290,12 @@ Module_oem() {
 Module_system() {
 	moduleName="System"
 	print_module_header "${moduleName}"
-	add_name_value_pair $"Operating system"      "$(uname --operating-system)"
-	add_name_value_pair $"Network node hostname" "$(uname --nodename)"
-	add_name_value_pair $"Kernel release"        "$(uname --kernel-release)"
-	add_name_value_pair $"Machine hardware name" "$(uname --machine)"
-	add_name_value_pair $"Kernel version"        "$(uname --kernel-version)" # doesn't work on all distros
+	add_name_value_pair $"Operating system"      "$(uname -s)"
+	add_name_value_pair $"Network node hostname" "$(hostname)"
+	add_name_value_pair $"Kernel release"        "$(uname -r)"
+	add_name_value_pair $"Machine hardware name" "$(uname -m)"
 	add_name_value_pair $"System locale"         "$(echo $LC_LANG)"
-	add_name_value_pair $"System uptime"         "$(uptime | awk -F, {'print $1'})"
-	# NOTE: uptime isn't accurate, as it cuts from the first ',' 
-	# TODO: find a way to cut from 'up' to 'min'
+	add_name_value_pair $"System uptime"         "$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
 
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
@@ -262,48 +345,6 @@ Module_printers() {
 #	fi
 }
 
-Module_applications() {
-	moduleName="Applications"
-	print_module_header "${moduleName}"
-
-	for APP in 'X' 'kde-config' 'gconftool' 'gcc' 'make' 'bash' 'find' \
-			'awk' 'sed' 'grep' 'cups-config' 'udevinfo' 'lspci' 'lshw' \
-			'gzip' 'ls' 'perl' 'python' 'php' 'mysql' 'smbd'; do
-
-		if [ "$(type -p $APP)" ]; then # it is installed
-			if [ "$APP" == "perl" ]; then
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 2 | grep '\w')" 
-			elif [ "$APP" == "python" ]; then
-				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
-			elif [ "$APP" == "X" ]; then
-				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
-			elif [ "$APP" == "kde-config" ]; then
-				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
-#			elif [ "$APP" == "gconftool" ]; then
-#				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
-			elif [ "$APP" == "cups-config" ]; then
-				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
-			elif [ "$APP" == "smbd" ]; then
-				add_name_value_pair 'samba' 		"$($APP -V 2>&1 )"
-			elif [ "$APP" == "udevinfo" ]; then
-				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
-			elif [ "$APP" == "awk" ]; then
-				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
-			else
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | head -n 1)" 
-									#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
-			fi
-		else
-			if [ "$APP" == "lspci" ]; then
-				add_name_value_pair 'lspci' 		"PLEASE INSTALL PCIUTILS!"
-			elif [ "$APP" == "lshw" ]; then
-				add_name_value_pair 'lshw' 		"PLEASE INSTALL LSHW!"
-			fi
-		fi
-	done
-	flush_name_value_pair
-	print_module_footer "${moduleName}"
-}
 
 Module_users() {
     moduleName="Users and processes"
@@ -340,22 +381,43 @@ Module_lsmod() {
 Module_network() {
 	moduleName="Network information"
 	print_module_header "${moduleName}"
-	
+
+	if [ "$SYSTEM" == "linux" ] ; then
+		ETH_DEVICES="$(ifconfig | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -v '^ ' | awk  {'print $1'})"
+
+	else
+		ETH_DEVICES="$(ifconfig | grep BROADCAST | grep -v LOOPBACK | awk -F': ' {'print $1'})"
+
+	fi
+
+
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
 	# what are these needed for?
 	
-	local interface_name="$ETH_DEVICE" 
-	# TODO: grep this from lspci
+	for interface_name in $ETH_DEVICES; do 
 
 	add_name_value_pair 'Device'	"$interface_name"
-	add_name_value_pair 'MAC'	"$(ifconfig $ETH_DEVICE | grep -Eo '([0-9A-F]{2}:){5}[0-9A-F]{2}')"
-	add_name_value_pair 'IP'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i inet | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Broadcast'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i Bcast | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'Netmask'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i Mask | grep '\w' | grep -Eo '([0-9].{1,3}){4}')"
-	add_name_value_pair 'RX bytes'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i 'RX bytes' | awk -F: {'print $2'})"	
-	add_name_value_pair 'TX bytes'	"$(ifconfig $ETH_DEVICE | sed "s/  /\n/g" | grep -i 'TX bytes' | awk -F: {'print $2'})"	
+	add_name_value_pair 'MAC'	"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
+	add_name_value_pair 'IPv4'	"$(ifconfig $interface_name | \
+					grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
 
-	
+	add_name_value_pair 'IPv6'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+					grep -i inet6 | grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
+
+	add_name_value_pair 'Broadcast'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+					grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
+
+	add_name_value_pair 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+			grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | grep -Eo '[0-9\.fx]+' )"
+
+	add_name_value_pair 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+									grep -i 'RX bytes' | awk -F: {'print $2'})"	
+
+	add_name_value_pair 'TX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+									grep -i 'TX bytes' | awk -F: {'print $2'})"	
+
+	done
+
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
@@ -379,7 +441,7 @@ Module_devices() {
 	# ${#devices[@]} # is the number of devices in the array
 
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(seq -1 ${#devices[@]}); do
+	for DEV_ARRAY in $(${Seq} -1 ${#devices[@]}); do
 		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
 
 			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \

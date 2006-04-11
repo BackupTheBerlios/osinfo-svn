@@ -1,4 +1,5 @@
 #!/bin/bash
+#!/usr/local/bin/bash
 ################################################################################
 # List System information                                                      #
 ################################################################################
@@ -11,7 +12,7 @@
 appname='osinfo'
 major_version=0
 minor_version=1
-micro_version=1
+micro_version=2
 patch_version=0
 dev_status=dev
 
@@ -23,6 +24,29 @@ dev_status=dev
 DEBUG=on
 # TODO: Use a parameter
 XMLFILE="osinfo.xml"
+
+SYSTEM="$(uname -s  | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
+if [ ! "$(echo $SYSTEM | grep linux)" ]; then # | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
+# freebsd doesn't understand '||' or evaluation, but it's not required
+	gettext $"This script has not been tested on other operating systems than Linux and FreeBSD."
+	echo
+	exit 0;
+fi
+
+#On BSD, coreutils are prebended with 'g' *sigh*
+
+if [ "$SYSTEM" == "linux" ] ; then
+
+	Seq="$(type -p seq)"
+
+elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+	Seq="$(type -p gseq)"
+
+fi
+
+
+
 
 isverbose=0
 usekdialog=0
@@ -44,9 +68,19 @@ function PRINT_Help {
 	echo 
 	gettext -s -e $"Arguments are names of modules to get info from:"
 	echo
-	for MODULE in ${MODULES}; do
-		echo -e "\t\t$MODULE"
-	done
+        if [ "$SYSTEM" == "linux" ] ; then
+
+			for MODULE in ${MODULES_LINUX}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+			for MODULE in ${MODULES_BSD}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        fi
 	echo
 	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
@@ -272,7 +306,7 @@ function flush_name_value_pair {
 
 
 function wrong_module() {
-	do_abort $"${1} are not a valid module!" 1
+	do_abort $"${1} is not a valid module!" 1
 }
 
 
@@ -308,11 +342,21 @@ print_module_footer() {
 
 
 for modul in $cmdsnames; do
+
 	if [ $modul = 'all' ]; then
-		cmdsnames="$MODULES"
-		break;
+		if [ "$SYSTEM" == "linux" ] ; then
+
+			cmdsnames="$MODULES_LINUX"
+			break;
+
+		elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+            cmdsnames="$MODULES_BSD"
+			break;
+		fi
 	fi
-	validate_arg "$modul" "$MODULES" || wrong_module "$modul"
+	# validate_arg "$modul" "$MODULES" || wrong_module "$modul"
+	# why is this function called? breaking MODULES for each system breaks it...
 done
 
 if [ "$prefix" != '/' ] ; then
@@ -331,17 +375,17 @@ for modul in $cmdsnames; do
 	case $modul in
 #		uname)              eval "Module_Cmd_${modul}";;
 		terminal|\
-			network|\
-			distro|\
-			devices|\
-			users|\
-			processor|\
-			system|\
-			lsmod|\
-			hdd|\
-			printers|\
-			oem|\
-			applications) Module_${modul};;
+		network|\
+		distro|\
+		devices|\
+		users|\
+		processor|\
+		system|\
+		lsmod|\
+		hdd|\
+		printers|\
+		oem|\
+		applications) Module_${modul};;
 	esac
 done
 #		lsmod|\		# is very alpha, do not uncomment
