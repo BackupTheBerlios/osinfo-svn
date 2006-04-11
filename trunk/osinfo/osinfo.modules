@@ -10,7 +10,7 @@
 
 MODULES_LINUX='distro applications terminal network devices users processor system lsmod hdd printers oem'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
-MODULES_BSD='system applications terminal network devices'
+MODULES_BSD='system applications terminal network'
 
 
 
@@ -20,72 +20,57 @@ MODULES_BSD='system applications terminal network devices'
 ################################################################################
 ################################################################################
 
-Module_applications() {
-	moduleName="Applications"
+
+Module_devices() {
+	moduleName="Devices"
 	print_module_header "${moduleName}"
 
-	if [ "$SYSTEM" == "linux" ] ; then
+	DEV_ARRAY=1;
+	for DEVICE in $(lspci -m | tr ' ' '_'); do 
 
-		APPLICATIONS="X kde-config \
-			bash csh ls \
-			gcc make \
-			awk sed grep gzip \
-			perl python \
-			apache2 php mysql smbd cups-config \
-			udevinfo lspci lshw smartctl hdparm"
+		devices_dbg[$DEV_ARRAY]="$(
+			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
 
-	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+		((DEV_ARRAY++))
+	done
 
-		APPLICATIONS="X kde-config \
-			csh bash ksh \
-			gcc grep gzip \
-			perl python \
-			apache2 php mysql smbd cups-config \
-			lspci lshw smartctl hdparm"
+	# these two loops should produce same contents to the array
 
-	fi
+	DEV_ARRAY=1;
+	for DEVICE in $(lspci | tr ' ' '_'); do 
 
 
-	for APP in $APPLICATIONS; do
 
-		if [ "$(type -p $APP)" ]; then # it is installed
-			if [ "$APP" == "perl" ]; then
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep 'perl, v')" 
-			elif [ "$APP" == "python" ]; then
-				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
-			elif [ "$APP" == "X" ]; then
-				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
-			elif [ "$APP" == "kde-config" ]; then
-				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
-			elif [ "$APP" == "gconftool" ]; then
-				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
-			elif [ "$APP" == "apache2" ]; then
-				add_name_value_pair '$APP' 		"$($APP -V | head -n 1 | awk -F': ' {'print $2'})"
-			elif [ "$APP" == "cups-config" ]; then
-				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
-			elif [ "$APP" == "smbd" ]; then
-				add_name_value_pair 'samba' 		"$($APP -V 2>&1 )"
-			elif [ "$APP" == "udevinfo" ]; then
-				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
-			elif [ "$APP" == "awk" ]; then
-				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
-			else
-				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep '\w' | head -n 1)" 
-									#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
-			fi
-		else
-			if [ "$APP" == "lspci" ]; then
-				add_name_value_pair 'lspci' 		"PLEASE INSTALL PCIUTILS!"
-			elif [ "$APP" == "lshw" ]; then
-				add_name_value_pair 'lshw' 		"PLEASE INSTALL LSHW!"
-			elif [ "$APP" == "smartctl" ]; then
-				add_name_value_pair 'smartctl' 		"PLEASE INSTALL SMARTMONTOOLS!"
-			fi
+		devices[$DEV_ARRAY]="$(
+			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+
+		((DEV_ARRAY++))
+	done
+
+
+
+
+	# the devices array now contains the ' ' separated entries from lsmod. 
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+
+	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
+	for DEV_ARRAY in $(${Seq} 1 ${#devices_dbg[@]}); do
+		if [ ! "$(echo ${devices_dbg[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
+
+			echo ">>" ${devices_dbg[$DEV_ARRAY]}
+			echo "  " ${devices[$DEV_ARRAY]}
+
+#			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
+#								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+
 		fi
 	done
+
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
+
 
 
 
@@ -423,37 +408,6 @@ Module_network() {
 }
 
 
-Module_devices() {
-	moduleName="Devices"
-	print_module_header "${moduleName}"
-
-	DEV_ARRAY=1;
-	for DEVICE in $(lspci -m | tr ' ' '_'); do 
-
-		devices[$DEV_ARRAY]="$(
-			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
-
-		((DEV_ARRAY++))
-	done
-
-	# the devices array now contains the ' ' separated entries from lsmod. 
-	# [1] device type		# [2] manufacturer		# [3] device name	etc
-	# ${#devices[@]} # is the number of devices in the array
-
-	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(${Seq} -1 ${#devices[@]}); do
-		if [ ! $(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT) ]; then 
-
-			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
-								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
-
-		fi
-	done
-
-	flush_name_value_pair
-	print_module_footer "${moduleName}"
-}
-
 
 Module_distro() {
 	moduleName="Distribution"
@@ -580,3 +534,69 @@ Module_distro() {
 	print_module_footer "${moduleName}"
 }
 
+Module_applications() {
+	moduleName="Applications"
+	print_module_header "${moduleName}"
+
+	if [ "$SYSTEM" == "linux" ] ; then
+
+		APPLICATIONS="X kde-config \
+			bash csh ls \
+			gcc make \
+			awk sed grep gzip \
+			perl python \
+			apache2 php mysql smbd cups-config \
+			udevinfo lspci lshw smartctl hdparm"
+
+	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+		APPLICATIONS="X kde-config \
+			csh bash ksh \
+			gcc grep gzip \
+			perl python \
+			apache2 php mysql smbd cups-config \
+			lspci lshw smartctl hdparm"
+
+	fi
+
+
+	for APP in $APPLICATIONS; do
+
+		if [ "$(type -p $APP)" ]; then # it is installed
+			if [ "$APP" == "perl" ]; then
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep 'perl, v')" 
+			elif [ "$APP" == "python" ]; then
+				add_name_value_pair $APP 		"$($APP -V 2>&1 | head -n 1 )" 
+			elif [ "$APP" == "X" ]; then
+				add_name_value_pair 'X11' 		"$($APP -version 2>&1 | grep Revision)"
+			elif [ "$APP" == "kde-config" ]; then
+				add_name_value_pair 'KDE' 		"$($APP -version 2>&1 | grep KDE)"
+			elif [ "$APP" == "gconftool" ]; then
+				add_name_value_pair 'Gnome' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "apache2" ]; then
+				add_name_value_pair '$APP' 		"$($APP -V | head -n 1 | awk -F': ' {'print $2'})"
+			elif [ "$APP" == "cups-config" ]; then
+				add_name_value_pair 'cups' 		"$($APP --version 2>&1 )"
+			elif [ "$APP" == "smbd" ]; then
+				add_name_value_pair 'samba' 		"$($APP -V 2>&1 )"
+			elif [ "$APP" == "udevinfo" ]; then
+				add_name_value_pair 'udev' 		"$($APP -V 2>&1 )"
+			elif [ "$APP" == "awk" ]; then
+				add_name_value_pair $APP 		"$($APP -W version 2>&1 | head -n 1 )"
+			else
+				add_name_value_pair $APP 		"$($APP --version 2>&1 | grep '\w' | head -n 1)" 
+									#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
+			fi
+		else
+			if [ "$APP" == "lspci" ]; then
+				add_name_value_pair 'lspci' 		"PLEASE INSTALL PCIUTILS!"
+			elif [ "$APP" == "lshw" ]; then
+				add_name_value_pair 'lshw' 		"PLEASE INSTALL LSHW!"
+			elif [ "$APP" == "smartctl" ]; then
+				add_name_value_pair 'smartctl' 		"PLEASE INSTALL SMARTMONTOOLS!"
+			fi
+		fi
+	done
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}

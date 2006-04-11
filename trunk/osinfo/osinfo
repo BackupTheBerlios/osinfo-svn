@@ -30,7 +30,7 @@ if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; 
 # freebsd doesn't understand '||' or evaluation, but it's not required
 	gettext $"This script has not been tested on other operating systems than Linux and FreeBSD."
 	echo
-	exit 0;
+#	exit 0;
 fi
 
 #On BSD, coreutils are prebended with 'g' *sigh*
