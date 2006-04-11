@@ -13,7 +13,7 @@ appname='osinfo'
 major_version=0
 minor_version=1
 micro_version=2
-patch_version=0
+patch_version=1
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -26,7 +26,7 @@ DEBUG=on
 XMLFILE="osinfo.xml"
 
 SYSTEM="$(uname -s  | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
-if [ ! "$(echo $SYSTEM | grep linux)" ]; then # | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
+if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
 	gettext $"This script has not been tested on other operating systems than Linux and FreeBSD."
 	echo
@@ -34,6 +34,7 @@ if [ ! "$(echo $SYSTEM | grep linux)" ]; then # | [ ! "$(echo $SYSTEM | grep bsd
 fi
 
 #On BSD, coreutils are prebended with 'g' *sigh*
+#http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
 if [ "$SYSTEM" == "linux" ] ; then
 
@@ -210,7 +211,7 @@ function flush_name_value_pair {
 
 		#### OUTER OPENING TAG
 		if [ "$value_pair_header" ]; then 
-			for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 			done
 			((XML_INDENT++))
 			echo -e "$(xml_tag_start "${value_pair_header}")" 	#>> $XMLFILE		# open tag
@@ -234,14 +235,14 @@ function flush_name_value_pair {
 			if [ ! "${openTag}" ]; then
 #echo "new tag"
 #echo $value1
-				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 				done
 				((XML_INDENT++))
 				echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '		#>> $XMLFILE		# open tag
 				openTag=${value1}
 
 				if [  "${value2}" ]; then 
-					for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+					for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 					done
 #echo "write data"
 #echo $value2
@@ -252,7 +253,7 @@ function flush_name_value_pair {
 #echo "close tag"
 #echo $value1
 				((XML_INDENT--))
-				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 				done
 				echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	#>> $XMLFILE		# close tag
 				unset openTag;
@@ -261,7 +262,7 @@ function flush_name_value_pair {
 
 		#### OUTER CLOSING TAG 
 		if [ "$value_pair_footer" ]; then 
-			for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 			done
 			((XML_INDENT--))
 			echo -e "$(xml_tag_stop "${value_pair_footer}")" 	#>> $XMLFILE		# close
