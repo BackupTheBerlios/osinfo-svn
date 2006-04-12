@@ -27,22 +27,31 @@ Module_devices() {
 
 	DEV_ARRAY=1;
 	for DEVICE in $(lspci -m | tr ' ' '_'); do 
+#DEVICE=$(lspci -m | tr ' ' '_'); 
 
 		devices_dbg[$DEV_ARRAY]="$(
 			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+#			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
+
 
 		((DEV_ARRAY++))
+
 	done
 
 	# these two loops should produce same contents to the array
 
 	DEV_ARRAY=1;
-	for DEVICE in $(lspci | tr ' ' '_'); do 
-
-
+	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 
 		devices[$DEV_ARRAY]="$(
-			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+
+			echo $DEVICE | sed -r 's/[^A-Za-z0-9]_//g' | tr ':' ' ' )"
+#			echo ${DEVICE} | tr ': ' ' ' 
+
+
+#			echo $DEVICE | awk {'$1="\b" ; print $0'} | tr ' ' '_' | tr ': ' ' ' 
+#			echo $DEVICE | awk {'$1="\b" ; print $0'} | tr ' ' '_' | tr ': ' ' ' )"
+			#| awk -F': ' {'print $2'} )"
 
 		((DEV_ARRAY++))
 	done
@@ -61,13 +70,13 @@ Module_devices() {
 			echo ">>" ${devices_dbg[$DEV_ARRAY]}
 			echo "  " ${devices[$DEV_ARRAY]}
 
-#			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ')" \
-#								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ' | sed 's/^.//')" \
+								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
 
 		fi
 	done
 
-	flush_name_value_pair
+#	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
 
