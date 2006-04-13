@@ -36,14 +36,11 @@ fi
 #On BSD, coreutils are prebended with 'g' *sigh*
 #http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
-if [ "$SYSTEM" == "linux" ] ; then
-
-	Seq="$(type -p seq)"
-
-elif [ "$(echo $SYSTEM | grep bsd)" ]; then
-
+if [ "$(echo $SYSTEM | grep bsd)" ]; then
 	Seq="$(type -p gseq)"
-
+	function seq() {
+		$Seq "$@"
+	}
 fi
 
 
@@ -176,7 +173,6 @@ k_title=""
 # WARNING: Do NOT indent! Uses a TWO line string!
 
 function add_name_value_pair {
-
 	name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
 	# uses a funny character '¡' that later will be parsed.
 	# not very sophisticated. :/
@@ -199,26 +195,26 @@ function add_name_value_pair {
 # Uses colours
 # Uses the "column" tool
 function flush_name_value_pair {
-
 	if [ "$usexml" == 1 ]; then
-
+		
 		##############################################
 		# this outputs XML
 		# Operation method: breaks value pair list into components, runs a for loop
 		# and parses the items into xml. needs a variable to aid the process.
 		# Could be better. :)
-
-
+		
+		
 		#### OUTER OPENING TAG
 		if [ "$value_pair_header" ]; then 
-			for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			for indent in $(seq 0 $XML_INDENT); do 
+				echo -ne "\t" #>> $XMLFILE 
 			done
 			((XML_INDENT++))
 			echo -e "$(xml_tag_start "${value_pair_header}")" 	#>> $XMLFILE		# open tag
 			unset value_pair_header
 		fi
-
-		unset openTag;
+		
+		unset openTag
 #			tr -s '¡' '\n' | \
 		for value in $(
 			echo  -e "$name_value_pair_list" | \
@@ -235,14 +231,14 @@ function flush_name_value_pair {
 			if [ ! "${openTag}" ]; then
 #echo "new tag"
 #echo $value1
-				for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 				done
 				((XML_INDENT++))
 				echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '		#>> $XMLFILE		# open tag
 				openTag=${value1}
 
 				if [  "${value2}" ]; then 
-					for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+					for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 					done
 #echo "write data"
 #echo $value2
@@ -253,7 +249,7 @@ function flush_name_value_pair {
 #echo "close tag"
 #echo $value1
 				((XML_INDENT--))
-				for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 				done
 				echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	#>> $XMLFILE		# close tag
 				unset openTag;
@@ -262,7 +258,7 @@ function flush_name_value_pair {
 
 		#### OUTER CLOSING TAG 
 		if [ "$value_pair_footer" ]; then 
-			for indent in `${Seq} 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 			done
 			((XML_INDENT--))
 			echo -e "$(xml_tag_stop "${value_pair_footer}")" 	#>> $XMLFILE		# close
