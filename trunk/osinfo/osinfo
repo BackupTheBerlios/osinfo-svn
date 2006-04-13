@@ -190,6 +190,74 @@ function add_name_value_pair {
 
 
 
+### experimental, CAN BE DEBUGGED WITH MODULE SYSTEM
+function add_values {
+
+#	headers=""
+
+	# the header and values are written to values[] array 
+	# the headers array consists of items that have x 
+	# where x = number of values
+
+	# check existing values array
+	FIRST_BLANK_VALUE=${#values[@]}
+
+	# check the number of input values
+	AMT_VALUES=$#
+
+	# add an item to the headers array
+	# THIS IS OK
+	headers[${#headers[@]}]="$AMT_VALUES"
+#	headers[${#headers[@]}]="$FIRST_BLANK_VALUE $AMT_VALUES"
+
+	# this will put the arguments into the values array
+	# THIS IS OK
+	IFS_bak=$IFS ; 	IFS="
+" # a literal newline
+
+	for VALUE in $@; do
+		values[$FIRST_BLANK_VALUE]=$VALUE
+		((FIRST_BLANK_VALUE++))
+	done
+	IFS=$IFS_bak
+
+
+#	for HDR in $(seq 1 ${#headers[@]}); do
+#		echo ${headers[$HDR]}
+#	done
+
+#	for VL in $(seq 1 ${#values[@]}); do
+#		echo ${values[$VL]}
+#	done
+
+#	echo ${#headers[@]}
+#	echo ${#values[@]}
+
+}
+
+function flush_values {
+
+	INDEX=0
+
+	for ITEMS in ${headers[@]}; do
+
+		VAL_STRING=""
+		if [ "$ITEMS" -gt 0 ]; then
+			for VALUE in `seq 1 $ITEMS`; do
+				VAL_STRING=$VAL_STRING${values[$INDEX]}"\t\t";
+				((INDEX++))
+			done
+
+			echo -e "${VAL_STRING}" | \
+				sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
+
+			# FIXME: add proper column support
+		fi
+	done
+
+}
+
+
 ################################################################################
 # Prints "$name_value_pair_list" then empties the "$name_value_pair_list"
 # Uses colours
