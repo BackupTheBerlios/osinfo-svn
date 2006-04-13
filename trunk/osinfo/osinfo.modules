@@ -21,165 +21,138 @@ MODULES_BSD='system applications terminal network'
 ################################################################################
 
 
-Module_devices() {
-	moduleName="Devices"
-	print_module_header "${moduleName}"
-
-	DEV_ARRAY=1;
-	for DEVICE in $(lspci -m | tr ' ' '_'); do 
-#DEVICE=$(lspci -m | tr ' ' '_'); 
-
-		devices_dbg[$DEV_ARRAY]="$(
-			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
-#			echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} 
-
-
-		((DEV_ARRAY++))
-
-	done
-
-	# these two loops should produce same contents to the array
-
-	DEV_ARRAY=1;
-	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
-
-		devices[$DEV_ARRAY]="$(
-
-			echo $DEVICE | sed -r 's/[^A-Za-z0-9]_//g' | tr ':' ' ' )"
-#			echo ${DEVICE} | tr ': ' ' ' 
-
-
-#			echo $DEVICE | awk {'$1="\b" ; print $0'} | tr ' ' '_' | tr ': ' ' ' 
-#			echo $DEVICE | awk {'$1="\b" ; print $0'} | tr ' ' '_' | tr ': ' ' ' )"
-			#| awk -F': ' {'print $2'} )"
-
-		((DEV_ARRAY++))
-	done
-
-
-
-
-	# the devices array now contains the ' ' separated entries from lsmod. 
-	# [1] device type		# [2] manufacturer		# [3] device name	etc
-	# ${#devices[@]} # is the number of devices in the array
-
-	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(seq 1 ${#devices_dbg[@]}); do
-		if [ ! "$(echo ${devices_dbg[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
-
-			echo ">>" ${devices_dbg[$DEV_ARRAY]}
-			echo "  " ${devices[$DEV_ARRAY]}
-
-			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ' | sed 's/^.//')" \
-								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
-
-		fi
-	done
-
-#	flush_name_value_pair
-	print_module_footer "${moduleName}"
-}
-
-
 
 
 Module_hdd() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
 
-	# using the dmesg log file to the fetch drive information. this is based on the
-	# standard Linux way of coding device information. therefore it's not very flexible.
+	if [ ! "$(whoami)" == "root" ]; then
+		add_name_value_pair "OSINFO" "Please run $appname as super-user to collect this information"
 
-	dmesgtmp="$(mktemp osinfo.XXXXXX)" # mktemp -t isn't portable
-
-	cat /var/log/dmesg | grep -i disk > $dmesgtmp
-	cat dmesg.tmp | grep '^hda' | awk -F': ' {'print $2'}
-
-
-	
-	if [ "$(whoami)" == "root" ]; then
+	else
 
 	# principle/TODO
-	# use fdisk to get data of what drives are connected to the system
-	# TODO: SCSI is still unknown
-		
-		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
-			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
-		done
+	# get as much information as is possible from df, fdisk and the /proc tree; then
+	# if hdparm, smartctl, lshw are not available && there are devices for the tools; then
+	# print information that the user should install the tools;
+	# else print everything in nice format
 
-	TOTALSIZE=0
-	TOTALFREE=0
+	# TODO: SCSI is still untested, although works probably as SATA
+
+	#		for DRV in `${Seq} 1 $(fdisk -l | grep -i disk | wc -l)`; do 
+	#			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
+	#		done
+
+		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
+		# the drives variable now holds all drives in the system
+
+		TOTALSIZE=0
+		TOTALFREE=0
 	
-	# then print information of each drive
+		# then print information of each drive
+		#FREEBSD: To check the status of drives, use the following:
+
+		#        ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
+		 #       ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
+
+		# using the dmesg log file to the fetch drive information. this is based on the
+		# standard Linux way of coding device information. therefore it's not very flexible.
+		#dmesgtmp="$(mktemp osinfo.XXXXXX)" # mktemp -t isn't portable
+		#cat /var/log/dmesg | grep -i disk > $dmesgtmp
+		#cat $dmesgtmp | grep '^hda' | awk -F': ' {'print $2'}
+
 	
-		for DRV in `seq 1 ${#drives[@]}`; do
-			
-			tmp="$(mktemp  osinfo.XXXXXX)"
-#			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+#		for DRV in `${Seq} 1 ${#drives[@]}`; do
+		for DRV in $drives; do
 
-			value_pair_header=${drives[$DRV]}
-#			add_name_value_pair	'Manufacturer'		"$()" # seems not to be available for all drives :( lshw seems to find this for some drives, is there another way to get this information?
-#			add_name_value_pair	'Model'				"$(cat $tmp | grep -Ei '(model)' | awk {'print $NF'})"
-			add_name_value_pair	'Model'				"$(hdparm -i ${drives[$DRV]} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
-#			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
-            add_name_value_pair 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+			DRVNAME=$(echo $DRV | awk -F/ {'print $NF'})
 
-			add_name_value_pair	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
-			add_name_value_pair	'Free'				"$(echo)"
-
-#			add_name_value_pair	'Standard'			"$()" # ATA / SATA / SCSI ...
-#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
-#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
-#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+#			value_pair_header=${drives[$DRV]}
+			value_pair_header=${DRV}
 
 
-			if [ -e "$tmp" ]; then
-				add_name_value_pair	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
-				add_name_value_pair	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
-#				add_name_value_pair	''		"$()"
-#				add_name_value_pair	''		"$()"
+			################# IDE drives
+			if [ "$(echo $DRV | grep hd)" ]; then
+
+				if [ -e "/proc/ide/ide0/$DRVNAME" ]; then
+					add_name_value_pair	'Driver'			"$(cat /proc/ide/ide0/$DRVNAME/driver)" 
+					add_name_value_pair	'Manufacturer'		"$(echo n/a)" # /proc/ide/ide0/hda/identify is in binary
+					add_name_value_pair	'Model'				"$(cat /proc/ide/ide0/$DRVNAME/model)"
+		#			add_name_value_pair	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
+		#			add_name_value_pair 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
+				fi
+
+				add_name_value_pair	'Capacity'			"$(fdisk -l ${DRV} | grep ${DRV} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+
 			fi
+
+            ################# SATA/SCSI drives
+            if [ "$(echo $DRV | grep sd)" ]; then
+
+				add_name_value_pair	'Manufacturer'		"$(echo n/a)"
+				add_name_value_pair	'Model'				"$(echo n/a)"
+			add_name_value_pair	'Serial'			"$(echo n/a)"
+		#			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
+		#            add_name_value_pair 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+	#			add_name_value_pair	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+	
+	#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
+	#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
+	#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+
+	#			tmp="$(mktemp  osinfo.XXXXXX)"
+	#			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+	
+	#			if [ -e "$tmp" ]; then
+	#				add_name_value_pair	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
+	#				add_name_value_pair	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
+	#				add_name_value_pair	''		"$()"
+	#				add_name_value_pair	''		"$()"
+	#			fi
+
+			fi ##### COMMON EVAL BELOW
 
 			flush_name_value_pair
 
-
-			DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
-			DISKFREE=0
+#			DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
+#			DISKFREE=0
 
 			# TODO: an array that's like this:
 			# [partition ID=83] [size on hda1] [size on hda4]
 			# [partition ID=7] [size on hda2] [size on hdb1]
 
+			add_name_value_pair	'Free'				"$(echo n/a)"
 
-			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
 
-				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
-				# TODO: DOG ISN'T PORTABLE!!!!!!!
+#			for PARTNR in `${Seq} 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
 
-				if [ "$(df -Plk | grep $PARTITION)" ]; then
+#				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
+#				if [ "$(df -Plk | grep $PARTITION)" ]; then
 
-					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
-					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
-					PERCFREE="$(($PARTFREE/$PARTSIZE))" # <<< rounds off improperly, how to fix????
+#					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
+#					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
+#					PERCFREE="$(($PARTFREE/$PARTSIZE))" # <<< rounds off improperly, how to fix????
 
-					value_pair_header=$PARTITION
+#					value_pair_header=$PARTITION
 
-					add_name_value_pair 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
-					add_name_value_pair 'Capacity'		"$(echo $PARTSIZE bytes)"
-					add_name_value_pair 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
+#					add_name_value_pair 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
+#					add_name_value_pair 'Capacity'		"$(echo $PARTSIZE bytes)"
+#					add_name_value_pair 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
 
-					flush_name_value_pair
+#					flush_name_value_pair
 
-					DISKFREE=$(($DISKFREE+$PARTFREE))
+#					DISKFREE=$(($DISKFREE+$PARTFREE))
 
-				fi
+#				fi
 
-			done
+#			done
 
-			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
-			TOTALFREE=$(($TOTALFREE+$DISKFREE))
+#			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
+#			TOTALFREE=$(($TOTALFREE+$DISKFREE))
 
-			value_pair_footer=${drives[$DRV]}
+#			value_pair_footer=${drives[$DRV]}
+			value_pair_footer=${DRV}
 
 		done
 
@@ -188,26 +161,27 @@ Module_hdd() {
 		add_name_value_pair	'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
 		value_pair_footer="Total disk space"
 
-		flush_name_value_pair
 
 	fi
 
-#FREEBSD: To check the status of drives, use the following:
-
-#        ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
- #       ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-
-
-
-	rm $tmp -f
+	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
+
 
 Module_oem() {
 	moduleName="OEM information"
 	print_module_header "${moduleName}"
 
-	tmp="$(mktemp -t osinfo.XXXXXX)"
+	if [ ! "$(type -p lshw)" ]; then
+		add_name_value_pair "OSINFO" "Please install LSHW to collect this information"
+
+	elif [ ! "$(whoami)" == "root" ]; then
+		add_name_value_pair "OSINFO" "Please run $appname as super-user to collect this information"
+
+	else
+
+	tmp="$(mktemp osinfo.XXXXXX)"
 	lshw > $tmp
 
 	# principle:
@@ -276,6 +250,8 @@ Module_oem() {
 	done
 	
 	rm $tmp -f
+
+	fi
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
@@ -358,12 +334,19 @@ Module_users() {
 
 
 Module_lsmod() {
-	moduleName="Kernel modules"
+	# rename to 'drivers'
+	moduleName="Device drivers"
 	print_module_header "${moduleName}"
+
+	# usb
+	# ide
+	# /proc/ide/drivers
+	# scsi
+	# etc...
 	
-	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
-		add_name_value_pair 'module' "$MODULE"
-	done
+#	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
+#		add_name_value_pair 'module' "$MODULE"
+#	done
 	# TODO: needs more work
 
 	flush_name_value_pair
@@ -377,7 +360,7 @@ Module_network() {
 	print_module_header "${moduleName}"
 
 	if [ "$SYSTEM" == "linux" ] ; then
-		ETH_DEVICES="$(ifconfig | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -v '^ ' | awk  {'print $1'})"
+		ETH_DEVICES="$(ifconfig | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
 
 	else
 		ETH_DEVICES="$(ifconfig | grep BROADCAST | grep -v LOOPBACK | awk -F': ' {'print $1'})"
@@ -390,29 +373,33 @@ Module_network() {
 	
 	for interface_name in $ETH_DEVICES; do 
 
-	add_name_value_pair 'Device'	"$interface_name"
-	add_name_value_pair 'MAC'	"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
-	add_name_value_pair 'IPv4'	"$(ifconfig $interface_name | \
+		value_pair_header="$interface_name"
+		#	add_name_value_pair 'Device'	"$interface_name"
+
+		add_name_value_pair 'MAC'	"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
+		add_name_value_pair 'IPv4'	"$(ifconfig $interface_name | \
 					grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
 
-	add_name_value_pair 'IPv6'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_name_value_pair 'IPv6'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 					grep -i inet6 | grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
-	add_name_value_pair 'Broadcast'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_name_value_pair 'Broadcast'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 					grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
 
-	add_name_value_pair 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_name_value_pair 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 			grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | grep -Eo '[0-9\.fx]+' )"
 
-	add_name_value_pair 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_name_value_pair 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 									grep -i 'RX bytes' | awk -F: {'print $2'})"	
 
-	add_name_value_pair 'TX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_name_value_pair 'TX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 									grep -i 'TX bytes' | awk -F: {'print $2'})"	
+
+		value_pair_footer="$interface_name"
+		flush_name_value_pair
 
 	done
 
-	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
 
@@ -609,3 +596,42 @@ Module_applications() {
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
 }
+
+
+Module_devices() {
+	moduleName="Devices"
+	print_module_header "${moduleName}"
+
+	DEV_ARRAY=1;
+	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
+
+		devices[$DEV_ARRAY]="$(
+
+			echo $DEVICE | sed -r 's/:_/:/g' | sed -r 's/(^_)//g' | tr ':' ' ' )"
+
+			# with lspci 2.2 and later, the -m switch works fine
+			#	for DEVICE in $(lspci -m | tr ' ' '_'); do 
+			#		devices_dbg[$DEV_ARRAY]="$(	echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+
+		((DEV_ARRAY++))
+	done
+
+	# the devices array now contains the ' ' separated entries from lsmod. 
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+
+	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
+	for DEV_ARRAY in $(${Seq} 1 ${#devices[@]}); do
+		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
+
+			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ' | sed 's/^.//')" \
+								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+
+		fi
+	done
+
+	flush_name_value_pair
+	print_module_footer "${moduleName}"
+}
+
+
