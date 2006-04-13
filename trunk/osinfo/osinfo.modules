@@ -40,7 +40,7 @@ Module_hdd() {
 
 	# TODO: SCSI is still untested, although works probably as SATA
 
-	#		for DRV in `${Seq} 1 $(fdisk -l | grep -i disk | wc -l)`; do 
+	#		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
 	#			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
 	#		done
 
@@ -63,7 +63,7 @@ Module_hdd() {
 		#cat $dmesgtmp | grep '^hda' | awk -F': ' {'print $2'}
 
 	
-#		for DRV in `${Seq} 1 ${#drives[@]}`; do
+#		for DRV in `seq 1 ${#drives[@]}`; do
 		for DRV in $drives; do
 
 			DRVNAME=$(echo $DRV | awk -F/ {'print $NF'})
@@ -125,7 +125,7 @@ Module_hdd() {
 			add_name_value_pair	'Free'				"$(echo n/a)"
 
 
-#			for PARTNR in `${Seq} 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
+#			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
 
 #				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 #				if [ "$(df -Plk | grep $PARTITION)" ]; then
@@ -621,7 +621,7 @@ Module_devices() {
 	# ${#devices[@]} # is the number of devices in the array
 
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(${Seq} 1 ${#devices[@]}); do
+	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
 
 			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ' | sed 's/^.//')" \
