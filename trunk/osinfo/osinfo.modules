@@ -76,44 +76,44 @@ Module_hdd() {
 			if [ "$(echo $DRV | grep hd)" ]; then
 
 				if [ -e "/proc/ide/ide0/$DRVNAME" ]; then
-					add_name_value_pair	'Driver'			"$(cat /proc/ide/ide0/$DRVNAME/driver)" 
-					add_name_value_pair	'Manufacturer'		"$(echo n/a)" # /proc/ide/ide0/hda/identify is in binary
-					add_name_value_pair	'Model'				"$(cat /proc/ide/ide0/$DRVNAME/model)"
-		#			add_name_value_pair	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
-		#			add_name_value_pair 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
+					add_values	'Driver'			"$(cat /proc/ide/ide0/$DRVNAME/driver)" 
+					add_values	'Manufacturer'		"$(echo n/a)" # /proc/ide/ide0/hda/identify is in binary
+					add_values	'Model'				"$(cat /proc/ide/ide0/$DRVNAME/model)"
+		#			add_values	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
+		#			add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
 				fi
 
-				add_name_value_pair	'Capacity'			"$(fdisk -l ${DRV} | grep ${DRV} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+				add_values	'Capacity'			"$(fdisk -l ${DRV} | grep ${DRV} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 
 			fi
 
             ################# SATA/SCSI drives
             if [ "$(echo $DRV | grep sd)" ]; then
 
-				add_name_value_pair	'Manufacturer'		"$(echo n/a)"
-				add_name_value_pair	'Model'				"$(echo n/a)"
-			add_name_value_pair	'Serial'			"$(echo n/a)"
-		#			add_name_value_pair	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
-		#            add_name_value_pair 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-	#			add_name_value_pair	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+				add_values	'Manufacturer'		"$(echo n/a)"
+				add_values	'Model'				"$(echo n/a)"
+			add_values	'Serial'			"$(echo n/a)"
+		#			add_values	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
+		#            add_values 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+	#			add_values	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 	
-	#			add_name_value_pair	'DMA'				"$()" # enabled/disabled
-	#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
-	#			add_name_value_pair	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+	#			add_values	'DMA'				"$()" # enabled/disabled
+	#			add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
+	#			add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
 	#			tmp="$(mktemp  osinfo.XXXXXX)"
 	#			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 	
 	#			if [ -e "$tmp" ]; then
-	#				add_name_value_pair	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
-	#				add_name_value_pair	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
-	#				add_name_value_pair	''		"$()"
-	#				add_name_value_pair	''		"$()"
+	#				add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
+	#				add_values	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
+	#				add_values	''		"$()"
+	#				add_values	''		"$()"
 	#			fi
 
 			fi ##### COMMON EVAL BELOW
 
-			flush_name_value_pair
+			flush_values
 
 #			DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
 #			DISKFREE=0
@@ -122,7 +122,7 @@ Module_hdd() {
 			# [partition ID=83] [size on hda1] [size on hda4]
 			# [partition ID=7] [size on hda2] [size on hdb1]
 
-			add_name_value_pair	'Free'				"$(echo n/a)"
+			add_values	'Free'				"$(echo n/a)"
 
 
 #			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
@@ -136,11 +136,11 @@ Module_hdd() {
 
 #					value_pair_header=$PARTITION
 
-#					add_name_value_pair 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
-#					add_name_value_pair 'Capacity'		"$(echo $PARTSIZE bytes)"
-#					add_name_value_pair 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
+#					add_values 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
+#					add_values 'Capacity'		"$(echo $PARTSIZE bytes)"
+#					add_values 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
 
-#					flush_name_value_pair
+#					flush_values
 
 #					DISKFREE=$(($DISKFREE+$PARTFREE))
 
@@ -157,14 +157,14 @@ Module_hdd() {
 		done
 
 		value_pair_header="Total disk space"
-		add_name_value_pair	'Capacity'		"$(echo $TOTALSIZE)"
-		add_name_value_pair	'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
+		add_values	'Capacity'		"$(echo $TOTALSIZE)"
+		add_values	'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
 		value_pair_footer="Total disk space"
 
 
 	fi
 
-	flush_name_value_pair
+	flush_values
 	print_module_footer "${moduleName}"
 }
 
@@ -275,7 +275,7 @@ Module_system() {
 	add_values $"System locale"         "$(echo $LC_LANG)"
 	add_values $"System uptime"         "$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
 
-	flush_name_value_pair
+#	flush_name_value_pair
 	flush_values
 	print_module_footer "${moduleName}"
 }
@@ -383,29 +383,30 @@ Module_network() {
 	for interface_name in $ETH_DEVICES; do 
 
 		value_pair_header="$interface_name"
-		#	add_name_value_pair 'Device'	"$interface_name"
+		#	add_values 'Device'	"$interface_name"
 
-		add_name_value_pair 'MAC'	"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
-		add_name_value_pair 'IPv4'	"$(ifconfig $interface_name | \
+		add_values 'MAC'	"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
+		add_values 'IPv4'	"$(ifconfig $interface_name | \
 					grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
 
-		add_name_value_pair 'IPv6'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_values 'IPv6'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 					grep -i inet6 | grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
-		add_name_value_pair 'Broadcast'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_values 'Broadcast'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 					grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
 
-		add_name_value_pair 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_values 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 			grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | grep -Eo '[0-9\.fx]+' )"
 
-		add_name_value_pair 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_values 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 									grep -i 'RX bytes' | awk -F: {'print $2'})"	
 
-		add_name_value_pair 'TX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
+		add_values 'TX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 									grep -i 'TX bytes' | awk -F: {'print $2'})"	
 
 		value_pair_footer="$interface_name"
-		flush_name_value_pair
+#		flush_name_value_pair
+		flush_values
 
 	done
 
