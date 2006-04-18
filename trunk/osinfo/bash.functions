@@ -65,8 +65,8 @@ check_cap rev   tREVERSE
 check_cap bel   tBELL
 check_cap sgr0  tSTD
 
-esc=$(echo -ne '\e')
-tab=$(echo -ne '\t')
+esc="$(echo -ne '\e')"
+tab="$(echo -ne '\t')"
 
 
 check_cap 'setaf 0' tcBLACK
@@ -91,14 +91,6 @@ fi
 
      header="${tcBLUE}"
   subheader="${tcBLUE}${tBOLD}"
-   tDepWarn="${tBLINK}${tBOLD}${tcRED}"
-
-# Parmeters:
-#   NONE
-function print_end_start {
-	echo "${tDepWarn}ERROR: print_end_start() is obsolete! Use print_line()!${tSTD}"
-}
-
 
 # Prints a line of 80 "─" if terminal has caps "enacs" and "smacs"
 # otherwise print a line of "-"
