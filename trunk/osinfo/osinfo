@@ -13,7 +13,7 @@ appname='osinfo'
 major_version=0
 minor_version=1
 micro_version=2
-patch_version=2
+patch_version=3
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -189,12 +189,21 @@ function add_name_value_pair {
 ################################################################################
 
 
+function value_header() {
 
-### experimental, CAN BE DEBUGGED WITH MODULE SYSTEM
+	# the headers array consists of item that are either
+	# strings, which mean they're a true header for xml; or
+	# an integer which notes the number of values grouped in values[].
+	headers[${#headers[@]}]="$1"
+
+}
+
 function add_values {
 
-	# the header and values are written to values[] array 
-	# the headers array consists of an item x = number of values
+	# the header with a set of values are written to values[] array.
+	# the headers array consists of item that are either
+	# strings, which mean they're a true header for xml; or
+	# an integer which notes the number of values grouped in values[].
 
 	# check existing values array
 	FIRST_BLANK_VALUE=${#values[@]}
@@ -235,26 +244,39 @@ function add_values {
 
 }
 
+function value_footer() {
+
+	# this searches the headers array backwards, looking for an open header
+	for HDR in $(seq ${#headers[@]} 1); do
+		if [ "$(echo $HDR | grep -E '[A-Öa-ö]')" ]; then
+	        VAL_STRING="/$HDR\n";
+			break;
+		fi
+	done
+	
+	
+}
+
 function flush_values {
 
 	INDEX=0
-
 	VAL_STRING=""
 
 	for ITEMS in ${headers[@]}; do
+		if [ "$(echo $ITEMS | grep -E '[A-Öa-ö]')" ]; then
+	        VAL_STRING="$ITEMS\n";
 
-#		if [ "$ITEMS" -gt 0 ]; then
-
+		else
 			for VALUE in `seq 1 $ITEMS`; do
-				VAL_STRING=$VAL_STRING${values[$INDEX]}"\t\t";
+				VAL_STRING="$VAL_STRING${values[$INDEX]}\t\t";
 				# this evaluation appends an additional tab space if it's required
-				[[ "${#values[$INDEX]}" -le 6 ]] && VAL_STRING=$VAL_STRING"\t"
-
+				# doesn't work properly yet, though
+				[[ "${#values[$INDEX]}" -le 15 ]] && VAL_STRING="$VAL_STRING\t" 
 				((INDEX++))
 			done
-		VAL_STRING=$VAL_STRING"\n";
 
-#		fi
+		VAL_STRING=$VAL_STRING"\n";
+		fi
 	done
 
 	echo -e "${VAL_STRING}" | \
@@ -264,6 +286,7 @@ function flush_values {
 	unset values
 
 }
+
 
 
 ################################################################################
@@ -475,3 +498,5 @@ if [ "$usexml" == 1 ]; then
 	echo "</osinfo>" #> $XMLFILE
 fi
 ############################################
+
+

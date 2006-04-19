@@ -18,3 +18,4 @@ Source a file with with the interface. There should be one file for xml output, 
 * add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
 * add --checkdep 
 * fix lspci. old versions (<2.2) don't output the same way. output should be parsed from "lspci" without -m option
+* look into daemontools for the init script

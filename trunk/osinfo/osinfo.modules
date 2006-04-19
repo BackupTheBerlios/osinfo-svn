@@ -69,7 +69,8 @@ Module_hdd() {
 			DRVNAME=$(echo $DRV | awk -F/ {'print $NF'})
 
 #			value_pair_header=${drives[$DRV]}
-			value_pair_header=${DRV}
+#			value_pair_header=${DRV}
+			value_header ${DRV}
 
 
 			################# IDE drives
@@ -260,7 +261,7 @@ Module_oem() {
 Module_system() {
 	moduleName="System"
 	print_module_header "${moduleName}"
-	add_values 
+#	add_values 
 	add_name_value_pair $"Operating system"      "$(uname -s)"
 	add_name_value_pair $"Network node hostname" "$(hostname)"
 	add_name_value_pair $"Kernel release"        "$(uname -r)"
@@ -546,7 +547,7 @@ Module_applications() {
 
 	if [ "$SYSTEM" == "linux" ] ; then
 
-		APPLICATIONS="X kde-config \
+		APPLICATIONS="X kde-config x11vnc \
 			bash csh ls \
 			gcc make \
 			awk sed grep gzip \
@@ -556,7 +557,7 @@ Module_applications() {
 
 	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
 
-		APPLICATIONS="X kde-config \
+		APPLICATIONS="X kde-config x11vnc \
 			csh bash ksh \
 			gcc grep gzip \
 			perl python \
