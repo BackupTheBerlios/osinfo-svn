@@ -123,6 +123,8 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				shift 1
 				;;
 			'--xml')
+				echo "xml is broken"
+				exit 0;
 				usexml=1
 				shift 1
 				;;
@@ -295,7 +297,8 @@ function flush_values {
 # Uses the "column" tool
 function flush_name_value_pair {
 	if [ "$usexml" == 1 ]; then
-		
+
+
 		##############################################
 		# this outputs XML
 		# Operation method: breaks value pair list into components, runs a for loop
@@ -333,7 +336,7 @@ function flush_name_value_pair {
 			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
 			 done
 			 ((XML_INDENT++))
-			 echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '		#>> $XMLFILE		# open tag
+			 echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '	#>> $XMLFILE	# open tag
 			 openTag=${value1}
 			 
 			 if [  "${value2}" ]; then 
@@ -342,7 +345,7 @@ function flush_name_value_pair {
 				 #echo "write data"
 				 #echo $value2
 				 
-				 echo -e "${value2}"  | tr '¿' ' '				#>> $XMLFILE		# write content
+				 echo -e "${value2}"  | tr '¿' ' '		#>> $XMLFILE	# write content
 			 fi
 			 
 			 #echo "close tag"

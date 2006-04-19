@@ -261,13 +261,6 @@ Module_oem() {
 Module_system() {
 	moduleName="System"
 	print_module_header "${moduleName}"
-#	add_values 
-	add_name_value_pair $"Operating system"      "$(uname -s)"
-	add_name_value_pair $"Network node hostname" "$(hostname)"
-	add_name_value_pair $"Kernel release"        "$(uname -r)"
-	add_name_value_pair $"Machine hardware name" "$(uname -m)"
-	add_name_value_pair $"System locale"         "$(echo $LC_LANG)"
-	add_name_value_pair $"System uptime"         "$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
 
 	add_values $"Operating system"      "$(uname -s)"
 	add_values $"Network node hostname" "$(hostname)"
@@ -276,7 +269,6 @@ Module_system() {
 	add_values $"System locale"         "$(echo $LC_LANG)"
 	add_values $"System uptime"         "$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
 
-#	flush_name_value_pair
 	flush_values
 	print_module_footer "${moduleName}"
 }
