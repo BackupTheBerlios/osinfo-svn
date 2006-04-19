@@ -63,13 +63,13 @@ Module_hdd() {
 		#cat $dmesgtmp | grep '^hda' | awk -F': ' {'print $2'}
 
 	
-#		for DRV in `seq 1 ${#drives[@]}`; do
+		#for DRV in `seq 1 ${#drives[@]}`; do
 		for DRV in $drives; do
 
 			DRVNAME=$(echo $DRV | awk -F/ {'print $NF'})
 
-#			value_pair_header=${drives[$DRV]}
-#			value_pair_header=${DRV}
+			#value_pair_header=${drives[$DRV]}
+			#value_pair_header=${DRV}
 			value_header ${DRV}
 
 
@@ -80,8 +80,8 @@ Module_hdd() {
 					add_values	'Driver'			"$(cat /proc/ide/ide0/$DRVNAME/driver)" 
 					add_values	'Manufacturer'		"$(echo n/a)" # /proc/ide/ide0/hda/identify is in binary
 					add_values	'Model'				"$(cat /proc/ide/ide0/$DRVNAME/model)"
-		#			add_values	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
-		#			add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
+					#add_values	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
+					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
 				fi
 
 				add_values	'Capacity'			"$(fdisk -l ${DRV} | grep ${DRV} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
@@ -93,31 +93,33 @@ Module_hdd() {
 
 				add_values	'Manufacturer'		"$(echo n/a)"
 				add_values	'Model'				"$(echo n/a)"
-			add_values	'Serial'			"$(echo n/a)"
-		#			add_values	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
-		#            add_values 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-	#			add_values	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+				add_values	'Serial'			"$(echo n/a)"
+				#add_values	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
+				#add_values 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+				#add_values	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 	
-	#			add_values	'DMA'				"$()" # enabled/disabled
-	#			add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
-	#			add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
+				#add_values	'DMA'				"$()" # enabled/disabled
+				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
+				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
-	#			tmp="$(mktemp  osinfo.XXXXXX)"
-	#			smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+				#tmp="$(mktemp  osinfo.XXXXXX)"
+				#smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 	
-	#			if [ -e "$tmp" ]; then
-	#				add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
-	#				add_values	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
-	#				add_values	''		"$()"
-	#				add_values	''		"$()"
-	#			fi
+				#if [ -e "$tmp" ]; then
+					#add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
+					#add_values	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
+					#add_values	''		"$()"
+					#add_values	''		"$()"
+				#fi
 
-			fi ##### COMMON EVAL BELOW
-
+			fi 
+			
 			flush_values
 
-#			DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
-#			DISKFREE=0
+			##### COMMON for all drive types
+
+			#DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
+			#DISKFREE=0
 
 			# TODO: an array that's like this:
 			# [partition ID=83] [size on hda1] [size on hda4]
@@ -421,7 +423,7 @@ Module_distro() {
 	# Begin searching for distro identifying files
 	local found_files=""
 	local fil
-	for fil in ${prefix}etc/{SuSE-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+	for fil in ${prefix}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 		[ -e $fil ] && found_files="$found_files $fil"
 	done
 	
@@ -432,6 +434,10 @@ Module_distro() {
 		case $distro_ident in
 			"${prefix}etc/SuSE-release")
 		    found_distros="$found_distros SuSE"
+		    break;
+		    ;;
+		"${prefix}etc/fedora-release")
+		    found_distros="$found_distros Fedora Core"			
 		    break;
 		    ;;
 		"${prefix}etc/redhat-release")
@@ -463,10 +469,11 @@ Module_distro() {
 
 	# Output distro name
 	case "$found_distros" in
-		'SuSE'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
+		'SuSE'|'Fedora Core'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
+			add_name_value_pair 'Distro name'         "$found_distros"
 			[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
 			[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
-			add_name_value_pair 'Distro name'         "$found_distros"
+			[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
 			;;
 		'Topologilinux')
 		# Abort if found Topologilinux but not Slackware.
@@ -515,6 +522,8 @@ Module_distro() {
 		'RedHat')
 #			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/redhat-release        | sed 's/VERSION = //'    )" ;;
 			local distro_version="$(cat ${prefix}etc/redhat-release)" ;;
+		'Fedora')
+			local distro_version="$(cat ${prefix}etc/fedora-release)" ;;
 		'Slackware')
 			local distro_version="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 		'Topologilinux')
