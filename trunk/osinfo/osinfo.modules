@@ -72,8 +72,7 @@ Module_hdd() {
 					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNODE/capacity)/1024/1024)) GB)" # why this is incorrect?
 				fi
 
-				add_values	'Capacity'			"$(fdisk -l $DRVDEV | grep $DRVDEV | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
-
+				
 			fi
 
             ################# SATA/SCSI drives
@@ -87,6 +86,56 @@ Module_hdd() {
 				#add_values	'Capacity'			"$(fdisk -l ${drives[$DRVDEV]} | grep ${drives[$DRVDEV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 	
 				#add_values	'DMA'				"$()" # enabled/disabled
+
+
+			fi 
+			
+
+			##### COMMON for all drive types
+
+			add_values	'Capacity'			"$(fdisk -l $DRVDEV | head -n 2 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+			DISKSIZE="$(fdisk -l $DRVDEV | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
+			add_values	'DMA'				"n/a" # enabled/disabled
+
+
+			# TODO: an array that's like this, to compare how much is allocated for each FS type
+			# [partition ID=83] [size on hda1] [size on hda4]
+			# [partition ID=7] [size on hda2] [size on hdb1]
+			
+
+			for PARTNR in `seq 1 $(fdisk -l $DRVDEV | grep ^$DRVDEV | wc -l)`; do 
+
+				PARTITION="$(fdisk -l $DRVDEV | grep ^$DRVDEV | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
+				if [ "$(df -Plk | grep $PARTITION)" ]; then
+
+					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
+					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
+					PERCFREE="$(($PARTFREE*100/$PARTSIZE))" # <<< rounds off improperly, how to fix????
+
+					#value_header $PARTITION
+
+					add_values 'Filesystem'		"$(df -PT $PARTITION | grep ^$PARTITION | awk {'print $2'})"
+					add_values 'Capacity'		"$(echo $PARTSIZE bytes)"
+					add_values 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
+
+					#value_footer
+					DISKFREE=$(($DISKFREE+$PARTFREE))
+
+				fi
+
+			done
+
+#			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
+#			TOTALFREE=$(($TOTALFREE+$DISKFREE))
+			add_values	'Free on mounted partitions'				"$(echo $DISKFREE)"
+
+#			value_footer
+			#flush_values
+
+#value_header foobar
+#value_footer
+#flush_values
+			### S.M.A.R.T information
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
@@ -99,58 +148,12 @@ Module_hdd() {
 					#add_values	''		"$()"
 					#add_values	''		"$()"
 				#fi
-
-			fi 
-			
-			flush_values
-
-			##### COMMON for all drive types
-
-			#DISKSIZE="$(fdisk -l ${drives[$DRVDEV]} | grep ${drives[$DRVDEV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
-			#DISKFREE=0
-
-			# TODO: an array that's like this:
-			# [partition ID=83] [size on hda1] [size on hda4]
-			# [partition ID=7] [size on hda2] [size on hdb1]
-
-			add_values	'Free'				"$(echo n/a)"
-
-
-#			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRVDEV]} | grep ^${drives[$DRVDEV]} | wc -l)`; do 
-
-#				PARTITION="$(fdisk -l ${drives[$DRVDEV]} | grep ^${drives[$DRVDEV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
-#				if [ "$(df -Plk | grep $PARTITION)" ]; then
-
-#					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
-#					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
-#					PERCFREE="$(($PARTFREE/$PARTSIZE))" # <<< rounds off improperly, how to fix????
-
-#					value_pair_header=$PARTITION
-
-#					add_values 'Filesystem'	"$(fdisk -l ${drives[$DRVDEV]} | grep ^$PARTITION | awk {'print $6'})"
-#					add_values 'Capacity'		"$(echo $PARTSIZE bytes)"
-#					add_values 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
-
-#					flush_values
-
-#					DISKFREE=$(($DISKFREE+$PARTFREE))
-
-#				fi
-
-#			done
-
-#			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
-#			TOTALFREE=$(($TOTALFREE+$DISKFREE))
-
-
-			value_footer
-
 		done
 
-		value_header	"Total disk space"
-		add_values		'Capacity'		"$(echo $TOTALSIZE)"
-		add_values		'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
-		value_footer
+		#value_header	"Total disk space"
+		#add_values		'Capacity'		"$(echo $TOTALSIZE)"
+		#add_values		'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
+		#value_footer
 
 	fi
 

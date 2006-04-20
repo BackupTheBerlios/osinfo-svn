@@ -197,6 +197,7 @@ function value_header() {
 	# strings, which mean they're a true header for xml; or
 	# an integer which notes the number of values grouped in values[].
 	headers[${#headers[@]}]="$1"
+	echo ${headers[((${#headers[@]}-1))]}
 
 }
 
@@ -232,8 +233,9 @@ function add_values {
 	IFS=$IFS_bak
 
 
-	# this is for debugging
-	#	for HDR in $(seq 1 ${#headers[@]}); do
+	# THIS IS FOR DEBUGGING
+
+#	for HDR in $(seq 1 ${#headers[@]}); do
 	#		echo ${headers[$HDR]}
 	#	done
 
@@ -249,13 +251,15 @@ function add_values {
 function value_footer() {
 
 	# this searches the headers array backwards, looking for an open header
-	for HDR in $(seq ${#headers[@]} 1); do
-		if [ "$(echo $HDR | grep -E '[A-Öa-ö]')" ]; then
-	        VAL_STRING="/$HDR\n";
+	for HDR in $(seq ${#headers[@]} -1 1); do
+#	echo ${headers[$HDR]}
+		if [ "$(echo ${headers[$HDR]} | grep -Eo '[A-Öa-ö]+')" ]; then
+#			echo $HDR
+			headers[${#headers[@]}]="/${headers[$HDR]}"
+	        #VAL_STRING="/$HDR\n";
 			break;
 		fi
 	done
-	
 	
 }
 
@@ -268,14 +272,14 @@ function flush_values {
 
 	INDEX=0 ;  LONGEST_STRING=0
 	for ITEMS in ${headers[@]}; do
-		if [ ! "$(echo $ITEMS | grep -E '[A-Öa-ö]')" ]; then
+		if [ ! "$(echo $ITEMS | grep -Eo '[A-Öa-ö]+')" ]; then
 			for VALUE in `seq 1 $ITEMS`; do
 				# fetch the longest string value
 				#echo ${#values[$INDEX]}
 				if [ ${#values[$INDEX]} -gt $LONGEST_STRING ]; then
 					LONGEST_STRING=${#values[$INDEX]}
 				fi
-				((INDEX++))
+			((INDEX++))
 			done
 		fi
 	done
@@ -283,14 +287,14 @@ function flush_values {
 	INDEX=0 ; VAL_STRING="" ; TABSIZE=7 ; 	
 	# proper indentation requires this loop to be run twice
 	for ITEMS in ${headers[@]}; do
-		if [ "$(echo $ITEMS | grep -E '[A-Öa-ö]')" ]; then
+		if [ "$(echo $ITEMS | grep -Eo '[A-Öa-ö]+')" ]; then
 			# the item in the headers array is declared by value_header
 			# and should be printed
 	        VAL_STRING="$ITEMS\n";
 		else
 			for VALUE in `seq 1 $ITEMS`; do
 			
-				VAL_STRING="$VAL_STRING${values[$INDEX]}\t\t";
+				VAL_STRING="$VAL_STRING${values[$INDEX]}\t";
 				
 				# this evaluation counts the proper amount of tabs to add
 				# for beautiful identation.
