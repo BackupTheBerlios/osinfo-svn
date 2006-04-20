@@ -27,83 +27,71 @@ Module_hdd() {
 	moduleName="Disk information"
 	print_module_header "${moduleName}"
 
-	if [ ! "$(whoami)" == "root" ]; then
-		add_name_value_pair "OSINFO" "Please run $appname as super-user to collect this information"
+	# TODO 
+	# SCSI is untested, although works probably as SATA
+	# RAID is untested 
+	# FREEBSD: To check the status of drives, use the following:
+	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
+	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
+
+	if [ "$(whoami)" != "root" ]; then
+		add_values "$appname notification" "Please run $appname as super-user to collect this information"
 
 	else
 
-	# principle/TODO
-	# get as much information as is possible from df, fdisk and the /proc tree; then
-	# if hdparm, smartctl, lshw are not available && there are devices for the tools; then
-	# print information that the user should install the tools;
-	# else print everything in nice format
+		# PRINCIPLE
+		# get as much information as is possible from df, fdisk and the /proc tree; then
+		# if hdparm, smartctl, lshw are not available && there are devices for the tools; then
+		# print information that the user should install the tools;
+		# else print everything in nice format
 
-	# TODO: SCSI is still untested, although works probably as SATA
 
-	#		for DRV in `seq 1 $(fdisk -l | grep -i disk | wc -l)`; do 
-	#			drives[$DRV]=$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)
-	#		done
-
+		# the drives variable holds all drives in the system
 		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
-		# the drives variable now holds all drives in the system
-
+		
+		# these variables hold the total disk capacity of the whole system
 		TOTALSIZE=0
 		TOTALFREE=0
 	
-		# then print information of each drive
-		#FREEBSD: To check the status of drives, use the following:
-
-		#        ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
-		 #       ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-
-		# using the dmesg log file to the fetch drive information. this is based on the
-		# standard Linux way of coding device information. therefore it's not very flexible.
-		#dmesgtmp="$(mktemp osinfo.XXXXXX)" # mktemp -t isn't portable
-		#cat /var/log/dmesg | grep -i disk > $dmesgtmp
-		#cat $dmesgtmp | grep '^hda' | awk -F': ' {'print $2'}
-
-	
-		#for DRV in `seq 1 ${#drives[@]}`; do
-		for DRV in $drives; do
-
-			DRVNAME=$(echo $DRV | awk -F/ {'print $NF'})
-
-			#value_pair_header=${drives[$DRV]}
-			#value_pair_header=${DRV}
-			value_header ${DRV}
+		for DRVDEV in $drives; do
+		
+			value_header ${DRVDEV}
+			
+			# $DRVDEV is the whole device address, eg "/dev/hda"
+			# $DRVNODE is just the device node, eg "hda"
+			DRVNODE=$(echo $DRVDEV | awk -F/ {'print $NF'})
 
 
 			################# IDE drives
-			if [ "$(echo $DRV | grep hd)" ]; then
-
-				if [ -e "/proc/ide/ide0/$DRVNAME" ]; then
-					add_values	'Driver'			"$(cat /proc/ide/ide0/$DRVNAME/driver)" 
-					add_values	'Manufacturer'		"$(echo n/a)" # /proc/ide/ide0/hda/identify is in binary
-					add_values	'Model'				"$(cat /proc/ide/ide0/$DRVNAME/model)"
-					#add_values	'Model'				"$(hdparm -i ${DRV} | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
-					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNAME/capacity)/1024/1024)) GB)" # why this is incorrect?
+			if [ "$(echo $DRVDEV | grep hd)" ]; then
+				if [ -e "/proc/ide/ide0/$DRVNODE" ]; then
+					add_values	'Driver'			"$(cat /proc/ide/ide0/$DRVNODE/driver)" 
+					add_values	'Manufacturer'		"n/a" # /proc/ide/ide0/hda/identify is in binary
+					add_values	'Model'				"$(cat /proc/ide/ide0/$DRVNODE/model)"
+					#add_values	'Model'				"$(hdparm -i $DRVDEV | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
+					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNODE/capacity)/1024/1024)) GB)" # why this is incorrect?
 				fi
 
-				add_values	'Capacity'			"$(fdisk -l ${DRV} | grep ${DRV} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+				add_values	'Capacity'			"$(fdisk -l $DRVDEV | grep $DRVDEV | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 
 			fi
 
             ################# SATA/SCSI drives
-            if [ "$(echo $DRV | grep sd)" ]; then
+            if [ "$(echo $DRVDEV | grep sd)" ]; then
 
 				add_values	'Manufacturer'		"$(echo n/a)"
 				add_values	'Model'				"$(echo n/a)"
 				add_values	'Serial'			"$(echo n/a)"
 				#add_values	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
-				#add_values 'Serial'            "$(hdparm -i ${drives[$DRV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-				#add_values	'Capacity'			"$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
+				#add_values 'Serial'            "$(hdparm -i ${drives[$DRVDEV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
+				#add_values	'Capacity'			"$(fdisk -l ${drives[$DRVDEV]} | grep ${drives[$DRVDEV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
 	
 				#add_values	'DMA'				"$()" # enabled/disabled
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
 				#tmp="$(mktemp  osinfo.XXXXXX)"
-				#smartctl -a ${drives[$DRV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+				#smartctl -a ${drives[$DRVDEV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 	
 				#if [ -e "$tmp" ]; then
 					#add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
@@ -118,7 +106,7 @@ Module_hdd() {
 
 			##### COMMON for all drive types
 
-			#DISKSIZE="$(fdisk -l ${drives[$DRV]} | grep ${drives[$DRV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
+			#DISKSIZE="$(fdisk -l ${drives[$DRVDEV]} | grep ${drives[$DRVDEV]} | head -n 1 | grep -Eo '[0-9]{4,}')" # in bytes
 			#DISKFREE=0
 
 			# TODO: an array that's like this:
@@ -128,9 +116,9 @@ Module_hdd() {
 			add_values	'Free'				"$(echo n/a)"
 
 
-#			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | wc -l)`; do 
+#			for PARTNR in `seq 1 $(fdisk -l ${drives[$DRVDEV]} | grep ^${drives[$DRVDEV]} | wc -l)`; do 
 
-#				PARTITION="$(fdisk -l ${drives[$DRV]} | grep ^${drives[$DRV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
+#				PARTITION="$(fdisk -l ${drives[$DRVDEV]} | grep ^${drives[$DRVDEV]} | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 #				if [ "$(df -Plk | grep $PARTITION)" ]; then
 
 #					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
@@ -139,7 +127,7 @@ Module_hdd() {
 
 #					value_pair_header=$PARTITION
 
-#					add_values 'Filesystem'	"$(fdisk -l ${drives[$DRV]} | grep ^$PARTITION | awk {'print $6'})"
+#					add_values 'Filesystem'	"$(fdisk -l ${drives[$DRVDEV]} | grep ^$PARTITION | awk {'print $6'})"
 #					add_values 'Capacity'		"$(echo $PARTSIZE bytes)"
 #					add_values 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
 
@@ -154,21 +142,20 @@ Module_hdd() {
 #			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
 #			TOTALFREE=$(($TOTALFREE+$DISKFREE))
 
-#			value_pair_footer=${drives[$DRV]}
-			value_pair_footer=${DRV}
+
+			value_footer
 
 		done
 
-		value_pair_header="Total disk space"
-		add_values	'Capacity'		"$(echo $TOTALSIZE)"
-		add_values	'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
-		value_pair_footer="Total disk space"
-
+		value_header	"Total disk space"
+		add_values		'Capacity'		"$(echo $TOTALSIZE)"
+		add_values		'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
+		value_footer
 
 	fi
 
 	flush_values
-	print_module_footer "${moduleName}"
+	#print_module_footer "${moduleName}"
 }
 
 
@@ -177,10 +164,10 @@ Module_oem() {
 	print_module_header "${moduleName}"
 
 	if [ ! "$(type -p lshw)" ]; then
-		add_name_value_pair "OSINFO" "Please install LSHW to collect this information"
+		add_name_value_pair "$appname notification" "Please install LSHW to collect this information"
 
 	elif [ ! "$(whoami)" == "root" ]; then
-		add_name_value_pair "OSINFO" "Please run $appname as super-user to collect this information"
+		add_name_value_pair "$appname notification" "Please run $appname as super-user to collect this information"
 
 	else
 
@@ -305,7 +292,7 @@ Module_terminal() {
 
 Module_printers() {
 	# this ugly hack prevents output if no printer is present, although needs debugging
-#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then	
+	#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then	
 
 	moduleName="Printers"
 	print_module_header "${moduleName}"
