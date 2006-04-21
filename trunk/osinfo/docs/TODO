@@ -3,8 +3,6 @@ To handle XML we need a generic output interface.
 Source a file with with the interface. There should be one file for xml output, one for kdialog output and one for normal.
 
 * Get rid of eval.
-* update all modules to use print_module_footer and variable $moduleName,
-	before that xml output is crippled
 * is it possible to run a for loop with the whitescapes, each line only
 	constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
 	example:
@@ -17,5 +15,10 @@ Source a file with with the interface. There should be one file for xml output, 
 
 * add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
 * add --checkdep 
-* fix lspci. old versions (<2.2) don't output the same way. output should be parsed from "lspci" without -m option
 * look into daemontools for the init script
+* change value_header => add_value_header
+* the headers array is fine, it's parsed linearly. if the entry in the array is not numbers only,
+	it means it is a header or a footer. the footer has a %footer% identifier which closes the previous
+	open tag. everything else is parsed to stdout or to xml. $indent variable is used to ensure proper format.
+* use if sentence for smartctl with IDE drives
+* parse all partition data into one line for each partition???

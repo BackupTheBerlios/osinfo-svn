@@ -382,6 +382,7 @@ Module_network() {
 
 		add_values 'Netmask'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 			grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | grep -Eo '[0-9\.fx]+' )"
+	# it's not possible to increment a variable right inside the loop, C-style?
 
 		add_values 'RX bytes'	"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 									grep -i 'RX bytes' | awk -F: {'print $2'})"	
