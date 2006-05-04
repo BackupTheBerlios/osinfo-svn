@@ -24,9 +24,17 @@ function xml_tag_start () {
 	echo "<${1}>"
 }
 
+function xml_attribute_start () {
+	echo "<attribute code=\"${1}\">"
+}
+
 # Simple end tag
 # Parameters:
 #  1  string  Name of tag
+function xml_attribute_stop () {
+	echo "</attribute>"
+}
+
 function xml_tag_stop () {
 	echo "</${1}>"
 }
@@ -43,6 +51,11 @@ function xml_tag_startstop () {
 #  1  string  Name of tag
 function xml_opentag_start () {
 	echo -n "<${1}"
+}
+
+# Simple value tag
+function xml_value () {
+	echo "<value>${1}</value>"
 }
 
 # Paramter for unclosed tag

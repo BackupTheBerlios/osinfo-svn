@@ -12,8 +12,8 @@
 appname='osinfo'
 major_version=0
 minor_version=1
-micro_version=2
-patch_version=3
+micro_version=3
+patch_version=0
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -48,6 +48,7 @@ fi
 
 isverbose=0
 usekdialog=0
+lanforce=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
    prefix="/"
@@ -123,9 +124,12 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				shift 1
 				;;
 			'--xml')
-				echo "xml is broken"
-				exit 0;
 				usexml=1
+				shift 1
+				;;
+			'--lanforce')
+				#usexml=1
+				lanforce=1
 				shift 1
 				;;
 			'-v'|'--verbose')
@@ -154,8 +158,8 @@ fi
 ############################################
 # IF OUTPUTTING TO XMLFILE, PRINT HEADER
 if [ "$usexml" == 1 ]; then
-	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" #> $XMLFILE
-	echo "<osinfo>" #> $XMLFILE
+	xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" | tee $XMLFILE
+	#echo "<osinfo>" | tee $XMLFILE
 	XML_INDENT=1
 fi
 ############################################
@@ -193,25 +197,35 @@ function add_name_value_pair {
 
 function value_header() {
 
-	# the headers array consists of item that are either
-	# strings, which mean they're a true header for xml; or
-	# an integer which notes the number of values grouped in values[].
+	# the headers array consists of items that are either:
+	#	strings == header for xml
+	#	an integer == number of values grouped in values[] array
+
+	# this function inserts the input (string) as the last available item in the array.
+#set -x
 	headers[${#headers[@]}]="$1"
-	echo ${headers[((${#headers[@]}-1))]}
+	infostring[${#infostring[@]}]="%header%$1"
+#set +x
+
+
+}
+
+function add_attribute() {
+
+	infostring[${#infostring[@]}]="%attribute%${1}"
 
 }
 
 function add_values {
 
-	# the header with a set of values are written to values[] array.
-	# the headers array consists of item that are either
-	# strings, which mean they're a true header for xml; or
-	# an integer which notes the number of values grouped in values[].
+	# a set of values are written to the infostring[] array.
+	# the first input is the attribute, the rest are plain values.
 
 	# check existing values array
 	FIRST_BLANK_VALUE=${#values[@]}
+	FIRST_BLANK_VALUE=${#infostring[@]}
 
-	# check the number of input values, modules may output blank, and that is concidered
+	# check the number of input values, modules may output blank, and that is considered
 	# a string, so this little eval thing compares the strings one by one
 	AMT_VALUES=0
 	for i in `seq 1 $#`; do
@@ -223,11 +237,13 @@ function add_values {
 	# add an item to the headers array
 	headers[${#headers[@]}]="$AMT_VALUES"
 
+
 	# this will put the arguments into the values array
 	IFS_bak=$IFS ; 	IFS="
-" # a literal newline
+" # a literal newline, do not indent
 	for VALUE in $@; do
-		values[$FIRST_BLANK_VALUE]=$VALUE
+		values[$FIRST_BLANK_VALUE]="$VALUE"
+		infostring[$FIRST_BLANK_VALUE]="$VALUE"
 		((FIRST_BLANK_VALUE++))
 	done
 	IFS=$IFS_bak
@@ -251,22 +267,117 @@ function add_values {
 function value_footer() {
 
 	# this searches the headers array backwards, looking for an open header
-	for HDR in $(seq ${#headers[@]} -1 1); do
+	for HDR in $(seq ${#headers[@]} -1 0); do
 #	echo ${headers[$HDR]}
-		if [ "$(echo ${headers[$HDR]} | grep -Eo '[A-Öa-ö]+')" ]; then
+		if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
 #			echo $HDR
-			headers[${#headers[@]}]="/${headers[$HDR]}"
+			headers[${#headers[@]}]="%footer%${headers[$HDR]}"
 	        #VAL_STRING="/$HDR\n";
 			break;
 		fi
 	done
-	
+	#set -x
+	for position in $(seq ${#infostring[@]} -1 0); do
+		if [ "$(echo ${infostring[$position]} | grep '^%header%')" ]; then
+			infostring[${#infostring[@]}]="$(echo ${infostring[$position]} | sed s/%header%/%footer%/)"
+			break;
+		fi
+	done
+#set +x
 }
 
 function flush_values {
+	if [ $usexml -eq 0 ]; then
+		print_stdout
+	elif [ $usexml -eq 1 ] && [ $lanforce -eq 0 ]; then
+		print_xml
+	else
+		print_lanforce_xml
+	fi
+}
 
+function print_xml {
 	### XML OUTPUT ------\
 
+	# debug:
+#		for HDR in $(seq 1 ${#headers[@]}); do
+#			echo ${headers[$HDR]}
+#		done
+
+#		for VL in $(seq 1 ${#values[@]}); do
+#			echo ${values[$VL]}
+#		done
+#set -x
+#cho $XML_INDENT
+	
+	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
+		item="${infostring[$itemnr]}"
+		#echo $item
+		if [ ! "$(echo ${item} | grep '^%')" ]; then
+
+			for indent in `seq 1 $XML_INDENT`; do 
+				echo -ne "\t" | tee -a $XMLFILE 
+			done
+			
+			echo -e "$(xml_value "${item}")" | tee -a $XMLFILE
+
+		else
+		
+			### CLOSE ATTRIBUTE TAG
+			if [ "$attribute" == "open" ]; then
+				((XML_INDENT--))
+				for indent in `seq 1 $XML_INDENT`; do
+					echo -ne "\t" | tee -a $XMLFILE 
+				done				
+				echo -e "$(xml_attribute_stop)" | tee -a $XMLFILE
+				echo | tee -a $XMLFILE
+				attribute="closed"
+			fi
+
+			### ATTRIBUTE TAG
+			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
+				for indent in `seq 1 $XML_INDENT`; do
+					echo -ne "\t" | tee -a $XMLFILE 
+				done
+				item="$(echo ${item} | sed s/%attribute%//)"
+				echo -e "$(xml_attribute_start "${item}")" | tee -a $XMLFILE
+				((XML_INDENT++))
+				attribute="open"
+
+
+			#### OPENING TAG
+			elif [ "$(echo ${item} | grep '^%header%')" ]; then 
+				for indent in $(seq 1 $XML_INDENT); do 
+					echo -ne "\t" | tee -a $XMLFILE 
+				done
+				item="$(echo ${item} | sed s/%header%//)"
+				echo -e "$(xml_tag_start "${item}")" | tee -a $XMLFILE
+				((XML_INDENT++))
+
+
+			### CLOSING TAG
+			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
+				((XML_INDENT--))
+				for indent in `seq 1 $XML_INDENT`; do
+					echo -ne "\t" | tee -a $XMLFILE 
+				done
+				item="$(echo ${item} | sed s/%footer%//)"
+				echo -e "$(xml_tag_stop "${item}")" | tee -a $XMLFILE
+
+			fi
+
+		fi				
+	done	
+		 
+}
+
+function print_lanforce_xml {
+	### XML OUTPUT ------\
+	echo TODO
+	exit 0;
+}
+
+function print_stdout {
 	
 	### STDOUT ---- \
 
@@ -317,8 +428,8 @@ function flush_values {
 	echo -e "${VAL_STRING}" | \
 		sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
 
-	unset headers
-	unset values
+	#unset headers
+	#unset values
 
 }
 
@@ -342,10 +453,10 @@ function flush_name_value_pair {
 		#### OUTER OPENING TAG
 		if [ "$value_pair_header" ]; then 
 			for indent in $(seq 0 $XML_INDENT); do 
-				echo -ne "\t" #>> $XMLFILE 
+				echo -ne "\t" | tee -a $XMLFILE 
 			done
 			((XML_INDENT++))
-			echo -e "$(xml_tag_start "${value_pair_header}")" 	#>> $XMLFILE		# open tag
+			echo -e "$(xml_tag_start "${value_pair_header}")" 	| tee -a $XMLFILE		# open tag
 			unset value_pair_header
 		fi
 		
@@ -366,37 +477,37 @@ function flush_name_value_pair {
 		 if [ ! "${openTag}" ]; then
 			 #echo "new tag"
 			 #echo $value1
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
 			 done
 			 ((XML_INDENT++))
-			 echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '	#>> $XMLFILE	# open tag
+			 echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '	| tee -a $XMLFILE	# open tag
 			 openTag=${value1}
 			 
 			 if [  "${value2}" ]; then 
-				 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+				 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
 				 done
 				 #echo "write data"
 				 #echo $value2
 				 
-				 echo -e "${value2}"  | tr '¿' ' '		#>> $XMLFILE	# write content
+				 echo -e "${value2}"  | tr '¿' ' '		| tee -a $XMLFILE	# write content
 			 fi
 			 
 			 #echo "close tag"
 			 #echo $value1
 			 ((XML_INDENT--))
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
 			 done
-			 echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	#>> $XMLFILE		# close tag
+			 echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	| tee -a $XMLFILE		# close tag
 			 unset openTag;
 		 fi
 		 
 		 
 		 #### OUTER CLOSING TAG 
 		 if [ "$value_pair_footer" ]; then 
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" #>> $XMLFILE 
+			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
 			 done
 			 ((XML_INDENT--))
-			 echo -e "$(xml_tag_stop "${value_pair_footer}")" 	#>> $XMLFILE		# close
+			 echo -e "$(xml_tag_stop "${value_pair_footer}")" 	| tee -a $XMLFILE		# close
 			 unset value_pair_footer
 		 fi
 		 
@@ -451,8 +562,8 @@ function wrong_module() {
 print_module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
-	elif [ "$usexml" == 1 ]; then
-		echo -e "\t$(xml_tag_start "${1}")"
+	elif [ $usexml -eq 1 ]; then
+		value_header "${1}"
 	else
 		print_line
 		echo "${tcRED}${tUNDERLINE}"$"Report from module""${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
