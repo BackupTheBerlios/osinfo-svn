@@ -132,6 +132,16 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				lanforce=1
 				shift 1
 				;;
+			'--nc')
+				if [ ! "$2" ] || [ ! "$3" ]; then
+					echo "You must set the target host and port!"
+					exit 0;
+				fi
+				netcat=1
+				HOST=$2
+				PORT=$3
+				shift 3
+				;;
 			'-v'|'--verbose')
 				isverbose=1
 				shift 1
@@ -642,8 +652,16 @@ done
 # IF OUTPUTTING TO XMLFILE, PRINT FOOTER
 
 if [ "$usexml" == 1 ]; then
-	echo "</osinfo>" #> $XMLFILE
+	echo "</osinfo>" | tee -a  $XMLFILE
+	echo "EOF" >> $XMLFILE
 fi
 ############################################
 
+
+############################################
+# FINALLY SEND OVER TCP IS OPTION IS SET
+if [ "$netcat" == "1" ]; then
+	cat $XMLFILE | nc $HOST $PORT
+fi
+############################################
 
