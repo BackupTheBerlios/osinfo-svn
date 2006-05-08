@@ -25,7 +25,7 @@ function xml_tag_start () {
 }
 
 function xml_attribute_start () {
-	echo "<attribute code=\"${1}\">"
+	echo "<attribute name=\"${1}\" code=\"${2}\">"
 }
 
 # Simple end tag
