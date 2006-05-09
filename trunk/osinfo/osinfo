@@ -12,7 +12,7 @@
 appname='osinfo'
 major_version=0
 minor_version=1
-micro_version=3
+micro_version=4
 patch_version=0
 dev_status=dev
 
@@ -134,7 +134,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				lanforce=1
 				shift 1
 				;;
-			'--nc')
+			'--nc'|'--netcat')
 				if [ ! "$2" ] || [ ! "$3" ]; then
 					echo "You must set the target host and port!"
 					exit 0;
@@ -694,8 +694,7 @@ done
 ############################################
 # FINALLY SEND OVER TCP IS OPTION IS SET
 if [ "$netcat" == "1" ]; then
-	echo "EOF" >> $XMLFILE
-	cat $XMLFILE | nc $HOST $PORT
+	cat $XMLFILE | nc -q 0 $HOST $PORT
 fi
 ############################################
 
