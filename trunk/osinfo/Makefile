@@ -24,8 +24,13 @@ dist:
 		cp $$dir/* dist/$(appname)/$$dir ; \
 	done
 
+# Not very elegant
+# It greps the definitons out of osinfo and then evals it.
+# After that it echos the thing.
+# And then include the output in the paramerter of tar.
+# Bad that it doesn't work in a variable.
 dist-tarbz2: dist
-	cd dist && tar -jcf $(appname).tar.bz2 $(appname)
+	cd dist && tar -jcf "$$(eval $$(head -n16 ../osinfo | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}-$${patch_version}).tar.bz2" $(appname)
 
 dist-all-in-one: dist
 	@echo "THIS IS BROKEN! To still use it edit the Makefile and uncomment some lines in the rule dist-all-in-one"
