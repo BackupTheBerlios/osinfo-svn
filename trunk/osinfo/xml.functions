@@ -86,6 +86,6 @@ function xml_opentag_stop () {
 #               Can be SYSTEM or PUBLIC
 #  3  string  DTD URL
 function xml_doc_start () {
-	echo '<?xml version="1.0"?>'
+	echo '<?xml version="1.0" encoding="ISO8859-1" ?>'
 	echo "<!DOCTYPE ${1} ${2} \"${3}\">"
 }

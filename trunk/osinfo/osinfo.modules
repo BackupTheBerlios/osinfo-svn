@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################################################
 # List System information                                                      #
-#   supports currently only Linux, FreeBSD support under development
+#   supports currently only Linux, FreeBSD support under development           #
 ################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                           #
 # Some parts are taken from:                                                   #
@@ -267,7 +267,7 @@ Module_system() {
 	add_attribute	$"Network node hostname"	"host_name"
 	add_values		"$(hostname)"
 		
-	add_attribute	 $"Kernel release"			"service_pack" #don't change
+	add_attribute	 $"Kernel release"
 	add_values		"$(uname -r)"
 	
 	add_attribute	$"Machine hardware name"	"system_type"
@@ -292,7 +292,6 @@ Module_processor() {
 
 	#TODO: fix double-entries with hyper-threading processors:
 	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
-	# update this to use lshw
 
 	flush_name_value_pair
 	print_module_footer "${moduleName}"
@@ -372,18 +371,18 @@ Module_network() {
 	print_module_header "${moduleName}"
 	#value_header "${moduleName}"
 
+	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
+	# what are these needed for?
+
 	if [ "$SYSTEM" == "linux" ] ; then
-		ETH_DEVICES="$(ifconfig | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
+		ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
 
 	else
-		ETH_DEVICES="$(ifconfig | grep BROADCAST | grep -v LOOPBACK | awk -F': ' {'print $1'})"
+		ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | awk -F': ' {'print $1'})"
 
 	fi
 
 
-	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
-	# what are these needed for?
-		
 	for interface_name in $ETH_DEVICES; do 
 
 		value_header	$interface_name
@@ -418,11 +417,9 @@ Module_network() {
 		add_attribute	'TX bytes'
 		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
 								grep -i 'TX bytes' | awk -F: {'print $2'})"	
-
 		value_footer
 
 	done
-
 #	print_module_footer "${moduleName}"
 
 	value_footer # < module_footer perhaps?

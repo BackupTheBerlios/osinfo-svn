@@ -3,16 +3,14 @@
 ################################################################################
 # List System information                                                      #
 ################################################################################
-# Written by Arvid Norlander                                                   #
-# 	   + Mikael Lammentausta                                                   #
-# Some documentation are in Swedish                                            #
+# Written by Arvid Norlander and Mikael Lammentausta                           #
 # Some parts are taken from:                                                   #
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 appname='osinfo'
 major_version=0
 minor_version=1
-micro_version=4
+micro_version=5
 patch_version=0
 dev_status=dev
 
@@ -34,7 +32,7 @@ SYSTEM="$(uname -s  | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwx
 #	exit 0;
 #fi
 
-#On BSD, coreutils are prebended with 'g' *sigh*
+#On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 #http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
 if [ "$(echo $SYSTEM | grep bsd)" ]; then
@@ -43,8 +41,6 @@ if [ "$(echo $SYSTEM | grep bsd)" ]; then
 		$Seq "$@"
 	}
 fi
-
-
 
 
 isverbose=0
@@ -60,7 +56,7 @@ usexml=0
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # LC_ALL makes is possible to print to stdout, due to support for '¡' :)
-[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
+#[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
 function PRINT_Help {
@@ -169,15 +165,22 @@ fi
 
 ############################################
 # IF OUTPUTTING TO XMLFILE, PRINT HEADER
-	if [ "$usexml" == 1 ]; then
+	if [ "$lanforce" == 1 ]; then
+
+		xml_doc_start "osinfo" "SYSTEM" "lanforce.dtd" | tee $XMLFILE
+		ip="$(ifconfig $interface_name | \
+			grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+			grep -Eo '[0-9\.]+' )"
+		
+		lf_entity_start "$(hostname)" "$ip"
+		#lf_entityset "N/A" "$(hostname)" "$ip"
+
+	elif [ "$usexml" == 1 ]; then
 		xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" | tee $XMLFILE
-#		if [ "$lanforce" == "1" ]; then
-#			lanforce_dtd | tee $XMLFILE
-#		fi
-		#echo "<osinfo>" | tee $XMLFILE
 		XML_INDENT=1
 		
 	fi
+	
 ############################################
 
 
@@ -268,7 +271,7 @@ function add_values {
 
 	# THIS IS FOR DEBUGGING
 
-#	for HDR in $(seq 1 ${#headers[@]}); do
+	#	for HDR in $(seq 1 ${#headers[@]}); do
 	#		echo ${headers[$HDR]}
 	#	done
 
@@ -285,11 +288,11 @@ function value_footer() {
 
 	# this searches the headers array backwards, looking for an open header
 	for HDR in $(seq ${#headers[@]} -1 0); do
-#	echo ${headers[$HDR]}
+	#echo ${headers[$HDR]}
 		if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
-#			echo $HDR
+			#echo $HDR
 			headers[${#headers[@]}]="%footer%${headers[$HDR]}"
-	        #VAL_STRING="/$HDR\n";
+		        #value_string="/$HDR\n";
 			break;
 		fi
 	done
@@ -311,6 +314,7 @@ function flush_values {
 	else
 		print_lanforce_xml
 	fi
+	unset infostring
 }
 
 function print_xml {
@@ -395,94 +399,116 @@ function print_xml {
 }
 
 function print_lanforce_xml {
-
-	ip="$(ifconfig $interface_name | \
-		grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-		grep -Eo '[0-9\.]+' )"
 	
-	### XML OUTPUT ------\
-	# ENTITY ------\
-	lf_entity "N/A" "$(hostname)" "$ip"
-	
-	# ATTRIBUTE ------\
 	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
-
-			echo -e "$(lf_value "${item}")" | tee -a $XMLFILE
+			echo -e "   $(xml_value "${item}")" | tee -a $XMLFILE
 
 		else
-		
-			### OPEN ATTRIBUTE TAG
+			### CLOSE ATTRIBUTE TAG
+			if [ "$attribute" == "open" ]; then
+				echo -e "  $(xml_attribute_stop)" | tee -a $XMLFILE
+				attribute="closed"
+			fi
+
+			### ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
 				item="$(echo ${item} | sed s/%attribute%//)"
 				name=$(echo ${item} | awk -F\; {'print $1'})
 				code=$(echo ${item} | awk -F\; {'print $2'})
-				lf_attribute "N/A" "${name}" "${code}" | tee -a $XMLFILE
+				#xml_attribute_start "${name}" "${code}"
+				echo -e "  $(xml_attribute_start "${name}" "${code}")" | tee -a $XMLFILE
+				attribute="open"
 			fi
+
+			### OPEN ATTRIBUTE TAG
+			#if [ "$(echo ${item} | grep '^%attribute%')" ]; then
+			#	item="$(echo ${item} | sed s/%attribute%//)"
+			#	name=$(echo ${item} | awk -F\; {'print $1'})
+			#	code=$(echo ${item} | awk -F\; {'print $2'})
+			#	lf_attribute "N/A" "${name}" "${code}" | tee -a $XMLFILE
+			#fi
 		fi
 	done
-
-	
-#	lf_template "N/A" "%header%" "%code%"
-	lf_note
-	
 
 }
 
 function print_stdout {
+
+	#for VL in $(seq 1 ${#infostring[@]}); do
+	#	echo ${infostring[$VL]}
+	#done
+
+	TABSIZE=6 
 	
 	### STDOUT ---- \
+	longest_string=0
 
-	INDEX=0 ;  LONGEST_STRING=0
-	for ITEMS in ${headers[@]}; do
-		if [ ! "$(echo $ITEMS | grep -Eo '[A-Öa-ö]+')" ]; then
-			for VALUE in `seq 1 $ITEMS`; do
-				# fetch the longest string value
-				#echo ${#values[$INDEX]}
-				if [ ${#values[$INDEX]} -gt $LONGEST_STRING ]; then
-					LONGEST_STRING=${#values[$INDEX]}
-				fi
-			((INDEX++))
-			done
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
+		item="${infostring[$itemnr]}"
+		#echo $item
+		if [ "$(echo ${item} | grep '^%attribute%')" ]; then
+			item="$(echo ${item} | sed s/%attribute%//)"
+			name=$(echo ${item} | awk -F\; {'print $1'})
+	
+			if [ ${#name} -gt $longest_string ]; then
+				longest_string=${#name}
+			fi
 		fi
 	done
-	
-	INDEX=0 ; VAL_STRING="" ; TABSIZE=7 ; 	
-	# proper indentation requires this loop to be run twice
-	for ITEMS in ${headers[@]}; do
-		if [ "$(echo $ITEMS | grep -Eo '[A-Öa-ö]+')" ]; then
-			# the item in the headers array is declared by value_header
-			# and should be printed
-	        VAL_STRING="$ITEMS\n";
+#set -x
+	INDEX=0 ; value_string="" ; attribute="closed"
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
+		item="${infostring[$itemnr]}"
+
+		if [ ! "$(echo ${item} | grep '^%')" ]; then
+
+			value_string="${value_string}${item}\t";
+
 		else
-			for VALUE in `seq 1 $ITEMS`; do
+		
+			if [ "$attribute" == "open" ]; then
+				value_string="${value_string}\n"
+				attribute="closed"
+			fi
+
+			if [ "$(echo ${item} | grep '^%header%')" ]; then 
+				item="$(echo ${item} | sed s/%header%//)"
+				value_string="${value_string}${item}\n";
 			
-				VAL_STRING="$VAL_STRING${values[$INDEX]}\t";
+
+			elif [ "$(echo ${item} | grep '^%attribute%')" ]; then
+				item="$(echo ${item} | sed s/%attribute%//)"
+				name=$(echo ${item} | awk -F\; {'print $1'})
+				value_string="${value_string}${name}\t";
+				attribute="open"
+
 				
 				# this evaluation counts the proper amount of tabs to add
 				# for beautiful identation.
-				#echo -en ${values[$INDEX]} " : " ${#values[$INDEX]} "\n"
-				#echo "diff : " $(($LONGEST_STRING-${#values[$INDEX]}))
-				TABS_TO_ADD=$((($LONGEST_STRING-${#values[$INDEX]})/$TABSIZE))
-				#echo "tabs to add : " $TABS_TO_ADD	
-				if [ $TABS_TO_ADD -ge 1 ]; then
-					for i in `seq 1 $TABS_TO_ADD`; do
-						VAL_STRING="$VAL_STRING\t" 
+				#echo -en ${name} " : " ${#name} "\n"
+				#echo "diff : " $(($longest_string-${#name}))
+				tabs_to_add=$((($longest_string-${#name})/$TABSIZE))
+				#echo "tabs to add : " $tabs_to_add	
+				if [ $tabs_to_add -ge 1 ]; then
+					for i in `seq 1 $tabs_to_add`; do
+						value_string="${value_string}\t" 
 					done
 				fi
-				((INDEX++))
-			done
-
-			VAL_STRING=$VAL_STRING"\n";
+				#((INDEX++))
+				#done
+				
+			fi
 		fi
 	done
-	echo -e "${VAL_STRING}" | \
+	value_string=${value_string}"\n";
+
+	echo -e "${value_string}" | \
 		sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
 set +x
-	#unset headers
-	#unset values
+set +x
 
 }
 
@@ -631,12 +657,15 @@ print_module_header() {
 # Parameters:
 #   1 string   Module name
 print_module_footer() {
+
+
 	if [ "$usexml" == 1 ]; then
 		echo -e "\t$(xml_tag_stop "${1}")"
 	fi
 }
 ################################################################################
 
+	
 
 
 for modul in $cmdsnames; do
@@ -689,6 +718,18 @@ done
 #		lsmod|\		# is very alpha, do not uncomment
 
 [ "$usekdialog" -ne 1 ]  #&& print_line
+
+
+################################################################################
+# Print footer (for xml)
+
+if [ "$lanforce" == 1 ]; then
+
+	#lf_template "N/A" "%header%" "%code%"
+	lf_entity_stop
+	#lf_note
+fi
+
 
 
 ############################################
