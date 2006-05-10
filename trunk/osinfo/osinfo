@@ -18,7 +18,7 @@ dev_status=dev
 source bash.functions
 source osinfo.modules
 source xml.functions
-source xml.dtd
+source lanforce.functions
 #. bash_Debug_functions.sh
 DEBUG=on
 # TODO: Use a parameter
