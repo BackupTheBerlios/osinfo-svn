@@ -51,6 +51,50 @@ usexml=0
 # To put this in a variable allows info on non-running systems
    prefix="/"
 
+function PRINT_Help {
+	print_line
+	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
+	echo 
+	gettext -s -e $"Arguments are names of modules to get info from:"
+	echo
+        if [ "$SYSTEM" == "linux" ] ; then
+
+			for MODULE in ${MODULES_LINUX}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+			for MODULE in ${MODULES_BSD}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        fi
+	echo
+	gettext -s $"If arguments is \"all\" then list information from all modules."
+	echo
+	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
+	echo "  $(basename $0) "$"[Options] arguments"
+	echo "  $(basename $0) "$"[--usage|--help]"
+	gettext -s "${tBOLD}"$"Options:""${tSTD}"
+	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
+	gettext -s "  -v, --verbose           "$"Show more information"
+	gettext -s "      --kdialog           "$"Show the information using KDialog"
+	gettext -s "                            "$"from KDE. Experimental feature!"
+	gettext -s "                            "$"Not usable yet!"
+	gettext -s "  -P, --prefix [dir]      "$"Use this dir as root"
+	gettext -s "                            "$"This disables some modules."
+	gettext -s "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
+	gettext -s "                            "$"and exits."
+	echo
+	print_line
+	if [ "$1" ]; then
+		exit $1
+	else
+		exit 0
+	fi
+}
+
 
 ######## SETTING USERSPACE VARIABLES 
 # PATH here allows normal users to run ifconfig and lsmod
@@ -118,49 +162,6 @@ else
 	PRINT_Help
 fi
 
-function PRINT_Help {
-	print_line
-	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
-	echo 
-	gettext -s -e $"Arguments are names of modules to get info from:"
-	echo
-        if [ "$SYSTEM" == "linux" ] ; then
-
-			for MODULE in ${MODULES_LINUX}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
-
-			for MODULE in ${MODULES_BSD}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        fi
-	echo
-	gettext -s $"If arguments is \"all\" then list information from all modules."
-	echo
-	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
-	echo "  $(basename $0) "$"[Options] arguments"
-	echo "  $(basename $0) "$"[--usage|--help]"
-	gettext -s "${tBOLD}"$"Options:""${tSTD}"
-	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
-	gettext -s "  -v, --verbose           "$"Show more information"
-	gettext -s "      --kdialog           "$"Show the information using KDialog"
-	gettext -s "                            "$"from KDE. Experimental feature!"
-	gettext -s "                            "$"Not usable yet!"
-	gettext -s "  -P, --prefix [dir]      "$"Use this dir as root"
-	gettext -s "                            "$"This disables some modules."
-	gettext -s "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
-	gettext -s "                            "$"and exits."
-	echo
-	print_line
-	if [ "$1" ]; then
-		exit $1
-	else
-		exit 0
-	fi
-}
 
 
 ############################################
