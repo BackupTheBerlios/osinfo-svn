@@ -110,7 +110,7 @@ Module_hdd() {
 			# [partition ID=7] [size on hda2] [size on hdb1]
 			
 
-			for PARTNR in `seq 1 $(fdisk -l $DRVDEV | grep ^$DRVDEV | wc -l)`; do 
+			for PARTNR in $(seq 1 $(fdisk -l $DRVDEV | grep ^$DRVDEV | wc -l)); do 
 
 				PARTITION="$(fdisk -l $DRVDEV | grep ^$DRVDEV | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 				if [ "$(df -Plk | grep $PARTITION)" ]; then
@@ -200,11 +200,11 @@ Module_oem() {
 
 	HW_ARRAY=1;
 	# TODO: fix the sed to cut all whitespaces before first word boundary
-	for HW in `seq 1 $(
+	for HW in $(seq 1 $(
 
 		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*" {'print NF'}
 
-	)`; do
+	)); do
 
 		hardware[$HW_ARRAY]="$(
 
