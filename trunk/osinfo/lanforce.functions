@@ -39,17 +39,6 @@ function lanforce_dtd () {
 	echo "<!ELEMENT text #PCDATA>"
 }
 
-function lf_entityset () {
-	id="$1"
-	name="$2"
-	ip="$3"
-
-	echo "<!ELEMENT entityset (entity+)>"
-	echo "<!ELEMENT entity (template, attribute*, note*)>"
-	echo "<!ATTLIST entity id         $id #IMPLIED"
-	echo "                 name       $name #REQUIRED"
-	echo "                 ip         $ip #IMPLIED>"
-}
 
 function lf_entity_start () {
 	hostname="$1"
@@ -65,31 +54,8 @@ function lf_entity_start () {
 }
 
 function lf_entity_stop () {
+	echo " </entity>"
 	echo "</entityset>"
-}
-
-function lf_template () {
-	id="$1"
-	name="$2"
-	code="$3"
-
-	echo "<!ELEMENT template EMPTY>"
-	echo "<!ATTLIST template id      $id #IMPLIED"
-	echo "                   name    $name #IMPLIED"
-	echo "                   code    $code #REQUIRED>"
-}
-
-function lf_attributeset () {
-	id="$1"
-	name="$2"
-	code="$3"
-
-	echo "<!ELEMENT attribute header?,(value | reference | embeddedreference |"
-	echo "                            externalreference)*, footer?>"
-	echo "<!ATTLIST attribute id     $id #IMPLIED"
-	echo "                    name   $name #IMPLIED"
-	echo "                    code   $code #REQUIRED>"
-
 }
 
 function lf_attribute_value () {
@@ -99,12 +65,6 @@ function lf_attribute_value () {
 	echo "  <attribute code=\"$code\">"
 	echo "   <value>$value</value>"
 	echo "  </attribute>"
-}
-
-function lf_value () {
-	value="$1"
-
-	echo "<!ELEMENT value $value>"
 }
 
 function lf_note () {
