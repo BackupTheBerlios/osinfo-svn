@@ -1,4 +1,4 @@
-helpers=bash.functions osinfo.modules xml.functions
+helpers=bash.functions osinfo.modules xml.functions lanforce.functions
 mainapp=osinfo
 subdirs=docs
 appname=osinfo
@@ -28,10 +28,11 @@ dist-tarbz2: dist
 	cd dist && tar -jcf $(appname).tar.bz2 $(appname)
 
 dist-all-in-one: dist
-	@echo "WARNING: this is quite untested"
-	@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
-	cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
-	chmod +x osinfo-all-in-one
+	@echo "THIS IS BROKEN! To still use it edit the Makefile and uncomment some lines in the rule dist-all-in-one"
+#	@echo "WARNING: this is quite untested"
+#	@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
+#	cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
+#	chmod +x dist/$(appname)/osinfo-all-in-one
 
 distclean: clean
 	-rm -rf dist
