@@ -167,7 +167,8 @@ fi
 
 
 ############################################
-# PRINT XML HEADER
+# XML HEADER & FOOTER FUNCTIONS
+
 function print_xml_header () {
 	if [ "$lanforce" == 1 ]; then
 
@@ -175,15 +176,27 @@ function print_xml_header () {
 		ip="$(ifconfig $interface_name | \
 			grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
 			grep -Eo '[0-9\.]+' )"
-		
 		lf_entity_start "$(hostname)" "$ip" | tee -a $XMLFILE
 
 	else
+
 		xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" | tee $XMLFILE
+		xml_tag_start "${appname}" | tee -a $XMLFILE
 		XML_INDENT=1
 		
 	fi
 }
+
+function print_xml_footer () {
+	
+	if [ "$lanforce" == 1 ]; then
+		lf_entity_stop | tee -a $XMLFILE
+		#lf_note
+	else
+		xml_tag_stop "${appname}" | tee -a $XMLFILE
+	fi
+}
+
 ############################################
 
 
@@ -240,7 +253,54 @@ function value_header() {
 	# use by print_* functions to interpret how to parse the string.
 
 	#headers[${#headers[@]}]="$1"
+	#echo ${#infostring[@]} 
 	infostring[${#infostring[@]}]="%header%$1"
+	#echo ${infostring[0]}
+}
+
+function value_footer() {
+
+	# this function searches the $infostring array backwards, 
+	# looking for open headers. 
+
+	# NEEDS DEBUGGING!
+	
+	#for HDR in $(seq ${#headers[@]} -1 0); do
+	#echo ${headers[$HDR]}
+	#	if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
+			#echo $HDR
+	#		headers[${#headers[@]}]="%footer%${headers[$HDR]}"
+		        #value_string="/$HDR\n";
+	#		break;
+	#	fi
+	#done
+	
+	found=""
+	for position in $(seq ${#infostring[@]} -1 0); do
+		item="$(echo ${infostring[$position]})"
+		# first collect %footer%s into $found array
+		if [ "$(echo ${item} | grep '^%footer%')" ]; then
+			found="$(echo ${item} | \
+				grep '^%footer%' | sed s/%footer%//)"
+
+		# then continue and add a footer if it is not already found	
+		elif [ "$(echo ${item} | grep '^%header%')" ]; then
+			item="$(echo ${item} | sed s/%header%//)"
+
+			if [ "${item}" != "${found}" ]; then
+			#found[${#found[@]}]="$(echo ${item} | \
+			#	grep '^%header%' | sed s/%header%/%footer%/)"
+			# then test if this has 
+			#echo $found
+				infostring[${#infostring[@]}]="%footer%${item}"
+				break;
+			fi
+		fi
+	done
+
+	#for VL in $(seq 0 ${#infostring[@]}); do
+#		echo ${infostring[$VL]}
+#	done
 
 }
 
@@ -281,7 +341,7 @@ function add_values {
 
 
 	# IFS need to be changed because the values are separated by newline
-	IFS_bak=$IFS ; 	IFS="
+	IFS_bak="$IFS" ; 	IFS="
 " # a literal newline, do not indent
 	for value in $@; do
 		#values[$FIRST_BLANK_VALUE]="$value"
@@ -289,7 +349,7 @@ function add_values {
 		infostring[${#infostring[@]}]="$value"
 		#((FIRST_BLANK_VALUE++))
 	done
-	IFS=$IFS_bak
+	IFS="$IFS_bak"
 
 
 	# THIS IS FOR DEBUGGING
@@ -307,31 +367,6 @@ function add_values {
 
 }
 
-function value_footer() {
-
-	# this function searches the $infostring array backwards, 
-	# looking for open headers. 
-
-	# NEEDS DEBUGGING!
-	
-	#for HDR in $(seq ${#headers[@]} -1 0); do
-	#echo ${headers[$HDR]}
-	#	if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
-			#echo $HDR
-	#		headers[${#headers[@]}]="%footer%${headers[$HDR]}"
-		        #value_string="/$HDR\n";
-	#		break;
-	#	fi
-	#done
-	
-	for position in $(seq ${#infostring[@]} -1 0); do
-		if [ "$(echo ${infostring[$position]} | grep '^%header%')" ]; then
-			infostring[${#infostring[@]}]="$(echo ${infostring[$position]} | \
-				sed s/%header%/%footer%/)"
-			break;
-		fi
-	done
-}
 
 function flush_values {
 	if [ "$usexml" == "0" ]; then
@@ -482,10 +517,6 @@ function print_stdout {
 
 	# finally $value_string is printed at once.
 
-
-	#for VL in $(seq 1 ${#infostring[@]}); do
-	#	echo ${infostring[$VL]}
-	#done
 
 	# TODO: get tabsize dynamically
 	TABSIZE=6 
@@ -680,7 +711,7 @@ function wrong_module() {
 # Print module header
 # Parameters:
 #   1 string   Module name
-print_module_header() {
+module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
 	elif [ $usexml -eq 1 ]; then
@@ -698,10 +729,8 @@ print_module_header() {
 # Print module footer (for xml)
 # Parameters:
 #   1 string   Module name
-print_module_footer() {
-	if [ "$usexml" == 1 ]; then
-		echo -e "\t$(xml_tag_stop "${1}")"
-	fi
+module_footer() {
+	value_footer
 }
 ################################################################################
 
@@ -738,11 +767,11 @@ if [ "$prefix" != '/' ] ; then
 	done
 fi
 
-for modul in $cmdsnames; do
+if [ "$usexml" == 1 ]; then
+	print_xml_header
+fi
 
-	if [ "$usexml" == 1 ]; then
-		print_xml_header
-	fi
+for modul in $cmdsnames; do
 
 	case $modul in
 		#		uname)              eval "Module_Cmd_${modul}";;
@@ -764,15 +793,10 @@ done
 
 [ "$usekdialog" -ne 1 ]  #&& print_line
 
-################################################################################
-# Print footer (for lanforce xml)
-
-if [ "$lanforce" == 1 ]; then
-
-	#lf_template "N/A" "%header%" "%code%"
-	lf_entity_stop | tee -a "$XMLFILE"
-	#lf_note
+if [ "$usexml" == 1 ]; then
+	print_xml_footer
 fi
+
 
 
 

@@ -32,7 +32,7 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hd
 
 Module_hdd() {
 	moduleName="Disk information"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	# TODO 
 	# SCSI is untested, although works probably as SATA
@@ -165,13 +165,13 @@ Module_hdd() {
 	fi
 
 	flush_values
-	#print_module_footer "${moduleName}"
+	#module_footer "${moduleName}"
 }
 
 
 Module_oem() {
 	moduleName="OEM information"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	if [ ! "$(type -p lshw)" ]; then
 		add_name_value_pair "$appname notification" "Please install LSHW to collect this information"
@@ -253,13 +253,13 @@ Module_oem() {
 
 	fi
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 
 Module_system() {
 	moduleName="System"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	add_attribute	$"Operating system"			"os"
 	add_values		"$(uname -s)"
@@ -279,13 +279,13 @@ Module_system() {
 	add_attribute	$"System uptime"
 	add_values		"$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
 
-	value_footer
+	module_footer
 	flush_values
 }
 
 Module_processor() {
 	moduleName="Processor"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	add_name_value_pair $"Processor model"       "$(cat /proc/cpuinfo | grep 'model name' | awk -F': ' {'print $2'})"
 	add_name_value_pair $"Processor frequency"   "$(cat /proc/cpuinfo | grep 'cpu MHz' | awk -F': ' {'print $2" MHz"'})"
@@ -294,12 +294,12 @@ Module_processor() {
 	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 Module_terminal() {
 	moduleName="Terminal info"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	add_name_value_pair 'Terminal type'         "$TERM"
 	add_name_value_pair 'Terminal speed'        "$(stty speed)"
@@ -307,7 +307,7 @@ Module_terminal() {
 	add_name_value_pair 'Columns'               "$(stty size | awk '{print $2}')"
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 Module_printers() {
@@ -315,13 +315,13 @@ Module_printers() {
 	#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then	
 
 	moduleName="Printers"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	add_name_value_pair 'printer'		"$(lpstat -a | awk {'print $1'})"
 	# TODO: test in a system with many printers
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 
 #	fi
 }
@@ -329,7 +329,7 @@ Module_printers() {
 
 Module_users() {
     moduleName="Users and processes"
-    print_module_header "${moduleName}"
+    module_header "${moduleName}"
 
 	add_name_value_pair 'Last logged in user' 	"$(last | head -n 1)"
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
@@ -340,14 +340,14 @@ Module_users() {
 	# -it has to work with all distros. 
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 
 Module_lsmod() {
 	# rename to 'drivers'
 	moduleName="Device drivers"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	# usb
 	# ide
@@ -361,15 +361,14 @@ Module_lsmod() {
 	# TODO: needs more work
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 
 
 Module_network() {
 	moduleName="Network information"
-	print_module_header "${moduleName}"
-	#value_header "${moduleName}"
+	module_header "${moduleName}"
 
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
 	# what are these needed for?
@@ -382,11 +381,10 @@ Module_network() {
 
 	fi
 
-
-	for interface_name in $ETH_DEVICES; do 
+	for interface_name in $ETH_DEVICES; do
 
 		value_header	$interface_name
-
+		
 		add_attribute	'MAC'		"mac_address"
 		add_values		"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
 		
@@ -420,9 +418,8 @@ Module_network() {
 		value_footer
 
 	done
-#	print_module_footer "${moduleName}"
 
-	value_footer # < module_footer perhaps?
+	module_footer 
 	flush_values
 }
 
@@ -430,7 +427,7 @@ Module_network() {
 
 Module_distro() {
 	moduleName="Distribution"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	# echo the root directory
 	[ "$prefix" != '/' ] && \
@@ -557,12 +554,12 @@ Module_distro() {
 	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"
 	# echo the whole table
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 Module_applications() {
 	moduleName="Applications"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	if [ "$SYSTEM" == "linux" ] ; then
 
@@ -624,13 +621,13 @@ Module_applications() {
 		fi
 	done
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 
 Module_devices() {
 	moduleName="Devices"
-	print_module_header "${moduleName}"
+	module_header "${moduleName}"
 
 	DEV_ARRAY=1;
 	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
@@ -661,7 +658,7 @@ Module_devices() {
 	done
 
 	flush_name_value_pair
-	print_module_footer "${moduleName}"
+	module_footer "${moduleName}"
 }
 
 
