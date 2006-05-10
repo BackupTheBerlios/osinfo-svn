@@ -125,11 +125,13 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				usexml=1
 				shift 1
 				;;
+			# Add something about this in PRINT_Help:
 			'--lanforce')
 				#usexml=1
 				lanforce=1
 				shift 1
 				;;
+			# Add something about this in PRINT_Help:
 			'--nc'|'--netcat')
 				if [ ! "$2" ] || [ ! "$3" ]; then
 					echo "You must set the target host and port!"
@@ -365,29 +367,29 @@ function print_xml {
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
-			for indent in `seq 1 $XML_INDENT`; do 
-				echo -ne "\t" | tee -a $XMLFILE 
+			for indent in $(seq 1 $XML_INDENT); do 
+				echo -ne "\t" | tee -a "$XMLFILE" 
 			done
 			
-			echo -e "$(xml_value "${item}")" | tee -a $XMLFILE
+			echo -e "$(xml_value "${item}")" | tee -a "$XMLFILE"
 
 		else
 		
 			### CLOSE ATTRIBUTE TAG
 			if [ "$attribute" == "open" ]; then
 				((XML_INDENT--))
-				for indent in `seq 1 $XML_INDENT`; do
-					echo -ne "\t" | tee -a $XMLFILE 
+				for indent in $(seq 1 $XML_INDENT); do
+					echo -ne "\t" | tee -a "$XMLFILE" 
 				done				
-				echo -e "$(xml_attribute_stop)" | tee -a $XMLFILE
-				echo | tee -a $XMLFILE
+				echo -e "$(xml_attribute_stop)" | tee -a "$XMLFILE"
+				echo | tee -a "$XMLFILE"
 				attribute="closed"
 			fi
 
 			### NEW ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
-				for indent in `seq 1 $XML_INDENT`; do
-					echo -ne "\t" | tee -a $XMLFILE 
+				for indent in $(seq 1 $XML_INDENT); do
+					echo -ne "\t" | tee -a "$XMLFILE"
 				done
 				item="$(echo ${item} | sed s/%attribute%//)"
 				name=$(echo ${item} | awk -F\; {'print $1'})
@@ -401,21 +403,21 @@ function print_xml {
 			#### HEADER TAG
 			elif [ "$(echo ${item} | grep '^%header%')" ]; then 
 				for indent in $(seq 1 $XML_INDENT); do 
-					echo -ne "\t" | tee -a $XMLFILE 
+					echo -ne "\t" | tee -a "$XMLFILE" 
 				done
 				item="$(echo ${item} | sed s/%header%//)"
-				echo -e "$(xml_tag_start "${item}")" | tee -a $XMLFILE
+				echo -e "$(xml_tag_start "${item}")" | tee -a "$XMLFILE"
 				((XML_INDENT++))
 
-
+				
 			### FOOTER TAG
 			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
 				((XML_INDENT--))
-				for indent in `seq 1 $XML_INDENT`; do
-					echo -ne "\t" | tee -a $XMLFILE 
+				for indent in $(seq 1 $XML_INDENT); do
+					echo -ne "\t" | tee -a "$XMLFILE"
 				done
 				item="$(echo ${item} | sed s/%footer%//)"
-				echo -e "$(xml_tag_stop "${item}")" | tee -a $XMLFILE
+				echo -e "$(xml_tag_stop "${item}")" | tee -a "$XMLFILE"
 
 			fi
 		fi				
@@ -433,12 +435,12 @@ function print_lanforce_xml {
 		item="${infostring[$itemnr]}"
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
-			echo -e "   $(xml_value "${item}")" | tee -a $XMLFILE
+			echo -e "   $(xml_value "${item}")" | tee -a "$XMLFILE"
 
 		else
 			### CLOSE ATTRIBUTE TAG
 			if [ "$attribute" == "open" ]; then
-				echo -e "  $(xml_attribute_stop)" | tee -a $XMLFILE
+				echo -e "  $(xml_attribute_stop)" | tee -a "$XMLFILE"
 				attribute="closed"
 			fi
 
@@ -448,7 +450,7 @@ function print_lanforce_xml {
 				name=$(echo ${item} | awk -F\; {'print $1'})
 				code=$(echo ${item} | awk -F\; {'print $2'})
 				#xml_attribute_start "${name}" "${code}"
-				echo -e "  $(xml_attribute_start "${name}" "${code}")" | tee -a $XMLFILE
+				echo -e "  $(xml_attribute_start "${name}" "${code}")" | tee -a "$XMLFILE"
 				attribute="open"
 			fi
 
