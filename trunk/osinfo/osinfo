@@ -59,50 +59,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 #[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
-function PRINT_Help {
-	print_line
-	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
-	echo 
-	gettext -s -e $"Arguments are names of modules to get info from:"
-	echo
-        if [ "$SYSTEM" == "linux" ] ; then
-
-			for MODULE in ${MODULES_LINUX}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
-
-			for MODULE in ${MODULES_BSD}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        fi
-	echo
-	gettext -s $"If arguments is \"all\" then list information from all modules."
-	echo
-	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
-	echo "  $(basename $0) "$"[Options] arguments"
-	echo "  $(basename $0) "$"[--usage|--help]"
-	gettext -s "${tBOLD}"$"Options:""${tSTD}"
-	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
-	gettext -s "  -v, --verbose           "$"Show more information"
-	gettext -s "      --kdialog           "$"Show the information using KDialog"
-	gettext -s "                            "$"from KDE. Experimental feature!"
-	gettext -s "                            "$"Not usable yet!"
-	gettext -s "  -P, --prefix [dir]      "$"Use this dir as root"
-	gettext -s "                            "$"This disables some modules."
-	gettext -s "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
-	gettext -s "                            "$"and exits."
-	echo
-	print_line
-	if [ "$1" ]; then
-		exit $1
-	else
-		exit 0
-	fi
-}
-
 if [ "$#" -gt 0 ]; then # there are arguments to the command
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
@@ -162,9 +118,54 @@ else
 	PRINT_Help
 fi
 
+function PRINT_Help {
+	print_line
+	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
+	echo 
+	gettext -s -e $"Arguments are names of modules to get info from:"
+	echo
+        if [ "$SYSTEM" == "linux" ] ; then
+
+			for MODULE in ${MODULES_LINUX}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+
+			for MODULE in ${MODULES_BSD}; do
+				echo -e "\t\t$MODULE"
+			done
+
+        fi
+	echo
+	gettext -s $"If arguments is \"all\" then list information from all modules."
+	echo
+	gettext -s "${tBOLD}"$"Syntax:""${tSTD}"
+	echo "  $(basename $0) "$"[Options] arguments"
+	echo "  $(basename $0) "$"[--usage|--help]"
+	gettext -s "${tBOLD}"$"Options:""${tSTD}"
+	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
+	gettext -s "  -v, --verbose           "$"Show more information"
+	gettext -s "      --kdialog           "$"Show the information using KDialog"
+	gettext -s "                            "$"from KDE. Experimental feature!"
+	gettext -s "                            "$"Not usable yet!"
+	gettext -s "  -P, --prefix [dir]      "$"Use this dir as root"
+	gettext -s "                            "$"This disables some modules."
+	gettext -s "  -V, --version           "$"Shows the version of ${tBOLD}${appname}${tSTD}"
+	gettext -s "                            "$"and exits."
+	echo
+	print_line
+	if [ "$1" ]; then
+		exit $1
+	else
+		exit 0
+	fi
+}
+
 
 ############################################
-# IF OUTPUTTING TO XMLFILE, PRINT HEADER
+# PRINT XML HEADER
+function print_xml_header () {
 	if [ "$lanforce" == 1 ]; then
 
 		xml_doc_start "osinfo" "SYSTEM" "lanforce.dtd" | tee $XMLFILE
@@ -174,27 +175,28 @@ fi
 		
 		lf_entity_start "$(hostname)" "$ip" | tee -a $XMLFILE
 
-	elif [ "$usexml" == 1 ]; then
+	else
 		xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" | tee $XMLFILE
 		XML_INDENT=1
 		
 	fi
-	
+}
 ############################################
 
 
 
-name_value_pair_list=""
-k_title=""
-
 
 ################################################################################
+# NOTE: this function is deprecated
 # Adds a identifier and a value to "$name_value_pair_list".
 # Parameters:
 #   1 string   Name
 #   2 string   Value
 #
 # WARNING: Do NOT indent! Uses a TWO line string!
+
+name_value_pair_list=""
+k_title=""
 
 function add_name_value_pair {
 	name_value_pair_list="${name_value_pair_list}$(echo $1¡$2)\n"
@@ -213,57 +215,76 @@ function add_name_value_pair {
 ################################################################################
 
 
+
+################################################################################
+# value_header(), value_footer(), add_attribute(), add_values(), flush_values()
+# -------------------------------------------------------------------
+# these are a group of functions that are used by the modules to formulate the output.
+#
+# flush_values calls either print_xml, print_lanforce_xml or print_stdout
+# depending on the parameters the user has set during invocations of osinfo.
+#
+# the other functions use the $infostring[] to store the information
+# collected by the modules. the format of this array is like:
+# [%header%System information] [%attribute%Operating system;os] [Linux]
+# detailed information is given in each function.
+
+
 function value_header() {
 
-	# the headers array consists of items that are either:
-	#	strings == header for xml
-	#	an integer == number of values grouped in values[] array
+	# this function inserts the input string as the last available item
+	# in the $infostring array. it also adds a %header% tag which will be
+	# use by print_* functions to interpret how to parse the string.
 
-	# this function inserts the input (string) as the last available item in the array.
-#set -x
-	headers[${#headers[@]}]="$1"
+	#headers[${#headers[@]}]="$1"
 	infostring[${#infostring[@]}]="%header%$1"
-#set +x
-
 
 }
 
 function add_attribute() {
 
+	# parameters:
+	#	1 free-form name	(eg. Operating system)	 (required)
+	#	2 code tag for xml	(eg. os)				 (optional)
+
+	# this function inserts the input string(s) as the last available item
+	# in the $infostring array, with a field delimiter of ";". 
+	# it also adds an %attribute% tag which will be use by print_* functions
+	# to interpret how to parse the string.
+
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
 
 }
 
-
 function add_values {
 
-	# a set of values are written to the infostring[] array.
-	# the first input is the attribute, the rest are plain values.
+	# this function inserts the input string or strings into the $infostring[] array.
 
-	# check existing values array
-	FIRST_BLANK_VALUE=${#values[@]}
+	#FIRST_BLANK_VALUE=${#values[@]}
 	FIRST_BLANK_VALUE=${#infostring[@]}
 
-	# check the number of input values, modules may output blank, and that is considered
-	# a string, so this little eval thing compares the strings one by one
-	AMT_VALUES=0
-	for i in `seq 1 $#`; do
-		if [ "$(eval "echo \$$i")" != "" ]; then
-			((AMT_VALUES++))
-		fi
-	done
+	# check the number of input values.
+	# modules may output a blank string, and because that is also considered
+	# to be a string, this eval(uation) compares the strings one by one.
+	#AMT_VALUES=0
+	#for i in `seq 1 1 $#`; do
+	#	if [ "$(eval "echo \$$i")" != "" ]; then
+	#		((AMT_VALUES++))
+	#	fi
+	#done
 
 	# add an item to the headers array
-	headers[${#headers[@]}]="$AMT_VALUES"
+	#headers[${#headers[@]}]="$AMT_VALUES"
 
 
-	# this will put the arguments into the values array
+	# IFS need to be changed because the values are separated by newline
 	IFS_bak=$IFS ; 	IFS="
 " # a literal newline, do not indent
-	for VALUE in $@; do
-		values[$FIRST_BLANK_VALUE]="$VALUE"
-		infostring[$FIRST_BLANK_VALUE]="$VALUE"
-		((FIRST_BLANK_VALUE++))
+	for value in $@; do
+		#values[$FIRST_BLANK_VALUE]="$value"
+		#infostring[$FIRST_BLANK_VALUE]="$value"
+		infostring[${#infostring[@]}]="$value"
+		#((FIRST_BLANK_VALUE++))
 	done
 	IFS=$IFS_bak
 
@@ -285,24 +306,28 @@ function add_values {
 
 function value_footer() {
 
-	# this searches the headers array backwards, looking for an open header
-	for HDR in $(seq ${#headers[@]} -1 0); do
+	# this function searches the $infostring array backwards, 
+	# looking for open headers. 
+
+	# NEEDS DEBUGGING!
+	
+	#for HDR in $(seq ${#headers[@]} -1 0); do
 	#echo ${headers[$HDR]}
-		if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
+	#	if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
 			#echo $HDR
-			headers[${#headers[@]}]="%footer%${headers[$HDR]}"
+	#		headers[${#headers[@]}]="%footer%${headers[$HDR]}"
 		        #value_string="/$HDR\n";
-			break;
-		fi
-	done
-	#set -x
+	#		break;
+	#	fi
+	#done
+	
 	for position in $(seq ${#infostring[@]} -1 0); do
 		if [ "$(echo ${infostring[$position]} | grep '^%header%')" ]; then
-			infostring[${#infostring[@]}]="$(echo ${infostring[$position]} | sed s/%header%/%footer%/)"
+			infostring[${#infostring[@]}]="$(echo ${infostring[$position]} | \
+				sed s/%header%/%footer%/)"
 			break;
 		fi
 	done
-#set +x
 }
 
 function flush_values {
@@ -316,20 +341,24 @@ function flush_values {
 	unset infostring
 }
 
+
+################################################################################
+# print_xml(), print_lanforce_xml(), print_stdout()
+# -------------------------------------------------------------------
+# this set of functions formulates the items in $infostring for output.
+# detailed information is given in each function.
+
 function print_xml {
-	### XML OUTPUT ------\
 
-	# debug:
-#		for HDR in $(seq 1 ${#headers[@]}); do
-#			echo ${headers[$HDR]}
-#		done
+	# this function loops the $infostring and does the following steps
+	# for each item:
+	#	1 test if item does not begin with '%' => print value; next
+	#	2 if there is an attribute tag open => close it
+	#	3 if the item begins with %attribute% => print attribute ; next
+	#	4 if the item begins with %header% => print header ; next
+	#	5 if the item begins with %footer% => print footer ; next
 
-#		for VL in $(seq 1 ${#values[@]}); do
-#			echo ${values[$VL]}
-#		done
-#set -x
-#cho $XML_INDENT
-	
+
 	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
@@ -342,8 +371,6 @@ function print_xml {
 			echo -e "$(xml_value "${item}")" | tee -a $XMLFILE
 
 		else
-
-
 		
 			### CLOSE ATTRIBUTE TAG
 			if [ "$attribute" == "open" ]; then
@@ -356,7 +383,7 @@ function print_xml {
 				attribute="closed"
 			fi
 
-			### ATTRIBUTE TAG
+			### NEW ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
 				for indent in `seq 1 $XML_INDENT`; do
 					echo -ne "\t" | tee -a $XMLFILE 
@@ -370,7 +397,7 @@ function print_xml {
 				attribute="open"
 
 
-			#### OPENING TAG
+			#### HEADER TAG
 			elif [ "$(echo ${item} | grep '^%header%')" ]; then 
 				for indent in $(seq 1 $XML_INDENT); do 
 					echo -ne "\t" | tee -a $XMLFILE 
@@ -380,7 +407,7 @@ function print_xml {
 				((XML_INDENT++))
 
 
-			### CLOSING TAG
+			### FOOTER TAG
 			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
 				((XML_INDENT--))
 				for indent in `seq 1 $XML_INDENT`; do
@@ -389,16 +416,18 @@ function print_xml {
 				item="$(echo ${item} | sed s/%footer%//)"
 				echo -e "$(xml_tag_stop "${item}")" | tee -a $XMLFILE
 
-
 			fi
-
 		fi				
 	done	
 		 
 }
 
 function print_lanforce_xml {
-	
+
+	# this functions prepares the output xml to conform to the LanForce dtd.
+	# LanForce is a commercial company who hired a dev to do this script :)
+	# works pretty much the same as print_xml()
+
 	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
@@ -436,15 +465,30 @@ function print_lanforce_xml {
 
 function print_stdout {
 
+	# this function formulates $infostring for stdout
+	# header tags are printed; attribute names are printed;
+	# values for each attribute are printed on the same line
+	# separated with a tab.
+
+	# $value_string is formulated in the following steps:
+	#	1 test if item does not begin with '%' => add value + tab to string; next
+	#	2 if there is an attribute tag open => add newline to string
+	#	3 if the item begins with %attribute% => add attribute + tab to string
+	#		if there is a need to add more tabs for indentation, add tabs ; next
+	#	4 if the item begins with %header% => add header + newline to string; next
+
+	# finally $value_string is printed at once.
+
+
 	#for VL in $(seq 1 ${#infostring[@]}); do
 	#	echo ${infostring[$VL]}
 	#done
 
+	# TODO: get tabsize dynamically
 	TABSIZE=6 
-	
-	### STDOUT ---- \
-	longest_string=0
 
+	# this routine gets the longest header string in $infostring
+	longest_string=0
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
@@ -457,13 +501,14 @@ function print_stdout {
 			fi
 		fi
 	done
-#set -x
+
+	# this routine formulates $value_string
 	INDEX=0 ; value_string="" ; attribute="closed"
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
-
+			# this is a normal value item
 			value_string="${value_string}${item}\t";
 
 		else
@@ -496,9 +541,6 @@ function print_stdout {
 						value_string="${value_string}\t" 
 					done
 				fi
-				#((INDEX++))
-				#done
-				
 			fi
 		fi
 	done
@@ -506,8 +548,6 @@ function print_stdout {
 
 	echo -e "${value_string}" | \
 		sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
-set +x
-set +x
 
 }
 
@@ -656,8 +696,6 @@ print_module_header() {
 # Parameters:
 #   1 string   Module name
 print_module_footer() {
-
-
 	if [ "$usexml" == 1 ]; then
 		echo -e "\t$(xml_tag_stop "${1}")"
 	fi
@@ -698,6 +736,11 @@ if [ "$prefix" != '/' ] ; then
 fi
 
 for modul in $cmdsnames; do
+
+	if [ "$usexml" == 1 ]; then
+		print_xml_header
+	fi
+
 	case $modul in
 		#		uname)              eval "Module_Cmd_${modul}";;
 		terminal|\
@@ -718,9 +761,8 @@ done
 
 [ "$usekdialog" -ne 1 ]  #&& print_line
 
-
 ################################################################################
-# Print footer (for xml)
+# Print footer (for lanforce xml)
 
 if [ "$lanforce" == 1 ]; then
 
@@ -732,7 +774,7 @@ fi
 
 
 ############################################
-# FINALLY SEND OVER TCP IS OPTION IS SET
+# FINALLY SEND OVER TCP IF THE OPTION IS SET
 if [ "$netcat" == "1" ]; then
 	cat $XMLFILE | nc -q 0 $HOST $PORT
 fi

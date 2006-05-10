@@ -39,7 +39,7 @@ function lanforce_dtd () {
 	echo "<!ELEMENT text #PCDATA>"
 }
 
-function lf_entity () {
+function lf_entityset () {
 	id="$1"
 	name="$2"
 	ip="$3"
@@ -49,6 +49,23 @@ function lf_entity () {
 	echo "<!ATTLIST entity id         $id #IMPLIED"
 	echo "                 name       $name #REQUIRED"
 	echo "                 ip         $ip #IMPLIED>"
+}
+
+function lf_entity_start () {
+	hostname="$1"
+	ip="$2"
+	timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
+
+
+	echo "<entityset>"
+	echo " <entity name=\"$hostname\">"
+	echo "  <template code=\"computer\"\>"
+	lf_attribute_value "computer_name" "${hostname}"
+	lf_attribute_value "scanning_date" "${timestamp}"
+}
+
+function lf_entity_stop () {
+	echo "</entityset>"
 }
 
 function lf_template () {
@@ -62,7 +79,7 @@ function lf_template () {
 	echo "                   code    $code #REQUIRED>"
 }
 
-function lf_attribute () {
+function lf_attributeset () {
 	id="$1"
 	name="$2"
 	code="$3"
@@ -73,6 +90,15 @@ function lf_attribute () {
 	echo "                    name   $name #IMPLIED"
 	echo "                    code   $code #REQUIRED>"
 
+}
+
+function lf_attribute_value () {
+	code="$1"
+	value="$2"
+
+	echo "  <attribute code=\"$code\">"
+	echo "   <value>$value</value>"
+	echo "  </attribute>"
 }
 
 function lf_value () {
