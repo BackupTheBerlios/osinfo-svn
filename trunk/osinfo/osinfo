@@ -270,7 +270,7 @@ function add_values {
 	# modules may output a blank string, and because that is also considered
 	# to be a string, this eval(uation) compares the strings one by one.
 	#AMT_VALUES=0
-	#for i in `seq 1 1 $#`; do
+	#for i in $(seq 1 1 $#); do
 	#	if [ "$(eval "echo \$$i")" != "" ]; then
 	#		((AMT_VALUES++))
 	#	fi
@@ -540,7 +540,7 @@ function print_stdout {
 				tabs_to_add=$((($longest_string-${#name})/$TABSIZE))
 				#echo "tabs to add : " $tabs_to_add	
 				if [ $tabs_to_add -ge 1 ]; then
-					for i in `seq 1 $tabs_to_add`; do
+					for i in $(seq 1 $tabs_to_add); do
 						value_string="${value_string}\t" 
 					done
 				fi
@@ -598,14 +598,14 @@ function flush_name_value_pair {
 		 if [ ! "${openTag}" ]; then
 			 #echo "new tag"
 			 #echo $value1
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
+			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a $XMLFILE 
 			 done
 			 ((XML_INDENT++))
 			 echo -e "$(xml_tag_start "${value1}")" | tr '¿' ' '	| tee -a $XMLFILE	# open tag
 			 openTag=${value1}
 			 
 			 if [  "${value2}" ]; then 
-				 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
+				 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a $XMLFILE 
 				 done
 				 #echo "write data"
 				 #echo $value2
@@ -616,7 +616,7 @@ function flush_name_value_pair {
 			 #echo "close tag"
 			 #echo $value1
 			 ((XML_INDENT--))
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
+			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a $XMLFILE 
 			 done
 			 echo -e "$(xml_tag_stop "${openTag}")"  | tr '¿' ' '	| tee -a $XMLFILE		# close tag
 			 unset openTag;
@@ -625,7 +625,7 @@ function flush_name_value_pair {
 		 
 		 #### OUTER CLOSING TAG 
 		 if [ "$value_pair_footer" ]; then 
-			 for indent in `seq 0 $XML_INDENT`; do echo -ne "\t" | tee -a $XMLFILE 
+			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a $XMLFILE 
 			 done
 			 ((XML_INDENT--))
 			 echo -e "$(xml_tag_stop "${value_pair_footer}")" 	| tee -a $XMLFILE		# close
@@ -770,7 +770,7 @@ done
 if [ "$lanforce" == 1 ]; then
 
 	#lf_template "N/A" "%header%" "%code%"
-	lf_entity_stop | tee -a $XMLFILE
+	lf_entity_stop | tee -a "$XMLFILE"
 	#lf_note
 fi
 
@@ -779,7 +779,7 @@ fi
 ############################################
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
 if [ "$netcat" == "1" ]; then
-	cat $XMLFILE | nc -q 0 $HOST $PORT
+	cat "$XMLFILE" | nc -q 0 "$HOST" "$PORT"
 fi
 ############################################
 
