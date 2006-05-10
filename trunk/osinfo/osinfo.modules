@@ -174,10 +174,12 @@ Module_oem() {
 	module_header "${moduleName}"
 
 	if [ ! "$(type -p lshw)" ]; then
-		add_name_value_pair "$appname notification" "Please install LSHW to collect this information"
+		add_attribute	"$appname notification" 
+		add_values		"Please install LSHW to collect this information"
 
 	elif [ ! "$(whoami)" == "root" ]; then
-		add_name_value_pair "$appname notification" "Please run $appname as super-user to collect this information"
+		add_attribute	"$appname notification" 
+		add_values		"Please run $appname as super-user to collect this information"
 
 	else
 
@@ -287,27 +289,45 @@ Module_processor() {
 	moduleName="Processor"
 	module_header "${moduleName}"
 
-	add_name_value_pair $"Processor model"       "$(cat /proc/cpuinfo | grep 'model name' | awk -F': ' {'print $2'})"
-	add_name_value_pair $"Processor frequency"   "$(cat /proc/cpuinfo | grep 'cpu MHz' | awk -F': ' {'print $2" MHz"'})"
+	add_attribute	"Vendor"		"processor_vendor"
+	# TODO
 
+	add_attribute	"Model"			"processor_model"
+	add_values		"$(cat /proc/cpuinfo | grep 'model name' | \
+					awk -F': ' {'print $2'})"
+
+	add_attribute	"Frequency"		"processor_speed"
+	add_values		"$(cat /proc/cpuinfo | grep 'cpu MHz' | \
+					awk -F': ' {'print $2" MHz"'})"
+	
+	add_attribute	"Count"			"processor_count"
+	# TODO
+	
 	#TODO: fix double-entries with hyper-threading processors:
 	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
 
-	flush_name_value_pair
-	module_footer "${moduleName}"
+	module_footer
+	flush_values
 }
 
 Module_terminal() {
 	moduleName="Terminal info"
 	module_header "${moduleName}"
 
-	add_name_value_pair 'Terminal type'         "$TERM"
-	add_name_value_pair 'Terminal speed'        "$(stty speed)"
-	add_name_value_pair 'Rows'                  "$(stty size | awk '{print $1}')"
-	add_name_value_pair 'Columns'               "$(stty size | awk '{print $2}')"
+	add_attribute	"Terminal type"
+	add_values		"$TERM"
+	
+	add_attribute	"Terminal speed"        
+	add_values		"$(stty speed)"
+	
+	add_attribute	"Rows"
+	add_values		"$(stty size | awk '{print $1}')"
+	
+	add_attribute	"Columns"
+	add_values		"$(stty size | awk '{print $2}')"
 
-	flush_name_value_pair
-	module_footer "${moduleName}"
+	module_footer 
+	flush_values
 }
 
 Module_printers() {
@@ -650,15 +670,17 @@ Module_devices() {
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
 	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
-
-			add_name_value_pair "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | tr '_' ' ' | sed 's/^.//')" \
-								"$(echo ${devices[$DEV_ARRAY]} | awk {'print $2" "$3'} | tr '_' ' ')" 
+	
+			add_attribute	"$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
+							tr '_' ' ' | sed 's/^.//')" 
+			add_values		 "$(echo ${devices[$DEV_ARRAY]} | \
+							awk {'print $2" "$3'} | tr '_' ' ')" 
 
 		fi
 	done
-
-	flush_name_value_pair
-	module_footer "${moduleName}"
+	
+	module_footer
+	flush_values
 }
 
 
