@@ -11,7 +11,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=0
-patch_version=0
+patch_version=1
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -803,7 +803,7 @@ fi
 ############################################
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
 if [ "$netcat" == "1" ]; then
-	cat "$XMLFILE" | nc -q 0 "$HOST" "$PORT"
+	cat "$XMLFILE" | nc "$HOST" "$PORT"
 fi
 ############################################
 
