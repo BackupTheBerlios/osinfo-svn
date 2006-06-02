@@ -10,8 +10,8 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=0
-patch_version=1
+micro_version=1
+patch_version=0
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -403,7 +403,7 @@ function print_xml {
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
 			for indent in $(seq 1 $XML_INDENT); do 
-				echo -ne "\t" | tee -a "$XMLFILE" 
+				echo -ne "\t" | tee -a "$XMLFILE"
 			done
 			
 			echo -e "$(xml_value "${item}")" | tee -a "$XMLFILE"
@@ -536,7 +536,12 @@ function print_stdout {
 		fi
 	done
 
+
 	# this routine formulates $value_string
+	# mechanism: sequentially parse the $infostring from start to end
+	# and copy the contents to $item. if $item does not contain formulating
+	# info (begin with %), then it is copied to $value_string.
+
 	INDEX=0 ; value_string="" ; attribute="closed"
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
