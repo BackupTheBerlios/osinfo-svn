@@ -34,9 +34,19 @@ Module_hdd() {
 	moduleName="Disk information"
 	module_header "${moduleName}"
 
-	# TODO 
+	# this module collects data of the hard disk drives attached to the system. some information
+	# is unaccesible unless the drive is mounted. everything is collected honoring the requirement
+	# of minimum dependencies; ie. using standard *nix tools. some information is unavailable
+	# without special (but quite common) packages, and S-ATA/P-ATA drives do now display everything
+	# as nicely as IDE drives, due to missing support in smartmontools (06/2006).
+
+	# the information is collected with df, fdisk and from the /proc tree; 
+	# then if hdparm, smartctl, lshw are available, use them.
+
+
 	# SCSI is untested, although works probably as SATA
 	# RAID is untested 
+	
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
@@ -46,108 +56,175 @@ Module_hdd() {
 
 	else
 
-		# PRINCIPLE
-		# get as much information as is possible from df, fdisk and the /proc tree; then
-		# if hdparm, smartctl, lshw are not available && there are devices for the tools; then
-		# print information that the user should install the tools;
-		# else print everything in nice format
-
-
-		# the drives variable holds all drives in the system
+		# detect all drives in the system
 		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
 		
 		# these variables hold the total disk capacity of the whole system
 		TOTALSIZE=0
 		TOTALFREE=0
+
+		# there are at least two methods to parse an alphabetical seq number:
+		# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
+		# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
+		# the latter works by subtracting the ASCII offset (64) from the uppercase character.
+
+		#tmp="$(mktemp  osinfo.XXXXXX)"
+		#lshw > $tmp
 	
-		for DRVDEV in $drives; do
+		for drvdev in $drives; do
 		
-			value_header ${DRVDEV}
+			value_header	 ${drvdev}
 			
-			# $DRVDEV is the whole device address, eg "/dev/hda"
-			# $DRVNODE is just the device node, eg "hda"
-			DRVNODE=$(echo $DRVDEV | awk -F/ {'print $NF'})
+			# $drvdev is the whole device address, eg "/dev/hda"
+			# $drvnode is just the device node, eg "hda"
+			# $drvnr is the drive number for this type of driver; eg. for sdc $drvnr=3
+			drvnode=$(echo $drvdev | awk -F/ {'print $NF'})
+			drvnr=$(( $(echo -n ${drvnode: -1:1} | tr 'a-z' 'A-Z' | od -A n -t u1) - 64));
 
 
 			################# IDE drives
-			if [ "$(echo $DRVDEV | grep hd)" ]; then
-				if [ -e "/proc/ide/ide0/$DRVNODE" ]; then
-					add_values	'Driver'			"$(cat /proc/ide/ide0/$DRVNODE/driver)" 
+			if [ "$(echo $drvdev | grep hd)" ]; then
+				if [ -e "/proc/ide/ide0/$drvnode" ]; then
+					add_values	'Driver'			"$(cat /proc/ide/ide0/$drvnode/driver)" 
 					add_values	'Manufacturer'		"n/a" # /proc/ide/ide0/hda/identify is in binary
-					add_values	'Model'				"$(cat /proc/ide/ide0/$DRVNODE/model)"
-					#add_values	'Model'				"$(hdparm -i $DRVDEV | grep -Eio 'Model=\w+' | awk -F= {'print $2'})"
-					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$DRVNODE/capacity)/1024/1024)) GB)" # why this is incorrect?
+					add_values	'Model'				"$(cat /proc/ide/ide0/$drvnode/model)"
+													#"$(hdparm -i $drvdev | grep -Eio 'Model=\w+' | \
+													#awk -F= {'print $2'})"
+					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$drvnode/capacity)/1024/1024)) GB)" # why this is incorrect?
+					#add_values 'Serial'            "$(hdparm -i ${drives[$drvdev]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
 				fi
-
-				
 			fi
 
-            ################# SATA/SCSI drives
-            if [ "$(echo $DRVDEV | grep sd)" ]; then
+            ################# SATA/SCSI/USB drives
+			# this function servers to detect properties of SATA/SCSI/USB drives,
+			# because under Linux they all use the same SCSI drivers.
+			# usb drives, when properly detected by the Linux kernel,
+			# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
+			# which can be found both in the beforementioned location and also
+			# in /proc/scsi/sg/devices, can be used to identify the device 
+			# in /proc/scsi/usb-storage/*.
+			#
+			# as the devices are (hopefully) linearily, the devices catalogue
+			# can be used to identify which /dev/sd* node is a certain scsi#.
+			# 
+			# this is not true in the case of custom udev rules. although
+			# a good practise is to let kernel do its magic and create a
+			# link node to that device, so this is unlikely to be a problem.
+            if [ "$(echo $drvdev | grep sd)" ]; then
+			
+				scsi_info="/proc/scsi/scsi"
+				scsi_devices="/proc/scsi/sg/devices"
+				scsi_devstrings="/proc/scsi/sg/device_strs"					
+				usb_devstrings="/proc/scsi/usb-storage/"
 
-				add_values	'Manufacturer'		"$(echo n/a)"
-				add_values	'Model'				"$(echo n/a)"
-				add_values	'Serial'			"$(echo n/a)"
-				#add_values	'Serial'			"$(cat $tmp | grep -Ei '(serial)' | awk {'print $NF'})"
-				#add_values 'Serial'            "$(hdparm -i ${drives[$DRVDEV]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-				#add_values	'Capacity'			"$(fdisk -l ${drives[$DRVDEV]} | grep ${drives[$DRVDEV]} | head -n 1 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
-	
-				#add_values	'DMA'				"$()" # enabled/disabled
-
-
+				serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F_ {'print $NF'})"
+				#scsi_nr="$(sed -n "$drvnr{p;q;}" | grep -Eo 'scsi[0-9]+' ${scsi_info})"
+				scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
+				if [ -e "${usb_devstrings}${scsi_nr}" ]; then
+				### USB drive
+					usb_info="${usb_devstrings}/${scsi_nr}"
+				
+					add_attribute	'Description'
+					add_values		'USB disk'
+					add_attribute	'Vendor'
+					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
+									#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
+					add_attribute	'Model'
+					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
+					add_attribute	'Serial'
+					add_values		${serial}
+									#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
+									#awk {'print $NF'})"
+					
+				else
+				### SATA/SCSI drive
+				
+					add_attribute	'Description'
+					add_values		'SATA/SCSI disk'
+					add_attribute	'Vendor'
+					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
+					add_attribute	'Model'
+					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
+					add_attribute	'Serial'
+					add_values		${serial}
+									#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
+									#awk {'print $NF'})"
+				fi
+				
+				add_attribute	'DMA'
+				add_values		"n/a" #enabled/disabled
 			fi 
 			
+			################## COMMON for all drive types
+			add_attribute	'Capacity (reported)'
+			add_values		"$(fdisk -l ${drvdev} | grep ${drvdev} | \
+							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
+			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
+			add_attribute	'Capacity (actual)'
+			[[ $DISKSIZE -lt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024)) MB" 
+			[[ $DISKSIZE -gt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024/1024)) GB"
+			add_values		"$DZ"
 
-			##### COMMON for all drive types
-
-			add_values	'Capacity'			"$(fdisk -l $DRVDEV | head -n 2 | grep -Eo '[1-9][0-9]+\.[0-9] \w{2}')"
-			DISKSIZE="$(fdisk -l $DRVDEV | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
-			add_values	'DMA'				"n/a" # enabled/disabled
 
 
-			# TODO: an array that's like this, to compare how much is allocated for each FS type
+	
+
+			# this loop extracts information of partitions
+			# TODO: an array that is like this, to compare how much is allocated for each FS type
 			# [partition ID=83] [size on hda1] [size on hda4]
 			# [partition ID=7] [size on hda2] [size on hdb1]
-			
 
-			for PARTNR in $(seq 1 $(fdisk -l $DRVDEV | grep ^$DRVDEV | wc -l)); do 
+			DISKFREE=0
+			for PARTNR in $(seq 1 $(fdisk -l $drvdev | grep ^$drvdev | wc -l)); do 
+				partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
+					sed -n "${PARTNR}{p;q;}" )"
+					
+				if [ "$(df -Plk | grep $partition)" ]; then
+					# df reports in kb
+					partsize="$(df -Plk | grep $partition | awk {'print $2'})"
+					partfree="$(df -Plk | grep $partition | awk {'print $4'})"
+					partpercfree="$(($partfree*100/$partsize))" # FIXME: rounds off improperly
 
-				PARTITION="$(fdisk -l $DRVDEV | grep ^$DRVDEV | awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
-				if [ "$(df -Plk | grep $PARTITION)" ]; then
+					add_attribute	"\t"${partition}
+					add_attribute	'\t\tMountpoint'
+					add_attribute	'\t\tFilesystem'
+					add_values		"$(df -PT $partition | grep ^$partition | awk {'print $2'})"
+					add_attribute	'\t\tCapacity'
+					# small partitions are reported in MB, larger in GB
+					[[ $partsize -lt 1048576 ]] && pz="$(($partsize/1024)) MB" && \
+						pf="$(($partfree/1024)) MB" 
+					[[ $partsize -gt 1048576 ]] && pz="$(($partsize/1024/1024)) GB" && \
+						pf="$(($partfree/1024/1024)) GB" 
+					add_values		"$pz"
+					add_attribute	'\t\tFree'
+					add_values		"$pf ; $partpercfree %"
 
-					PARTSIZE="$(df -Plk | grep $PARTITION | awk {'print $2'})"
-					PARTFREE="$(df -Plk | grep $PARTITION | awk {'print $3'})"
-					PERCFREE="$(($PARTFREE*100/$PARTSIZE))" # <<< rounds off improperly, how to fix????
-
-					#value_header $PARTITION
-
-					add_values 'Filesystem'		"$(df -PT $PARTITION | grep ^$PARTITION | awk {'print $2'})"
-					add_values 'Capacity'		"$(echo $PARTSIZE bytes)"
-					add_values 'Free'			"$(echo $PARTFREE bytes ";" $PERCFREE %) "
-
-					#value_footer
-					DISKFREE=$(($DISKFREE+$PARTFREE))
-
+					DISKFREE=$(($DISKFREE+$partfree))
+				else
+					add_attribute	"\t${partition}"
+					add_values		"unmounted"
+					#DISKFREE=0
 				fi
-
 			done
 
-#			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
-#			TOTALFREE=$(($TOTALFREE+$DISKFREE))
-			add_values	'Free on mounted partitions'				"$(echo $DISKFREE)"
 
-#			value_footer
-			#flush_values
+			add_attribute	'Free (mounted)'
+			[[ $DISKSIZE -lt 1048576 ]] && DSF="$(($DISKFREE/1024)) MB" 
+			[[ $DISKSIZE -gt 1048576 ]] && DSF="$(($DISKFREE/1024/1024)) GB"
 
-#value_header foobar
-#value_footer
-#flush_values
+			diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # FIXME: rounds off improperly
+			add_values		"$DSF ; $diskpercfree %"
+
+			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
+			TOTALFREE=$(($TOTALFREE+$DISKFREE))
+
+
 			### S.M.A.R.T information
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
 				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
 
 				#tmp="$(mktemp  osinfo.XXXXXX)"
-				#smartctl -a ${drives[$DRVDEV]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
+				#smartctl -a ${drives[$drvdev]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
 	
 				#if [ -e "$tmp" ]; then
 					#add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
@@ -155,6 +232,8 @@ Module_hdd() {
 					#add_values	''		"$()"
 					#add_values	''		"$()"
 				#fi
+			unset DISKSIZE
+			unset DISKFREE
 		done
 
 		#value_header	"Total disk space"
@@ -164,9 +243,13 @@ Module_hdd() {
 
 	fi
 
+	module_footer
 	flush_values
-	#module_footer "${moduleName}"
 }
+
+
+#Module_memory() {}
+#Module_cdrom() {}
 
 
 Module_oem() {

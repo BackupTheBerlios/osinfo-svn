@@ -10,7 +10,7 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=1
+micro_version=2
 patch_version=0
 dev_status=dev
 
@@ -258,6 +258,7 @@ function value_header() {
 	#echo ${infostring[0]}
 }
 
+
 function value_footer() {
 
 	# this function searches the $infostring array backwards, 
@@ -304,6 +305,7 @@ function value_footer() {
 
 }
 
+
 function add_attribute() {
 
 	# parameters:
@@ -322,9 +324,7 @@ function add_attribute() {
 function add_values {
 
 	# this function inserts the input string or strings into the $infostring[] array.
-
-	#FIRST_BLANK_VALUE=${#values[@]}
-	FIRST_BLANK_VALUE=${#infostring[@]}
+	# FIXME: newline detection is broken.
 
 	# check the number of input values.
 	# modules may output a blank string, and because that is also considered
@@ -336,18 +336,11 @@ function add_values {
 	#	fi
 	#done
 
-	# add an item to the headers array
-	#headers[${#headers[@]}]="$AMT_VALUES"
-
-
 	# IFS need to be changed because the values are separated by newline
 	IFS_bak="$IFS" ; 	IFS="
 " # a literal newline, do not indent
 	for value in $@; do
-		#values[$FIRST_BLANK_VALUE]="$value"
-		#infostring[$FIRST_BLANK_VALUE]="$value"
 		infostring[${#infostring[@]}]="$value"
-		#((FIRST_BLANK_VALUE++))
 	done
 	IFS="$IFS_bak"
 
@@ -460,6 +453,7 @@ function print_xml {
 		 
 }
 
+
 function print_lanforce_xml {
 
 	# this functions prepares the output xml to conform to the LanForce dtd.
@@ -501,6 +495,7 @@ function print_lanforce_xml {
 
 }
 
+
 function print_stdout {
 
 	# this function formulates $infostring for stdout
@@ -518,8 +513,8 @@ function print_stdout {
 	# finally $value_string is printed at once.
 
 
-	# TODO: get tabsize dynamically
-	TABSIZE=6 
+		# TODO: get tabsize dynamically
+	TABSIZE=8 
 
 	# this routine gets the longest header string in $infostring
 	longest_string=0
@@ -559,8 +554,9 @@ function print_stdout {
 
 			if [ "$(echo ${item} | grep '^%header%')" ]; then 
 				item="$(echo ${item} | sed s/%header%//)"
-				value_string="${value_string}${item}\n";
-			
+				value_string="${value_string}${tBOLD}${item}${tSTD}\n";
+
+
 
 			elif [ "$(echo ${item} | grep '^%attribute%')" ]; then
 				item="$(echo ${item} | sed s/%attribute%//)"
@@ -571,30 +567,44 @@ function print_stdout {
 				
 				# this evaluation counts the proper amount of tabs to add
 				# for beautiful identation.
+				# bash always rounds downward, so 20/8 = 2
 				#echo -en ${name} " : " ${#name} "\n"
-				#echo "diff : " $(($longest_string-${#name}))
-				tabs_to_add=$((($longest_string-${#name})/$TABSIZE))
-				#echo "tabs to add : " $tabs_to_add	
-				if [ $tabs_to_add -ge 1 ]; then
-					for i in $(seq 1 $tabs_to_add); do
-						value_string="${value_string}\t" 
-					done
-				fi
+				#diff=$(($longest_string-${#name}))
+				max_indent=$(($longest_string/$TABSIZE))
+				diff_indent=$(($max_indent-${#name}/$TABSIZE))
+				#echo "diff : $diff" 				
+				#if [ ${#name} -ne $TABSIZE ]; then
+				# bc might not be available everywhere. not sure about that.
+				#set -x
+				#foo=$(echo ${#name}/$TABSIZE | bc -l | awk -F. {'print $NF'})
+				#echo $foo
+				#exit 0
+				#if [ ${#name} -ne $TABSIZE ]; then
+				#if [ $diff -ne 0 ]; then
+					#tabs_to_add=$(($diff/$TABSIZE+1))
+					tabs_to_add=$diff_indent
+					#echo "tabs to add : " $tabs_to_add	
+					if [ $tabs_to_add -ge 1 ]; then
+						for i in $(seq 1 $tabs_to_add); do
+							value_string="${value_string}\t" 
+						done
+					fi
+				#fi
 			fi
 		fi
 	done
 	value_string=${value_string}"\n";
 
-	echo -e "${value_string}" | \
-		sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
+	# this sed makes the first item bold
+	echo -e "${value_string}" #| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" 
 
 }
-
 
 
 ################################################################################
 # Prints "$name_value_pair_list" then empties the "$name_value_pair_list"
 # Uses colours
+# DEPRECATED
 # Uses the "column" tool
 function flush_name_value_pair {
 	if [ "$usexml" == 1 ]; then
@@ -706,6 +716,11 @@ function flush_name_value_pair {
 }
 ################################################################################
 
+
+
+################################################################################
+# Module functions
+# ------------------------------------------------------------------------------
 
 function wrong_module() {
 	do_abort $"${1} is not a valid module!" 1
