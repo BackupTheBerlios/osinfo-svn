@@ -590,24 +590,41 @@ Module_processor() {
 	moduleName="Processor"
 	module_header "${moduleName}"
 
-	add_attribute	"Vendor"		"processor_vendor"
-	add_values		"$(cat /proc/cpuinfo | grep 'vendor' | \
-					awk -F': ' {'print $2'})"
+	cpuinfo="/proc/cpuinfo"
+	cpu_count="$(cat ${cpuinfo}  | grep 'cpu cores' | head -n 1 | awk {'print $NF'})"
 
-	add_attribute	"Model"			"processor_model"
-	add_values		"$(cat /proc/cpuinfo | grep 'model name' | \
-					awk -F': ' {'print $2'})"
-
-	add_attribute	"Frequency"		"processor_speed"
-	add_values		"$(cat /proc/cpuinfo | grep 'cpu MHz' | \
-					awk -F': ' {'print $2" MHz"'})"
-	
 	add_attribute	"Count"			"processor_count"
-	# TODO
+	add_values		$cpu_count
 	
-	#TODO: fix double-entries with hyper-threading processors:
-	#Processor model:      Intel(R) Pentium(R) 4 CPU 2.80GHz Intel(R) Pentium(R) 4 CPU 2.80GHz
+	for cpunr in $(seq 1 1 $cpu_count); do
+	
+		if [ $cpu_count -gt 1 ]; then
+			value_header	"Processor $cpunr"
+		fi
+		
+		add_attribute	"Vendor"		"processor_vendor"
+		add_values		"$(cat ${cpuinfo} | grep 'vendor' | sed -n "$cpunr{p;q}" | \
+						awk -F': ' {'print $2'})"
 
+		add_attribute	"Model"			"processor_model"
+		add_values		"$(cat ${cpuinfo}  | grep 'model name' | sed -n "$cpunr{p;q}" | \
+						awk -F': ' {'print $2'})"
+
+		add_attribute	"Frequency"		"processor_speed"
+		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
+						awk -F': ' {'print $2" MHz"'})"
+
+		add_attribute	"Cache"
+		add_values		"$(cat ${cpuinfo} | grep 'cache' | sed -n "$cpunr{p;q}" | \
+						awk -F': ' {'print $2'})"
+
+		add_attribute	"Stepping"
+		add_values		"$(cat ${cpuinfo} | grep 'stepping' | sed -n "$cpunr{p;q}" | \
+						awk -F': ' {'print $2'})"
+
+
+	done
+	
 	module_footer
 	flush_values
 }
