@@ -35,42 +35,49 @@ Module_hdd() {
 	module_header "${moduleName}"
 
 	# this module collects data of the hard disk drives attached to the system. some information
-	# is unaccesible unless the drive is mounted. everything is collected honoring the requirement
+	# is unaccesible unless the partitions are mounted. everything is collected honoring the requirement
 	# of minimum dependencies; ie. using standard *nix tools. some information is unavailable
 	# without special (but quite common) packages, and S-ATA/P-ATA drives do now display everything
 	# as nicely as IDE drives, due to missing support in smartmontools (06/2006).
 
-	# the information is collected with df, fdisk and from the /proc tree; 
-	# then if hdparm, smartctl, lshw are available, use them.
+	# used tools:
+	# fdisk, df, /proc tree (Linux only), bc, lshw, smartmontools, hdparm
 
-
+	# developement status:
+	# -------------------
+	# IDE/PATA is tested
+	# SATA is tested
+	# USBhdd is tested	
 	# SCSI is untested, although works probably as SATA
 	# RAID is untested 
-	
+	# Logical Volume Management is untested
+
+	# notes:
+	# -----
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
+	# -----
+	# there are at least two methods to parse an alphabetical seq number:
+	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
+	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
+	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
 
+	# begin
+	# -----
+	# this module depends heavily on root access, so prevent other users of running this module
 	if [ "$(whoami)" != "root" ]; then
-		add_values "$appname notification" "Please run $appname as super-user to collect this information"
-
+		add_attribute	"$appname notification"
+		add_values		"Run $appname as super-user to collect this information"
 	else
 
+		# declare variables
+		totalsize=0; totalfree=0
+
 		# detect all drives in the system
-		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
-		
-		# these variables hold the total disk capacity of the whole system
-		TOTALSIZE=0
-		TOTALFREE=0
+		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"		
 
-		# there are at least two methods to parse an alphabetical seq number:
-		# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
-		# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
-		# the latter works by subtracting the ASCII offset (64) from the uppercase character.
-
-		#tmp="$(mktemp  osinfo.XXXXXX)"
-		#lshw > $tmp
-	
+		# loop all detected drives
 		for drvdev in $drives; do
 		
 			value_header	 ${drvdev}
@@ -81,170 +88,327 @@ Module_hdd() {
 			drvnode=$(echo $drvdev | awk -F/ {'print $NF'})
 			drvnr=$(( $(echo -n ${drvnode: -1:1} | tr 'a-z' 'A-Z' | od -A n -t u1) - 64));
 
-
-			################# IDE drives
 			if [ "$(echo $drvdev | grep hd)" ]; then
-				if [ -e "/proc/ide/ide0/$drvnode" ]; then
-					add_values	'Driver'			"$(cat /proc/ide/ide0/$drvnode/driver)" 
-					add_values	'Manufacturer'		"n/a" # /proc/ide/ide0/hda/identify is in binary
-					add_values	'Model'				"$(cat /proc/ide/ide0/$drvnode/model)"
-													#"$(hdparm -i $drvdev | grep -Eio 'Model=\w+' | \
-													#awk -F= {'print $2'})"
-					#add_values 'Capacity'          "$(echo $(($(cat /proc/ide/ide0/$drvnode/capacity)/1024/1024)) GB)" # why this is incorrect?
-					#add_values 'Serial'            "$(hdparm -i ${drives[$drvdev]} | grep -Eio 'serialno=\w+' | awk -F= {'print $2'})"
-				fi
-			fi
 
-            ################# SATA/SCSI/USB drives
-			# this function servers to detect properties of SATA/SCSI/USB drives,
-			# because under Linux they all use the same SCSI drivers.
-			# usb drives, when properly detected by the Linux kernel,
-			# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
-			# which can be found both in the beforementioned location and also
-			# in /proc/scsi/sg/devices, can be used to identify the device 
-			# in /proc/scsi/usb-storage/*.
-			#
-			# as the devices are (hopefully) linearily, the devices catalogue
-			# can be used to identify which /dev/sd* node is a certain scsi#.
-			# 
-			# this is not true in the case of custom udev rules. although
-			# a good practise is to let kernel do its magic and create a
-			# link node to that device, so this is unlikely to be a problem.
-            if [ "$(echo $drvdev | grep sd)" ]; then
+				scan_hdd_ide
+
+			elif [ "$(echo $drvdev | grep sd)" ]; then
 			
-				scsi_info="/proc/scsi/scsi"
-				scsi_devices="/proc/scsi/sg/devices"
-				scsi_devstrings="/proc/scsi/sg/device_strs"					
-				usb_devstrings="/proc/scsi/usb-storage/"
+				scan_hdd_sg
 
-				serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F_ {'print $NF'})"
-				#scsi_nr="$(sed -n "$drvnr{p;q;}" | grep -Eo 'scsi[0-9]+' ${scsi_info})"
-				scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
-				if [ -e "${usb_devstrings}${scsi_nr}" ]; then
-				### USB drive
-					usb_info="${usb_devstrings}/${scsi_nr}"
-				
-					add_attribute	'Description'
-					add_values		'USB disk'
-					add_attribute	'Vendor'
-					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
-									#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
-					add_attribute	'Model'
-					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
-					add_attribute	'Serial'
-					add_values		${serial}
-									#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
-									#awk {'print $NF'})"
-					
-				else
-				### SATA/SCSI drive
-				
-					add_attribute	'Description'
-					add_values		'SATA/SCSI disk'
-					add_attribute	'Vendor'
-					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
-					add_attribute	'Model'
-					add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
-					add_attribute	'Serial'
-					add_values		${serial}
-									#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
-									#awk {'print $NF'})"
-				fi
-				
-				add_attribute	'DMA'
-				add_values		"n/a" #enabled/disabled
+			else
+			
+				add_attribute	"Description"			
+				add_values		"Unknown device type"
+
 			fi 
 			
-			################## COMMON for all drive types
+			#################################
+			# common data for all drive types
+
+			add_attribute	'Geometry'
+			add_values		"$(fdisk -l | grep /dev/sda -A 1 | sed -n "2{p;q}")"
+
 			add_attribute	'Capacity (reported)'
 			add_values		"$(fdisk -l ${drvdev} | grep ${drvdev} | \
 							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
-			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
+			
 			add_attribute	'Capacity (actual)'
+			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
 			[[ $DISKSIZE -lt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024)) MB" 
 			[[ $DISKSIZE -gt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024/1024)) GB"
 			add_values		"$DZ"
 
 
+			#####################
+			# scan the partitions
+			
+			scan_hdd_partitions
+			
 
-	
-
-			# this loop extracts information of partitions
-			# TODO: an array that is like this, to compare how much is allocated for each FS type
-			# [partition ID=83] [size on hda1] [size on hda4]
-			# [partition ID=7] [size on hda2] [size on hdb1]
-
-			DISKFREE=0
-			for PARTNR in $(seq 1 $(fdisk -l $drvdev | grep ^$drvdev | wc -l)); do 
-				partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
-					sed -n "${PARTNR}{p;q;}" )"
-					
-				if [ "$(df -Plk | grep $partition)" ]; then
-					# df reports in kb
-					partsize="$(df -Plk | grep $partition | awk {'print $2'})"
-					partfree="$(df -Plk | grep $partition | awk {'print $4'})"
-					partpercfree="$(($partfree*100/$partsize))" # FIXME: rounds off improperly
-
-					add_attribute	"\t"${partition}
-					add_attribute	'\t\tMountpoint'
-					add_attribute	'\t\tFilesystem'
-					add_values		"$(df -PT $partition | grep ^$partition | awk {'print $2'})"
-					add_attribute	'\t\tCapacity'
-					# small partitions are reported in MB, larger in GB
-					[[ $partsize -lt 1048576 ]] && pz="$(($partsize/1024)) MB" && \
-						pf="$(($partfree/1024)) MB" 
-					[[ $partsize -gt 1048576 ]] && pz="$(($partsize/1024/1024)) GB" && \
-						pf="$(($partfree/1024/1024)) GB" 
-					add_values		"$pz"
-					add_attribute	'\t\tFree'
-					add_values		"$pf ; $partpercfree %"
-
-					DISKFREE=$(($DISKFREE+$partfree))
-				else
-					add_attribute	"\t${partition}"
-					add_values		"unmounted"
-					#DISKFREE=0
-				fi
-			done
-
-
+			###############################
+			# calculate total disk capacity
+			
 			add_attribute	'Free (mounted)'
-			[[ $DISKSIZE -lt 1048576 ]] && DSF="$(($DISKFREE/1024)) MB" 
-			[[ $DISKSIZE -gt 1048576 ]] && DSF="$(($DISKFREE/1024/1024)) GB"
+			[[ $DISKSIZE -lt 1048576 ]] && \
+				#diskfr="$(($DISKFREE/1024)) MB"
+				diskfr="$(echo $DISKFREE/1024 | bc -l) MB"
+			[[ $DISKSIZE -gt 1048576 ]] && \
+				#diskfr="$(($DISKFREE/1024/1024)) GB"
+				diskfr="$(echo $DISKFREE/1024/1024 | bc -l) GB"
 
-			diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # FIXME: rounds off improperly
-			add_values		"$DSF ; $diskpercfree %"
+			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # FIXME: rounds off improperly
+			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)" 
+			add_values		"${diskfr:0:4} ; ${diskpercfree:0:4} %"
 
-			TOTALSIZE=$(($TOTALSIZE+$DISKSIZE))
-			TOTALFREE=$(($TOTALFREE+$DISKFREE))
+			totalsize=$(($totalsize+$DISKSIZE))
+			totalfree=$(($totalfree+$DISKFREE))
 
 
-			### S.M.A.R.T information
-				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | head -n 1 | awk -F': ' {'print $2'})" 
-				#add_values	'SMART'				"$(cat $tmp | grep 'SMART support' | tail -n 1 | awk -F': ' {'print $2'})" # is it on?
-
-				#tmp="$(mktemp  osinfo.XXXXXX)"
-				#smartctl -a ${drives[$drvdev]} > $tmp		# << TODO: fix this not to error if smartctl is unavailable
-	
-				#if [ -e "$tmp" ]; then
-					#add_values	'Lifetime'			"$(cat $tmp | grep -i power_on_hours | awk {'print $NF'}) hours"
-					#add_values	'Health Status'		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
-					#add_values	''		"$()"
-					#add_values	''		"$()"
-				#fi
 			unset DISKSIZE
 			unset DISKFREE
+			
 		done
 
-		#value_header	"Total disk space"
-		#add_values		'Capacity'		"$(echo $TOTALSIZE)"
-		#add_values		'Free'			"$(echo -e $TOTALFREE "; xx%" )" 
-		#value_footer
+
+
+		######################################
+		# calculate total system disk capacity
+		# report data of the whole system
+		
+		totalpercfree=0
+		
+		#add_attribute	"Total disk space"
+		#add_values		"Capacity: $(echo $totalsize)"
+		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
 
 	fi
 
+	# finalize
 	module_footer
 	flush_values
+}
+
+function scan_hdd_smart() {
+	#########################
+	# S.M.A.R.T. scanning
+	#
+	# smartmontools are handy in getting the extended parameters
+	# of hard drives. only version 5.36 and onward support SATA drives
+	# and the version may be a bit uncommon, as it was released in April 2006.
+	# all major distros should begin to include it in their packages,
+	# so this should be relatively common in late 2006.
+	# for ide drives this is not a problem.
+	#
+	# this function takes one parameter, the driver to use. default is ata.
+	
+	if [ "$1" ]; then dev_type=$1
+	else dev_type=ata;
+	fi
+
+	# allocate a temp file
+	tmp="$(mktemp  osinfo.XXXXXX)"
+
+	### check the smartctl version >5.36
+	version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
+		grep -Eo '[0-9]\.[0-9]+')";
+	diff="$(echo $version-5.36 | bc -l)"
+	if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
+		smart="sata-ok"
+	else
+		smart=$version					
+	fi
+	unset version
+
+	smartctl -a -d $dev_type ${drvdev} > $tmp
+	add_attribute	'S.M.A.R.T.'
+	add_values		"$(cat ${tmp} | grep 'SMART support' | \
+					head -n 1 | awk -F': ' {'print $2'})"
+
+	add_attribute	'Lifetime'
+	add_values		"$(cat $tmp | grep -i power_on | awk {'print $NF'})"
+
+	add_attribute	'Temperature (C)'
+	add_values		"$(cat $tmp | grep -i temperature_celsius | awk -F'  ' {'print $NF'})"
+ 
+	add_attribute	'Health Status'
+	add_values		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
+	
+}
+
+function scan_hdd_partitions() {
+	####################
+	# PARTITIONS
+	# 
+	# this loop extracts information of partitions
+	# 
+	# TODO: an array that stores data of how much is allocated for each FS
+	# [partition ID=83] [size on hda1] [size on hda4]
+	# [partition ID=7] [size on hda2] [size on hdb1]
+	
+	DISKFREE=0
+	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
+
+	value_header		"  Partition\t\tmountpoint\tfilesystem\tcapacity\tfree"
+
+	for PARTNR in $(seq 1 1 $partitions_on_drive); do 
+		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
+			sed -n "${PARTNR}{p;q;}" )"
+
+
+		# if partition is mounted (=is in mtab)
+		# BUG: submounted (=system for automounting usb sticks) partitions
+		# are considered unmounted, while they are not!
+		if [ "$(df -Plk | grep $partition)" ]; then
+		
+			# df reports in kb
+			partsize="$(df -Plk | grep $partition | awk {'print $2'})"
+			partfree="$(df -Plk | grep $partition | awk {'print $4'})"
+			partpercfree="$(($partfree*100/$partsize))" # FIXME: rounds off improperly
+
+			add_attribute	"  ${partition}"
+			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $NF'})"
+			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $2'})"
+			# small partitions are reported in MB, larger in GB
+			[[ $partsize -lt 1048576 ]] && pz="$(($partsize/1024)) MB" && \
+				pf="$(($partfree/1024)) MB" 
+			[[ $partsize -gt 1048576 ]] && pz="$(($partsize/1024/1024)) GB" && \
+				pf="$(($partfree/1024/1024)) GB" 
+			add_values		"$pz"
+			add_values		"$pf ; $partpercfree%"
+
+			DISKFREE=$(($DISKFREE+$partfree))
+			
+		else
+		
+			add_attribute	"  ${partition}"
+			add_values		"unmounted"
+			add_values		"$(fdisk -l | grep ^${partition} | awk {'print $NF'})"
+			#DISKFREE=0
+			
+		fi
+	done
+}
+
+function scan_hdd_ide() {
+	#################
+	# IDE drives
+	#
+	# this function collects information of IDE drives in the system.
+
+	ide_info="/proc/ide/"
+	serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F= {'print $NF'})"
+
+	add_attribute	'Description'
+	add_values		'IDE drive'
+	
+	add_attribute	'Vendor'
+	if [ "$(type -p smartctl)" ]; then	
+		# this smart scan is not included into the scan_hdd_smart()
+		# because it would break the correct order of the report.
+		add_values		"$(smartctl -i ${drvdev} | grep '^Model' | \
+						awk -F: {'print $2'} | sed 's/^ *//')"						
+	else
+		add_values		"$(udevinfo -q all -n ${drvdev} | grep VENDOR | \
+						awk -F_ {'print $NF'})"
+	fi
+
+	if [ -e "/proc/ide/$drvnode" ]; then
+	
+		add_attribute	'Model'
+		add_values		"$(cat ${ide_info}${drvnode}/model)"
+						#"$(hdparm -i $drvdev | grep -Eio 'Model=\w+' | \
+						#awk -F= {'print $2'})"
+
+	fi	
+
+	add_attribute	'Serial'
+	add_values		${serial}
+					#"$(hdparm -i ${drives[$drvdev]} | grep -Eio 'serialno=\w+' | \
+					#awk -F= {'print $2'})"
+	
+	if [ -e "/proc/ide/$drvnode" ]; then
+	
+		add_attribute	'Driver'
+		add_values		"$(cat ${ide_info}${drvnode}/driver)"
+		
+	fi
+	
+	add_attribute	'DMA'
+	add_values		"$(hdparm /dev/hda | grep dma | grep -Eo '\([onf]+\)')"	
+		
+	if [ "$(type -p smartctl)" ]; then
+		
+		scan_hdd_smart
+			
+	fi		
+}
+
+function scan_hdd_sg() {
+
+	################# 
+	# SATA/SCSI/USB drives (sg driver)
+	# 
+	# this function servers to detect properties of SATA/SCSI/USB drives,
+	# because under Linux they all use the same SCSI drivers.
+	# usb drives, when properly detected by the Linux kernel,
+	# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
+	# which can be found both in the beforementioned location and also
+	# in /proc/scsi/sg/devices, can be used to identify the device 
+	# in /proc/scsi/usb-storage/*.
+	#
+	# as the devices are (hopefully) linearily, the devices catalogue
+	# can be used to identify which /dev/sd* node is a certain scsi#.
+	# 
+	# this is not true in the case of custom udev rules. although
+	# a good practise is to let kernel do its magic and create a
+	# link node to that device, so this is unlikely to be a problem.
+	#
+	# smartmontools support SATA drives from version 5.36 on
+	# (released April 2006). this function is written in June 2006,
+	# and for that the version of smartctl is checked before trying
+	# to access SATA drives.
+
+	scsi_info="/proc/scsi/scsi"
+	scsi_devices="/proc/scsi/sg/devices"
+	scsi_devstrings="/proc/scsi/sg/device_strs"					
+	usb_devstrings="/proc/scsi/usb-storage/"
+	sg_version="/proc/scsi/sg/version"
+
+	serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F= {'print $NF'})"
+	scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
+
+	# test if the scsi_nr is found in /proc/scsi/usb-storage/
+	if [ -e "${usb_devstrings}${scsi_nr}" ]; then				
+	###
+	# USB drive
+	
+		usb_info="${usb_devstrings}/${scsi_nr}"
+	
+		add_attribute	'Description'
+		add_values		'USB drive'
+
+	else
+	###
+	# SATA/SCSI drive
+	
+		add_attribute	'Description'
+		add_values		'SATA/SCSI drive'
+	fi
+
+	### 
+	# common sg driver
+	
+	add_attribute	'Vendor'
+	if [ "$smart" = "sata-ok" ]; then
+		# this smart scan is not included into the scan_hdd_smart()
+		# because it would break the correct order of the report.
+		add_values		"$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
+						awk -F: {'print $2'} | sed 's/^ *//')"
+	else
+		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
+						#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
+	fi
+	
+	add_attribute	'Model'
+	add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
+	
+	add_attribute	'Serial'
+	add_values		${serial}
+					#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
+					#awk {'print $NF'})"
+					
+	add_attribute	'Driver'
+	add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"			
+	
+	#add_attribute	'DMA'
+	#add_values		"n/a" #enabled/disabled
+
+	if [ "$smart" = "sata-ok" ]; then
+
+		scan_hdd_smart
+			
+	fi
 }
 
 

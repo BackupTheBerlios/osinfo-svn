@@ -558,9 +558,10 @@ function print_stdout {
 
 
 
-			elif [ "$(echo ${item} | grep '^%attribute%')" ]; then
-				item="$(echo ${item} | sed s/%attribute%//)"
-				name=$(echo ${item} | awk -F\; {'print $1'})
+			elif [ "$(echo "${item}" | grep '^%attribute%')" ]; then
+			
+				item="$(echo "${item}" | sed s/%attribute%//)"
+				name=$(echo "${item}" | awk -F\; {'print $1'})				
 				value_string="${value_string}${name}\t";
 				attribute="open"
 
