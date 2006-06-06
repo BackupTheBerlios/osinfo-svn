@@ -8,9 +8,9 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES_LINUX='distro applications terminal network devices processor system hdd oem'
+MODULES_LINUX='terminal network devices processor system hdd'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lsmod users'
+MODULES_BROKEN='printers lsmod users distro oem applications'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 
@@ -507,7 +507,7 @@ Module_oem() {
 
 	done
 
-	echo "this module is broken, will be fixed soon - ruxpin"
+	echo "this module is broken, will be fixed -ruxpin"
 #	echo ${hardware[1]}
 	exit 0
 
