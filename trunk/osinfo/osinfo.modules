@@ -57,11 +57,14 @@ Module_hdd() {
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-	# -----
+	# 
 	# there are at least two methods to parse an alphabetical seq number:
 	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
 	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
 	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
+	#
+	# to use tab as a field separator in awk:
+	# awk $'-F\t' {}
 
 	# begin
 	# -----
@@ -104,7 +107,8 @@ Module_hdd() {
 			fi 
 			
 			#################################
-			# common data for all drive types
+			# common data for all drive types:
+			# drive geometry and capacity
 
 			add_attribute	'Geometry'
 			add_values		"$(fdisk -l | grep /dev/sda -A 1 | sed -n "2{p;q}")"
@@ -114,9 +118,14 @@ Module_hdd() {
 							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
 			
 			add_attribute	'Capacity (actual)'
-			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')" # drive capacity in bytes
-			[[ $DISKSIZE -lt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024)) MB" 
-			[[ $DISKSIZE -gt 1073741824 ]] && DZ="$(($DISKSIZE/1024/1024/1024)) GB"
+			# fdisk gives drive capacity in bytes
+			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')"
+			[[ $DISKSIZE -lt 1073741824 ]] && \
+				DZ="$(echo $DISKSIZE/1024/1024 | bc -l)"
+				DZ="${DZ:0:5} MB"
+			[[ $DISKSIZE -gt 1073741824 ]] && \
+				DZ="$(echo $DISKSIZE/1024/1024/1024 | bc -l)" && \
+				DZ="${DZ:0:5} GB"
 			add_values		"$DZ"
 
 
@@ -128,18 +137,22 @@ Module_hdd() {
 
 			###############################
 			# calculate total disk capacity
-			
-			add_attribute	'Free (mounted)'
+							
 			[[ $DISKSIZE -lt 1048576 ]] && \
 				#diskfr="$(($DISKFREE/1024)) MB"
-				diskfr="$(echo $DISKFREE/1024 | bc -l) MB"
+				diskfr="$(echo $DISKFREE/1024 | bc -l)" && \
+				diskfr="${diskfr:0:4} MB"
 			[[ $DISKSIZE -gt 1048576 ]] && \
 				#diskfr="$(($DISKFREE/1024/1024)) GB"
-				diskfr="$(echo $DISKFREE/1024/1024 | bc -l) GB"
+				diskfr="$(echo $DISKFREE/1024/1024 | bc -l)" && \
+				diskfr="${diskfr:0:4} GB"
 
-			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # FIXME: rounds off improperly
+			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
 			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)" 
-			add_values		"${diskfr:0:4} ; ${diskpercfree:0:4} %"
+			diskpercfree="${diskpercfree:0:4}"
+			
+			add_attribute	'Free (mounted)'
+			add_values		"${diskfr} ; ${diskpercfree}%"
 
 			totalsize=$(($totalsize+$DISKSIZE))
 			totalfree=$(($totalfree+$DISKFREE))
@@ -209,7 +222,8 @@ function scan_hdd_smart() {
 	add_values		"$(cat $tmp | grep -i power_on | awk {'print $NF'})"
 
 	add_attribute	'Temperature (C)'
-	add_values		"$(cat $tmp | grep -i temperature_celsius | awk -F'  ' {'print $NF'})"
+	add_values		"$(cat $tmp | grep -i temperature_celsius | \
+					awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
  
 	add_attribute	'Health Status'
 	add_values		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
@@ -229,44 +243,73 @@ function scan_hdd_partitions() {
 	DISKFREE=0
 	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
-	value_header		"  Partition\t\tmountpoint\tfilesystem\tcapacity\tfree"
+	value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
 
 	for PARTNR in $(seq 1 1 $partitions_on_drive); do 
 		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
 			sed -n "${PARTNR}{p;q;}" )"
+				
+		# partition
+		add_attribute	"  ${partition}"
 
-
-		# if partition is mounted (=is in mtab)
+		# capacity; if partition is mounted (=is in mtab)
 		# BUG: submounted (=system for automounting usb sticks) partitions
 		# are considered unmounted, while they are not!
 		if [ "$(df -Plk | grep $partition)" ]; then
 		
+			# the partition size is calculated from the value given by df,
+			# and the float division is computed by bc.
+			# the output of bc is then concatenated by parameter expansion.
+		
 			# df reports in kb
+			# small partitions are reported in MB, larger in GB
 			partsize="$(df -Plk | grep $partition | awk {'print $2'})"
 			partfree="$(df -Plk | grep $partition | awk {'print $4'})"
-			partpercfree="$(($partfree*100/$partsize))" # FIXME: rounds off improperly
-
-			add_attribute	"  ${partition}"
-			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $NF'})"
-			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $2'})"
-			# small partitions are reported in MB, larger in GB
-			[[ $partsize -lt 1048576 ]] && pz="$(($partsize/1024)) MB" && \
-				pf="$(($partfree/1024)) MB" 
-			[[ $partsize -gt 1048576 ]] && pz="$(($partsize/1024/1024)) GB" && \
-				pf="$(($partfree/1024/1024)) GB" 
-			add_values		"$pz"
-			add_values		"$pf ; $partpercfree%"
-
+	
+			[[ $partsize -lt 1048576 ]] && \
+				pz="$(echo $partfree/1024 | bc -l)" && \
+				pz="${pf:0:4} MB"
+			[[ $partsize -gt 1048576 ]] && \
+				pf="$(echo $partfree/1024/1024 | bc -l)" && \
+				pf="${pf:0:4} GB"
+				
+			#partpercfree="$(($partfree*100/$partsize))" # rounds off improperly
+			partpercfree="$(echo $partfree*100/$partsize | bc -l)"
+			partpercfree="${partpercfree:0:4}"
+			
 			DISKFREE=$(($DISKFREE+$partfree))
+
+
+			# capacity
+			add_values		"$pz\t"
 			
-		else
+			# free space
+			add_values		"$partpercfree%"
 		
-			add_attribute	"  ${partition}"
-			add_values		"unmounted"
-			add_values		"$(fdisk -l | grep ^${partition} | awk {'print $NF'})"
-			#DISKFREE=0
+			# mountpoint			
+			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $NF'})"
+		
+		else
 			
+			# capacity
+			add_values		"-\t"
+			
+			# free space
+			add_values		"-"
+		
+			# mountpoint			
+			add_values		"unmounted"
+
 		fi
+	
+		# filesystem
+		# because fdisk adds a '*' character for bootable partitions, awk gets
+		# messed up. that is why numbers are removed from the beginning of string.
+		add_values		"$(fdisk -l | grep ^${partition} | \
+						awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
+						sed 's/^[0-9 ]*//')"
+						#(read Disk foo bar foobar something partition; echo "$partition"))"
+			
 	done
 }
 
@@ -319,7 +362,7 @@ function scan_hdd_ide() {
 		
 	if [ "$(type -p smartctl)" ]; then
 		
-		scan_hdd_smart
+		scan_hdd_smart ata
 			
 	fi		
 }
@@ -406,7 +449,7 @@ function scan_hdd_sg() {
 
 	if [ "$smart" = "sata-ok" ]; then
 
-		scan_hdd_smart
+		scan_hdd_smart ata
 			
 	fi
 }
