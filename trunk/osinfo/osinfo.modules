@@ -476,7 +476,7 @@ function scan_hdd_sg() {
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
 		udev_info="$(mktemp  osinfo.XXXXXX)"
-		udevinfo -q all -n ${drvdev} > ${dev_info}
+		udevinfo -q all -n ${drvdev} > ${udev_info}
 	fi
 	if [ -e "/proc/scsi/" ]; then
 		proc_info="/proc/scsi/scsi"
@@ -625,10 +625,13 @@ Module_oem() {
 	lshw > $tmp
 
 	# principle:
-	# (1) output of lshw is stripped out of newlines, switched spaces with _ and added ¡ to denote a value pair
-	# (2) this is put into hardware array, because bash doesn't support two-dimensional arrays 
+	# (1) output of lshw is stripped out of newlines, switched spaces with _ and 
+	#     added ¡ to denote a value pair 
+	# (2) this is put into hardware array, because bash doesn't support 
+	#     two-dimensional arrays 
 	# (3) a for loop then checks each array element for OUTPUT type node ID.
-	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied, value_name_pair is added
+	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied, 
+	#     values are sent with add_values()
 
 
 	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk" 
@@ -643,13 +646,15 @@ Module_oem() {
 	# this loop fills the $hardware[] array with entries from lshw.
 	for HW in $(seq 1 $(
 
-		cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | awk -F"*" {'print NF'}
+		cat $tmp | sed 's/^ *//' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | \
+		awk -F"*" {'print NF'}
 
 	)); do
 
 		hardware[$HW_ARRAY]="$(
 
-			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/%%/g' | awk -F"*" {'print $'$HW' '}
+			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/%%/g' | \
+			awk -F"*" {'print $'$HW' '}
 
 		)" ; ((HW_ARRAY++))
 
