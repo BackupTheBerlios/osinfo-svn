@@ -399,6 +399,9 @@ function print_xml {
 				echo -ne "\t" | tee -a "$XMLFILE"
 			done
 
+			# the following sed removes all formatting tags
+			# from the value string. it's a tad slow, though.
+			item="$(echo "${item}" | sed 's/\\[a-z]//g')"
 			echo -e "$(xml_value "${item}")" | tee -a "$XMLFILE"
 
 		else
@@ -420,10 +423,12 @@ function print_xml {
 					echo -ne "\t" | tee -a "$XMLFILE"
 				done
 				item="$(echo ${item} | sed s/%attribute%//)"
-				name=$(echo ${item} | awk -F\; {'print $1'})
+				name="$(echo ${item} | awk -F\; {'print $1'} | \
+					sed 's/\\[a-z]//g')"
 				code=$(echo ${item} | awk -F\; {'print $2'})
-				xml_attribute_start "${name}" "${code}"
-#				echo -e "$(xml_attribute_start "${name}" "${code}")" | tee -a $XMLFILE
+				#xml_attribute_start "${name}" "${code}"
+				echo -e "$(xml_attribute_start "${name}" "${code}")" | \
+					tee -a $XMLFILE
 				((XML_INDENT++))
 				attribute="open"
 
@@ -464,6 +469,10 @@ function print_lanforce_xml {
 		item="${infostring[$itemnr]}"
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
+
+			# the following sed removes all formatting tags
+			# from the value string. it's a tad slow, though.
+			item="$(echo "${item}" | sed 's/\\[a-z]//g')"
 			echo -e "   $(xml_value "${item}")" | tee -a "$XMLFILE"
 
 		else
@@ -476,10 +485,12 @@ function print_lanforce_xml {
 			### ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
 				item="$(echo ${item} | sed s/%attribute%//)"
-				name=$(echo ${item} | awk -F\; {'print $1'})
-				code=$(echo ${item} | awk -F\; {'print $2'})
-				#xml_attribute_start "${name}" "${code}"
-				echo -e "  $(xml_attribute_start "${name}" "${code}")" | tee -a "$XMLFILE"
+				name="$(echo ${item} | awk -F\; {'print $1'} | \
+					sed 's/\\[a-z]//g')"
+				code="$(echo ${item} | awk -F\; {'print $2'})"
+
+				echo -e "  $(xml_attribute_start "${name}" "${code}")" | \
+					tee -a "$XMLFILE"
 				attribute="open"
 			fi
 

@@ -8,9 +8,9 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES_LINUX='terminal network devices processor system hdd'
+MODULES_LINUX='distro processor system network applications terminal devices hdd'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lsmod users distro oem applications'
+MODULES_BROKEN='printers lsmod users oem'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 
@@ -1164,47 +1164,47 @@ Module_applications() {
 	fi
 
 	## Write the header for output
-	add_attribute	$"Applications"		'software'
+	add_attribute		$"Applications\n"		'software'
 
 
 	## Process all applications
 	for app in ${APPLICATIONS}; do
 
-
 		if [ "$(type -p $app)" ]; then # it is installed
 			case "$app" in 
 				'perl')
-					add_values		"Perl $($app --version 2>&1 | grep 'perl, v' | grep -Eo 'v[ A-Za-z0-9.-]*')" 
+					add_values 	"Perl $($app --version 2>&1 | grep 'perl, v' | \
+								grep -Eo 'v[ A-Za-z0-9.-]*')\n" 
 					;;
 				'python')
-					add_values		"$($app -V 2>&1 | head -n 1 )" 
+					add_values	"$($app -V 2>&1 | head -n 1 )\n" 
 					;;
 				'X')
-					add_values		"$($app -version 2>&1 | grep Revision)"
+					add_values	"$($app -version 2>&1 | grep Revision)\n"
 					;;
 				'kde-config')
-					add_values 		"$($app -version 2>&1 | grep KDE)"
+					add_values	"$($app -version 2>&1 | grep KDE)\n"
 					;;
 				'gconftool')
-					add_values  	"$($app --version 2>&1 )"
+					add_values	"$($app --version 2>&1 )\n"
 					;;
 				'apache2'|'apache')
-					add_values		"$($app -V | head -n 1 | awk -F': ' {'print $2'})"
+					add_values	"$($app -V | head -n 1 | awk -F': ' {'print $2'})\n"
 					;;
 				'cups-config')
-					add_values		"Cups $($app --version 2>&1 )"
+					add_values	"Cups $($app --version 2>&1 )\n"
 					;;
 				'smbd')
-					add_values		"Samba $($app -V 2>&1 )"
+					add_values	"Samba $($app -V 2>&1 )\n"
 					;;
 				'udevinfo')
-					add_values		"$($app -V 2>&1 )"
+					add_values	"$($app -V 2>&1 )\n"
 					;;
 				'awk')
-					add_values		"$($app -W version 2>&1 | head -n 1 )"
+					add_values	"$($app -W version 2>&1 | head -n 1 )\n"
 					;;
 				*)
-					add_values		"$($app --version 2>&1 | grep '\w' | head -n 1)" 
+					add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n" 
 					;;
 										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			esac
