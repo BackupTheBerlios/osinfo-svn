@@ -499,11 +499,18 @@ function scan_hdd_sg() {
 		if [ "$(echo $bus | grep usb)" ]; then
 			# USB drive detected
 
-			usb_info="${usb_devstrings}/${scsi_nr}"
-
 			add_attribute	'Description'
 			add_values		'USB drive'
 
+		fi
+
+	# test if the scsi_nr is found in /proc/scsi/usb-storage/
+	elif [ -e "${proc_info}" ]; then
+	
+		if [ -e "${usb_devstrings}${scsi_nr}" ]; then	
+			usb_info="${usb_devstrings}/${scsi_nr}"
+			add_attribute	'Description'
+			add_values		'USB drive'
 		fi
 
 	else
