@@ -600,6 +600,10 @@ function scan_hdd_sg() {
 		scan_hdd_smart ata
 
 	fi
+
+	# cleanup
+	rm -f $udev_info
+
 }
 
 
