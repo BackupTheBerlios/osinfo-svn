@@ -198,9 +198,9 @@ function scan_hdd_smart() {
 # this function takes one parameter, the driver to use. default is ata.
 
 	if [ "$1" ]; then
-		dev_type=$1
+		dev_type="$1"
 	else
-		dev_type=ata;
+		dev_type=ata
 	fi
 
 	# allocate a temp file
