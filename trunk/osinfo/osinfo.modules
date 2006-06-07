@@ -84,9 +84,9 @@ Module_hdd() {
 
 		# loop all detected drives
 		for drvdev in $drives; do
-		
+
 			value_header	 ${drvdev}
-			
+
 			# $drvdev is the whole device address, eg "/dev/hda"
 			# $drvnode is just the device node, eg "hda"
 			# $drvnr is the drive number for this type of driver; eg. for sdc $drvnr=3
@@ -98,16 +98,16 @@ Module_hdd() {
 				scan_hdd_ide
 
 			elif [ "$(echo $drvdev | grep sd)" ]; then
-			
+
 				scan_hdd_sg
 
 			else
-			
+
 				add_attribute	"Description"			
 				add_values		"Unknown device type"
 
 			fi 
-			
+
 			#################################
 			# common data for all drive types:
 			# drive geometry and capacity
@@ -118,7 +118,7 @@ Module_hdd() {
 			add_attribute	'Capacity (reported)'
 			add_values		"$(fdisk -l ${drvdev} | grep ${drvdev} | \
 							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
-			
+
 			add_attribute	'Capacity (actual)'
 			# fdisk gives drive capacity in bytes
 			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{4,}')"
@@ -133,13 +133,13 @@ Module_hdd() {
 
 			#####################
 			# scan the partitions
-			
+
 			scan_hdd_partitions
-			
+
 
 			###############################
 			# calculate total disk capacity
-							
+
 			[[ $DISKSIZE -lt 1048576 ]] && \
 				#diskfr="$(($DISKFREE/1024)) MB"
 				diskfr="$(echo $DISKFREE/1024 | bc -l)" && \
@@ -152,7 +152,7 @@ Module_hdd() {
 			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
 			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)" 
 			diskpercfree="${diskpercfree:0:4}"
-			
+
 			add_attribute	'Free (mounted)'
 			add_values		"${diskfr} ; ${diskpercfree}%"
 
@@ -162,7 +162,7 @@ Module_hdd() {
 
 			unset DISKSIZE
 			unset DISKFREE
-			
+
 		done
 
 
@@ -170,9 +170,9 @@ Module_hdd() {
 		######################################
 		# calculate total system disk capacity
 		# report data of the whole system
-		
+
 		totalpercfree=0
-		
+
 		#add_attribute	"Total disk space"
 		#add_values		"Capacity: $(echo $totalsize)"
 		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
@@ -197,8 +197,10 @@ function scan_hdd_smart() {
 #
 # this function takes one parameter, the driver to use. default is ata.
 
-	if [ "$1" ]; then dev_type=$1
-	else dev_type=ata;
+	if [ "$1" ]; then 
+		dev_type=$1
+	else 
+		dev_type=ata;
 	fi
 
 	# allocate a temp file
@@ -226,7 +228,7 @@ function scan_hdd_smart() {
 	add_attribute	'Temperature (C)'
 	add_values		"$(cat $smart_info | grep -i temperature_celsius | \
 					awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
- 
+
 	add_attribute	'Health Status'
 	add_values		"$(cat $smart_info | grep -Ei '(health)+' | awk {'print $NF'})"
 
@@ -245,7 +247,7 @@ function scan_hdd_partitions() {
 # TODO: an array that stores data of how much is allocated for each FS
 # [partition ID=83] [size on hda1] [size on hda4]
 # [partition ID=7] [size on hda2] [size on hdb1]
-	
+
 	DISKFREE=0
 	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
@@ -253,11 +255,11 @@ function scan_hdd_partitions() {
 
 
 	# loop all partitions detected by fdisk
-	
+
 	for PARTNR in $(seq 1 1 $partitions_on_drive); do 
 		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
 			sed -n "${PARTNR}{p;q;}" )"
-				
+
 		add_attribute	"  ${partition}"
 
 
@@ -265,38 +267,38 @@ function scan_hdd_partitions() {
 		#
 		# BUG: submounted (=system for automounting usb sticks) partitions
 		# are considered unmounted, while they are not!
-		
+
 		if [ "$(df -Plk | grep $partition)" ]; then
-		
+
 			# the partition size is calculated from the value given by df,
 			# and the float division is computed by bc.
 			# the output of bc is then concatenated by parameter expansion.
-		
+
 			# df reports in kb
 			# small partitions are reported in MB, larger in GB
 			partsize="$(df -Plk | grep $partition | awk {'print $2'})"
 			partfree="$(df -Plk | grep $partition | awk {'print $4'})"
-			
+
 			[[ $partsize -lt 1048576 ]] && \
 				pz="$(echo $partsize/1024 | bc -l)" && \
 				pz="${pz:0:4} MB"
 			[[ $partsize -gt 1048576 ]] && \
 				pz="$(echo $partsize/1024/1024 | bc -l)" && \
 				pz="${pz:0:4} GB"
-	
+
 			#partpercfree="$(($partfree*100/$partsize))" # rounds off improperly
 			partpercfree="$(echo $partfree*100/$partsize | bc -l)"
 			partpercfree="${partpercfree:0:4}"
-			
+
 			DISKFREE=$(($DISKFREE+$partfree))
 
 
 			# capacity
 			add_values		"$pz\t"
-			
+
 			# free space
 			add_values		"$partpercfree%"
-		
+
 			# mountpoint
 			local mp="$(df -PT $partition | grep ^$partition | \
 						awk {'print $NF'})"
@@ -307,18 +309,18 @@ function scan_hdd_partitions() {
 			add_values		"${mp}"
 
 		else	# detect capacity of an unmounted partition
-				
+
 			# capacity
 			add_values		"-\t"
-			
+
 			# free space
 			add_values		"-"
-		
+
 			# mountpoint			
 			add_values		"unmounted"
 
 		fi
-	
+
 		# filesystem
 		# because fdisk adds a '*' character for bootable partitions, awk gets
 		# messed up. that is why numbers are removed from the beginning of string.
@@ -326,7 +328,7 @@ function scan_hdd_partitions() {
 						awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
 						sed 's/^[0-9 ]*//')"
 						#(read Disk foo bar foobar something partition; echo "$partition"))"
-			
+
 	done
 }
 
@@ -359,19 +361,19 @@ function scan_hdd_ide() {
 	########
 	# Vendor
 	add_attribute	'Vendor'
-	
+
 	if [ "$(type -p smartctl)" ]; then
-	
+
 		# because smartctl uses its own database to report the HDD vendor,
 		# it is preferred over udev.
 		#
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
-		
+
 		add_values		"$(smartctl -i ${drvdev} | grep '^Model' | \
 						awk -F: {'print $2'} | sed 's/^ *//')"						
 	elif [ "${udev_info}" ]; then
-	
+
 		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
 						awk -F_ {'print $NF'})"						
 	fi
@@ -379,14 +381,14 @@ function scan_hdd_ide() {
 	#######
 	# Model
 	add_attribute	'Model'
-	
+
 	if  [ "${udev_info}" ]; then
 
 		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i model | \
 						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
-	
+
 		add_values		"$(cat ${proc_info}/model)"
 
 	elif [ "$(type -p hdparm)" ]; then
@@ -416,8 +418,8 @@ function scan_hdd_ide() {
 		add_attribute	'Driver'
 		add_values		"$(cat ${proc_info}/driver)"		
 	fi
-	
-	
+
+
 	#####
 	# DMA
 	if [ "$(type -p hdparm)" ]; then
@@ -435,7 +437,7 @@ function scan_hdd_ide() {
 
 	# cleanup
 	rm -f $udev_info
-	
+
 }
 
 function scan_hdd_sg() {
@@ -475,22 +477,22 @@ function scan_hdd_sg() {
 	usb_devstrings="/proc/scsi/usb-storage/"
 	sg_version="/proc/scsi/sg/version"
 
-	
+
 	scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
 
 	# test if the scsi_nr is found in /proc/scsi/usb-storage/
 	# TODO: add a test for udev
 	if [ -e "${usb_devstrings}${scsi_nr}" ]; then				
 	# USB drive
-	
+
 		usb_info="${usb_devstrings}/${scsi_nr}"
-	
+
 		add_attribute	'Description'
 		add_values		'USB drive'
 
 	else
 	# SATA/SCSI drive
-	
+
 		add_attribute	'Description'
 		add_values		'SATA/SCSI drive'
 	fi
@@ -501,23 +503,23 @@ function scan_hdd_sg() {
 	add_attribute	'Vendor'
 
 	if [ "$smart" = "sata-ok" ]; then
-	
+
 		# because smartctl uses its own database to report the HDD vendor,
 		# it is preferred over udev.
 		#
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
-		
+
 		add_values		"$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
 						awk -F: {'print $2'} | sed 's/^ *//')"
-						
+
 	elif [ "${udev_info}" ]; then
-	
+
 		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
 						awk -F_ {'print $NF'})"	
-						
+
 	elif [ -e "${proc_info}" ]; then
-	
+
 		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
 						awk {'print $1'})"
 						#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
@@ -527,14 +529,14 @@ function scan_hdd_sg() {
 	#######
 	# Model
 	add_attribute	'Model'
-	
+
 	if  [ "${udev_info}" ]; then
 
 		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i model | \
 						awk -F= {'print $NF'})"	
 
 	elif [ -e "${proc_info}" ]; then
-	
+
 		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
 						awk {'print $2" "$3'})"
 
@@ -543,8 +545,8 @@ function scan_hdd_sg() {
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 						awk -F= {'print $2'})"
 	fi	
-	
-	
+
+
 	###############
 	# Serial number
 	add_attribute	'Serial'
@@ -552,7 +554,7 @@ function scan_hdd_sg() {
 	if  [ "${udev_info}" ]; then
 
 		add_values		"$(cat ${udev_info} | grep SERIAL | awk -F= {'print $NF'})"
-					
+
 	elif [ "$(type -p hdparm)" ]; then
 
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
@@ -566,14 +568,14 @@ function scan_hdd_sg() {
 		add_attribute	'Driver'
 		add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
 	fi
-	
+
 	#add_attribute	'DMA'
 	#add_values		"n/a" #enabled/disabled
 
 	if [ "$smart" = "sata-ok" ]; then
 
 		scan_hdd_smart ata
-			
+
 	fi
 }
 
@@ -637,7 +639,7 @@ Module_oem() {
 
 	for HW_ARRAY in $(seq 1 ${#hardware[@]}); do
 		if [ "$)" ]; then # we want output
-		
+
 			myELEMENT=2;
 
 			# then parse all elements in the array
@@ -668,7 +670,7 @@ Module_oem() {
 			done
 		fi
 	done
-	
+
 	rm $tmp -f
 
 	fi
@@ -683,10 +685,10 @@ Module_system() {
 
 	add_attribute	$"Operating system"			"os"
 	add_values		"$(uname -s)"
-	
+
 	add_attribute	 $"Kernel release"			"kernel_release"
 	add_values		"$(uname -r)"
-	
+
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
 		kernel_makefile="/usr/src/linux/Makefile"		
@@ -701,13 +703,13 @@ Module_system() {
 
 	add_attribute	$"Network node hostname"	"host_name"
 	add_values		"$(hostname)"
-		
+
 	add_attribute	$"Machine hardware name"	"system_type"
 	add_values		"$(uname -m)"
-	
+
 	add_attribute	$"System locale"
 	add_values		"$(echo $LC_LANG)"
-	
+
 	add_attribute	$"System uptime"
 	add_values		"$(uptime | awk -F, {'print $1'} | \
 					grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
@@ -732,13 +734,13 @@ Module_processor() {
 		add_attribute	"Count"			"processor_count"
 		add_values		$cpu_count
 	fi
-	
+
 	for cpunr in $(seq 1 1 $cpu_count); do
-	
+
 		if [ $cpu_count -gt 1 ]; then
 			value_header	"Processor $cpunr"
 		fi
-		
+
 		add_attribute	"Vendor"		"processor_vendor"
 		add_values		"$(cat ${cpuinfo} | grep 'vendor' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
@@ -761,7 +763,7 @@ Module_processor() {
 
 
 	done
-	
+
 	module_footer
 	flush_values
 }
@@ -772,13 +774,13 @@ Module_terminal() {
 
 	add_attribute	"Terminal type"
 	add_values		"$TERM"
-	
+
 	add_attribute	"Terminal speed"        
 	add_values		"$(stty speed)"
-	
+
 	add_attribute	"Rows"
 	add_values		"$(stty size | awk '{print $1}')"
-	
+
 	add_attribute	"Columns"
 	add_values		"$(stty size | awk '{print $2}')"
 
@@ -830,7 +832,7 @@ Module_lsmod() {
 	# /proc/ide/drivers
 	# scsi
 	# etc...
-	
+
 #	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
 #		add_name_value_pair 'module' "$MODULE"
 #	done
@@ -875,11 +877,11 @@ Module_network() {
 		#cat network-debug > ${nw_info}
 
 		value_header	$interface_name
-			
+
 		add_attribute	'MAC'		"mac_address"
 		add_values		"$(cat ${nw_info} | \
 						grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
-		
+
 		add_attribute	'IPv4'		"ip_address"
 		add_values		"$(cat ${nw_info} | \
 						grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
@@ -910,7 +912,7 @@ Module_network() {
 		add_attribute	'TX bytes'
 		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
 						grep -i 'TX bytes' | awk -F: {'print $2'})"	
-						
+
 		value_footer
 
 	done
@@ -962,14 +964,14 @@ Module_distro() {
 						awk -F: '{print $2}' | sed -s 's/^\t*//')"
 
 	else
-	
+
 		# Begin searching for distro identifying files
 		local found_files=""
 		local fil
 		for fil in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 			[ -e $fil ] && found_files="$found_files $fil"
 		done
-		
+
 		# Now make a list of distros from the $found_files list above
 		local found_distros=""
 		local distro_ident
@@ -1016,7 +1018,7 @@ Module_distro() {
 			#'SuSE'|'Fedora Core'|'Fedora'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo'|'Ubuntu')
 				add_attribute	'Distro name'
 				add_values		"${found_distros}"
-				
+
 				# clear spaces
 				#[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
 				#[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
@@ -1090,15 +1092,15 @@ Module_distro() {
 				local distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
 				# TODO: improve the grep 
 		esac
-		
+
 		add_attribute	'Distro version'
 		add_values		"$distro_version"
-		
+
 		[ "$SlackwareBase" ] && \
 		add_values	'Based on Slackware version' "$SlackwareBase"
-		
+
 	fi
-	
+
 	module_footer
 	flush_values
 }
@@ -1221,7 +1223,7 @@ Module_devices() {
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
 	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
-	
+
 			add_attribute	"$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
 							tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')" 
 			add_values		 "$(echo ${devices[$DEV_ARRAY]} | \
@@ -1229,7 +1231,7 @@ Module_devices() {
 
 		fi
 	done
-	
+
 	module_footer
 	flush_values
 }
