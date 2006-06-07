@@ -196,7 +196,7 @@ function scan_hdd_smart() {
 # for ide drives this is not a problem.
 #
 # this function takes one parameter, the driver to use. default is ata.
-
+	local dev_type smart_info
 	if [ "$1" ]; then
 		dev_type="$1"
 	else
@@ -233,7 +233,7 @@ function scan_hdd_smart() {
 	add_values		"$(cat $smart_info | grep -Ei '(health)+' | awk {'print $NF'})"
 
 	# cleanup
-	rm -f $smart_info
+	rm -f "$smart_info"
 
 }
 
@@ -343,7 +343,7 @@ function scan_hdd_ide() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		udev_info="$(mktemp  osinfo.XXXXXX)"
+		local udev_info="$(mktemp  osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > $udev_info
 	fi
 	if [ -e "/proc/ide/" ]; then
@@ -436,7 +436,7 @@ function scan_hdd_ide() {
 
 
 	# cleanup
-	rm -f $udev_info
+	rm -f "$udev_info"
 
 }
 
@@ -475,7 +475,7 @@ function scan_hdd_sg() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		udev_info="$(mktemp  osinfo.XXXXXX)"
+		local udev_info="$(mktemp  osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > ${udev_info}
 	fi
 	if [ -e "/proc/scsi/" ]; then
@@ -506,7 +506,7 @@ function scan_hdd_sg() {
 
 	# test if the scsi_nr is found in /proc/scsi/usb-storage/
 	elif [ -e "${proc_info}" ]; then
-	
+
 		if [ -e "${usb_devstrings}${scsi_nr}" ]; then	
 			local usb_info="${usb_devstrings}/${scsi_nr}"
 			add_attribute	'Description'
