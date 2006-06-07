@@ -612,8 +612,16 @@ function scan_hdd_sg() {
 
 
 Module_oem() {
+#### OEM INFORMATION
+#
+# this module collects information from lshw, a somewhat rare package,
+# which tells a lot of interesting information of the system.
+# it also seems to be the only way to get the serial number of a
+# branded computer, thus 'oem info'.
+
 	moduleName="OEM information"
 	module_header "${moduleName}"
+
 
 	if [ ! "$(type -p lshw)" ]; then
 		add_attribute	"$appname notification" 
@@ -625,8 +633,8 @@ Module_oem() {
 
 	else
 
-	tmp="$(mktemp osinfo.XXXXXX)"
-	lshw > $tmp
+	lshw_tmp="$(mktemp osinfo.XXXXXX)"
+	lshw > $lshw_tmp
 
 	# principle:
 	# (1) output of lshw is stripped out of newlines, switched spaces with _ and 
@@ -638,6 +646,9 @@ Module_oem() {
 	#     values are sent with add_values()
 
 
+	# the verbosity of this module can be controlled by modifying the
+	# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
+
 	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk" 
 	DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
 
@@ -645,69 +656,99 @@ Module_oem() {
 		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
 
 
-	HW_ARRAY=1;
-	# TODO: fix the sed to cut all whitespaces before first word boundary
 	# this loop fills the $hardware[] array with entries from lshw.
-	for HW in $(seq 1 $(
+	#
+	# 1) the leading spaces are removed
+	# 2) whitespaces are converted to underscores
+	# 3) newlines are replaced by '%newline%'
+	# 4) the '*' character is the node identifier in lshw.
+	#
+	# the product of this is an array, where an item contains
+	# all information of the node parsed to a single string.
+	for node in $(seq 0 1 $(
 
-		cat $tmp | sed 's/^ *//' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/¡/g' | \
-		awk -F"*" {'print NF'}
+		cat ${lshw_tmp} | grep '\*' | wc -l
 
-	)); do
+		#cat ${lshw_tmp} | sed 's/^ *//' | tr ' ' '_' | \
+		#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
 
-		hardware[$HW_ARRAY]="$(
+	));	do
 
-			cat $tmp | sed 's/  //g' | tr ' ' '_' | sed ':a;N;$!ba;s/\n/%%/g' | \
-			awk -F"*" {'print $'$HW' '}
+		#hardware_debug[$HW]="foo"
+		#echo $HW
+		#echo ${#hardware[@]}
+		oem_str[$node]="$(
+	
+			cat ${lshw_tmp} | sed 's/^ *//g' | tr ' ' '_' | \
+			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
 
-		)" ; ((HW_ARRAY++))
+		)"
 
 	done
 
-	echo "this module is broken, will be fixed -ruxpin"
-#	echo ${hardware[1]}
-	exit 0
+	# then fix the first node so that the hostname isn't printed
+	oem_str[0]="-${oem_str[0]}"
 
+		
+	# parse the string in a loop	
+	for node in $(seq 0 1 ${#oem_str[@]}); do
+	
+		# if the oem_string contains an interesting node...
+		if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
+			grep -i $OUTPUT)" ]; then # we want output
 
-	for HW_ARRAY in $(seq 1 ${#hardware[@]}); do
-		if [ "$)" ]; then # we want output
-
-			myELEMENT=2;
+			myELEMENT=1;
 
 			# then parse all elements in the array
-			while [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print NF'})" -gt "$myELEMENT" ]; do  
+			while [ "$(echo ${oem_str[$node]} | \
+				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do 
+	
 
-				# this 'if' test prunes out the devices we're not interested in
-				if [ ! "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | \
-						grep -i $DO_NOT_OUTPUT)" ]; then 
+				# if the node doesn't contain info we don't want..
+				if [ ! "$(echo ${oem_str[$node]} | \
+					awk -F'%newline%' {'print $'$myELEMENT' '} | \
+					grep -i $DO_NOT_OUTPUT)" ]; then 
+				
+					# the oem_string is extracted into a variable
+					oem_node="$(echo ${oem_str[$node]} | \
+						awk -F'%newline%' {'print $'$myELEMENT' '})"
+						
+					# then prune out the *-foo nodes 
+					# and send the data to add_values()
+					if [ ! "$(echo ${oem_node} | grep '^-')" ]; then
+					
+						add_attribute	"  $(echo ${oem_node} | \
+							awk -F":_" {'print $1'} | tr '_' ' ')"
 
-					myHW="$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '})"
+						add_values		"  $(echo ${oem_node} | \
+							awk -F":_" {'print $2'} | tr '_' ' ')" 
+							
+					fi
 
-					#add_values	"$(echo ${myHW} | awk -F":_" {'print $1'} | tr '_' ' ')" \
-					#			"$(echo ${myHW} | awk -F":_" {'print $2'} | tr '_' ' ')" 
-
-
-				elif [ "$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | \
-						grep -i 'description')" ]; then
-
-					flush_values
-#					[[ "$value_pair_header" ]] && flush_values
-					value_pair_header="$(echo ${hardware[$HW_ARRAY]} | awk -F¡ {'print $'$myELEMENT' '} | awk -F":_" {'print $2'} | tr '_' ' ')"
-
+				# 'description' values are printed as headers
+				elif [ "$(echo ${oem_str[$node]} | \
+					awk -F'%newline%' {'print $'$myELEMENT' '} | \
+					grep -i 'description')" ]; then
+					
+						value_header	"$(echo ${oem_str[$node]} | \
+						awk -F'%newline%' {'print $'$myELEMENT' '} | \
+						awk -F":_" {'print $2'} | tr '_' ' ')"
 
 				fi
 
 				((myELEMENT++));
-
 			done
 		fi
 	done
 
-	rm $tmp -f
 
 	fi
-	flush_name_value_pair
-	module_footer "${moduleName}"
+
+	# cleanup
+	rm $lshw_tmp -f
+
+	module_footer
+	flush_values
 }
 
 
