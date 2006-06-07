@@ -347,7 +347,7 @@ function scan_hdd_ide() {
 		udevinfo -q all -n ${drvdev} > $udev_info
 	fi
 	if [ -e "/proc/ide/" ]; then
-		proc_info="/proc/ide/${drvnode}"
+		local proc_info="/proc/ide/${drvnode}"
 	fi
 	# hdparm output is not read into a temp file, as
 	# it is unlikely to be used, and that would unnecessarily
@@ -479,13 +479,13 @@ function scan_hdd_sg() {
 		udevinfo -q all -n ${drvdev} > ${udev_info}
 	fi
 	if [ -e "/proc/scsi/" ]; then
-		proc_info="/proc/scsi/scsi"
-		scsi_devices="/proc/scsi/sg/devices"
-		scsi_devstrings="/proc/scsi/sg/device_strs"					
-		usb_devstrings="/proc/scsi/usb-storage/"
-		sg_version="/proc/scsi/sg/version"
+		local proc_info="/proc/scsi/scsi"
+		local scsi_devices="/proc/scsi/sg/devices"
+		local scsi_devstrings="/proc/scsi/sg/device_strs"					
+		local usb_devstrings="/proc/scsi/usb-storage/"
+		local sg_version="/proc/scsi/sg/version"
 
-		scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
+		local scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
 	fi
 	# hdparm output is not read into a temp file, as
 	# it is unlikely to be used, and that would unnecessarily
@@ -495,7 +495,7 @@ function scan_hdd_sg() {
 
 	if [ "${udev_info}" ]; then
 
-		bus="$(cat ${udev_info} | grep -i ID_BUS | awk -F= {'print $NF'})"
+		local bus="$(cat ${udev_info} | grep -i ID_BUS | awk -F= {'print $NF'})"
 		if [ "$(echo $bus | grep usb)" ]; then
 			# USB drive detected
 
@@ -508,7 +508,7 @@ function scan_hdd_sg() {
 	elif [ -e "${proc_info}" ]; then
 	
 		if [ -e "${usb_devstrings}${scsi_nr}" ]; then	
-			usb_info="${usb_devstrings}/${scsi_nr}"
+			local usb_info="${usb_devstrings}/${scsi_nr}"
 			add_attribute	'Description'
 			add_values		'USB drive'
 		fi
