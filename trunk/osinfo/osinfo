@@ -183,12 +183,12 @@ function print_xml_header () {
 		xml_doc_start "osinfo" "SYSTEM" "osinfo.dtd" | tee $XMLFILE
 		xml_tag_start "${appname}" | tee -a $XMLFILE
 		XML_INDENT=1
-		
+
 	fi
 }
 
 function print_xml_footer () {
-	
+
 	if [ "$lanforce" == 1 ]; then
 		lf_entity_stop | tee -a $XMLFILE
 		#lf_note
@@ -265,7 +265,7 @@ function value_footer() {
 	# looking for open headers. 
 
 	# NEEDS DEBUGGING!
-	
+
 	#for HDR in $(seq ${#headers[@]} -1 0); do
 	#echo ${headers[$HDR]}
 	#	if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-Öa-ö ]+')" ]; then
@@ -275,7 +275,7 @@ function value_footer() {
 	#		break;
 	#	fi
 	#done
-	
+
 	found=""
 	for position in $(seq ${#infostring[@]} -1 0); do
 		item="$(echo ${infostring[$position]})"
@@ -398,11 +398,11 @@ function print_xml {
 			for indent in $(seq 1 $XML_INDENT); do 
 				echo -ne "\t" | tee -a "$XMLFILE"
 			done
-			
+
 			echo -e "$(xml_value "${item}")" | tee -a "$XMLFILE"
 
 		else
-		
+
 			### CLOSE ATTRIBUTE TAG
 			if [ "$attribute" == "open" ]; then
 				((XML_INDENT--))
@@ -437,7 +437,7 @@ function print_xml {
 				echo -e "$(xml_tag_start "${item}")" | tee -a "$XMLFILE"
 				((XML_INDENT++))
 
-				
+
 			### FOOTER TAG
 			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
 				((XML_INDENT--))
@@ -524,7 +524,7 @@ function print_stdout {
 		if [ "$(echo ${item} | grep '^%attribute%')" ]; then
 			item="$(echo ${item} | sed s/%attribute%//)"
 			name=$(echo ${item} | awk -F\; {'print $1'})
-	
+
 			if [ ${#name} -gt $longest_string ]; then
 				longest_string=${#name}
 			fi
@@ -546,7 +546,7 @@ function print_stdout {
 			value_string="${value_string}${item}\t";
 
 		else
-		
+
 			if [ "$attribute" == "open" ]; then
 				value_string="${value_string}\n"
 				attribute="closed"
@@ -559,13 +559,13 @@ function print_stdout {
 
 
 			elif [ "$(echo "${item}" | grep '^%attribute%')" ]; then
-			
+
 				item="$(echo "${item}" | sed s/%attribute%//)"
 				name=$(echo "${item}" | awk -F\; {'print $1'})				
 				value_string="${value_string}${name}\t";
 				attribute="open"
 
-				
+
 				# this evaluation counts the proper amount of tabs to add
 				# for beautiful identation.
 				# bash always rounds downward, so 20/8 = 2
@@ -616,8 +616,8 @@ function flush_name_value_pair {
 		# Operation method: breaks value pair list into components, runs a for loop
 		# and parses the items into xml. needs a variable to aid the process.
 		# Could be better. :)
-		
-		
+
+
 		#### OUTER OPENING TAG
 		if [ "$value_pair_header" ]; then 
 			for indent in $(seq 0 $XML_INDENT); do 
@@ -627,7 +627,7 @@ function flush_name_value_pair {
 			echo -e "$(xml_tag_start "${value_pair_header}")" 	| tee -a $XMLFILE		# open tag
 			unset value_pair_header
 		fi
-		
+
 		unset openTag
 		#			tr -s '¡' '\n' | \
 		for value in $(
@@ -681,13 +681,13 @@ function flush_name_value_pair {
 		 
 		done
 		##############################################
-		
+
 	elif [ "$usekdialog" -eq 1 ]; then 
-		
+
 		##############################################
 		# this outputs to KDIALOG
 		# this is completely unmaintained. doesn't work
-		
+
 		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
 		echo -e "\n$value_pair_header"
 		echo  "$name_value_pair_list" | \
@@ -695,14 +695,14 @@ function flush_name_value_pair {
 			tr '' ' ' > $TMPFILE
 		kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
 		rm $TMPFILE
-		
+
 	else
-		
+
 		# FIXME: This bit doesn't work at all on Gentoo 2006.0 64-bit
 		#set -x
 		###############################################
 		# output to STDOUT
-		
+
 		[[ "$value_pair_header" ]] && echo -e "\n$value_pair_header"
 		echo -e "$name_value_pair_list" | \
 			column -ts '¡' | \
@@ -710,7 +710,7 @@ function flush_name_value_pair {
 			tr '¡' '\t'
 		#set +x
 	fi
-	
+
 	unset name_value_pair_list
 	unset value_pair_header
 	linecount=0
@@ -736,7 +736,7 @@ module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
 	elif [ $usexml -eq 1 ]; then
-	
+
 		# make valid xml tag
 		xml_tag="$(echo ${1} | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
 		value_header "${xml_tag}"
@@ -759,28 +759,28 @@ module_footer() {
 }
 ################################################################################
 
-	
+
 
 #################
 # "main" function
 for modul in $cmdsnames; do
-	
+
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
-			
+
 			cmdsnames="$MODULES_LINUX"
 			break;
-			
+
 		elif [ "$(echo $SYSTEM | grep bsd)" ]; then
-			
+
 			cmdsnames="$MODULES_BSD"
 			break;
 		fi
 	fi
-	
+
 	# validate_arg "$modul" "$MODULES" || wrong_module "$modul"
 	# why is validate_arg called?
-	
+
 done
 
 if [ "$prefix" != '/' ] ; then
