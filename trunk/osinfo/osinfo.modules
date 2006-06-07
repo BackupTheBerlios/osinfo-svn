@@ -8,9 +8,9 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES_LINUX='distro processor system network applications terminal devices hdd'
+MODULES_LINUX='distro processor system network applications terminal devices hdd oem'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lsmod users oem'
+MODULES_BROKEN='printers lsmod users'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 
@@ -729,7 +729,7 @@ Module_oem() {
 				elif [ "$(echo ${oem_str[$node]} | \
 					awk -F'%newline%' {'print $'$myELEMENT' '} | \
 					grep -i 'description')" ]; then
-					
+
 						value_header	"$(echo ${oem_str[$node]} | \
 						awk -F'%newline%' {'print $'$myELEMENT' '} | \
 						awk -F":_" {'print $2'} | tr '_' ' ')"
