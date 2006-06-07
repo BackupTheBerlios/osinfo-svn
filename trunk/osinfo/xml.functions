@@ -70,7 +70,7 @@ function xml_opentag_param () {
 # Parameters:
 #  1  integer  Type of close
 #                1            = >
-#                anthing else = /> 
+#                anthing else = />
 function xml_opentag_stop () {
 	if [[ "$1" -eq 1 ]]; then
 		echo ">"

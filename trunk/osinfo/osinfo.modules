@@ -33,10 +33,10 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hd
 Module_hdd() {
 # this module collects data of the hard disk drives attached to the system.
 # some information is unaccesible unless the partitions are mounted.
-# everything is collected honoring the requirement of minimum dependencies; 
+# everything is collected honoring the requirement of minimum dependencies;
 # ie. using standard *nix tools. some information is unavailable
 # without special (but quite common) packages, and S-ATA/P-ATA drives
-# do now display everything as nicely as IDE drives, due to missing support 
+# do now display everything as nicely as IDE drives, due to missing support
 # in smartmontools (06/2006).
 
 # used tools:
@@ -49,9 +49,9 @@ Module_hdd() {
 	# -------------------
 	# IDE/PATA is tested
 	# SATA is tested
-	# USBhdd is tested	
+	# USBhdd is tested
 	# SCSI is untested, although works probably as SATA
-	# RAID is untested 
+	# RAID is untested
 	# Logical Volume Management is untested
 
 	# notes:
@@ -59,7 +59,7 @@ Module_hdd() {
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-	# 
+	#
 	# there are at least two methods to parse an alphabetical seq number:
 	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
 	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
@@ -80,7 +80,7 @@ Module_hdd() {
 		totalsize=0; totalfree=0
 
 		# detect all drives in the system
-		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"		
+		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
 
 		# loop all detected drives
 		for drvdev in $drives; do
@@ -103,10 +103,10 @@ Module_hdd() {
 
 			else
 
-				add_attribute	"Description"			
+				add_attribute	"Description"
 				add_values		"Unknown device type"
 
-			fi 
+			fi
 
 			#################################
 			# common data for all drive types:
@@ -150,7 +150,7 @@ Module_hdd() {
 				diskfr="${diskfr:0:4} GB"
 
 			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
-			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)" 
+			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)"
 			diskpercfree="${diskpercfree:0:4}"
 
 			add_attribute	'Free (mounted)'
@@ -213,7 +213,7 @@ function scan_hdd_smart() {
 	if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
 		smart="sata-ok"
 	else
-		smart=$version					
+		smart=$version
 	fi
 	unset version
 
@@ -240,10 +240,10 @@ function scan_hdd_smart() {
 function scan_hdd_partitions() {
 ####################
 # PARTITIONS
-# 
+#
 # function extracts information of hard drive partitions.
-# 
-# 
+#
+#
 # TODO: an array that stores data of how much is allocated for each FS
 # [partition ID=83] [size on hda1] [size on hda4]
 # [partition ID=7] [size on hda2] [size on hdb1]
@@ -256,7 +256,7 @@ function scan_hdd_partitions() {
 
 	# loop all partitions detected by fdisk
 
-	for PARTNR in $(seq 1 1 $partitions_on_drive); do 
+	for PARTNR in $(seq 1 1 $partitions_on_drive); do
 		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
 			sed -n "${PARTNR}{p;q;}" )"
 
@@ -316,7 +316,7 @@ function scan_hdd_partitions() {
 			# free space
 			add_values		"-"
 
-			# mountpoint			
+			# mountpoint
 			add_values		"unmounted"
 
 		fi
@@ -371,11 +371,11 @@ function scan_hdd_ide() {
 		# because it would break the correct order of the report.
 
 		add_values		"$(smartctl -i ${drvdev} | grep '^Model' | \
-						awk -F: {'print $2'} | sed 's/^ *//')"						
+						awk -F: {'print $2'} | sed 's/^ *//')"
 	elif [ "${udev_info}" ]; then
 
 		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
-						awk -F_ {'print $NF'})"						
+						awk -F_ {'print $NF'})"
 	fi
 
 	#######
@@ -395,7 +395,7 @@ function scan_hdd_ide() {
 
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 						awk -F= {'print $2'})"
-	fi	
+	fi
 
 	###############
 	# Serial number
@@ -408,15 +408,15 @@ function scan_hdd_ide() {
 	elif [ "$(type -p hdparm)" ]; then
 
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
-						awk -F= {'print $2'})"						
-	fi	
+						awk -F= {'print $2'})"
+	fi
 
 
 	########
-	# Driver	
+	# Driver
 	if [ -e "/proc/ide/$drvnode" ]; then
 		add_attribute	'Driver'
-		add_values		"$(cat ${proc_info}/driver)"		
+		add_values		"$(cat ${proc_info}/driver)"
 	fi
 
 
@@ -429,10 +429,10 @@ function scan_hdd_ide() {
 
 
 	############
-	# SMART info		
-	if [ "$(type -p smartctl)" ]; then		
-		scan_hdd_smart ata			
-	fi	
+	# SMART info
+	if [ "$(type -p smartctl)" ]; then
+		scan_hdd_smart ata
+	fi
 
 
 	# cleanup
@@ -441,27 +441,27 @@ function scan_hdd_ide() {
 }
 
 function scan_hdd_sg() {
-################# 
+#################
 # SATA/SCSI/USB drives (sg driver)
-# 
+#
 # this function collects information of SATA/SCSI/USB drives,
 # because under Linux they all use the same SCSI drivers.
-# 
+#
 # the information in stored into two or three locations, depending
 # on the kernel and whether the system uses devfs or udev.
 # since devfs is deprecated, it is not used at all.
 # the /proc/scsi/ system is deprecated from 2.6 on, but it is left
-# here for legacy support. 
+# here for legacy support.
 #
 # usb drives, when properly detected by the Linux kernel,
 # are added to /proc/scsi/scsi info sheet, and the assigned scsi number
 # which can be found both in the beforementioned location and also
-# in /proc/scsi/sg/devices, can be used to identify the device 
+# in /proc/scsi/sg/devices, can be used to identify the device
 # in /proc/scsi/usb-storage/*.
 #
 # as the devices are (hopefully) linearily, the devices catalogue
 # can be used to identify which /dev/sd* node is a certain scsi#.
-# 
+#
 # this is not true in the case of custom udev rules. although
 # a good practise is to let kernel do its magic and create a
 # link node to that device, so this is unlikely to be a problem.
@@ -481,7 +481,7 @@ function scan_hdd_sg() {
 	if [ -e "/proc/scsi/" ]; then
 		local proc_info="/proc/scsi/scsi"
 		local scsi_devices="/proc/scsi/sg/devices"
-		local scsi_devstrings="/proc/scsi/sg/device_strs"					
+		local scsi_devstrings="/proc/scsi/sg/device_strs"
 		local usb_devstrings="/proc/scsi/usb-storage/"
 		local sg_version="/proc/scsi/sg/version"
 
@@ -507,7 +507,7 @@ function scan_hdd_sg() {
 	# test if the scsi_nr is found in /proc/scsi/usb-storage/
 	elif [ -e "${proc_info}" ]; then
 
-		if [ -e "${usb_devstrings}${scsi_nr}" ]; then	
+		if [ -e "${usb_devstrings}${scsi_nr}" ]; then
 			local usb_info="${usb_devstrings}/${scsi_nr}"
 			add_attribute	'Description'
 			add_values		'USB drive'
@@ -539,7 +539,7 @@ function scan_hdd_sg() {
 	elif [ "${udev_info}" ]; then
 
 		add_values		"$(cat ${udev_info} | grep -i vendor | \
-						awk -F= {'print $NF'})"	
+						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
 
@@ -556,7 +556,7 @@ function scan_hdd_sg() {
 	if  [ "${udev_info}" ]; then
 
 		add_values		"$(cat ${udev_info} | grep -i model | \
-						awk -F= {'print $NF'})"	
+						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
 
@@ -567,7 +567,7 @@ function scan_hdd_sg() {
 
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 						awk -F= {'print $2'})"
-	fi	
+	fi
 
 
 	###############
@@ -581,13 +581,13 @@ function scan_hdd_sg() {
 	elif [ "$(type -p hdparm)" ]; then
 
 		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
-						awk -F= {'print $2'})"						
-	fi	
+						awk -F= {'print $2'})"
+	fi
 
 
 	########
-	# Driver					
-	if [ -e "${proc_info}" ]; then				
+	# Driver
+	if [ -e "${proc_info}" ]; then
 		add_attribute	'Driver'
 		add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
 	fi
@@ -624,11 +624,11 @@ Module_oem() {
 
 
 	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification" 
+		add_attribute	"$appname notification"
 		add_values		"Please install LSHW to collect this information"
 
 	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification" 
+		add_attribute	"$appname notification"
 		add_values		"Please run $appname as super-user to collect this information"
 
 	else
@@ -637,22 +637,22 @@ Module_oem() {
 	lshw > $lshw_tmp
 
 	# principle:
-	# (1) output of lshw is stripped out of newlines, switched spaces with _ and 
-	#     added ¡ to denote a value pair 
-	# (2) this is put into hardware array, because bash doesn't support 
-	#     two-dimensional arrays 
+	# (1) output of lshw is stripped out of newlines, switched spaces with _ and
+	#     added ¡ to denote a value pair
+	# (2) this is put into hardware array, because bash doesn't support
+	#     two-dimensional arrays
 	# (3) a for loop then checks each array element for OUTPUT type node ID.
-	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied, 
+	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied,
 	#     values are sent with add_values()
 
 
 	# the verbosity of this module can be controlled by modifying the
 	# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
 
-	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk" 
+	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk"
 	DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
 
-	[[ "$isverbose" -eq 1 ]] && 
+	[[ "$isverbose" -eq 1 ]] &&
 		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
 
 
@@ -678,7 +678,7 @@ Module_oem() {
 		#echo $HW
 		#echo ${#hardware[@]}
 		oem_str[$node]="$(
-	
+
 			cat ${lshw_tmp} | sed 's/^ *//g' | tr ' ' '_' | \
 			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
 
@@ -689,10 +689,10 @@ Module_oem() {
 	# then fix the first node so that the hostname isn't printed
 	oem_str[0]="-${oem_str[0]}"
 
-		
-	# parse the string in a loop	
+
+	# parse the string in a loop
 	for node in $(seq 0 1 ${#oem_str[@]}); do
-	
+
 		# if the oem_string contains an interesting node...
 		if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
 			grep -i $OUTPUT)" ]; then # we want output
@@ -701,28 +701,28 @@ Module_oem() {
 
 			# then parse all elements in the array
 			while [ "$(echo ${oem_str[$node]} | \
-				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do 
-	
+				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do
+
 
 				# if the node doesn't contain info we don't want..
 				if [ ! "$(echo ${oem_str[$node]} | \
 					awk -F'%newline%' {'print $'$myELEMENT' '} | \
-					grep -i $DO_NOT_OUTPUT)" ]; then 
-				
+					grep -i $DO_NOT_OUTPUT)" ]; then
+
 					# the oem_string is extracted into a variable
 					oem_node="$(echo ${oem_str[$node]} | \
 						awk -F'%newline%' {'print $'$myELEMENT' '})"
-						
-					# then prune out the *-foo nodes 
+
+					# then prune out the *-foo nodes
 					# and send the data to add_values()
 					if [ ! "$(echo ${oem_node} | grep '^-')" ]; then
-					
+
 						add_attribute	"  $(echo ${oem_node} | \
 							awk -F":_" {'print $1'} | tr '_' ' ')"
 
 						add_values		"  $(echo ${oem_node} | \
-							awk -F":_" {'print $2'} | tr '_' ' ')" 
-							
+							awk -F":_" {'print $2'} | tr '_' ' ')"
+
 					fi
 
 				# 'description' values are printed as headers
@@ -764,7 +764,7 @@ Module_system() {
 
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
-		kernel_makefile="/usr/src/linux/Makefile"		
+		kernel_makefile="/usr/src/linux/Makefile"
 	else
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
@@ -801,7 +801,7 @@ Module_processor() {
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, assume 1 cpu.
 	# if the number is greater, then output how many.
-	if [ ! "$cpu_count" ]; then 
+	if [ ! "$cpu_count" ]; then
 		cpu_count=1
 	elif [ $cpu_count -gt 1 ]; then
 		add_attribute	"Count"			"processor_count"
@@ -848,7 +848,7 @@ Module_terminal() {
 	add_attribute	"Terminal type"
 	add_values		"$TERM"
 
-	add_attribute	"Terminal speed"        
+	add_attribute	"Terminal speed"
 	add_values		"$(stty speed)"
 
 	add_attribute	"Rows"
@@ -857,13 +857,13 @@ Module_terminal() {
 	add_attribute	"Columns"
 	add_values		"$(stty size | awk '{print $2}')"
 
-	module_footer 
+	module_footer
 	flush_values
 }
 
 Module_printers() {
 	# this ugly hack prevents output if no printer is present, although needs debugging
-	#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then	
+	#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
 
 	moduleName="Printers"
 	module_header "${moduleName}"
@@ -888,7 +888,7 @@ Module_users() {
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
-	# -it has to work with all distros. 
+	# -it has to work with all distros.
 
 	flush_name_value_pair
 	module_footer "${moduleName}"
@@ -921,7 +921,7 @@ Module_network() {
 # there are at least two methods to pull in information; ifconfig and iproute2.
 
 	moduleName="Network information"
-	module_header	"${moduleName}"	
+	module_header	"${moduleName}"
 
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
 	# what are these needed for?
@@ -980,11 +980,11 @@ Module_network() {
 
 		add_attribute	'RX bytes'
 		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
-						grep -i 'RX bytes' | awk -F: {'print $2'})"	
+						grep -i 'RX bytes' | awk -F: {'print $2'})"
 
 		add_attribute	'TX bytes'
 		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
-						grep -i 'TX bytes' | awk -F: {'print $2'})"	
+						grep -i 'TX bytes' | awk -F: {'print $2'})"
 
 		value_footer
 
@@ -993,7 +993,7 @@ Module_network() {
 	# cleanup
 	rm -f ${nw_info}
 
-	module_footer 
+	module_footer
 	flush_values
 }
 
@@ -1003,7 +1003,7 @@ Module_distro() {
 # DISTRIBUTION
 #
 # this module will try to guess which Linux distrobution is installed.
-# the default tool to use is the lsb-release (Linux Standard Base 
+# the default tool to use is the lsb-release (Linux Standard Base
 # version reporting utility), which is just beginning to appear in distros.
 # a secondary id source are the unique files in /etc/, and as a last
 # resort the /etc/issue file.
@@ -1055,7 +1055,7 @@ Module_distro() {
 				break;
 				;;
 			"${root_dir}etc/fedora-release")
-				found_distros="$found_distros Fedora Core"			
+				found_distros="$found_distros Fedora Core"
 				break;
 				;;
 			"${root_dir}etc/redhat-release")
@@ -1110,7 +1110,7 @@ Module_distro() {
 				;;
 			'misc')
 				for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
-					if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then 
+					if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then
 						add_attribute	'Distro name'
 						add_vales		"$DISTRO"
 					fi
@@ -1163,7 +1163,7 @@ Module_distro() {
 				local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 			'misc')
 				local distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
-				# TODO: improve the grep 
+				# TODO: improve the grep
 		esac
 
 		add_attribute	'Distro version'
@@ -1212,13 +1212,13 @@ Module_applications() {
 	for app in ${APPLICATIONS}; do
 
 		if [ "$(type -p $app)" ]; then # it is installed
-			case "$app" in 
+			case "$app" in
 				'perl')
 					add_values 	"Perl $($app --version 2>&1 | grep 'perl, v' | \
-								grep -Eo 'v[ A-Za-z0-9.-]*')\n" 
+								grep -Eo 'v[ A-Za-z0-9.-]*')\n"
 					;;
 				'python')
-					add_values	"$($app -V 2>&1 | head -n 1 )\n" 
+					add_values	"$($app -V 2>&1 | head -n 1 )\n"
 					;;
 				'X')
 					add_values	"$($app -version 2>&1 | grep Revision)\n"
@@ -1245,7 +1245,7 @@ Module_applications() {
 					add_values	"$($app -W version 2>&1 | head -n 1 )\n"
 					;;
 				*)
-					add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n" 
+					add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
 										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			esac
@@ -1263,7 +1263,7 @@ Module_applications() {
 			esac
 		fi
 	done
-	module_footer 
+	module_footer
 	flush_values
 }
 
@@ -1283,24 +1283,24 @@ Module_devices() {
 			echo $DEVICE | sed -r 's/:_/:/g' | sed -r 's/(^_)//g' | tr ':' ' ' )"
 
 			# with lspci 2.2 and later, the -m switch works fine
-			#	for DEVICE in $(lspci -m | tr ' ' '_'); do 
+			#	for DEVICE in $(lspci -m | tr ' ' '_'); do
 			#		devices_dbg[$DEV_ARRAY]="$(	echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
 
 		((DEV_ARRAY++))
 	done
 
-	# the devices array now contains the ' ' separated entries from lsmod. 
+	# the devices array now contains the ' ' separated entries from lsmod.
 	# [1] device type		# [2] manufacturer		# [3] device name	etc
 	# ${#devices[@]} # is the number of devices in the array
 
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
 	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
-		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
+		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then
 
 			add_attribute	"$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
-							tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')" 
+							tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')"
 			add_values		 "$(echo ${devices[$DEV_ARRAY]} | \
-							awk {'print $2" "$3'} | tr '_' ' ')" 
+							awk {'print $2" "$3'} | tr '_' ' ')"
 
 		fi
 	done
