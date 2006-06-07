@@ -31,17 +31,19 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hd
 
 
 Module_hdd() {
+# this module collects data of the hard disk drives attached to the system.
+# some information is unaccesible unless the partitions are mounted.
+# everything is collected honoring the requirement of minimum dependencies; 
+# ie. using standard *nix tools. some information is unavailable
+# without special (but quite common) packages, and S-ATA/P-ATA drives
+# do now display everything as nicely as IDE drives, due to missing support 
+# in smartmontools (06/2006).
+
+# used tools:
+# fdisk, df, udev, /proc (deprecated), lshw, smartmontools, hdparm, bc
+
 	moduleName="Disk information"
 	module_header "${moduleName}"
-
-	# this module collects data of the hard disk drives attached to the system. some information
-	# is unaccesible unless the partitions are mounted. everything is collected honoring the requirement
-	# of minimum dependencies; ie. using standard *nix tools. some information is unavailable
-	# without special (but quite common) packages, and S-ATA/P-ATA drives do now display everything
-	# as nicely as IDE drives, due to missing support in smartmontools (06/2006).
-
-	# used tools:
-	# fdisk, df, /proc tree (Linux only), bc, lshw, smartmontools, hdparm
 
 	# developement status:
 	# -------------------
@@ -183,24 +185,24 @@ Module_hdd() {
 }
 
 function scan_hdd_smart() {
-	#########################
-	# S.M.A.R.T. scanning
-	#
-	# smartmontools are handy in getting the extended parameters
-	# of hard drives. only version 5.36 and onward support SATA drives
-	# and the version may be a bit uncommon, as it was released in April 2006.
-	# all major distros should begin to include it in their packages,
-	# so this should be relatively common in late 2006.
-	# for ide drives this is not a problem.
-	#
-	# this function takes one parameter, the driver to use. default is ata.
-	
+#########################
+# S.M.A.R.T. scanning
+#
+# smartmontools are handy in getting the extended parameters
+# of hard drives. only version 5.36 and onward support SATA drives
+# and the version may be a bit uncommon, as it was released in April 2006.
+# all major distros should begin to include it in their packages,
+# so this should be relatively common in late 2006.
+# for ide drives this is not a problem.
+#
+# this function takes one parameter, the driver to use. default is ata.
+
 	if [ "$1" ]; then dev_type=$1
 	else dev_type=ata;
 	fi
 
 	# allocate a temp file
-	tmp="$(mktemp  osinfo.XXXXXX)"
+	smart_info="$(mktemp  osinfo.XXXXXX)"
 
 	### check the smartctl version >5.36
 	version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
@@ -213,48 +215,57 @@ function scan_hdd_smart() {
 	fi
 	unset version
 
-	smartctl -a -d $dev_type ${drvdev} > $tmp
+	smartctl -a -d $dev_type ${drvdev} > $smart_info
 	add_attribute	'S.M.A.R.T.'
-	add_values		"$(cat ${tmp} | grep 'SMART support' | \
+	add_values		"$(cat ${smart_info} | grep 'SMART support' | \
 					head -n 1 | awk -F': ' {'print $2'})"
 
 	add_attribute	'Lifetime'
-	add_values		"$(cat $tmp | grep -i power_on | awk {'print $NF'})"
+	add_values		"$(cat $smart_info | grep -i power_on | awk {'print $NF'})"
 
 	add_attribute	'Temperature (C)'
-	add_values		"$(cat $tmp | grep -i temperature_celsius | \
+	add_values		"$(cat $smart_info | grep -i temperature_celsius | \
 					awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
  
 	add_attribute	'Health Status'
-	add_values		"$(cat $tmp | grep -Ei '(health)+' | awk {'print $NF'})"
-	
+	add_values		"$(cat $smart_info | grep -Ei '(health)+' | awk {'print $NF'})"
+
+	# cleanup
+	rm -f $smart_info
+
 }
 
 function scan_hdd_partitions() {
-	####################
-	# PARTITIONS
-	# 
-	# this loop extracts information of partitions
-	# 
-	# TODO: an array that stores data of how much is allocated for each FS
-	# [partition ID=83] [size on hda1] [size on hda4]
-	# [partition ID=7] [size on hda2] [size on hdb1]
+####################
+# PARTITIONS
+# 
+# function extracts information of hard drive partitions.
+# 
+# 
+# TODO: an array that stores data of how much is allocated for each FS
+# [partition ID=83] [size on hda1] [size on hda4]
+# [partition ID=7] [size on hda2] [size on hdb1]
 	
 	DISKFREE=0
 	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
 	value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
 
+
+	# loop all partitions detected by fdisk
+	
 	for PARTNR in $(seq 1 1 $partitions_on_drive); do 
 		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
 			sed -n "${PARTNR}{p;q;}" )"
 				
-		# partition
 		add_attribute	"  ${partition}"
 
-		# capacity; if partition is mounted (=is in mtab)
+
+		# CAPACITY; if partition is mounted (=is in mtab)
+		#
 		# BUG: submounted (=system for automounting usb sticks) partitions
 		# are considered unmounted, while they are not!
+		
 		if [ "$(df -Plk | grep $partition)" ]; then
 		
 			# the partition size is calculated from the value given by df,
@@ -265,14 +276,14 @@ function scan_hdd_partitions() {
 			# small partitions are reported in MB, larger in GB
 			partsize="$(df -Plk | grep $partition | awk {'print $2'})"
 			partfree="$(df -Plk | grep $partition | awk {'print $4'})"
-	
+			
 			[[ $partsize -lt 1048576 ]] && \
-				pz="$(echo $partfree/1024 | bc -l)" && \
-				pz="${pf:0:4} MB"
+				pz="$(echo $partsize/1024 | bc -l)" && \
+				pz="${pz:0:4} MB"
 			[[ $partsize -gt 1048576 ]] && \
-				pf="$(echo $partfree/1024/1024 | bc -l)" && \
-				pf="${pf:0:4} GB"
-				
+				pz="$(echo $partsize/1024/1024 | bc -l)" && \
+				pz="${pz:0:4} GB"
+	
 			#partpercfree="$(($partfree*100/$partsize))" # rounds off improperly
 			partpercfree="$(echo $partfree*100/$partsize | bc -l)"
 			partpercfree="${partpercfree:0:4}"
@@ -286,11 +297,17 @@ function scan_hdd_partitions() {
 			# free space
 			add_values		"$partpercfree%"
 		
-			# mountpoint			
-			add_values		"$(df -PT $partition | grep ^$partition | awk {'print $NF'})"
-		
-		else
-			
+			# mountpoint
+			local mp="$(df -PT $partition | grep ^$partition | \
+						awk {'print $NF'})"
+			# check the number of tabs to add for stdout indent
+			if [ ${#mp} -lt 8 ]; then
+				mp="${mp}\t"
+			fi
+			add_values		"${mp}"
+
+		else	# detect capacity of an unmounted partition
+				
 			# capacity
 			add_values		"-\t"
 			
@@ -314,96 +331,156 @@ function scan_hdd_partitions() {
 }
 
 function scan_hdd_ide() {
-	#################
-	# IDE drives
-	#
-	# this function collects information of IDE drives in the system.
+#################
+# IDE drives
+#
+# this function collects information of IDE drives in the system.
+#
+# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
 
-	ide_info="/proc/ide/"
-	serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F= {'print $NF'})"
+	# detect the available data sources
+	if [ "$(type -p udevinfo)" ]; then
+		# allocate a temp file
+		udev_info="$(mktemp  osinfo.XXXXXX)"
+		udevinfo -q all -n ${drvdev} > $udev_info
+	fi
+	if [ -e "/proc/ide/" ]; then
+		proc_info="/proc/ide/${drvnode}"
+	fi
+	# hdparm output is not read into a temp file, as
+	# it is unlikely to be used, and that would unnecessarily
+	# slow down this function.
+
 
 	add_attribute	'Description'
 	add_values		'IDE drive'
-	
+
+
+	########
+	# Vendor
 	add_attribute	'Vendor'
-	if [ "$(type -p smartctl)" ]; then	
+	
+	if [ "$(type -p smartctl)" ]; then
+	
+		# because smartctl uses its own database to report the HDD vendor,
+		# it is preferred over udev.
+		#
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
+		
 		add_values		"$(smartctl -i ${drvdev} | grep '^Model' | \
 						awk -F: {'print $2'} | sed 's/^ *//')"						
-	else
-		add_values		"$(udevinfo -q all -n ${drvdev} | grep VENDOR | \
-						awk -F_ {'print $NF'})"
+	elif [ "${udev_info}" ]; then
+	
+		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
+						awk -F_ {'print $NF'})"						
 	fi
 
-	if [ -e "/proc/ide/$drvnode" ]; then
+	#######
+	# Model
+	add_attribute	'Model'
 	
-		add_attribute	'Model'
-		add_values		"$(cat ${ide_info}${drvnode}/model)"
-						#"$(hdparm -i $drvdev | grep -Eio 'Model=\w+' | \
-						#awk -F= {'print $2'})"
+	if  [ "${udev_info}" ]; then
 
+		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i model | \
+						awk -F= {'print $NF'})"
+
+	elif [ -e "${proc_info}" ]; then
+	
+		add_values		"$(cat ${proc_info}/model)"
+
+	elif [ "$(type -p hdparm)" ]; then
+
+		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+						awk -F= {'print $2'})"
 	fi	
 
+	###############
+	# Serial number
 	add_attribute	'Serial'
-	add_values		${serial}
-					#"$(hdparm -i ${drives[$drvdev]} | grep -Eio 'serialno=\w+' | \
-					#awk -F= {'print $2'})"
-	
+
+	if  [ "${udev_info}" ]; then
+
+		add_values		"$(cat ${udev_info} | grep SERIAL | awk -F= {'print $NF'})"
+
+	elif [ "$(type -p hdparm)" ]; then
+
+		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+						awk -F= {'print $2'})"						
+	fi	
+
+
+	########
+	# Driver	
 	if [ -e "/proc/ide/$drvnode" ]; then
-	
 		add_attribute	'Driver'
-		add_values		"$(cat ${ide_info}${drvnode}/driver)"
-		
+		add_values		"$(cat ${proc_info}/driver)"		
 	fi
 	
-	add_attribute	'DMA'
-	add_values		"$(hdparm /dev/hda | grep dma | grep -Eo '\([onf]+\)')"	
-		
-	if [ "$(type -p smartctl)" ]; then
-		
-		scan_hdd_smart ata
-			
-	fi		
+	
+	#####
+	# DMA
+	if [ "$(type -p hdparm)" ]; then
+		add_attribute	'DMA'
+		add_values		"$(hdparm ${drvdev} | grep dma | grep -Eo '\([onf]+\)')"
+	fi
+
+
+	############
+	# SMART info		
+	if [ "$(type -p smartctl)" ]; then		
+		scan_hdd_smart ata			
+	fi	
+
+
+	# cleanup
+	rm -f $udev_info
+	
 }
 
 function scan_hdd_sg() {
+################# 
+# SATA/SCSI/USB drives (sg driver)
+# 
+# this function collects information of SATA/SCSI/USB drives,
+# because under Linux they all use the same SCSI drivers.
+# 
+# the information in stored into two or three locations, depending
+# on the kernel and whether the system uses devfs or udev.
+# since devfs is deprecated, it is not used at all.
+# the /proc/scsi/ system is deprecated from 2.6 on, but it is left
+# here for legacy support. 
+#
+# usb drives, when properly detected by the Linux kernel,
+# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
+# which can be found both in the beforementioned location and also
+# in /proc/scsi/sg/devices, can be used to identify the device 
+# in /proc/scsi/usb-storage/*.
+#
+# as the devices are (hopefully) linearily, the devices catalogue
+# can be used to identify which /dev/sd* node is a certain scsi#.
+# 
+# this is not true in the case of custom udev rules. although
+# a good practise is to let kernel do its magic and create a
+# link node to that device, so this is unlikely to be a problem.
+#
+# smartmontools support SATA drives from version 5.36 on
+# (released April 2006). this function is written in June 2006,
+# and for that the version of smartctl is checked before trying
+# to access SATA drives.
 
-	################# 
-	# SATA/SCSI/USB drives (sg driver)
-	# 
-	# this function servers to detect properties of SATA/SCSI/USB drives,
-	# because under Linux they all use the same SCSI drivers.
-	# usb drives, when properly detected by the Linux kernel,
-	# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
-	# which can be found both in the beforementioned location and also
-	# in /proc/scsi/sg/devices, can be used to identify the device 
-	# in /proc/scsi/usb-storage/*.
-	#
-	# as the devices are (hopefully) linearily, the devices catalogue
-	# can be used to identify which /dev/sd* node is a certain scsi#.
-	# 
-	# this is not true in the case of custom udev rules. although
-	# a good practise is to let kernel do its magic and create a
-	# link node to that device, so this is unlikely to be a problem.
-	#
-	# smartmontools support SATA drives from version 5.36 on
-	# (released April 2006). this function is written in June 2006,
-	# and for that the version of smartctl is checked before trying
-	# to access SATA drives.
-
-	scsi_info="/proc/scsi/scsi"
+	proc_info="/proc/scsi/scsi"
 	scsi_devices="/proc/scsi/sg/devices"
 	scsi_devstrings="/proc/scsi/sg/device_strs"					
 	usb_devstrings="/proc/scsi/usb-storage/"
 	sg_version="/proc/scsi/sg/version"
 
-	serial="$(udevinfo -q all -n ${drvdev} | grep SERIAL | awk -F= {'print $NF'})"
+	
 	scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
 
 	# test if the scsi_nr is found in /proc/scsi/usb-storage/
+	# TODO: add a test for udev
 	if [ -e "${usb_devstrings}${scsi_nr}" ]; then				
-	###
 	# USB drive
 	
 		usb_info="${usb_devstrings}/${scsi_nr}"
@@ -412,37 +489,83 @@ function scan_hdd_sg() {
 		add_values		'USB drive'
 
 	else
-	###
 	# SATA/SCSI drive
 	
 		add_attribute	'Description'
 		add_values		'SATA/SCSI drive'
 	fi
 
-	### 
-	# common sg driver
-	
+
+	########
+	# Vendor
 	add_attribute	'Vendor'
+
 	if [ "$smart" = "sata-ok" ]; then
+	
+		# because smartctl uses its own database to report the HDD vendor,
+		# it is preferred over udev.
+		#
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
+		
 		add_values		"$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
 						awk -F: {'print $2'} | sed 's/^ *//')"
-	else
-		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $1'})"
+						
+	elif [ "${udev_info}" ]; then
+	
+		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
+						awk -F_ {'print $NF'})"	
+						
+	elif [ -e "${proc_info}" ]; then
+	
+		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+						awk {'print $1'})"
 						#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
 	fi
-	
+
+
+	#######
+	# Model
 	add_attribute	'Model'
-	add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | awk {'print $2" "$3'})"
 	
+	if  [ "${udev_info}" ]; then
+
+		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i model | \
+						awk -F= {'print $NF'})"	
+
+	elif [ -e "${proc_info}" ]; then
+	
+		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+						awk {'print $2" "$3'})"
+
+	elif [ "$(type -p hdparm)" ]; then
+
+		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+						awk -F= {'print $2'})"
+	fi	
+	
+	
+	###############
+	# Serial number
 	add_attribute	'Serial'
-	add_values		${serial}
-					#"$(cat $tmp | grep ${drvdev}$ -A 2 | grep -Ei 'serial' | \
-					#awk {'print $NF'})"
+
+	if  [ "${udev_info}" ]; then
+
+		add_values		"$(cat ${udev_info} | grep SERIAL | awk -F= {'print $NF'})"
 					
-	add_attribute	'Driver'
-	add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"			
+	elif [ "$(type -p hdparm)" ]; then
+
+		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+						awk -F= {'print $2'})"						
+	fi	
+
+
+	########
+	# Driver					
+	if [ -e "${proc_info}" ]; then				
+		add_attribute	'Driver'
+		add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
+	fi
 	
 	#add_attribute	'DMA'
 	#add_values		"n/a" #enabled/disabled
@@ -564,10 +687,16 @@ Module_system() {
 	add_attribute	 $"Kernel release"			"kernel_release"
 	add_values		"$(uname -r)"
 	
-	kernel_makefile="/usr/src/linux/Makefile"
+	# Unique kernel name
+	if [ -e "/usr/src/linux" ]; then
+		kernel_makefile="/usr/src/linux/Makefile"		
+	else
+		kernel_makefile="/usr/src/linux*/Makefile"
+	fi
 	if [ -e "${kernel_makefile}" ]; then
 		add_attribute	$"Kernel name"			"kernel_name"
-		add_values		"$(head ${kernel_makefile} | grep NAME | awk -F= {'print $2'})"
+		add_values		"$(head ${kernel_makefile} | grep NAME | \
+						head -n 1 | awk -F= {'print $2'})"
 	fi
 
 	add_attribute	$"Network node hostname"	"host_name"
@@ -580,7 +709,8 @@ Module_system() {
 	add_values		"$(echo $LC_LANG)"
 	
 	add_attribute	$"System uptime"
-	add_values		"$(uptime | awk -F, {'print $1'} | grep -Eo 'up [a-z0-9: ]*')"
+	add_values		"$(uptime | awk -F, {'print $1'} | \
+					grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
 	module_footer
 	flush_values
@@ -593,8 +723,15 @@ Module_processor() {
 	cpuinfo="/proc/cpuinfo"
 	cpu_count="$(cat ${cpuinfo}  | grep 'cpu cores' | head -n 1 | awk {'print $NF'})"
 
-	add_attribute	"Count"			"processor_count"
-	add_values		$cpu_count
+	# test if /proc/cpuinfo gives a number for cpu cores.
+	# if it is does not, assume 1 cpu.
+	# if the number is greater, then output how many.
+	if [ ! "$cpu_count" ]; then 
+		cpu_count=1
+	elif [ $cpu_count -gt 1 ]; then
+		add_attribute	"Count"			"processor_count"
+		add_values		$cpu_count
+	fi
 	
 	for cpunr in $(seq 1 1 $cpu_count); do
 	
@@ -706,57 +843,80 @@ Module_lsmod() {
 
 
 Module_network() {
+# there are at least two methods to pull in information; ifconfig and iproute2.
+
 	moduleName="Network information"
-	module_header "${moduleName}"
+	module_header	"${moduleName}"	
 
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
 	# what are these needed for?
 
-	if [ "$SYSTEM" == "linux" ] ; then
-		ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 2 | grep -v LOOPBACK | grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
+	# allocate the temp file
+	nw_info="$(mktemp  osinfo.XXXXXX)"
 
-	else
-		ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | awk -F': ' {'print $1'})"
+	if [ "$(type -p ifconfig)" ]; then
+		nw_src="ifconfig"
 
+		# detect the type of ifconfig available; there may be more,
+		# but these two were tested. all ifconfigs in Linux operate
+		# more of less similarity, but the one on FreeBSD is different.
+		if [ "$SYSTEM" == "linux" ] ; then
+			ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | grep -v LOOPBACK | \
+			grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
+
+		else # *BSD ifconfig
+			ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | \
+			awk -F': ' {'print $1'})"
+		fi
 	fi
 
 	for interface_name in $ETH_DEVICES; do
+		ifconfig $interface_name > ${nw_info}
+		#cat network-debug > ${nw_info}
 
 		value_header	$interface_name
-		
+			
 		add_attribute	'MAC'		"mac_address"
-		add_values		"$(ifconfig $interface_name | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
+		add_values		"$(cat ${nw_info} | \
+						grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
 		
 		add_attribute	'IPv4'		"ip_address"
-		add_values		"$(ifconfig $interface_name | \
-								grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
+		add_values		"$(cat ${nw_info} | \
+						grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+						grep -Eo '[0-9\.]+' )"
 
 		add_attribute	'IPv6'
-		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
-								grep -i inet6 | grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
+		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+						grep -i inet6 | \
+						grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
 		add_attribute	'Gateway'	"default_gateway"
 		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
 
 		add_attribute	'Broadcast'
-		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
-								grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -Eo '[0-9\.]+' )"
+		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+						grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+						grep -Eo '[0-9\.]+' )"
 
 		add_attribute	'Netmask'	"subnet_mask"
-		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
-								grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
-								grep -Eo '[0-9\.fx]+' )"
+		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+						grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
+						grep -Eo '[0-9\.fx]+' )"
 
 		add_attribute	'RX bytes'
-		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
-								grep -i 'RX bytes' | awk -F: {'print $2'})"	
+		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+						grep -i 'RX bytes' | awk -F: {'print $2'})"	
 
 		add_attribute	'TX bytes'
-		add_values		"$(ifconfig $interface_name | sed "s/  /\n/g" | \
-								grep -i 'TX bytes' | awk -F: {'print $2'})"	
+		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+						grep -i 'TX bytes' | awk -F: {'print $2'})"	
+						
 		value_footer
 
 	done
+
+	# cleanup
+	rm -f ${nw_info}
 
 	module_footer 
 	flush_values
@@ -765,135 +925,182 @@ Module_network() {
 
 
 Module_distro() {
+# DISTRIBUTION
+#
+# this module will try to guess which Linux distrobution is installed.
+# the default tool to use is the lsb-release (Linux Standard Base 
+# version reporting utility), which is just beginning to appear in distros.
+# a secondary id source are the unique files in /etc/, and as a last
+# resort the /etc/issue file.
+
 	moduleName="Distribution"
 	module_header "${moduleName}"
 
-	# echo the root directory
+	# locate and echo the root directory
 	[ "$prefix" != '/' ] && \
 		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
 		local root_dir="$prefix"
-	add_name_value_pair 'Root dir'  "$root_dir"
-	
-	# Begin searching for distro identifying files
-	local found_files=""
-	local fil
-	for fil in ${prefix}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
-		[ -e $fil ] && found_files="$found_files $fil"
-	done
-	
-	# Now make a list of distros from the $found_files list above
-	local found_distros=""
-	local distro_ident
-	for distro_ident in $found_files; do
-		case $distro_ident in
-			"${prefix}etc/SuSE-release")
-		    found_distros="$found_distros SuSE"
-		    break;
-		    ;;
-		"${prefix}etc/fedora-release")
-		    found_distros="$found_distros Fedora Core"			
-		    break;
-		    ;;
-		"${prefix}etc/redhat-release")
-		    found_distros="$found_distros Red Hat"
-		    break;
-		    ;;
-		"${prefix}etc/slackware-version")
-		    found_distros="$found_distros Slackware"
-		    break;
-		    ;;
-		"${prefix}etc/Topologilinux-version")
-		    found_distros="$found_distros Topologilinux"
-		    break;
-		    ;;
-		"${prefix}etc/gentoo-release")
-		    found_distros="$found_distros Gentoo"
-		    break;
-		    ;;
-		# if nothing previous matches, then use issue
-		# AnMaster: Inform user that this might be very wrong...
-		"${prefix}etc/issue")
-			found_distros="$found_distros misc"
-			break;
-			;;
-		esac
-	done
-	# Remove beginning spaces.
-	found_distros="$(echo "$found_distros" | sed "s/^ *//")"
+	add_attribute		'Root dir'
+	add_values			"$root_dir"
 
-	# Output distro name
-	case "$found_distros" in
-		'SuSE'|'Fedora Core'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo')
-			add_name_value_pair 'Distro name'         "$found_distros"
-			[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
-			[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
-			[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
-			;;
-		'Topologilinux')
-		# Abort if found Topologilinux but not Slackware.
-			if [ "$usekdialog" == "1" ]; then
-				kdialog --error  "Topologilinux is based on Slackware and should contain\n${prefix}etc/slackware-version AND ${prefix}etc/Topologilinux-version.\nThis module will abort."
-			else
-				echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
-				echo "${tcRED}ERROR:${tSTD} contain ${prefix}etc/slackware-version ${tBOLD}AND${tSTD} ${prefix}etc/Topologilinux-version."
-				echo "${tcRED}This module will abort.${tSTD}"
-			fi
-			return 1
-			;;
-		'misc')
-			for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
-				if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then 
-					add_name_value_pair 'Distro name'         "$DISTRO"
+	# look for lsb-release
+	if [ "$(type -p lsb_release)" ]; then
+		add_attribute	'Distro ID'
+		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^distributor' | \
+						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+
+		add_attribute	'Release'
+		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^release' | \
+						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+
+		add_attribute	'Codename'
+		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^codename' | \
+						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+
+		add_attribute	'Description'
+		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^description' | \
+						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+
+	else
+	
+		# Begin searching for distro identifying files
+		local found_files=""
+		local fil
+		for fil in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+			[ -e $fil ] && found_files="$found_files $fil"
+		done
+		
+		# Now make a list of distros from the $found_files list above
+		local found_distros=""
+		local distro_ident
+		for distro_ident in $found_files; do
+			case $distro_ident in
+				"${root_dir}etc/SuSE-release")
+				found_distros="$found_distros SuSE"
+				break;
+				;;
+			"${root_dir}etc/fedora-release")
+				found_distros="$found_distros Fedora Core"			
+				break;
+				;;
+			"${root_dir}etc/redhat-release")
+				found_distros="$found_distros Red Hat"
+				break;
+				;;
+			"${root_dir}etc/slackware-version")
+				found_distros="$found_distros Slackware"
+				break;
+				;;
+			"${root_dir}etc/Topologilinux-version")
+				found_distros="$found_distros Topologilinux"
+				break;
+				;;
+			"${root_dir}etc/gentoo-release")
+				found_distros="$found_distros Gentoo"
+				break;
+				;;
+			# if nothing previous matches, then use /etc/issue
+			# AnMaster: Inform user that this might be very wrong...
+			"${root_dir}etc/issue")
+				found_distros="$found_distros misc"
+				break;
+				;;
+			esac
+		done
+		# Remove leading spaces.
+		found_distros="$(echo "${found_distros}" | sed 's/^ *//')"
+
+		# Output distro name
+		case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
+			'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')
+			#'SuSE'|'Fedora Core'|'Fedora'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo'|'Ubuntu')
+				add_attribute	'Distro name'
+				add_values		"${found_distros}"
+				
+				# clear spaces
+				#[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
+				#[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
+				#[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
+				;;
+			'topologilinux')
+			# Abort if found Topologilinux but not Slackware.
+				if [ "$usekdialog" == "1" ]; then
+					kdialog --error  "Topologilinux is based on Slackware and should contain\n${root_dir}etc/slackware-version AND ${root_dir}etc/Topologilinux-version.\nThis module will abort."
+				else
+					echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
+					echo "${tcRED}ERROR:${tSTD} contain ${root_dir}etc/slackware-version ${tBOLD}AND${tSTD} ${root_dir}etc/Topologilinux-version."
+					echo "${tcRED}This module will abort.${tSTD}"
 				fi
-			done
-			;;
-		'')
-			# Abort if no distro found
-			if [ "$usekdialog" == "1" ]; then
-				kdialog --error  "You have zero distros installed or use a distro not recognised by ${appname}\nThis module will abort."
-			else
-				echo "${tcRED}ERROR:${tSTD} You have zero distros installed or use a distro not recognised by ${appname}"
-				echo "${tcRED}This module will abort.${tSTD}"
-			fi
-			return 1
-			;;
-#	*)
-#		# Abort if more than one distro
-#		if [ "$usekdialog" == "1" ]; then
-#			kdialog --error  "You have several distros installed at the same time.\nInstalled distros:\n${found_distros}\nThis module will abort."
-#		else
-#			echo "${tcRED}ERROR:${tSTD} You have several distros installed at the same time."
-#			echo "${tcRED}ERROR:${tSTD} ${tBOLD}Installed distros:${tSTD} ${found_distros}"
-#			echo "${tcRED}This module will abort.${tSTD}"
-#		fi
-#		return 1
-#	;;
-	esac
-	# Output distro version
-	case "$found_distros" in
-		'SuSE')
-			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
-		'RedHat')
-#			local distro_version="$(fgrep 'VERSION = '     ${prefix}etc/redhat-release        | sed 's/VERSION = //'    )" ;;
-			local distro_version="$(cat ${prefix}etc/redhat-release)" ;;
-		'Fedora')
-			local distro_version="$(cat ${prefix}etc/fedora-release)" ;;
-		'Slackware')
-			local distro_version="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | sed 's/Slackware //'    )" ;;
-		'Topologilinux')
-			local distro_version="$(fgrep 'Topologilinux ' ${prefix}etc/Topologilinux-version | sed 's/Topologilinux //')"
-			local  SlackwareBase="$(fgrep 'Slackware '     ${prefix}etc/slackware-version     | sed 's/Slackware //'    )" ;;
-		'Gentoo')
-			local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
-		'misc')
-			local distro_version="$(grep '.' "${prefix}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
-			# TODO: improve the grep 
-	esac
-	add_name_value_pair 'Distro version' "$distro_version"
-	[ "$SlackwareBase" ] && add_name_value_pair 'Based on Slackware version' "$SlackwareBase"
-	# echo the whole table
-	flush_name_value_pair
-	module_footer "${moduleName}"
+				return 1
+				;;
+			'misc')
+				for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
+					if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then 
+						add_attribute	'Distro name'
+						add_vales		"$DISTRO"
+					fi
+				done
+				;;
+			'')
+				# Abort if no distro found
+				if [ "$usekdialog" == "1" ]; then
+					kdialog --error  "You have zero distros installed or use \
+					a distro not recognised by ${appname}\nThis module will abort."
+				else
+					echo "${tcRED}ERROR:${tSTD} You have zero distros installed \
+					or use a distro not recognised by ${appname}"
+					echo "${tcRED}This module will abort.${tSTD}"
+				fi
+				return 1
+				;;
+			#*)
+				# Abort if more than one distro
+				#if [ "$usekdialog" == "1" ]; then
+					#kdialog --error  "You have several distros installed at the \
+					#same time.\nInstalled distros:\n${found_distros}\n\
+					#This module will abort."
+				#else
+					#echo "${tcRED}ERROR:${tSTD} You have several distros \
+						#installed at the same time."
+					#echo "${tcRED}ERROR:${tSTD} ${tBOLD}Installed distros:${tSTD}\
+						#${found_distros}"
+					#echo "${tcRED}This module will abort.${tSTD}"
+				#fi
+				#return 1
+			#;;
+			esac
+
+		# Output distro version
+		case "${found_distros}" in
+			'SuSE')
+				local distro_version="$(fgrep 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
+			'Red Hat')
+	#			local distro_version="$(fgrep 'VERSION = ' ${root_dir}etc/redhat-release        | sed 's/VERSION = //'    )" ;;
+				local distro_version="$(cat ${root_dir}etc/redhat-release)" ;;
+			'Fedora')
+				local distro_version="$(cat ${root_dir}etc/fedora-release)" ;;
+			'Slackware')
+				local distro_version="$(fgrep 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+			'Topologilinux')
+				local distro_version="$(fgrep 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
+				local  SlackwareBase="$(fgrep 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+			'Gentoo')
+				local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
+			'misc')
+				local distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
+				# TODO: improve the grep 
+		esac
+		
+		add_attribute	'Distro version'
+		add_values		"$distro_version"
+		
+		[ "$SlackwareBase" ] && \
+		add_values	'Based on Slackware version' "$SlackwareBase"
+		
+	fi
+	
+	module_footer
+	flush_values
 }
 
 Module_applications() {
@@ -987,6 +1194,9 @@ Module_applications() {
 
 
 Module_devices() {
+# this function parses the physical devices in the computer from lspci.
+# depends on pciutils.
+
 	moduleName="Devices"
 	module_header "${moduleName}"
 
@@ -1013,7 +1223,7 @@ Module_devices() {
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then 
 	
 			add_attribute	"$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
-							tr '_' ' ' | sed 's/^.//')" 
+							tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')" 
 			add_values		 "$(echo ${devices[$DEV_ARRAY]} | \
 							awk {'print $2" "$3'} | tr '_' ' ')" 
 

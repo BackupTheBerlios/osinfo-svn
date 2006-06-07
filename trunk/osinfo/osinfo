@@ -10,7 +10,7 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=2
+micro_version=3
 patch_version=0
 dev_status=dev
 
@@ -513,7 +513,7 @@ function print_stdout {
 	# finally $value_string is printed at once.
 
 
-		# TODO: get tabsize dynamically
+	# TODO: get tabsize dynamically
 	TABSIZE=8 
 
 	# this routine gets the longest header string in $infostring
@@ -731,12 +731,16 @@ function wrong_module() {
 ################################################################################
 # Print module header
 # Parameters:
-#   1 string   Module name
+#   1 string	Module name
 module_header() {
 	if [ "$usekdialog" == "1" ]; then
 		k_title="$1"
 	elif [ $usexml -eq 1 ]; then
-		value_header "${1}"
+	
+		# make valid xml tag
+		xml_tag="$(echo ${1} | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+		value_header "${xml_tag}"
+
 	else
 		print_line
 		echo "${tcRED}${tUNDERLINE}"$"Report from module""${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
@@ -757,7 +761,8 @@ module_footer() {
 
 	
 
-
+#################
+# "main" function
 for modul in $cmdsnames; do
 	
 	if [ $modul = 'all' ]; then
@@ -772,8 +777,10 @@ for modul in $cmdsnames; do
 			break;
 		fi
 	fi
+	
 	# validate_arg "$modul" "$MODULES" || wrong_module "$modul"
-	# why is this function called? breaking MODULES for each system breaks it...
+	# why is validate_arg called?
+	
 done
 
 if [ "$prefix" != '/' ] ; then
