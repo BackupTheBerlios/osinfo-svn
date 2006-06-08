@@ -844,17 +844,19 @@ for modul in $cmdsnames; do
 	case $modul in
 		#		uname)              eval "Module_Cmd_${modul}";;
 		terminal|\
-			network|\
-			distro|\
-			devices|\
-			users|\
-			processor|\
-			system|\
-			lsmod|\
-			hdd|\
-			printers|\
-			oem|\
-			applications) Module_${modul};;
+		network|\
+		distro|\
+		devices|\
+		users|\
+		processor|\
+		system|\
+		lsmod|\
+		hdd|\
+		printers|\
+		oem|\
+		memory|\
+		cdrom|\
+		applications) Module_${modul};;
 	esac
 done
 #		lsmod|\		# is very alpha, do not uncomment

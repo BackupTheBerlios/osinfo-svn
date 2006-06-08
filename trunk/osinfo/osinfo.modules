@@ -8,9 +8,9 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES_LINUX='distro processor system network applications terminal devices hdd oem'
+MODULES_LINUX='distro processor system memory network applications terminal devices hdd oem'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lsmod users'
+MODULES_BROKEN='printers lsmod users cdrom'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 
@@ -607,8 +607,40 @@ function scan_hdd_sg() {
 }
 
 
-#Module_memory() {}
-#Module_cdrom() {}
+Module_memory() {
+# MEMORY
+#
+# this module tells complete information of the memory
+# installed on the system.
+#
+# only RAM at the moment
+
+	moduleName="System memory"
+	module_header "${moduleName}"
+
+
+
+	module_footer
+	flush_values
+
+}
+
+
+Module_cdrom() {
+# CDROM
+#
+# information of cd/dvd devices
+
+	moduleName="CD/DVD drives"
+	module_header "${moduleName}"
+
+
+
+	module_footer
+	flush_values
+
+
+}
 
 
 Module_oem() {
@@ -783,7 +815,7 @@ Module_system() {
 	add_attribute	$"System locale"
 	add_values		"$(echo $LC_LANG)"
 
-	add_attribute	$"System uptime"
+	add_attribute	$"System uptime"			"uptime"
 	add_values		"$(uptime | awk -F, {'print $1'} | \
 					grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
@@ -800,13 +832,12 @@ Module_processor() {
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, assume 1 cpu.
-	# if the number is greater, then output how many.
 	if [ ! "$cpu_count" ]; then
 		cpu_count=1
-	elif [ $cpu_count -gt 1 ]; then
-		add_attribute	"Count"			"processor_count"
-		add_values		$cpu_count
 	fi
+
+	add_attribute	"Count"			"processor_count"
+	add_values		$cpu_count
 
 	for cpunr in $(seq 1 1 $cpu_count); do
 
@@ -826,7 +857,7 @@ Module_processor() {
 		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2" MHz"'})"
 
-		add_attribute	"Cache"
+		add_attribute	"Cache"			"processor_cache"
 		add_values		"$(cat ${cpuinfo} | grep 'cache' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 
@@ -918,7 +949,17 @@ Module_lsmod() {
 
 
 Module_network() {
+# NETWORK
+#
+# this module detects the network settings of the computer.
+#
 # there are at least two methods to pull in information; ifconfig and iproute2.
+# ifconfig is used; there are at least two versions of ifconfig being used, and
+# all tested Linuxes have used the same, whereas FreeBSD v6 had different
+# output. the script should work on both versions.
+#
+# some changes have been made after testing with FreeBSD, so compitibility
+# may not be 100% anymore.
 
 	moduleName="Network information"
 	module_header	"${moduleName}"
@@ -929,12 +970,15 @@ Module_network() {
 	# allocate the temp file
 	nw_info="$(mktemp  osinfo.XXXXXX)"
 
+
+	# detect network devices using ifconfig
+	#
+	# detect the type of OS (and ifconfig available); there may other
+	# versions, but these two OSes were tested. all ifconfigs in Linux operate
+	# more of less similarity, but the one on FreeBSD is different.
 	if [ "$(type -p ifconfig)" ]; then
 		nw_src="ifconfig"
 
-		# detect the type of ifconfig available; there may be more,
-		# but these two were tested. all ifconfigs in Linux operate
-		# more of less similarity, but the one on FreeBSD is different.
 		if [ "$SYSTEM" == "linux" ] ; then
 			ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | grep -v LOOPBACK | \
 			grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
@@ -945,6 +989,8 @@ Module_network() {
 		fi
 	fi
 
+
+	# collect the information from detected network devices
 	for interface_name in $ETH_DEVICES; do
 		ifconfig $interface_name > ${nw_info}
 		#cat network-debug > ${nw_info}
@@ -955,6 +1001,9 @@ Module_network() {
 		add_values		"$(cat ${nw_info} | \
 						grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
 
+		# TODO: IP type (static or dynamic)
+		#add_attribute	'IP type'	"ip_type"
+
 		add_attribute	'IPv4'		"ip_address"
 		add_values		"$(cat ${nw_info} | \
 						grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
@@ -964,6 +1013,19 @@ Module_network() {
 		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
 						grep -i inet6 | \
 						grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
+
+		# FIXME: ubuntu does not know this command
+		add_attribute	'Domain'	"domain"
+		add_values		"$(domainname)"
+
+		#windows netbios/ domain
+		# this may be incorrect, but gives the proper Active Directory
+		# domain on a computer where the NSSswitch is set up
+		add_attribute	'NetBIOS domain'	"windows_domain"
+		add_values		"$(dnsdomainname)"
+
+		#TODO:
+		#add_attribute	'FQDN'		"fully_qualified_domain_name"
 
 		add_attribute	'Gateway'	"default_gateway"
 		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
@@ -1007,6 +1069,8 @@ Module_distro() {
 # version reporting utility), which is just beginning to appear in distros.
 # a secondary id source are the unique files in /etc/, and as a last
 # resort the /etc/issue file.
+#
+# TODO: move reporting to the end of the module; use local variables
 
 	moduleName="Distribution"
 	module_header "${moduleName}"
@@ -1024,7 +1088,7 @@ Module_distro() {
 		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^distributor' | \
 						awk -F: '{print $2}' | sed -s 's/^\t*//')"
 
-		add_attribute	'Release'
+		add_attribute	'Release'	"os_build"
 		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^release' | \
 						awk -F: '{print $2}' | sed -s 's/^\t*//')"
 
@@ -1166,7 +1230,7 @@ Module_distro() {
 				# TODO: improve the grep
 		esac
 
-		add_attribute	'Distro version'
+		add_attribute	'Distro version'	"os_build"
 		add_values		"$distro_version"
 
 		[ "$SlackwareBase" ] && \
