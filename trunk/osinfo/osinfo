@@ -464,11 +464,17 @@ function print_lanforce_xml {
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
-			# the following sed removes all formatting tags
-			# from the value string. it's a tad slow, though.
-			item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
-				sed 's/^ *//')"
-			echo -e "   $(xml_value "${item}")" | tee -a "$XMLFILE"
+			# only print values for which attribute is active
+			# (prevents attributes with no code tag from printing)
+			if [ "$attribute" == "open" ]; then
+
+				# the following sed removes all formatting tags
+				# from the value string. it's a tad slow, though.
+				local item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
+					sed 's/^ *//')"
+				echo -e "   $(xml_value "${item}")" | tee -a "$XMLFILE"
+				
+			fi
 
 		else
 			### CLOSE ATTRIBUTE TAG
@@ -479,17 +485,22 @@ function print_lanforce_xml {
 
 			### ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
-				item="$(echo ${item} | sed s/%attribute%//)"
+			
+				local item="$(echo ${item} | sed s/%attribute%//)"
+				local code="$(echo ${item} | awk -F\; {'print $2'})"
 
-				# validate xml
-				name="$(echo ${item} | awk -F\; {'print $1'} | \
-					sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+				# only print attributes and values with a code
+				if [ "$code" != "" ]; then
+				
+					# validate xml
+					local name="$(echo ${item} | awk -F\; {'print $1'} | \
+						sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
 
-				code="$(echo ${item} | awk -F\; {'print $2'})"
+					echo -e "  $(xml_attribute_start "${name}" "${code}")" | \
+						tee -a "$XMLFILE"
+					attribute="open"
 
-				echo -e "  $(xml_attribute_start "${name}" "${code}")" | \
-					tee -a "$XMLFILE"
-				attribute="open"
+				fi
 			fi
 
 			### OPEN ATTRIBUTE TAG
@@ -850,7 +861,7 @@ for modul in $cmdsnames; do
 		users|\
 		processor|\
 		system|\
-		lsmod|\
+		services|\
 		hdd|\
 		printers|\
 		oem|\

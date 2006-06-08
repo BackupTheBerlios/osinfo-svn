@@ -8,9 +8,10 @@
 #   --Advanced Bash Scripting Guide (ABS)                                      #
 ################################################################################
 
-MODULES_LINUX='distro processor system memory network applications terminal devices hdd oem'
+MODULES_LINUX='system distro kernel processor memory network applications terminal devices hdd oem'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lsmod users cdrom'
+MODULES_LANFORCE='system processor network oem memory hdd devices applications'
+MODULES_BROKEN='printers services users cdrom'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
 
 
@@ -22,7 +23,7 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hd
 ################################################################################
 
 
-### Comments
+### General comments
 # value_header
 # add_attribute takes two parameters: common name and xml code tag.
 # add_values can take several values.
@@ -196,6 +197,7 @@ function scan_hdd_smart() {
 # for ide drives this is not a problem.
 #
 # this function takes one parameter, the driver to use. default is ata.
+
 	local dev_type smart_info
 	if [ "$1" ]; then
 		dev_type="$1"
@@ -471,7 +473,6 @@ function scan_hdd_sg() {
 # and for that the version of smartctl is checked before trying
 # to access SATA drives.
 
-
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
@@ -642,12 +643,42 @@ Module_cdrom() {
 
 }
 
-
-Module_oem() {
-#### OEM INFORMATION
+Module_oem_rewrite() {
+# OEM INFORMATION (rewrite)
 #
 # this module collects information from lshw, a somewhat rare package,
-# which tells a lot of interesting information of the system.
+# which tells a lot of interesting information of system hardware.
+# it also seems to be the only way to get the serial number of a
+# branded computer, thus 'oem info'.
+
+	moduleName="OEM information"
+	module_header "${moduleName}"
+
+
+	if [ ! "$(type -p lshw)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install LSHW to collect this information"
+
+	elif [ ! "$(whoami)" == "root" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please run $appname as super-user to collect this information"
+
+	else
+
+		lshw_tmp="$(mktemp osinfo.XXXXXX)"
+		lshw > $lshw_tmp
+
+	fi
+
+
+}
+
+
+Module_oem() {
+# OEM INFORMATION
+#
+# this module collects information from lshw, a somewhat rare package,
+# which tells a lot of interesting information of system hardware.
 # it also seems to be the only way to get the serial number of a
 # branded computer, thus 'oem info'.
 
@@ -670,7 +701,7 @@ Module_oem() {
 
 	# principle:
 	# (1) output of lshw is stripped out of newlines, switched spaces with _ and
-	#     added ¡ to denote a value pair
+	#     added %newline% to denote a value pair
 	# (2) this is put into hardware array, because bash doesn't support
 	#     two-dimensional arrays
 	# (3) a for loop then checks each array element for OUTPUT type node ID.
@@ -785,26 +816,16 @@ Module_oem() {
 
 
 Module_system() {
+# General information of the system
+
 	moduleName="System"
 	module_header "${moduleName}"
 
-	add_attribute	$"Operating system"			"os"
-	add_values		"$(uname -s)"
+	add_attribute	"Operating system"			"os"
+	add_values		"\$distro $(uname -s) \$distro_version"
 
-	add_attribute	 $"Kernel release"			"kernel_release"
-	add_values		"$(uname -r)"
-
-	# Unique kernel name
-	if [ -e "/usr/src/linux" ]; then
-		kernel_makefile="/usr/src/linux/Makefile"
-	else
-		kernel_makefile="/usr/src/linux*/Makefile"
-	fi
-	if [ -e "${kernel_makefile}" ]; then
-		add_attribute	$"Kernel name"			"kernel_name"
-		add_values		"$(head ${kernel_makefile} | grep NAME | \
-						head -n 1 | awk -F= {'print $2'})"
-	fi
+	add_attribute	$"Operating system kernel"	"os_kernel"
+	add_values		"$(uname -sr)"
 
 	add_attribute	$"Network node hostname"	"host_name"
 	add_values		"$(hostname)"
@@ -823,7 +844,37 @@ Module_system() {
 	flush_values
 }
 
+Module_kernel() {
+# Operating system kernel
+
+	moduleName="Kernel"
+	module_header "${moduleName}"
+
+	add_attribute	$"Operating system"	
+	add_values		"$(uname -sr)"
+
+	add_attribute	 $"Kernel release"			"kernel_release"
+	add_values		"$(uname -r)"
+
+	# Unique kernel name
+	if [ -e "/usr/src/linux" ]; then
+		kernel_makefile="/usr/src/linux/Makefile"
+	elif [ "$(ls /usr/src/ | grep linux)" ]; then
+		kernel_makefile="/usr/src/linux*/Makefile"
+	fi
+	if [ -e "${kernel_makefile}" ]; then
+		add_attribute	$"Kernel name"			"kernel_name"
+		add_values		"$(head ${kernel_makefile} | grep NAME | \
+						head -n 1 | awk -F= {'print $2'})"
+	fi
+
+	module_footer
+	flush_values
+}
+
 Module_processor() {
+# information of the cpu
+
 	moduleName="Processor"
 	module_header "${moduleName}"
 
@@ -850,8 +901,8 @@ Module_processor() {
 						awk -F': ' {'print $2'})"
 
 		add_attribute	"Model"			"processor_model"
-		add_values		"$(cat ${cpuinfo}  | grep 'model name' | sed -n "$cpunr{p;q}" | \
-						awk -F': ' {'print $2'})"
+		add_values		"$(cat ${cpuinfo}  | grep 'model name' | \
+						sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
 
 		add_attribute	"Frequency"		"processor_speed"
 		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
@@ -873,6 +924,8 @@ Module_processor() {
 }
 
 Module_terminal() {
+# information of the terminal in use
+
 	moduleName="Terminal info"
 	module_header "${moduleName}"
 
@@ -910,10 +963,15 @@ Module_printers() {
 
 
 Module_users() {
-    moduleName="Users and processes"
+    moduleName="Users"
     module_header "${moduleName}"
 
-	add_name_value_pair 'Last logged in user' 	"$(last | head -n 1)"
+	add_attribute	'Last logged in user'	"last_logged_user"
+	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
+
+	add_attribute	'All users'		"users"
+	add_values		"$(last | awk {'print $1'} | sort | uniq | grep '^[a-zA-Z]')"
+	
 #	add_name_value_pair 'Users' 			"$(ls /home/)"
 #	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
 
@@ -921,13 +979,14 @@ Module_users() {
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
 	# -it has to work with all distros.
 
-	flush_name_value_pair
-	module_footer "${moduleName}"
+	module_footer
+	flush_values
 }
 
 
-Module_lsmod() {
-	# rename to 'drivers'
+Module_services() {
+# information of system services
+
 	moduleName="Device drivers"
 	module_header "${moduleName}"
 
@@ -1333,8 +1392,14 @@ Module_applications() {
 
 
 Module_devices() {
+# hardware devices of the system
+#
 # this function parses the physical devices in the computer from lspci.
 # depends on pciutils.
+#
+# the output verbosity can be increased to include devices in the
+# DO_NOT_OUTPUT string to include standard motherboard controllers
+# which are suppressed in the normal level of verbosity.
 
 	moduleName="Devices"
 	module_header "${moduleName}"
@@ -1357,17 +1422,48 @@ Module_devices() {
 	# [1] device type		# [2] manufacturer		# [3] device name	etc
 	# ${#devices[@]} # is the number of devices in the array
 
+	# by default output all, but
 	DO_NOT_OUTPUT="pci\|usb\|smb\|bridge\|ide"
-	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
-		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | grep -i $DO_NOT_OUTPUT)" ]; then
 
-			add_attribute	"$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
-							tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')"
-			add_values		 "$(echo ${devices[$DEV_ARRAY]} | \
-							awk {'print $2" "$3'} | tr '_' ' ')"
+	[[ "$isverbose" -eq 1 ]] && \
+		DO_NOT_OUTPUT="smb\|bridge"
+
+	
+	
+	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
+		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
+			grep -i $DO_NOT_OUTPUT)" ]; then
+			
+			local description="$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
+					tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')"
+			local device="$(echo ${devices[$DEV_ARRAY]} | \
+					awk {'print $2" "$3'} | tr '_' ' ')"
+
+
+			# make an exception for display and ethernet adapters
+			# (lanforce) requires this
+			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
+
+				local eth_adapter="$device"
+
+			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
+
+				local display_adapter="$device"
+			
+			else
+				add_attribute	"$description"
+				add_values		"$device"
+			fi		
 
 		fi
 	done
+
+	# finally, report the eth and display adapters
+	add_attribute	'Display adapter'		"display_adapter"
+	add_values		"$display_adapter"
+
+	add_attribute	'Ethernet controller'	"network_adapter"
+	add_values		"$eth_adapter"
 
 	module_footer
 	flush_values
