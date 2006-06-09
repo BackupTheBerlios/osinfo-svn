@@ -9,11 +9,11 @@ all:
 
 help:
 	@echo "Targets:"
-	@echo "  dist            - makes a dist dir with a ready to tar up with $(appname)"
+	@echo "  dist            - makes a dist dir, ready for $(appname) tarball"
 	@echo "  dist-tarbz2     - tar and bzip2 the dist"
 	@echo "  distclean       - remove the dist dir and *~"
 	@echo "  clean           - remove *~"
-	@echo "  dist-all-in-one - Makes a huge all in one script. (replaces source foo with foo)"
+	@echo "  dist-all-in-one - makes a huge all in one script. (replaces source foo with foo)"
 
 dist:
 	mkdir -p dist/$(appname)

@@ -1,18 +1,68 @@
 #!/bin/bash
-################################################################################
-# List System information                                                      #
-#   supports currently only Linux, FreeBSD support under development           #
-################################################################################
-# Written by Arvid Norlander and Mikael Lammentausta                           #
-# Some parts are taken from:                                                   #
-#   --Advanced Bash Scripting Guide (ABS)                                      #
-################################################################################
+#################################################################################
+# OSINFO MODULES								#
+#										#
+# osinfo lists system information available to the OS.				#
+# this file contains the osinfo modules and module subfunctions.		#
+# modules can be freely added; the data processing and outputting is taken	#
+# care of by other functions. these are accessed by the following functions,	#
+# and here they are presented in the order in which they should appear in	#
+# the modules. 									#
+#										#
+# module_header	"Module name"							#
+#	each module should begin with this line.				#
+#	it will be printed in colour at stdout and as a tag to xml.		#
+#	it may contain spaces; in the xml tag they will be replaced by '_'	#
+#										#
+# value_header	"Header" 							#
+# 	the argument is printed on a single line in bold to stdout,		#
+#	and as a <header> tag to the xml.					#
+#	each module may contain several calls of this type.			#
+#										#
+# add_attribute "Common Name"	"xml_code"					#
+#	the first argument is printed at the first field to stdout,		#
+#	and the xml output is formulated as: 					#
+#	<xml_code>								#
+#	 <value>foo</value>							#
+#	</xml_code>								#
+#	each module may contain several calls of this type.			#
+#	the previous attribute tag is automatically closed when a new 		#
+#	one is introduced.							#
+#										#
+# add_values "value 1" "value 2" "value n"					#
+#	several values can be given; 						#
+#	all of them will be separated with tab at stdout,			#
+#	and they will each get their own <value>foo</value> line at xml output. #
+#	special characters as '\n' and '\t' can be used;			#
+#	they will not affect the xml output.					#
+#	each module may contain several calls of this type.			#
+#										#
+# value_footer									#
+#	this call should follow a block of values, if the value_header		#
+#	function is called before them. this closes open header tags.		#
+#										#
+# module_footer									#
+# 	this call should immediately precede the flush_values call.		#
+#	this takes care of closing an open attribute tag.			#
+#										#
+# flush_values 									#
+#	prints the values to xml file or to stdout.				#
+#	this should be the final command in a module.				#
+#										#
+#################################################################################
+# Written by Mikael Lammentausta and Arvid Norlander				#
+#										#
+# Some parts are taken from:                                                    #
+#   --Advanced Bash Scripting Guide (ABS)                                       #
+#################################################################################
 
-MODULES_LINUX='system distro kernel processor memory network applications terminal devices hdd oem'
+MODULES_LINUX='system distro kernel processor memory network applications \
+	terminal devices hdd oem oem_rewrite'
 MODULES_BSD='system applications terminal network'
 MODULES_LANFORCE='system processor network oem memory hdd devices applications'
 MODULES_BROKEN='printers services users cdrom'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hdd printers oem'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices \
+	services hdd printers oem'
 
 
 
@@ -23,25 +73,19 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices modprobe hd
 ################################################################################
 
 
-### General comments
-# value_header
-# add_attribute takes two parameters: common name and xml code tag.
-# add_values can take several values.
-# flush_values prints the values to xml file or to stdout.
-
 
 
 Module_hdd() {
+# HARD DISK DRIVES
+#
 # this module collects data of the hard disk drives attached to the system.
 # some information is unaccesible unless the partitions are mounted.
-# everything is collected honoring the requirement of minimum dependencies;
-# ie. using standard *nix tools. some information is unavailable
-# without special (but quite common) packages, and S-ATA/P-ATA drives
-# do now display everything as nicely as IDE drives, due to missing support
-# in smartmontools (06/2006).
+#
+# S-ATA drives now display everything as nicely as IDE drives, 
+# due to support in recent smartmontools (version 5.36).
 
 # used tools:
-# fdisk, df, udev, /proc (deprecated), lshw, smartmontools, hdparm, bc
+# fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc
 
 	moduleName="Disk information"
 	module_header "${moduleName}"
@@ -69,9 +113,9 @@ Module_hdd() {
 	# to use tab as a field separator in awk:
 	# awk $'-F\t' {}
 
-	# begin
-	# -----
-	# this module depends heavily on root access, so prevent other users of running this module
+	
+	# this module depends heavily on root access, so prevent other users
+	# of running this module	
 	if [ "$(whoami)" != "root" ]; then
 		add_attribute	"$appname notification"
 		add_values		"Run $appname as super-user to collect this information"
@@ -92,7 +136,8 @@ Module_hdd() {
 			# $drvnode is just the device node, eg "hda"
 			# $drvnr is the drive number for this type of driver; eg. for sdc $drvnr=3
 			drvnode=$(echo $drvdev | awk -F/ {'print $NF'})
-			drvnr=$(( $(echo -n ${drvnode: -1:1} | tr 'a-z' 'A-Z' | od -A n -t u1) - 64));
+			drvnr=$(( $(echo -n ${drvnode: -1:1} | \
+				tr 'a-z' 'A-Z' | od -A n -t u1) - 64));
 
 			if [ "$(echo $drvdev | grep hd)" ]; then
 
@@ -647,7 +692,7 @@ Module_oem_rewrite() {
 # OEM INFORMATION (rewrite)
 #
 # this module collects information from lshw, a somewhat rare package,
-# which tells a lot of interesting information of system hardware.
+# which tells a lot of interesting information of the system hardware.
 # it also seems to be the only way to get the serial number of a
 # branded computer, thus 'oem info'.
 
@@ -668,8 +713,23 @@ Module_oem_rewrite() {
 		lshw_tmp="$(mktemp osinfo.XXXXXX)"
 		lshw > $lshw_tmp
 
+	
+
+		# kiinnostavat:
+		# $hostname
+		# core
+		# firmware
+
+		#this="$(cat lshw.xml | grep -n 'id=\"core\"' | awk -F: {'print $1'})"
+		#next="$(cat lshw.xml | grep -n 'node id' | grep -A 1 core | awk -F: {'print $1'} | sed -n "2{p;q}")"
+		##for i in $foo; do echo $i; done
+		#((next--))
+		#time cat lshw.xml  | sed -n "$this,$next{p;}"
+
 	fi
 
+	module_footer
+	flush_values
 
 }
 
@@ -851,7 +911,7 @@ Module_kernel() {
 	module_header "${moduleName}"
 
 	add_attribute	$"Operating system"	
-	add_values		"$(uname -sr)"
+	add_values		"$(uname -o)"
 
 	add_attribute	 $"Kernel release"			"kernel_release"
 	add_values		"$(uname -r)"
@@ -1444,11 +1504,13 @@ Module_devices() {
 			# (lanforce) requires this
 			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
 
-				local eth_adapter="$device"
+				add_attribute	'Ethernet controller'	"network_adapter"
+				add_values		"$device"
 
 			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
 
-				local display_adapter="$device"
+				add_attribute	'Display adapter'		"display_adapter"
+				add_values		"$device"
 			
 			else
 				add_attribute	"$description"
@@ -1457,13 +1519,6 @@ Module_devices() {
 
 		fi
 	done
-
-	# finally, report the eth and display adapters
-	add_attribute	'Display adapter'		"display_adapter"
-	add_values		"$display_adapter"
-
-	add_attribute	'Ethernet controller'	"network_adapter"
-	add_values		"$eth_adapter"
 
 	module_footer
 	flush_values

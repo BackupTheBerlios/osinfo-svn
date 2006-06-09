@@ -1,12 +1,49 @@
 #!/bin/bash
 #!/usr/local/bin/bash
-################################################################################
-# List System information                                                      #
-################################################################################
-# Written by Arvid Norlander and Mikael Lammentausta                           #
-# Some parts are taken from:                                                   #
-#   --Advanced Bash Scripting Guide (ABS)                                      #
-################################################################################
+#################################################################################
+# OSINFO 									#
+#										#
+# osinfo lists system information available to the OS.				#
+#										#
+# everything is collected honoring the requirement of minimum dependencies;	#
+# ie. using standard *nix tools. some information is unavailable		#
+# without special (but quite common) packages, but the availability		#
+# of these is tested, and no error messaged are produced if these rarer		#
+# tools are missing. see info below for a list of dependencies.			#
+#										#
+# the script has been currently tested on the following Linux distros:		#
+#  Gentoo 2005.1 and 2006.0							#
+#  Ubuntu 5.10 and 6.06								#
+#  Fedora Core 4 and 5								#
+#  Red Hat 9									#
+#  Suse 10.0									#
+#  SlackWare									#
+#										#
+# and on FreeBSD 6.0								#
+# on x86 and amd64 architectures with various hardware configurations,		#
+#										#
+#################################################################################
+# list of (known) dependencies:							#
+#										#
+# bash 2.02									#
+# GNU grep with support for extended regular expressions			#
+# awk, sed, seq, tr, bc
+# netcat (for sending the xml output over tcp)
+#										
+# per module: (incomplete)
+# ----------
+# users: uniq, sort, last
+# oem: lshw
+# hdd: fdisk, df, udev (opt), smartmontools (opt), hdparm (opt)
+# devices: lspci
+# network: ifconfig, route
+#										#
+#################################################################################
+# Written by Arvid Norlander and Mikael Lammentausta                            #
+#										#
+# Some parts are taken from:                                                    #
+#   --Advanced Bash Scripting Guide (ABS)                                       #
+#################################################################################
 appname='osinfo'
 major_version=0
 minor_version=2
@@ -24,7 +61,8 @@ DEBUG=on
 # TODO: Use a parameter
 XMLFILE="osinfo.xml"
 
-SYSTEM="$(uname -s  | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
+#SYSTEM="$(uname -s  | sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')"
+SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
 #	gettext $"This script has not been tested on other operating systems than Linux and FreeBSD."
@@ -865,8 +903,10 @@ for modul in $cmdsnames; do
 		hdd|\
 		printers|\
 		oem|\
+		oem_rewrite|\
 		memory|\
 		cdrom|\
+		kernel|\
 		applications) Module_${modul};;
 	esac
 done
