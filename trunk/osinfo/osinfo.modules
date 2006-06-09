@@ -56,8 +56,7 @@
 #   --Advanced Bash Scripting Guide (ABS)                                       
 #################################################################################
 
-MODULES_LINUX='system distro kernel processor memory network applications \
-	terminal devices hdd oem oem_rewrite'
+MODULES_LINUX='system distro kernel processor memory network applications terminal devices hdd oem'
 MODULES_BSD='system applications terminal network'
 MODULES_LANFORCE='system processor network oem memory hdd devices applications'
 MODULES_BROKEN='printers services users cdrom'
@@ -688,7 +687,7 @@ Module_cdrom() {
 
 }
 
-Module_oem_rewrite() {
+Module_oem() {
 # OEM INFORMATION (rewrite)
 #
 # this module collects information from lshw, a somewhat rare package,
@@ -696,7 +695,7 @@ Module_oem_rewrite() {
 # it also seems to be the only way to get the serial number of a
 # branded computer, thus 'oem info'.
 
-	moduleName="OEM information"
+	local moduleName="OEM information"
 	module_header "${moduleName}"
 
 
@@ -711,30 +710,210 @@ Module_oem_rewrite() {
 	else
 
 		lshw_tmp="$(mktemp osinfo.XXXXXX)"
-		lshw > $lshw_tmp
+		lshw -xml > $lshw_tmp
 
-	
 
-		# kiinnostavat:
+		# the interesting entries:
 		# $hostname
 		# core
 		# firmware
 
-		#this="$(cat lshw.xml | grep -n 'id=\"core\"' | awk -F: {'print $1'})"
-		#next="$(cat lshw.xml | grep -n 'node id' | grep -A 1 core | awk -F: {'print $1'} | sed -n "2{p;q}")"
-		##for i in $foo; do echo $i; done
-		#((next--))
-		#time cat lshw.xml  | sed -n "$this,$next{p;}"
+		local NODES="$(hostname) core firmware"
 
+		# following loop extracts the data under the nodes variable.
+
+		# (1) get the line number where the 'node id=$NODES'
+		# (2) get the line number of the next 'node id'
+		# (3) everything in between those lines contains interesting data
+
+		for myNODE in $NODES; do
+
+			this="$(cat $lshw_tmp | grep -n "node id=\""${myNODE}"\"" | \
+				awk -F: {'print $1'})"
+			next="$(cat $lshw_tmp | grep -n 'node id' | grep -A 1 ${myNODE} | \
+				awk -F: {'print $1'} | sed -n "2{p;q}")"
+			((this++)) # this prevents the 'node' lines from printing
+			((next--))
+			
+			local IFSbk="$IFS"
+			IFS="
+"; # a literal newline, do not indent!
+			# then process....
+			for info in $(cat $lshw_tmp  | sed -n "$this,$next{p;}"); do
+
+				# the data is avaiable here, printed line by line.
+				# usually the fields are:
+				
+				# <description>
+				# <product>
+				# <vendor>
+				# <version>
+				# <serial>
+				
+				# then there special fields. see 'lshw -xml'
+
+				# parse standard <foo> tags
+				# TODO: add support for capabilities tags
+				local tag="$(echo ${info} | grep -o '<[a-z]*>' | \
+							sed 's/<\([^>]*\)>/\1/')"
+							# matched everything between '<' and '>'
+
+				[ "$tag" ] && \
+				local value="$(echo ${info} | grep ${tag} | \
+							awk -F'<|>' {'print $3'})"	
+							
+				# here the data is processed
+				case $myNODE in
+
+					"$(hostname)")	# OEM info
+
+						if [ "$printed" != "oem" ]; then
+							value_header	"OEM info"
+							local printed="oem"
+						fi
+
+						case $tag in
+
+							'description')
+							
+								add_attribute	'System model' \
+												'system_model'
+								add_values		"$value"
+								;;
+
+							'vendor')
+
+								add_attribute	'System manufacturer' \
+												'system_manufacturer'
+								add_values		"$value"
+								;;
+
+							'product')
+
+								add_attribute	'System name' 
+								add_values		"$value"
+								;;
+
+							'version')
+
+								add_attribute	'System version' 
+								add_values		"$value"
+								;;	
+
+							'serial')
+
+								add_attribute	'OEM serial number' \
+												'computer_product_serial'
+								add_values		"$value"
+								;;
+
+							#*)
+
+								#add_attribute	"$tag"
+								#add_values		"$value"
+								#;;
+
+						esac
+						
+						value_footer
+						;;
+						
+					'core')			# mobo info
+
+						if [ "$printed" != "mobo" ]; then
+							value_header	"Motherboard"
+							local printed="mobo"
+						fi
+						
+						case $tag in
+
+							'vendor')
+
+								add_attribute	'Make'
+								add_values		"$value"
+								;;
+
+							'product')
+
+								add_attribute	'Model' 
+								add_values		"$value"
+								;;
+
+							'version')
+
+								add_attribute	'Revision' 
+								add_values		"$value"
+								;;
+								
+							'serial')
+								add_attribute	'Serial number' \
+												'mother_board_serial_number'
+								add_values		"$value"
+								;;
+	
+						esac
+						
+						value_footer
+						;;
+						
+					'firmware')		# BIOS info
+
+						if [ "$printed" != "bios" ]; then
+							value_header	"BIOS"
+							local printed="bios"
+						fi
+
+						case $tag in
+
+							'vendor')
+
+								add_attribute	'Vendor'
+								add_values		"$value"
+								;;
+
+							'version')
+
+								add_attribute	'Revision' 
+								add_values		"$value"
+
+								# try to extract date
+								;;
+
+							'date')
+
+								add_attribute	'Date'
+								add_values		"$value"
+								;;
+
+							'serial')
+								add_attribute	'Serial number' \
+												'bios_serial_number'
+								add_values		"$value"
+								;;
+								
+								
+						esac
+						
+						#value_footer
+						# this produces an eternal loop
+						;;
+
+				esac
+
+			done
+
+			IFS="$IFSbk"
+
+		done
 	fi
-
+	
 	module_footer
 	flush_values
 
 }
 
 
-Module_oem() {
+Module_oem_old() {
 # OEM INFORMATION
 #
 # this module collects information from lshw, a somewhat rare package,
@@ -1144,8 +1323,8 @@ Module_network() {
 		add_attribute	'NetBIOS domain'	"windows_domain"
 		add_values		"$(dnsdomainname)"
 
-		#TODO:
-		#add_attribute	'FQDN'		"fully_qualified_domain_name"
+		add_attribute	'FQDN'		"fully_qualified_domain_name"
+		add_values		"$(hostname -f)"
 
 		add_attribute	'Gateway'	"default_gateway"
 		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
