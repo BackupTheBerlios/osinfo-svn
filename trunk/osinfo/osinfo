@@ -511,7 +511,7 @@ function print_lanforce_xml {
 				local item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
 					sed 's/^ *//')"
 				echo -e "   $(xml_value "${item}")" | tee -a "$XMLFILE"
-				
+
 			fi
 
 		else
@@ -523,13 +523,13 @@ function print_lanforce_xml {
 
 			### ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
-			
+
 				local item="$(echo ${item} | sed s/%attribute%//)"
 				local code="$(echo ${item} | awk -F\; {'print $2'})"
 
 				# only print attributes and values with a code
 				if [ "$code" != "" ]; then
-				
+
 					# validate xml
 					local name="$(echo ${item} | awk -F\; {'print $1'} | \
 						sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"

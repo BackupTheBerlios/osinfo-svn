@@ -60,8 +60,7 @@ MODULES_LINUX='system distro kernel processor memory network applications termin
 MODULES_BSD='system applications terminal network'
 MODULES_LANFORCE='system processor network oem memory hdd devices applications'
 MODULES_BROKEN='printers services users cdrom'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices \
-	services hdd printers oem'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers oem'
 
 
 
@@ -112,7 +111,7 @@ Module_hdd() {
 	# to use tab as a field separator in awk:
 	# awk $'-F\t' {}
 
-	
+
 	# this module depends heavily on root access, so prevent other users
 	# of running this module	
 	if [ "$(whoami)" != "root" ]; then
@@ -250,7 +249,7 @@ function scan_hdd_smart() {
 	fi
 
 	# allocate a temp file
-	smart_info="$(mktemp  osinfo.XXXXXX)"
+	smart_info="$(mktemp -t osinfo.XXXXXX)"
 
 	### check the smartctl version >5.36
 	version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
@@ -389,7 +388,7 @@ function scan_hdd_ide() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		local udev_info="$(mktemp  osinfo.XXXXXX)"
+		local udev_info="$(mktemp -t osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > $udev_info
 	fi
 	if [ -e "/proc/ide/" ]; then
@@ -453,8 +452,8 @@ function scan_hdd_ide() {
 
 	elif [ "$(type -p hdparm)" ]; then
 
-		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
-						awk -F= {'print $2'})"
+		add_values  "$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+		             awk -F= {'print $2'})"
 	fi
 
 
@@ -520,7 +519,7 @@ function scan_hdd_sg() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		local udev_info="$(mktemp  osinfo.XXXXXX)"
+		local udev_info="$(mktemp -t osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > ${udev_info}
 	fi
 	if [ -e "/proc/scsi/" ]; then
@@ -549,7 +548,7 @@ function scan_hdd_sg() {
 
 		fi
 
-	# test if the scsi_nr is found in /proc/scsi/usb-storage/
+		# test if the scsi_nr is found in /proc/scsi/usb-storage/
 	elif [ -e "${proc_info}" ]; then
 
 		if [ -e "${usb_devstrings}${scsi_nr}" ]; then
@@ -640,10 +639,8 @@ function scan_hdd_sg() {
 	#add_attribute	'DMA'
 	#add_values		"n/a" #enabled/disabled
 
-	if [ "$smart" = "sata-ok" ]; then
-
+	if [ "$smart" = "sata-ok" ]; then		
 		scan_hdd_smart ata
-
 	fi
 
 	# cleanup
@@ -694,7 +691,6 @@ Module_oem() {
 # which tells a lot of interesting information of the system hardware.
 # it also seems to be the only way to get the serial number of a
 # branded computer, thus 'oem info'.
-
 	local moduleName="OEM information"
 	module_header "${moduleName}"
 
@@ -709,7 +705,7 @@ Module_oem() {
 
 	else
 
-		lshw_tmp="$(mktemp osinfo.XXXXXX)"
+		lshw_tmp="$(mktemp -t osinfo.XXXXXX)"
 		lshw -xml > $lshw_tmp
 
 
@@ -734,7 +730,7 @@ Module_oem() {
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'node' lines from printing
 			((next--))
-			
+
 			local IFSbk="$IFS"
 			IFS="
 "; # a literal newline, do not indent!
@@ -743,13 +739,13 @@ Module_oem() {
 
 				# the data is avaiable here, printed line by line.
 				# usually the fields are:
-				
+
 				# <description>
 				# <product>
 				# <vendor>
 				# <version>
 				# <serial>
-				
+
 				# then there special fields. see 'lshw -xml'
 
 				# parse standard <foo> tags
@@ -761,7 +757,7 @@ Module_oem() {
 				[ "$tag" ] && \
 				local value="$(echo ${info} | grep ${tag} | \
 							awk -F'<|>' {'print $3'})"	
-							
+
 				# here the data is processed
 				case $myNODE in
 
@@ -775,17 +771,17 @@ Module_oem() {
 						case $tag in
 
 							'description')
-							
-								add_attribute	'System model' \
-												'system_model'
-								add_values		"$value"
+
+								add_attribute 'System model' \
+								              'system_model'
+								add_values    "$value"
 								;;
 
 							'vendor')
 
-								add_attribute	'System manufacturer' \
-												'system_manufacturer'
-								add_values		"$value"
+								add_attribute 'System manufacturer' \
+								              'system_manufacturer'
+								add_values    "$value"
 								;;
 
 							'product')
@@ -802,9 +798,9 @@ Module_oem() {
 
 							'serial')
 
-								add_attribute	'OEM serial number' \
-												'computer_product_serial'
-								add_values		"$value"
+								add_attribute 'OEM serial number' \
+								              'computer_product_serial'
+								add_values    "$value"
 								;;
 
 							#*)
@@ -814,48 +810,48 @@ Module_oem() {
 								#;;
 
 						esac
-						
+
 						value_footer
 						;;
-						
+
 					'core')			# mobo info
 
 						if [ "$printed" != "mobo" ]; then
 							value_header	"Motherboard"
 							local printed="mobo"
 						fi
-						
+
 						case $tag in
 
 							'vendor')
 
-								add_attribute	'Make'
-								add_values		"$value"
+								add_attribute 'Make'
+								add_values    "$value"
 								;;
 
 							'product')
 
-								add_attribute	'Model' 
-								add_values		"$value"
+								add_attribute 'Model' 
+								add_values    "$value"
 								;;
 
 							'version')
 
-								add_attribute	'Revision' 
-								add_values		"$value"
+								add_attribute 'Revision' 
+								add_values    "$value"
 								;;
-								
+
 							'serial')
-								add_attribute	'Serial number' \
-												'mother_board_serial_number'
-								add_values		"$value"
+								add_attribute 'Serial number' \
+								              'mother_board_serial_number'
+								add_values    "$value"
 								;;
-	
+
 						esac
-						
+
 						value_footer
 						;;
-						
+
 					'firmware')		# BIOS info
 
 						if [ "$printed" != "bios" ]; then
@@ -886,14 +882,14 @@ Module_oem() {
 								;;
 
 							'serial')
-								add_attribute	'Serial number' \
-												'bios_serial_number'
-								add_values		"$value"
+								add_attribute 'Serial number' \
+								              'bios_serial_number'
+								add_values    "$value"
 								;;
-								
-								
+
+
 						esac
-						
+
 						#value_footer
 						# this produces an eternal loop
 						;;
@@ -906,7 +902,7 @@ Module_oem() {
 
 		done
 	fi
-	
+
 	module_footer
 	flush_values
 
@@ -935,68 +931,68 @@ Module_oem_old() {
 
 	else
 
-	lshw_tmp="$(mktemp osinfo.XXXXXX)"
-	lshw > $lshw_tmp
+		lshw_tmp="$(mktemp -t osinfo.XXXXXX)"
+		lshw > $lshw_tmp
 
-	# principle:
-	# (1) output of lshw is stripped out of newlines, switched spaces with _ and
-	#     added %newline% to denote a value pair
-	# (2) this is put into hardware array, because bash doesn't support
-	#     two-dimensional arrays
-	# (3) a for loop then checks each array element for OUTPUT type node ID.
-	# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied,
-	#     values are sent with add_values()
+		# principle:
+		# (1) output of lshw is stripped out of newlines, switched spaces with _ and
+		#     added %newline% to denote a value pair
+		# (2) this is put into hardware array, because bash doesn't support
+		#     two-dimensional arrays
+		# (3) a for loop then checks each array element for OUTPUT type node ID.
+		# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied,
+		#     values are sent with add_values()
 
 
-	# the verbosity of this module can be controlled by modifying the
-	# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
+		# the verbosity of this module can be controlled by modifying the
+		# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
 
-	OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk"
-	DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
+		OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk"
+		DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
 
-	[[ "$isverbose" -eq 1 ]] &&
+		[[ "$isverbose" -eq 1 ]] &&
 		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
 
 
-	# this loop fills the $hardware[] array with entries from lshw.
-	#
-	# 1) the leading spaces are removed
-	# 2) whitespaces are converted to underscores
-	# 3) newlines are replaced by '%newline%'
-	# 4) the '*' character is the node identifier in lshw.
-	#
-	# the product of this is an array, where an item contains
-	# all information of the node parsed to a single string.
-	for node in $(seq 0 1 $(
+		# this loop fills the $hardware[] array with entries from lshw.
+		#
+		# 1) the leading spaces are removed
+		# 2) whitespaces are converted to underscores
+		# 3) newlines are replaced by '%newline%'
+		# 4) the '*' character is the node identifier in lshw.
+		#
+		# the product of this is an array, where an item contains
+		# all information of the node parsed to a single string.
+		for node in $(seq 0 1 $(
 
-		cat ${lshw_tmp} | grep '\*' | wc -l
+				cat ${lshw_tmp} | grep '\*' | wc -l
 
-		#cat ${lshw_tmp} | sed 's/^ *//' | tr ' ' '_' | \
-		#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
+				#cat ${lshw_tmp} | sed 's/^ *//' | tr ' ' '_' | \
+				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
 
-	));	do
-
-		#hardware_debug[$HW]="foo"
-		#echo $HW
-		#echo ${#hardware[@]}
-		oem_str[$node]="$(
+				));	do
+		 
+		 #hardware_debug[$HW]="foo"
+		 #echo $HW
+		 #echo ${#hardware[@]}
+		 oem_str[$node]="$(
 
 			cat ${lshw_tmp} | sed 's/^ *//g' | tr ' ' '_' | \
 			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
 
 		)"
 
-	done
+		done
 
 	# then fix the first node so that the hostname isn't printed
-	oem_str[0]="-${oem_str[0]}"
+		oem_str[0]="-${oem_str[0]}"
 
 
-	# parse the string in a loop
-	for node in $(seq 0 1 ${#oem_str[@]}); do
+		# parse the string in a loop
+		for node in $(seq 0 1 ${#oem_str[@]}); do
 
 		# if the oem_string contains an interesting node...
-		if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
+			if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
 			grep -i $OUTPUT)" ]; then # we want output
 
 			myELEMENT=1;
@@ -1004,9 +1000,9 @@ Module_oem_old() {
 			# then parse all elements in the array
 			while [ "$(echo ${oem_str[$node]} | \
 				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do
-
-
-				# if the node doesn't contain info we don't want..
+			 
+			 
+			 # if the node doesn't contain info we don't want..
 				if [ ! "$(echo ${oem_str[$node]} | \
 					awk -F'%newline%' {'print $'$myELEMENT' '} | \
 					grep -i $DO_NOT_OUTPUT)" ]; then
@@ -1027,12 +1023,12 @@ Module_oem_old() {
 
 					fi
 
-				# 'description' values are printed as headers
+					# 'description' values are printed as headers
 				elif [ "$(echo ${oem_str[$node]} | \
 					awk -F'%newline%' {'print $'$myELEMENT' '} | \
 					grep -i 'description')" ]; then
 
-						value_header	"$(echo ${oem_str[$node]} | \
+					value_header	"$(echo ${oem_str[$node]} | \
 						awk -F'%newline%' {'print $'$myELEMENT' '} | \
 						awk -F":_" {'print $2'} | tr '_' ' ')"
 
@@ -1040,8 +1036,8 @@ Module_oem_old() {
 
 				((myELEMENT++));
 			done
-		fi
-	done
+			fi
+		done
 
 
 	fi
@@ -1113,18 +1109,19 @@ Module_kernel() {
 }
 
 Module_processor() {
-# information of the cpu
+	# information of the cpu
 
 	moduleName="Processor"
 	module_header "${moduleName}"
 
-	cpuinfo="/proc/cpuinfo"
+	# AnMaster: Why this line? Would it ever be anything else?
+	local cpuinfo="/proc/cpuinfo"
 	cpu_count="$(cat ${cpuinfo}  | grep 'cpu cores' | head -n 1 | awk {'print $NF'})"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
-	# if it is does not, assume 1 cpu.
+	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
 	if [ ! "$cpu_count" ]; then
-		cpu_count=1
+		local cpu_count=1
 	fi
 
 	add_attribute	"Count"			"processor_count"
@@ -1198,7 +1195,7 @@ Module_printers() {
 	flush_name_value_pair
 	module_footer "${moduleName}"
 
-#	fi
+	#	fi
 }
 
 
@@ -1211,9 +1208,9 @@ Module_users() {
 
 	add_attribute	'All users'		"users"
 	add_values		"$(last | awk {'print $1'} | sort | uniq | grep '^[a-zA-Z]')"
-	
-#	add_name_value_pair 'Users' 			"$(ls /home/)"
-#	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
+
+	#	add_name_value_pair 'Users' 			"$(ls /home/)"
+	#	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
 
 	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
 	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
@@ -1239,7 +1236,7 @@ Module_services() {
 #	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
 #		add_name_value_pair 'module' "$MODULE"
 #	done
-	# TODO: needs more work
+# TODO: needs more work
 
 	flush_name_value_pair
 	module_footer "${moduleName}"
@@ -1267,7 +1264,7 @@ Module_network() {
 	# what are these needed for?
 
 	# allocate the temp file
-	nw_info="$(mktemp  osinfo.XXXXXX)"
+	nw_info="$(mktemp -t osinfo.XXXXXX)"
 
 
 	# detect network devices using ifconfig
@@ -1414,35 +1411,35 @@ Module_distro() {
 		for distro_ident in $found_files; do
 			case $distro_ident in
 				"${root_dir}etc/SuSE-release")
-				found_distros="$found_distros SuSE"
-				break;
-				;;
-			"${root_dir}etc/fedora-release")
-				found_distros="$found_distros Fedora Core"
-				break;
-				;;
-			"${root_dir}etc/redhat-release")
-				found_distros="$found_distros Red Hat"
-				break;
-				;;
-			"${root_dir}etc/slackware-version")
-				found_distros="$found_distros Slackware"
-				break;
-				;;
-			"${root_dir}etc/Topologilinux-version")
-				found_distros="$found_distros Topologilinux"
-				break;
-				;;
-			"${root_dir}etc/gentoo-release")
-				found_distros="$found_distros Gentoo"
-				break;
-				;;
-			# if nothing previous matches, then use /etc/issue
-			# AnMaster: Inform user that this might be very wrong...
-			"${root_dir}etc/issue")
-				found_distros="$found_distros misc"
-				break;
-				;;
+					found_distros="$found_distros SuSE"
+					break;
+					;;
+				"${root_dir}etc/fedora-release")
+					found_distros="$found_distros Fedora Core"
+					break;
+					;;
+				"${root_dir}etc/redhat-release")
+					found_distros="$found_distros Red Hat"
+					break;
+					;;
+				"${root_dir}etc/slackware-version")
+					found_distros="$found_distros Slackware"
+					break;
+					;;
+				"${root_dir}etc/Topologilinux-version")
+					found_distros="$found_distros Topologilinux"
+					break;
+					;;
+				"${root_dir}etc/gentoo-release")
+					found_distros="$found_distros Gentoo"
+					break;
+					;;
+				# if nothing previous matches, then use /etc/issue
+				# AnMaster: Inform user that this might be very wrong...
+				"${root_dir}etc/issue")
+					found_distros="$found_distros misc"
+					break;
+					;;
 			esac
 		done
 		# Remove leading spaces.
@@ -1461,7 +1458,7 @@ Module_distro() {
 				#[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
 				;;
 			'topologilinux')
-			# Abort if found Topologilinux but not Slackware.
+				# Abort if found Topologilinux but not Slackware.
 				if [ "$usekdialog" == "1" ]; then
 					kdialog --error  "Topologilinux is based on Slackware and should contain\n${root_dir}etc/slackware-version AND ${root_dir}etc/Topologilinux-version.\nThis module will abort."
 				else
@@ -1534,7 +1531,7 @@ Module_distro() {
 		add_values		"$distro_version"
 
 		[ "$SlackwareBase" ] && \
-		add_values	'Based on Slackware version' "$SlackwareBase"
+			add_values	'Based on Slackware version' "$SlackwareBase"
 
 	fi
 
@@ -1669,12 +1666,12 @@ Module_devices() {
 	[[ "$isverbose" -eq 1 ]] && \
 		DO_NOT_OUTPUT="smb\|bridge"
 
-	
-	
+
+
 	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
 			grep -i $DO_NOT_OUTPUT)" ]; then
-			
+
 			local description="$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
 					tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')"
 			local device="$(echo ${devices[$DEV_ARRAY]} | \
@@ -1692,7 +1689,7 @@ Module_devices() {
 
 				add_attribute	'Display adapter'		"display_adapter"
 				add_values		"$device"
-			
+
 			else
 				add_attribute	"$description"
 				add_values		"$device"
