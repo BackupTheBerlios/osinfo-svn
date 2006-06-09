@@ -894,6 +894,7 @@ Module_system() {
 	add_values		"$(uname -m)"
 
 	add_attribute	$"System locale"
+	# AnMaster: Hm... Is this line correct? I think there is LC_ALL too (diffrent locales for diffrent things?). 
 	add_values		"$(echo $LC_LANG)"
 
 	add_attribute	$"System uptime"			"uptime"
@@ -1023,8 +1024,8 @@ Module_printers() {
 
 
 Module_users() {
-    moduleName="Users"
-    module_header "${moduleName}"
+	moduleName="Users"
+	module_header "${moduleName}"
 
 	add_attribute	'Last logged in user'	"last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
@@ -1345,6 +1346,7 @@ Module_distro() {
 			'Gentoo')
 				local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 			'misc')
+				# AnMaster: . is a wildcard meaning any single char. Isn't fgrep what you want?
 				local distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
 				# TODO: improve the grep
 		esac
