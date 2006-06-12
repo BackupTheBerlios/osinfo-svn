@@ -412,7 +412,7 @@ function print_xml {
 			# from the value string. it's a tad slow, though.			
 			item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
 				sed 's/^ *//')"
-			echo "$(xml_value "${item}")" | tee -a "${XMLFILE}"
+			echo "${item}" | tee -a "${XMLFILE}"
 
 		else
 
