@@ -249,7 +249,7 @@ function scan_hdd_smart() {
 	fi
 
 	# allocate a temp file
-	smart_info="$(mktemp -t osinfo.XXXXXX)"
+	smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
 
 	### check the smartctl version >5.36
 	version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
@@ -388,7 +388,7 @@ function scan_hdd_ide() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		local udev_info="$(mktemp -t osinfo.XXXXXX)"
+		local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > $udev_info
 	fi
 	if [ -e "/proc/ide/" ]; then
@@ -519,7 +519,7 @@ function scan_hdd_sg() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
-		local udev_info="$(mktemp -t osinfo.XXXXXX)"
+		local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		udevinfo -q all -n ${drvdev} > ${udev_info}
 	fi
 	if [ -e "/proc/scsi/" ]; then
@@ -705,7 +705,7 @@ Module_oem() {
 
 	else
 
-		lshw_tmp="$(mktemp -t osinfo.XXXXXX)"
+		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		lshw -xml > $lshw_tmp
 
 
@@ -931,7 +931,7 @@ Module_oem_old() {
 
 	else
 
-		lshw_tmp="$(mktemp -t osinfo.XXXXXX)"
+		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		lshw > $lshw_tmp
 
 		# principle:
@@ -1264,7 +1264,7 @@ Module_network() {
 	# what are these needed for?
 
 	# allocate the temp file
-	nw_info="$(mktemp -t osinfo.XXXXXX)"
+	nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
 
 
 	# detect network devices using ifconfig
