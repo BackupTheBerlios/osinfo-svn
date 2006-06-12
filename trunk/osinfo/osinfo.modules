@@ -1200,7 +1200,7 @@ Module_processor() {
 		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2" MHz"'})"
 
-		add_attribute	"Cache"			"processor_cache"
+		add_attribute	"Cache"	
 		add_values		"$(cat ${cpuinfo} | grep 'cache' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 

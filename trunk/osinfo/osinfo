@@ -450,25 +450,25 @@ function print_xml {
 			#### HEADER TAG
 			# redundant: this will not go to xml
 
-			#elif [ "$(echo ${item} | grep '^%header%')" ]; then
+			elif [ "$(echo ${item} | grep '^%header%')" ]; then
 
 				# close open header tag.. this leaves the closing tag off
-				#if [ "$header" == "open" ]; then
-				#	((XML_INDENT--))
-				#fi
+				if [ "$header" == "open" ]; then
+					((XML_INDENT--))
+				fi
 
-				#for indent in $(seq 1 $XML_INDENT); do
-				#	echo -ne "\t" | tee -a "${XMLFILE}"
-				#done
-				#item="$(echo ${item} | sed s/%header%//)"
+				for indent in $(seq 1 $XML_INDENT); do
+					echo -ne "\t" | tee -a "${XMLFILE}"
+				done
+				item="$(echo ${item} | sed s/%header%//)"
 
 				# validate xml
-				#local name="$(echo ${item} | awk -F\; {'print $1'} | \
-				#	sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+				local name="$(echo ${item} | awk -F\; {'print $1'} | \
+					sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
 
-				#echo -e "$(xml_tag_start "${name}")" | tee -a "${XMLFILE}"
-				#((XML_INDENT++))
-				#header="open"
+				echo -e "$(xml_tag_start "${name}")" | tee -a "${XMLFILE}"
+				((XML_INDENT++))
+				header="open"
 
 
 			### FOOTER TAG
