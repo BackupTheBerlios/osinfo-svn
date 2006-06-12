@@ -56,10 +56,10 @@
 #   --Advanced Bash Scripting Guide (ABS)                                       
 #################################################################################
 
-MODULES_LINUX='system distro kernel processor memory network applications terminal devices hdd oem'
+MODULES_LINUX='system distro kernel processor network applications terminal devices hdd oem'
 MODULES_BSD='system applications terminal network'
-MODULES_LANFORCE='system processor network oem memory hdd devices applications'
-MODULES_BROKEN='printers services users cdrom'
+MODULES_LANFORCE='system processor network oem devices users applications env'
+MODULES_BROKEN='printers services users cdrom memory'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers oem'
 
 
@@ -71,6 +71,28 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hd
 ################################################################################
 
 
+Module_env() {
+# ENVIRONMENT VARIABLES
+#
+# xml only
+
+	moduleName="Environment variables"
+	module_header "${moduleName}"
+
+	## Write the header for output
+	add_attribute		$"System enviroment variables\n"	\
+						'system_enviroment_variables'
+	## Process all variables
+	for var in $(env); do
+
+		add_values	"${var}\n"
+
+	done
+
+	module_footer
+	flush_values
+
+}
 
 
 Module_hdd() {
@@ -655,12 +677,42 @@ Module_memory() {
 # this module tells complete information of the memory
 # installed on the system.
 #
-# only RAM at the moment
+# only RAM at the moment and the solution is really dirty
+# needs root access
 
 	moduleName="System memory"
 	module_header "${moduleName}"
+	
+	if [ ! "$(type -p lshw)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install LSHW to collect this information"
+
+	elif [ ! "$(whoami)" == "root" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please run $appname as super-user to collect this information"
+
+	else
 
 
+		# TODO: add support for memory type/speed detection thru lshw
+		# FIXME: if there's an open lshw.tmp, then it should be used
+		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		lshw -xml > $lshw_tmp
+
+		# for some odd reason meminfo or free don't give a proper value
+
+		meminfo="/proc/meminfo"
+
+		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
+		totalram="$(cat ${lshw_tmp} | grep 'id=\"memory' -A 20 | grep capacity | \
+			grep -Eo '[0-9]+')"
+			
+		totalram="$(echo $totalram/1024/1024 | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
+
+		add_attribute	'RAM total'	'ram'
+		add_values		"$totalram MB"
+
+	fi
 
 	module_footer
 	flush_values
@@ -869,16 +921,20 @@ Module_oem() {
 
 							'version')
 
-								add_attribute	'Revision' 
+								add_attribute	'Revision'	'bios_version'
 								add_values		"$value"
 
-								# try to extract date
+								# trying to extract date from version
+								add_attribute	'Date'	'bios_date'
+								add_values		"$(echo $value | \
+									grep -Eo '([0-9]{2,4}[-./][0-9]{2}[-./][0-9]{2,4})+')"
 								;;
 
 							'date')
 
-								add_attribute	'Date'
+								add_attribute	'Date'	'bios_date'
 								add_values		"$value"
+
 								;;
 
 							'serial')
@@ -886,7 +942,6 @@ Module_oem() {
 								              'bios_serial_number'
 								add_values    "$value"
 								;;
-
 
 						esac
 
@@ -1089,7 +1144,7 @@ Module_kernel() {
 	add_attribute	$"Operating system"	
 	add_values		"$(uname -o)"
 
-	add_attribute	 $"Kernel release"			"kernel_release"
+	add_attribute	 $"Kernel release"
 	add_values		"$(uname -r)"
 
 	# Unique kernel name
@@ -1099,7 +1154,7 @@ Module_kernel() {
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
 	if [ -e "${kernel_makefile}" ]; then
-		add_attribute	$"Kernel name"			"kernel_name"
+		add_attribute	$"Kernel name"
 		add_values		"$(head ${kernel_makefile} | grep NAME | \
 						head -n 1 | awk -F= {'print $2'})"
 	fi
@@ -1224,22 +1279,21 @@ Module_users() {
 Module_services() {
 # information of system services
 
-	moduleName="Device drivers"
+# Gentoo: rc-status
+
+# Fedora: /sbin/service --status-all
+#		  chkconfig --list
+
+# Ubuntu: 
+
+	moduleName="Services"
 	module_header "${moduleName}"
 
-	# usb
-	# ide
-	# /proc/ide/drivers
-	# scsi
-	# etc...
 
-#	for MODULE in $(lsmod | awk {'print $1'} | grep -v Module); do
-#		add_name_value_pair 'module' "$MODULE"
-#	done
-# TODO: needs more work
+	module_footer
+	flush_values
 
-	flush_name_value_pair
-	module_footer "${moduleName}"
+
 }
 
 
@@ -1289,7 +1343,6 @@ Module_network() {
 	# collect the information from detected network devices
 	for interface_name in $ETH_DEVICES; do
 		ifconfig $interface_name > ${nw_info}
-		#cat network-debug > ${nw_info}
 
 		value_header	$interface_name
 
@@ -1310,14 +1363,7 @@ Module_network() {
 						grep -i inet6 | \
 						grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
-		# FIXME: ubuntu does not know this command
-		add_attribute	'Domain'	"domain"
-		add_values		"$(domainname)"
-
-		#windows netbios/ domain
-		# this may be incorrect, but gives the proper Active Directory
-		# domain on a computer where the NSSswitch is set up
-		add_attribute	'NetBIOS domain'	"windows_domain"
+		add_attribute	'Domain'	'domain'
 		add_values		"$(dnsdomainname)"
 
 		add_attribute	'FQDN'		"fully_qualified_domain_name"
@@ -1681,10 +1727,10 @@ Module_devices() {
 			# make an exception for display and ethernet adapters
 			# (lanforce) requires this
 			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
-
+			
 				add_attribute	'Ethernet controller'	"network_adapter"
 				add_values		"$device"
-
+				
 			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
 
 				add_attribute	'Display adapter'		"display_adapter"
