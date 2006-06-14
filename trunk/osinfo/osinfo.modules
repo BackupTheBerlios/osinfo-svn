@@ -1258,18 +1258,15 @@ Module_users() {
 	moduleName="Users"
 	module_header "${moduleName}"
 
+	# TODO: ditch out user 'reboot'
+
 	add_attribute	'Last logged in user'	"last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
 
 	add_attribute	'All users'		"users"
 	add_values		"$(last | awk {'print $1'} | sort | uniq | grep '^[a-zA-Z]')"
 
-	#	add_name_value_pair 'Users' 			"$(ls /home/)"
-	#	add_name_value_pair 'Groups'  			"$(cat /etc/group | awk -F: {'print $1'} | sed 's/\n/  /g')"
 
-	# perhaps the solution is to ditch out standard linux non-human users, then print the rest
-	# AnMaster answers: check by uid. On gentoo normal users got uid > 1000. Some distros use 500.
-	# -it has to work with all distros.
 
 	module_footer
 	flush_values
@@ -1321,7 +1318,9 @@ Module_network() {
 	nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
 
 
-	# detect network devices using ifconfig
+	################################
+	# DETECT (WIRED) NETWORK DEVICES 
+	# using ifconfig
 	#
 	# detect the type of OS (and ifconfig available); there may other
 	# versions, but these two OSes were tested. all ifconfigs in Linux operate
@@ -1363,11 +1362,15 @@ Module_network() {
 						grep -i inet6 | \
 						grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
-		add_attribute	'Domain'	'domain'
-		add_values		"$(dnsdomainname)"
+		add_attribute	'NIS domain'
+		add_values		"$(hostname -y 2> /dev/null)"
+		# hostname produces stderr if no network is available
+
+		add_attribute	'DNS domain'	'domain'
+		add_values		"$(hostname -d 2> /dev/null)"
 
 		add_attribute	'FQDN'		"fully_qualified_domain_name"
-		add_values		"$(hostname -f)"
+		add_values		"$(hostname -f 2> /dev/null)"
 
 		add_attribute	'Gateway'	"default_gateway"
 		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
@@ -1393,6 +1396,47 @@ Module_network() {
 		value_footer
 
 	done
+
+
+	###################################################
+	# DETECT WIRELESS NETWORK DEVICES AND ACCESS POINTS
+	# with iwconfig, Linux only
+	#
+	# under developement, does not yet work!
+
+	# note: for debugging, these variables are set here
+	iw_src="wlan-iwconfig-on"
+	WLAN_DEVICES="eth1"
+	ap_src="wlan-stations"
+	
+	if [ "$(type -p iwconfig)" ]; then
+
+		iw_src="iwconfig"
+
+		# not tested yet
+		if [ "$SYSTEM" == "linux" ] ; then
+			ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | grep -v LOOPBACK | \
+			grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
+		fi
+
+	fi
+
+	# info from access points (AP)
+	if [ "$(type -p iwlist)" ]; then
+		# tweak this a bit
+		ap_src="iwlist $WLAN_DEVICES scan"
+	fi
+
+	value_header	'wlan'
+
+	add_attribute	"associated ESSID"
+	add_values		"$(cat "${iw_src}" | grep -Eo 'ESSID[:"A-Za-z/ ]*' | \
+					awk -F: {'print $2'})"
+
+	value_footer
+	
+
+
 
 	# cleanup
 	rm -f ${nw_info}
@@ -1713,7 +1757,6 @@ Module_devices() {
 		DO_NOT_OUTPUT="smb\|bridge"
 
 
-
 	for DEV_ARRAY in $(seq 1 ${#devices[@]}); do
 		if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
 			grep -i $DO_NOT_OUTPUT)" ]; then
@@ -1726,15 +1769,18 @@ Module_devices() {
 
 			# make an exception for display and ethernet adapters
 			# (lanforce) requires this
+			# make sure that if several adapters are found, they don't
+			# get individual attributes
+
 			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
+
+				local eth_adapter[${#eth_adapter}]="$device"
 			
-				add_attribute	'Ethernet controller'	"network_adapter"
-				add_values		"$device"
 				
 			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
 
-				add_attribute	'Display adapter'		"display_adapter"
-				add_values		"$device"
+				local video_adapter[${#video_adapter}]="$device"
+
 
 			else
 				add_attribute	"$description"
@@ -1742,7 +1788,23 @@ Module_devices() {
 			fi		
 
 		fi
+
 	done
+
+	#finally report the eth and video adapters
+	if [ "$eth_adapter" ]; then
+		add_attribute	'Ethernet controller(s)'	"network_adapter"
+		for i in $(seq 1 1 ${#eth_adapter[@]}); do
+			add_values		"${eth_adapter[$i]}\n"
+		done
+	fi
+
+	if [ "$video_adapter" ]; then
+		add_attribute	'Display adapter(s)'		"display_adapter"
+		for i in $(seq 1 1 ${#eth_adapter[@]}); do
+			add_values		"${video_adapter[$i]}\n"
+		done
+	fi
 
 	module_footer
 	flush_values

@@ -34,9 +34,10 @@
 # ----------
 # users: uniq, sort, last
 # oem: lshw
-# hdd: fdisk, df, udev (opt), smartmontools (opt), hdparm (opt)
+# hdd: fdisk, df, udev, smartmontools (opt), hdparm (opt)
 # devices: lspci
-# network: ifconfig, route
+# network: standard linux networking tools (hostname, ifconfig, route)
+#		   wireless-tools (iwconfig, iwlist) - optional
 #										
 #################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                            #
@@ -47,8 +48,8 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=4
-patch_version=1
+micro_version=5
+patch_version=0
 dev_status=dev
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -574,7 +575,7 @@ function print_stdout {
 	# finally $value_string is printed at once.
 
 
-	# TODO: get tabsize dynamically
+	# FIXME: get tabsize dynamically
 	TABSIZE=8
 
 	# this routine gets the longest header string in $infostring
@@ -602,38 +603,40 @@ function print_stdout {
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 
+		# this is a normal value item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
-			# this is a normal value item
-			value_string="${value_string}${item}\t";
 
-		else
 
-			if [ "$attribute" == "open" ]; then
-				value_string="${value_string}\n"
-				attribute="closed"
+			# test if an attribute is open, 
+			# whether the last item in value_string ended with newline
+			# (prevents sequential values like in mod_hdd be affected)
+			# and the previous item ended with other than a tab (\t)
+
+			if [ "$attribute" == "open" ] && \
+				[ "${item: -1:2}" == "n" ] && \
+				[ "${value_string: -1:2}" == "t" ]; then
+			
+				unset tab_string
+				# the -1 is a hack, I was too tired to really debug this further
+				for i in $(seq 1 $(($max_indent-$diff_indent-1)) ); do
+					local tab_string="${tab_string}\t"
+				done
+
+				local value_string="${value_string}${tab_string}"
 			fi
 
-			if [ "$(echo ${item} | grep '^%header%')" ]; then
-				item="$(echo ${item} | sed s/%header%//)"
-				value_string="${value_string}${tBOLD}${item}${tSTD}\n";
+			# this evaluation counts the proper amount of tabs to add
+			# for beautiful identation.
 
-
-
-			elif [ "$(echo "${item}" | grep '^%attribute%')" ]; then
-
-				item="$(echo "${item}" | sed s/%attribute%//)"
-				name=$(echo "${item}" | awk -F\; {'print $1'})
-				value_string="${value_string}${name}\t";
-				attribute="open"
-
-
-				# this evaluation counts the proper amount of tabs to add
-				# for beautiful identation.
+			# lots of code has been commented for later debugging
+			
 				# bash always rounds downward, so 20/8 = 2
-				#echo -en ${name} " : " ${#name} "\n"
-				#diff=$(($longest_string-${#name}))
-				max_indent=$(($longest_string/$TABSIZE))
-				diff_indent=$(($max_indent-${#name}/$TABSIZE))
+				
+				# max indent is the indentation (in tabs) of the longest string
+				# diff indent is the difference between the current item and the max
+				local max_indent=$(($longest_string/$TABSIZE))
+				local diff_indent=$(($max_indent-${#name}/$TABSIZE))
+				
 				#echo "diff : $diff"
 				#if [ ${#name} -ne $TABSIZE ]; then
 				# bc might not be available everywhere. not sure about that.
@@ -644,21 +647,57 @@ function print_stdout {
 				#if [ ${#name} -ne $TABSIZE ]; then
 				#if [ $diff -ne 0 ]; then
 					#tabs_to_add=$(($diff/$TABSIZE+1))
-					tabs_to_add=$diff_indent
+					local tabs_to_add=$diff_indent
 					#echo "tabs to add : " $tabs_to_add
 					if [ $tabs_to_add -ge 1 ]; then
+						unset tab_string
 						for i in $(seq 1 $tabs_to_add); do
-							value_string="${value_string}\t"
+							local tab_string="${tab_string}\t"
 						done
+						local value_string="${value_string}${tab_string}"
 					fi
 				#fi
+
+
+
+
+
+
+			local value_string="${value_string}\t${item}\t";
+
+
+		else
+
+
+			# if an attribute is open, print a newline
+			if [ "$attribute" == "open" ]; then
+				local value_string="${value_string}\n"
+				attribute="closed"
+			fi
+
+
+			# prints header
+			if [ "$(echo ${item} | grep '^%header%')" ]; then
+				local item="$(echo ${item} | sed s/%header%//)"
+				local value_string="${value_string}${tBOLD}${item}${tSTD}\n";
+
+
+			# prints attribute
+			elif [ "$(echo "${item}" | grep '^%attribute%')" ]; then
+
+				local item="$(echo "${item}" | sed s/%attribute%//)"
+				local name=$(echo "${item}" | awk -F\; {'print $1'})
+				local value_string="${value_string}${name}";
+				attribute="open"
+
+
 			fi
 		fi
 	done
-	value_string=${value_string}"\n";
+	#local value_string=${value_string}"\n";
 
 	# this sed makes the first item bold
-	echo -e "${value_string}" #| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
+	echo -e "${value_string}\n" #| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
 
 }
 
