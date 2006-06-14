@@ -400,12 +400,12 @@ function print_xml {
 	#	5 if the item begins with %footer% => print footer ; next
 
 
-	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
-			for indent in $(seq 1 $XML_INDENT); do
+			for indent in $(seq 1 1 $XML_INDENT); do
 				echo -ne "\t" | tee -a "${XMLFILE}"
 			done
 
@@ -420,7 +420,7 @@ function print_xml {
 			### CLOSE ATTRIBUTE TAG
 			if [ "$attribute" == "open" ]; then
 				((XML_INDENT--))
-				for indent in $(seq 1 $XML_INDENT); do
+				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
 				echo -e "$(xml_attribute_stop)" | tee -a "${XMLFILE}"
@@ -430,7 +430,7 @@ function print_xml {
 
 			### NEW ATTRIBUTE TAG
 			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
-				for indent in $(seq 1 $XML_INDENT); do
+				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
 				# parse item
@@ -458,7 +458,7 @@ function print_xml {
 					((XML_INDENT--))
 				fi
 
-				for indent in $(seq 1 $XML_INDENT); do
+				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
 				item="$(echo ${item} | sed s/%header%//)"
@@ -475,7 +475,7 @@ function print_xml {
 			### FOOTER TAG
 			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
 				((XML_INDENT--))
-				for indent in $(seq 1 $XML_INDENT); do
+				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
 				item="$(echo ${item} | sed s/%footer%//)"
@@ -500,7 +500,7 @@ function print_lanforce_xml {
 	# LanForce is a commercial company who hired a dev to do this script :)
 	# works pretty much the same as print_xml()
 
-	for itemnr in $(seq 0 $((${#infostring[@]}-1))); do
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 	
 		local item="${infostring[$itemnr]}"
 		
@@ -618,7 +618,7 @@ function print_stdout {
 			
 				unset tab_string
 				# the -1 is a hack, I was too tired to really debug this further
-				for i in $(seq 1 $(($max_indent-$diff_indent-1)) ); do
+				for i in $(seq 1 1 $(($max_indent-$diff_indent-1)) ); do
 					local tab_string="${tab_string}\t"
 				done
 
@@ -651,7 +651,7 @@ function print_stdout {
 					#echo "tabs to add : " $tabs_to_add
 					if [ $tabs_to_add -ge 1 ]; then
 						unset tab_string
-						for i in $(seq 1 $tabs_to_add); do
+						for i in $(seq 1 1 $tabs_to_add); do
 							local tab_string="${tab_string}\t"
 						done
 						local value_string="${value_string}${tab_string}"
@@ -751,7 +751,7 @@ function flush_name_value_pair {
 
 		#### OUTER OPENING TAG
 		if [ "$value_pair_header" ]; then
-			for indent in $(seq 0 $XML_INDENT); do
+			for indent in $(seq 0 1 $XML_INDENT); do
 				echo -ne "\t" | tee -a "${XMLFILE}"
 			done
 			((XML_INDENT++))
@@ -776,14 +776,14 @@ function flush_name_value_pair {
 		 if [ ! "${openTag}" ]; then
 			 #echo "new tag"
 			 #echo $value1
-			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
 			 done
 			 ((XML_INDENT++))
 			 echo -e "$(xml_tag_start "${value1}")" | tr '' ' '	| tee -a "${XMLFILE}"	# open tag
 			 openTag=${value1}
 
 			 if [  "${value2}" ]; then
-				 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+				 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
 				 done
 				 #echo "write data"
 				 #echo $value2
@@ -794,7 +794,7 @@ function flush_name_value_pair {
 			 #echo "close tag"
 			 #echo $value1
 			 ((XML_INDENT--))
-			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
 			 done
 			 echo -e "$(xml_tag_stop "${openTag}")"  | tr '' ' '	| tee -a "${XMLFILE}"		# close tag
 			 unset openTag;
@@ -803,7 +803,7 @@ function flush_name_value_pair {
 
 		 #### OUTER CLOSING TAG
 		 if [ "$value_pair_footer" ]; then
-			 for indent in $(seq 0 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
 			 done
 			 ((XML_INDENT--))
 			 echo -e "$(xml_tag_stop "${value_pair_footer}")" 	| tee -a "${XMLFILE}"		# close

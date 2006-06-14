@@ -1633,6 +1633,7 @@ Module_applications() {
 	moduleName="Applications"
 	module_header "${moduleName}"
 
+
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
 
