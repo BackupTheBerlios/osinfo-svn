@@ -828,7 +828,6 @@ Module_dmi() {
 					value_footer
 					;;
 
-
 				"0x0001")	# System Information
 
 					value_header	"System info"
@@ -864,7 +863,6 @@ Module_dmi() {
 					value_footer
 					;;
 
-
 				"0x0002")	# Base Board Information
 
 					value_header	"Motherboard"
@@ -872,7 +870,7 @@ Module_dmi() {
 
 					add_attribute	'Manufacturer' \
 									'mother_board_manufacturer'
-					add_values		"$(grep -i uuid ${dmi_tmp} | \
+					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
 									awk -F: {'print $2'})"
 
 
@@ -929,7 +927,7 @@ Module_dmi() {
 
 
 					value_footer
-				;;
+					;;
 			
 
 			esac
@@ -944,7 +942,7 @@ Module_dmi() {
 
 	# cleanup
 
-	#rm -f $dmi_info $dmi_tmp
+	rm -f $dmi_info $dmi_tmp
 
 	module_footer
 	flush_values
