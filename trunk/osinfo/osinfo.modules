@@ -56,9 +56,9 @@
 #   --Advanced Bash Scripting Guide (ABS)                                       
 #################################################################################
 
-MODULES_LINUX='system distro kernel processor network applications terminal devices hdd oem'
+MODULES_LINUX='system distro kernel processor network applications terminal devices hdd oem dmi'
 MODULES_BSD='system applications terminal network'
-MODULES_LANFORCE='system processor network oem devices users applications env'
+MODULES_LANFORCE='system processor network dmi devices users applications env'
 MODULES_BROKEN='printers services users cdrom memory'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers oem'
 
@@ -736,20 +736,248 @@ Module_cdrom() {
 
 }
 
+Module_dmi() {
+# DMI / OEM INFORMATION
+#
+# this module works as a replacement for module_oem. this is faster,
+# as it doesn't scan hardware. look below for excerpt from 'man dmidecode':
+#
+# dmidecode  is  a  tool  for dumping a computer's DMI (some say SMBIOS) table
+# contents in a human-readable format.
+# This table contains a description of the system's hardware components,
+# as well as other useful pieces of information  such  as  serial
+# numbers and BIOS revision. Thanks to this table, you can retrieve this
+# information without having to probe for the actual hardware.  While this
+# is a good point in terms of report speed and safeness,  this also makes
+# the presented information possibly unreliable.
+
+
+	moduleName="DMI information"
+	module_header "${moduleName}"
+
+	if [ ! "$(type -p dmidecode)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install dmidecode to collect this information"
+
+	elif [ ! "$(whoami)" == "root" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please run $appname as super-user to collect this information"
+
+	else
+
+		# allocate the temp files
+		dmi_info="$(mktemp /tmp/osinfo.XXXXXX)"
+		dmi_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		dmidecode > $dmi_info
+
+
+		# the interesting handles:
+		# 0x0000 'BIOS Information'
+		# 0x0001 'System Information'
+		# 0x0002 'Base Board Information'
+		# 0x0003 'Chassis Information'
+
+		local HANDLES="0x0000 0x0001 0x0002 0x0003"
+
+		# following loop extracts the data under the nodes variable.
+
+		# (1) get the line number where the 'node id=$HANDLES'
+		# (2) get the line number of the next 'node id'
+		# (3) everything in between those lines contains interesting data
+		
+		for myHANDLE in $HANDLES; do
+
+
+			this="$(cat ${dmi_info} | grep -n "Handle ${myHANDLE}" | awk -F: {'print $1'})"
+			next="$(cat ${dmi_info} | grep -n Handle | grep -A 1 ${myHANDLE} | \
+				awk -F: {'print $1'} | sed -n "2{p;q}")"
+			((this++)) # this prevents the 'handle' lines from printing
+			((next--))
+
+			# use a temp file to store handle information
+			cat ${dmi_info} | sed -n "$this,$next{p;}" > ${dmi_tmp}
+
+
+			# here the data is processed
+			case $myHANDLE in
+
+				"0x0000")	# BIOS Information
+
+					value_header	"BIOS"
+
+					add_attribute	'Vendor'
+					add_values		"$(grep -i vendor ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Revision'	'bios_version'
+					add_values		"$(grep -i version ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Date'	'bios_date'
+					add_values		"$(grep -i date ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+					
+					
+					add_attribute	'Serial number'	'bios_serial_number'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					value_footer
+					;;
+
+
+				"0x0001")	# System Information
+
+					value_header	"System info"
+
+
+					add_attribute	'System manufacturer' \
+									'system_manufacturer'
+					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Product name'	'system_model'
+					add_values		"$(grep -i product ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+					
+					add_attribute	'System version' 
+					add_values		"$(grep -i version ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'OEM serial number' \
+									'computer_product_serial'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'UUID' 	'uuid'
+					add_values		"$(grep -i uuid ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					value_footer
+					;;
+
+
+				"0x0002")	# Base Board Information
+
+					value_header	"Motherboard"
+
+
+					add_attribute	'Manufacturer' \
+									'mother_board_manufacturer'
+					add_values		"$(grep -i uuid ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Model' \
+									'mother_board_model'
+					add_values		"$(grep -i product ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Version' \
+									'mother_board_version'
+					add_values		"$(grep -i version ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Serial number' \
+									'mother_board_serial_number'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					value_footer
+					;;
+			
+				"0x0003")	# Chassis Information
+
+					value_header	'Chassis'
+
+					add_attribute	'Manufacturer' 	'chassis_manufacturer'
+					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Type' 	'chassis_type'
+					add_values		"$(grep -i type ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+									
+					add_attribute	'Lock' 	'chassis_lock'
+					add_values		"$(grep -i lock ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Asset tag' 'chassis_asset_tag'
+					add_values		"$(grep -i asset ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Serial number' \
+									'chassis_serial_number'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+
+					value_footer
+				;;
+			
+
+			esac
+
+		#done
+
+		#IFS="$IFSbk"
+
+		done
+		
+	fi
+
+	# cleanup
+
+	#rm -f $dmi_info $dmi_tmp
+
+	module_footer
+	flush_values
+
+}
+
+
 Module_oem() {
 # OEM INFORMATION (rewrite)
 #
-# this module collects information from lshw, a somewhat rare package,
-# which tells a lot of interesting information of the system hardware.
-# it also seems to be the only way to get the serial number of a
-# branded computer, thus 'oem info'.
+# this module collects information from lshw, a somewhat rare package, which
+# tells a lot of interesting information of the system hardware.  it also seems
+# to be the only way to get the serial number of a branded computer, thus 'oem
+# info'.
+#
+# below is an excerpt from 'man lshw'
+#
+# lshw  is a small tool to extract detailed information on the hardware
+# configuration of the machine. It can report exact memory configuration,
+# firmware version, mainboard configuration, CPU version and  speed,  cache
+# configuration,  bus  speed, etc. on DMI-capable x86 or IA-64 systems and on
+# some PowerPC machines (PowerMac G4 is known to work).  It currently supports
+# DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
+# CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
+
+	   
 	local moduleName="OEM information"
 	module_header "${moduleName}"
 
 
 	if [ ! "$(type -p lshw)" ]; then
 		add_attribute	"$appname notification"
-		add_values		"Please install LSHW to collect this information"
+		add_values		"Please install lshw to collect this information"
 
 	elif [ ! "$(whoami)" == "root" ]; then
 		add_attribute	"$appname notification"
@@ -1114,7 +1342,7 @@ Module_system() {
 	add_attribute	"Operating system"			"os"
 	add_values		"\$distro $(uname -s) \$distro_version"
 
-	add_attribute	$"Operating system kernel"	"os_kernel"
+	add_attribute	$"Operating system kernel"	"os_build"
 	add_values		"$(uname -sr)"
 
 	add_attribute	$"Network node hostname"	"host_name"
@@ -1124,8 +1352,7 @@ Module_system() {
 	add_values		"$(uname -m)"
 
 	add_attribute	$"System locale"
-	# AnMaster: Hm... Is this line correct? I think there is LC_ALL too (diffrent locales for diffrent things?). 
-	add_values		"$(echo $LC_LANG)"
+	add_values		"$(echo $LC_ALL)"
 
 	add_attribute	$"System uptime"			"uptime"
 	add_values		"$(uptime | awk -F, {'print $1'} | \
@@ -1696,6 +1923,9 @@ Module_applications() {
 				'awk')
 					add_values	"$($app -W version 2>&1 | head -n 1 )\n"
 					;;
+				'dmidecode')
+					add_values	"dmidecode $(dmidecode -V)\n"
+					;;
 				*)
 					add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
@@ -1704,14 +1934,16 @@ Module_applications() {
 		else
 			case "$app" in
 				'lspci')
-					add_values 'lspci' 		"PLEASE INSTALL PCIUTILS!"
+					add_values 'lspci' 		"please install pciutils"
 					;;
 				'lshw')
-					add_values 'lshw' 		"PLEASE INSTALL LSHW!"
+					add_values 'lshw' 		"please install lshw"
 					;;
 				'smartctl')
-					add_values 'smartctl'	"PLEASE INSTALL SMARTMONTOOLS!"
+					add_values 'smartctl'	"please install smartmontools"
 					;;
+				'dmidecode')
+					add_values 'demidecode'	'please install dmidecode'
 			esac
 		fi
 	done

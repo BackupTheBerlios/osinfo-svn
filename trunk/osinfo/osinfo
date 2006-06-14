@@ -33,6 +33,7 @@
 # per module: (incomplete)
 # ----------
 # users: uniq, sort, last
+# dmi: dmidecode
 # oem: lshw
 # hdd: fdisk, df, udev, smartmontools (opt), hdparm (opt)
 # devices: lspci
@@ -951,6 +952,7 @@ for modul in $cmdsnames; do
 		hdd|\
 		printers|\
 		oem|\
+		dmi|\
 		oem_rewrite|\
 		memory|\
 		cdrom|\
