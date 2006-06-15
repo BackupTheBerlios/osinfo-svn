@@ -1799,7 +1799,7 @@ Module_distro() {
 				for DISTRO in 'Ubuntu' 'Fedora' 'SUSE'; do
 					if [ "$(grep -i ${DISTRO} ${distro_ident})" ]; then
 						add_attribute	'Distro name'
-						add_vales		"$DISTRO"
+						add_values		"$DISTRO"
 					fi
 				done
 				;;
