@@ -1700,10 +1700,7 @@ Module_distro() {
 	# TODO
 	# the extracted information is stored into these variables,
 	# defined by lsb_release and at the end of the function printed.
-	local distro_id
-	local distro_release
-	local distro_codename
-	local distro_description
+	local distro_id distro_release distro_codename distro_description
 
 
 	# locate and echo the root directory.
@@ -1815,14 +1812,7 @@ Module_distro() {
 				;;
 			'')
 				# Abort if no distro found
-				if [ "$usekdialog" == "1" ]; then
-					kdialog --error  "You have zero distros installed or use \
-					a distro not recognised by ${appname}\nThis module will abort."
-				else
-					echo "${tcRED}ERROR:${tSTD} You have zero distros installed \
-					or use a distro not recognised by ${appname}"
-					echo "${tcRED}This module will abort.${tSTD}"
-				fi
+				print_error "$usekdialog" "You have zero distros installed or use a distro not recognised by ${appname}" "This module will abort."
 				return 1
 				;;
 			#*)

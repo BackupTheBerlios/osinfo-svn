@@ -248,5 +248,18 @@ function print_name_value_pair {
 	fi
 }
 
+# Prints a error message.
+# Parmeters:
+#   1 integer  1 = use kdialog
+#   2 error messages
+#   3 Optional extra message.
+function print_error()	{
+	if [ "$1" == "1" ]; then
+		kdialog --error  "$2\n$3" &> /dev/null
+	else
+		echo -e "${tcRED}ERROR:${tSTD} $2"
+		echo -e "${tcRED}$3${tSTD}"
+	fi
+}
 fi
 
