@@ -1768,7 +1768,6 @@ Module_distro() {
 	# defined by lsb_release and at the end of the function printed.
 	local distro_id distro_release distro_codename distro_description
 
-
 	# locate and echo the root directory.
 	[ "$prefix" != '/' ] && \
 		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
@@ -1794,11 +1793,13 @@ Module_distro() {
 
 	else
 
+
 		# Begin searching for distro identifying files
 		local found_files="" myfile
 		for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 			[ -e $myfile ] && found_files="$found_files $myfile"
 		done
+
 
 		# Now make a list of distros from the $found_files list above
 		local found_distros="" distro_ident
@@ -1839,13 +1840,13 @@ Module_distro() {
 		# Remove leading spaces.
 		found_distros="$(echo "${found_distros}" | sed 's/^ *//')"
 
+
 		# Output distro name
 		case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
 			'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')
 			#'SuSE'|'Fedora Core'|'Fedora'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo'|'Ubuntu')
 				add_attribute	'Distro name'
 				add_values		"${found_distros}"
-
 				# clear spaces
 				#[ "$found_distros" = 'Slackware Topologilinux' ] && found_distros='Topologilinux'
 				#[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
@@ -1888,25 +1889,27 @@ Module_distro() {
 			#;;
 			esac
 
+
 		# Output distro version
+		local distro_version
 		case "${found_distros}" in
 			'SuSE')
-				local distro_version="$(fgrep 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
+				distro_version="$(fgrep 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
 			'Red Hat')
 	#			local distro_version="$(fgrep 'VERSION = ' ${root_dir}etc/redhat-release        | sed 's/VERSION = //'    )" ;;
-				local distro_version="$(cat ${root_dir}etc/redhat-release)" ;;
+				distro_version="$(cat ${root_dir}etc/redhat-release)" ;;
 			'Fedora')
-				local distro_version="$(cat ${root_dir}etc/fedora-release)" ;;
+				distro_version="$(cat ${root_dir}etc/fedora-release)" ;;
 			'Slackware')
-				local distro_version="$(fgrep 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+				distro_version="$(fgrep 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 			'Topologilinux')
-				local distro_version="$(fgrep 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
+				distro_version="$(fgrep 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
 				local  SlackwareBase="$(fgrep 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 			'Gentoo')
-				local distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
+				distro_version="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 			'misc')
 				# AnMaster: . is a wildcard meaning any single char. Isn't fgrep what you want?
-				local distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
+				distro_version="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
 				# TODO: improve the grep
 		esac
 
