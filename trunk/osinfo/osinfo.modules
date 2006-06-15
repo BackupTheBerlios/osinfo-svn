@@ -60,7 +60,7 @@ MODULES_LINUX='system distro kernel processor network applications terminal devi
 MODULES_BSD='system applications terminal network'
 MODULES_LANFORCE='system processor network dmi devices users applications env'
 MODULES_BROKEN='printers services users cdrom memory'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers oem'
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers oem dmi'
 
 
 
@@ -403,14 +403,9 @@ function scan_hdd_ide() {
 	# slow down this function.
 
 
-	add_attribute	'Description'
-	add_values		'IDE drive'
-
 
 	########
 	# Vendor
-	add_attribute	'Vendor'
-
 	if [ "$(type -p smartctl)" ]; then
 
 		# because smartctl uses its own database to report the HDD vendor,
@@ -419,36 +414,42 @@ function scan_hdd_ide() {
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
 
-		add_values		"$(smartctl -i ${drvdev} | grep '^Model' | \
-						awk -F: {'print $2'} | sed 's/^ *//')"
+		local vendor="$(smartctl -i ${drvdev} | grep '^Model' | \
+						awk -F: {'print $2'} | sed 's/^ *//') "
+
 	elif [ "${udev_info}" ]; then
 
-		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
-						awk -F_ {'print $NF'})"
+		local vendor="$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
+						awk -F_ {'print $NF'}) "
 	fi
+
 
 	#######
 	# Model
-	add_attribute	'Model'
-
 	if  [ "${udev_info}" ]; then
 
-		add_values		"$(udevinfo -q all -n ${drvdev} | grep -i model | \
+		local model="$(udevinfo -q all -n ${drvdev} | grep -i model | \
 						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
 
-		add_values		"$(cat ${proc_info}/model)"
+		local model="$(cat ${proc_info}/model)"
 
 	elif [ "$(type -p hdparm)" ]; then
 
-		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+		local model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 						awk -F= {'print $2'})"
 	fi
 
+
+	# report both vendor and model on one line
+	add_attribute	'IDE drive'	'hard_disk'
+	add_values		"$vendor$model"
+
+
 	###############
 	# Serial number
-	add_attribute	'Serial'
+	add_attribute	'Serial number'
 
 	if  [ "${udev_info}" ]; then
 
@@ -547,8 +548,7 @@ function scan_hdd_sg() {
 		if [ "$(echo $bus | grep usb)" ]; then
 			# USB drive detected
 
-			add_attribute	'Description'
-			add_values		'USB drive'
+			local drive_type='USB drive'
 
 		fi
 
@@ -557,22 +557,19 @@ function scan_hdd_sg() {
 
 		if [ -e "${usb_devstrings}${scsi_nr}" ]; then
 			local usb_info="${usb_devstrings}/${scsi_nr}"
-			add_attribute	'Description'
-			add_values		'USB drive'
+			local drive_type='USB drive'
 		fi
 
 	else
 	# SATA/SCSI drive
 
-		add_attribute	'Description'
-		add_values		'SATA/SCSI drive'
+		local drive_type='SATA/SCSI drive'
+
 	fi
 
 
 	########
 	# Vendor
-	add_attribute	'Vendor'
-
 	if [ "$smart" = "sata-ok" ]; then
 
 		# because smartctl uses its own database to report the HDD vendor,
@@ -581,46 +578,50 @@ function scan_hdd_sg() {
 		# this smart scan is not included into the scan_hdd_smart()
 		# because it would break the correct order of the report.
 
-		add_values		"$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
-						awk -F: {'print $2'} | sed 's/^ *//')"
+		local vendor="$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
+						awk -F: {'print $2'} | sed 's/^ *//') "
 
 	elif [ "${udev_info}" ]; then
 
-		add_values		"$(cat ${udev_info} | grep -i vendor | \
-						awk -F= {'print $NF'})"
+		local vendor="$(cat ${udev_info} | grep -i vendor | \
+						awk -F= {'print $NF'}) "
 
 	elif [ -e "${proc_info}" ]; then
 
-		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
-						awk {'print $1'})"
+		local vendor="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+						awk {'print $1'}) "
 						#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
 	fi
 
 
 	#######
 	# Model
-	add_attribute	'Model'
-
 	if  [ "${udev_info}" ]; then
 
-		add_values		"$(cat ${udev_info} | grep -i model | \
+		local model="$(cat ${udev_info} | grep -i model | \
 						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
 
-		add_values		"$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+		local model="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
 						awk {'print $2" "$3'})"
 
 	elif [ "$(type -p hdparm)" ]; then
 
-		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+		local model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 						awk -F= {'print $2'})"
 	fi
 
 
+	# report both vendor and model on one line
+	add_attribute	"$drive_type"		'hard_disk'
+	add_values		"$vendor$model"
+
+
+
 	###############
 	# Serial number
-	add_attribute	'Serial'
+	add_attribute	'Serial number'
 
 	if  [ "${udev_info}" ]; then
 
