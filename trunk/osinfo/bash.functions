@@ -250,15 +250,37 @@ function print_name_value_pair {
 
 # Prints a error message.
 # Parmeters:
-#   1 integer  1 = use kdialog
-#   2 error messages
-#   3 Optional extra message.
+#   1       integer  1 = use extra abort line.
+#   2       string     Optional extra abort line.
+#   2 or 3  integer  1 = use kdialog
+#   *       string   error messages
 function print_error()	{
+	local extraabortline=""
 	if [ "$1" == "1" ]; then
-		kdialog --error  "$2\n$3" &> /dev/null
+		extraabortline="$2"
+		shift 2
 	else
-		echo -e "${tcRED}ERROR:${tSTD} $2"
-		echo -e "${tcRED}$3${tSTD}"
+		shift 1
+	fi
+
+	local i usekdialog="$1"
+	shift 1
+	# Now the rest are the error messages.
+	if [ "$usekdialog" == "1" ]; then
+		local errorline="$1"
+		shift 1
+		if [ $# -gt 0 ]; then
+			for i in "$@"; do
+				errorline="${errorline}\n${i}"
+			done
+		fi
+		[ "$extraabortline" ] && errorline="${errorline}\n${extraabortline}"
+		/usr/kde/3.5/bin/kdialog --error  "$errorline" &> /dev/null
+	else
+		for i in "$@"; do
+			echo -e "${tcRED}ERROR:${tSTD} $i"
+		done
+		[ "$extraabortline" ] && echo -e "${tcRED}${extraabortline}${tSTD}"
 	fi
 }
 fi

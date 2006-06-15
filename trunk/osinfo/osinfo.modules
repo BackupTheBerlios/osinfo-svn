@@ -1778,7 +1778,6 @@ Module_distro() {
 		done
 		# Remove leading spaces.
 		found_distros="$(echo "${found_distros}" | sed 's/^ *//')"
-
 		# Output distro name
 		case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
 			'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')
@@ -1792,14 +1791,9 @@ Module_distro() {
 				#[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
 				;;
 			'topologilinux')
-				# Abort if found Topologilinux but not Slackware.
-				if [ "$usekdialog" == "1" ]; then
-					kdialog --error  "Topologilinux is based on Slackware and should contain\n${root_dir}etc/slackware-version AND ${root_dir}etc/Topologilinux-version.\nThis module will abort."
-				else
-					echo "${tcRED}ERROR:${tSTD} Topologilinux is based on Slackware and should"
-					echo "${tcRED}ERROR:${tSTD} contain ${root_dir}etc/slackware-version ${tBOLD}AND${tSTD} ${root_dir}etc/Topologilinux-version."
-					echo "${tcRED}This module will abort.${tSTD}"
-				fi
+				print_error 1 "This module will abort." "$usekdialog" \
+					"Topologilinux is based on Slackware and should" \
+					"contain ${root_dir}etc/slackware-version AND ${root_dir}etc/Topologilinux-version."
 				return 1
 				;;
 			'misc')
@@ -1812,7 +1806,8 @@ Module_distro() {
 				;;
 			'')
 				# Abort if no distro found
-				print_error "$usekdialog" "You have zero distros installed or use a distro not recognised by ${appname}" "This module will abort."
+				print_error 1 "This module will abort." "$usekdialog" \
+					"You have zero distros installed or use a distro not recognised by ${appname}"
 				return 1
 				;;
 			#*)
