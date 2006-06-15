@@ -1183,6 +1183,7 @@ Module_oem() {
 Module_oem_old() {
 # OEM INFORMATION
 # deprecated, as this module has been rewritten. left here for reference.
+#AnMaster: why? you can just look at an older revision in svn. If this is not used anywhere it should be deleted before a release.
 
 	moduleName="OEM information"
 	module_header "${moduleName}"
