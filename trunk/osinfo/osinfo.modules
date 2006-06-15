@@ -1,59 +1,59 @@
 #!/bin/bash
 #################################################################################
-# OSINFO MODULES								
-#										
-# osinfo lists system information available to the OS.				
-# this file contains the osinfo modules and module subfunctions.		
-# modules can be freely added; the data processing and outputting is taken	
-# care of by other functions. these are accessed by the following functions,	
-# and here they are presented in the order in which they should appear in	
-# the modules. 									
-#										
-# module_header	"Module name"							
-#	each module should begin with this line.				
-#	it will be printed in colour at stdout and as a tag to xml.		
-#	it may contain spaces; in the xml tag they will be replaced by '_'	
-#										
-# value_header	"Header" 							
-# 	the argument is printed on a single line in bold to stdout,		
-#	and as a <header> tag to the xml.					
-#	each module may contain several calls of this type.			
-#										
-# add_attribute "Common Name"	"xml_code"					
-#	the first argument is printed at the first field to stdout,		
-#	and the xml output is formulated as: 					
-#	<xml_code>								
-#	 <value>foo</value>							
-#	</xml_code>							
-#	each module may contain several calls of this type.			
+# OSINFO MODULES
+#
+# osinfo lists system information available to the OS.
+# this file contains the osinfo modules and module subfunctions.
+# modules can be freely added; the data processing and outputting is taken
+# care of by other functions. these are accessed by the following functions,
+# and here they are presented in the order in which they should appear in
+# the modules.
+#
+# module_header	"Module name"
+#	each module should begin with this line.
+#	it will be printed in colour at stdout and as a tag to xml.
+#	it may contain spaces; in the xml tag they will be replaced by '_'
+#
+# value_header	"Header"
+# 	the argument is printed on a single line in bold to stdout,
+#	and as a <header> tag to the xml.
+#	each module may contain several calls of this type
+#
+# add_attribute "Common Name"	"xml_code"
+#	the first argument is printed at the first field to stdout,
+#	and the xml output is formulated as:
+#	<xml_code>
+#	 <value>foo</value>
+#	</xml_code>
+#	each module may contain several calls of this type.
 #	the previous attribute tag is automatically closed when a new
-#	one is introduced.							
-#										
-# add_values "value 1" "value 2" "value n"					
-#	several values can be given; 						
-#	all of them will be separated with tab at stdout,			
-#	and they will each get their own <value>foo</value> line at xml output. 
-#	special characters as '\n' and '\t' can be used;			
-#	they will not affect the xml output.					
-#	each module may contain several calls of this type.			
-#										
-# value_footer									
-#	this call should follow a block of values, if the value_header		
-#	function is called before them. this closes open header tags.	
-#										
-# module_footer									
-#	this call should immediately precede the flush_values call.		
-#	this takes care of closing an open attribute tag.			
-#										
-# flush_values 									
-#	prints the values to xml file or to stdout.				
-#	this should be the final command in a module.				
-#										
+#	one is introduced.
+#
+# add_values "value 1" "value 2" "value n"
+#	several values can be given;
+#	all of them will be separated with tab at stdout,
+#	and they will each get their own <value>foo</value> line at xml output.
+#	special characters as '\n' and '\t' can be used;
+#	they will not affect the xml output.
+#	each module may contain several calls of this type.
+#
+# value_footer
+#	this call should follow a block of values, if the value_header
+#	function is called before them. this closes open header tags.
+#
+# module_footer
+#	this call should immediately precede the flush_values call.
+#	this takes care of closing an open attribute tag.
+#
+# flush_values
+#	prints the values to xml file or to stdout.
+#	this should be the final command in a module.
+#
 #################################################################################
-# Written by Mikael Lammentausta and Arvid Norlander							
-#																				
-# Some parts are taken from:                                                    
-#   --Advanced Bash Scripting Guide (ABS)                                       
+# Written by Mikael Lammentausta and Arvid Norlander
+#
+# Some parts are taken from:
+#   --Advanced Bash Scripting Guide (ABS)
 #################################################################################
 
 MODULES_LINUX='system distro kernel processor network applications terminal devices hdd oem dmi'
@@ -101,7 +101,7 @@ Module_hdd() {
 # this module collects data of the hard disk drives attached to the system.
 # some information is unaccesible unless the partitions are mounted.
 #
-# S-ATA drives now display everything as nicely as IDE drives, 
+# S-ATA drives now display everything as nicely as IDE drives,
 # due to support in recent smartmontools (version 5.36).
 
 # used tools:
@@ -135,7 +135,7 @@ Module_hdd() {
 
 
 	# this module depends heavily on root access, so prevent other users
-	# of running this module	
+	# of running this module
 	if [ "$(whoami)" != "root" ]; then
 		add_attribute	"$appname notification"
 		add_values		"Run $appname as super-user to collect this information"
@@ -661,7 +661,7 @@ function scan_hdd_sg() {
 	#add_attribute	'DMA'
 	#add_values		"n/a" #enabled/disabled
 
-	if [ "$smart" = "sata-ok" ]; then		
+	if [ "$smart" = "sata-ok" ]; then
 		scan_hdd_smart ata
 	fi
 
@@ -681,13 +681,13 @@ Module_memory() {
 # it uses lshw. 'free' and '/proc/meminfo' would also report
 # free RAM, but slightly incorrect number because it's the total
 # ram after kernel has allocated some for system services.
-# 
+#
 #
 # requires root access
 
 	moduleName="System memory"
 	module_header "${moduleName}"
-	
+
 	if [ ! "$(type -p lshw)" ]; then
 		add_attribute	"$appname notification"
 		add_values		"Please install LSHW to collect this information"
@@ -711,7 +711,7 @@ Module_memory() {
 		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
 		totalram="$(cat ${lshw_tmp} | grep 'id=\"memory' -A 20 | grep capacity | \
 			grep -Eo '[0-9]+')"
-			
+
 		totalram="$(echo $totalram/1024/1024 | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
 
 		add_attribute	'RAM total'	'ram'
@@ -789,7 +789,7 @@ Module_dmi() {
 		# (1) get the line number where the 'node id=$HANDLES'
 		# (2) get the line number of the next 'node id'
 		# (3) everything in between those lines contains interesting data
-		
+
 		for myHANDLE in $HANDLES; do
 
 
@@ -822,8 +822,8 @@ Module_dmi() {
 					add_values		"$(grep -i product ${dmi_tmp} | \
 									awk -F: {'print $2'})"
 
-					
-					add_attribute	'System version' 
+
+					add_attribute	'System version'
 					add_values		"$(grep -i version ${dmi_tmp} | \
 									awk -F: {'print $2'})"
 
@@ -842,7 +842,7 @@ Module_dmi() {
 					value_footer
 					;;
 
-				"0x0002")	# Base Board Information				
+				"0x0002")	# Base Board Information
 
 					value_header	"Motherboard"
 
@@ -873,7 +873,7 @@ Module_dmi() {
 
 					value_footer
 					;;
-			
+
 				"0x0000")	# BIOS Information
 
 					value_header	"BIOS"
@@ -891,8 +891,8 @@ Module_dmi() {
 					add_attribute	'Date'	'bios_date'
 					add_values		"$(grep -i date ${dmi_tmp} | \
 									awk -F: {'print $2'})"
-					
-					
+
+
 					add_attribute	'Serial number'	'bios_serial_number'
 					add_values		"$(grep -i serial ${dmi_tmp} | \
 									awk -F: {'print $2'})"
@@ -939,11 +939,11 @@ Module_dmi() {
 
 					value_footer
 					;;
-			
+
 			esac
 
 		done
-		
+
 	fi
 
 	# cleanup
@@ -974,7 +974,7 @@ Module_oem() {
 # DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
 # CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
 
-	   
+
 	local moduleName="OEM information"
 	module_header "${moduleName}"
 
@@ -1040,7 +1040,7 @@ Module_oem() {
 
 				[ "$tag" ] && \
 				local value="$(echo ${info} | grep ${tag} | \
-							awk -F'<|>' {'print $3'})"	
+							awk -F'<|>' {'print $3'})"
 
 				# here the data is processed
 				case $myNODE in
@@ -1070,15 +1070,15 @@ Module_oem() {
 
 							'product')
 
-								add_attribute	'System name' 
+								add_attribute	'System name'
 								add_values		"$value"
 								;;
 
 							'version')
 
-								add_attribute	'System version' 
+								add_attribute	'System version'
 								add_values		"$value"
-								;;	
+								;;
 
 							'serial')
 
@@ -1115,13 +1115,13 @@ Module_oem() {
 
 							'product')
 
-								add_attribute 'Model' 
+								add_attribute 'Model'
 								add_values    "$value"
 								;;
 
 							'version')
 
-								add_attribute 'Revision' 
+								add_attribute 'Revision'
 								add_values    "$value"
 								;;
 
@@ -1258,7 +1258,7 @@ Module_oem_old() {
 				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
 
 				));	do
-		 
+
 		 #hardware_debug[$HW]="foo"
 		 #echo $HW
 		 #echo ${#hardware[@]}
@@ -1287,8 +1287,8 @@ Module_oem_old() {
 			# then parse all elements in the array
 			while [ "$(echo ${oem_str[$node]} | \
 				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do
-			 
-			 
+
+
 			 # if the node doesn't contain info we don't want..
 				if [ ! "$(echo ${oem_str[$node]} | \
 					awk -F'%newline%' {'print $'$myELEMENT' '} | \
@@ -1372,7 +1372,7 @@ Module_kernel() {
 	moduleName="Kernel"
 	module_header "${moduleName}"
 
-	add_attribute	$"Operating system"	
+	add_attribute	$"Operating system"
 	add_values		"$(uname -o)"
 
 	add_attribute	 $"Kernel release"
@@ -1431,7 +1431,7 @@ Module_processor() {
 		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2" MHz"'})"
 
-		add_attribute	"Cache"	
+		add_attribute	"Cache"
 		add_values		"$(cat ${cpuinfo} | grep 'cache' | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 
@@ -1528,7 +1528,7 @@ Module_services() {
 # Fedora: /sbin/service --status-all
 #		  chkconfig --list
 
-# Ubuntu: 
+# Ubuntu:
 
 	moduleName="Services"
 	module_header "${moduleName}"
@@ -1566,7 +1566,7 @@ Module_network() {
 
 
 	################################
-	# DETECT (WIRED) NETWORK DEVICES 
+	# DETECT (WIRED) NETWORK DEVICES
 	# using ifconfig
 	#
 	# detect the type of OS (and ifconfig available); there may other
@@ -1655,7 +1655,7 @@ Module_network() {
 	iw_src="wlan-iwconfig-on"
 	WLAN_DEVICES="eth1"
 	ap_src="wlan-stations"
-	
+
 	if [ "$(type -p iwconfig)" ]; then
 
 		iw_src="iwconfig"
@@ -1681,7 +1681,7 @@ Module_network() {
 					awk -F: {'print $2'})"
 
 	value_footer
-	
+
 
 
 
@@ -1716,7 +1716,7 @@ Module_distro() {
 	add_values			"$root_dir"
 
 	# look for lsb-release
-	if [ "$(type -p lsb_release)" ]; then
+	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 		add_attribute	'Distro ID'
 		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^distributor' | \
 						awk -F: '{print $2}' | sed -s 's/^\t*//')"
@@ -2028,8 +2028,8 @@ Module_devices() {
 			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
 
 				local eth_adapter[${#eth_adapter}]="$device"
-			
-				
+
+
 			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
 
 				local video_adapter[${#video_adapter}]="$device"
@@ -2038,7 +2038,7 @@ Module_devices() {
 			else
 				add_attribute	"$description"
 				add_values		"$device"
-			fi		
+			fi
 
 		fi
 
