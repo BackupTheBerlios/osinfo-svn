@@ -1683,7 +1683,13 @@ Module_network() {
 	flush_values
 }
 
-
+##
+# Gets data from lsb_release
+# Parameters:
+#  $1  string   what value to get.
+distro_lsb_release() {
+	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
+}
 
 Module_distro() {
 # DISTRIBUTION
@@ -1717,20 +1723,16 @@ Module_distro() {
 	# look for lsb-release if real root is used.
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 		add_attribute	'Distro ID'
-		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^distributor' | \
-						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+		add_values		"$(distro_lsb_release 'distributor')"
 
 		add_attribute	'Release'	"os_build"
-		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^release' | \
-						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+		add_values		"$(distro_lsb_release 'release')"
 
 		add_attribute	'Codename'
-		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^codename' | \
-						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+		add_values		"$(distro_lsb_release 'codename')"
 
 		add_attribute	'Description'
-		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^description' | \
-						awk -F: '{print $2}' | sed -s 's/^\t*//')"
+		add_values		"$(distro_lsb_release 'description')"
 
 	else
 
