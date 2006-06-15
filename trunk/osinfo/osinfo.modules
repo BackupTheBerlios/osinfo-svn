@@ -677,8 +677,13 @@ Module_memory() {
 # this module tells complete information of the memory
 # installed on the system.
 #
-# only RAM at the moment and the solution is really dirty
-# needs root access
+# only RAM at the moment and the solution is really dirty because
+# it uses lshw. 'free' and '/proc/meminfo' would also report
+# free RAM, but slightly incorrect number because it's the total
+# ram after kernel has allocated some for system services.
+# 
+#
+# requires root access
 
 	moduleName="System memory"
 	module_header "${moduleName}"
@@ -788,7 +793,8 @@ Module_dmi() {
 		for myHANDLE in $HANDLES; do
 
 
-			this="$(cat ${dmi_info} | grep -n "Handle ${myHANDLE}" | awk -F: {'print $1'})"
+			this="$(cat ${dmi_info} | grep -n "Handle ${myHANDLE}" | \
+				awk -F: {'print $1'})"
 			next="$(cat ${dmi_info} | grep -n Handle | grep -A 1 ${myHANDLE} | \
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'handle' lines from printing
@@ -801,39 +807,12 @@ Module_dmi() {
 			# here the data is processed
 			case $myHANDLE in
 
-				"0x0000")	# BIOS Information
-
-					value_header	"BIOS"
-
-					add_attribute	'Vendor'
-					add_values		"$(grep -i vendor ${dmi_tmp} | \
-									awk -F: {'print $2'})"
-
-
-					add_attribute	'Revision'	'bios_version'
-					add_values		"$(grep -i version ${dmi_tmp} | \
-									awk -F: {'print $2'})"
-
-
-					add_attribute	'Date'	'bios_date'
-					add_values		"$(grep -i date ${dmi_tmp} | \
-									awk -F: {'print $2'})"
-					
-					
-					add_attribute	'Serial number'	'bios_serial_number'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
-
-
-					value_footer
-					;;
-
 				"0x0001")	# System Information
 
 					value_header	"System info"
 
 
-					add_attribute	'System manufacturer' \
+					add_attribute	'Manufacturer' \
 									'system_manufacturer'
 					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
 									awk -F: {'print $2'})"
@@ -863,7 +842,7 @@ Module_dmi() {
 					value_footer
 					;;
 
-				"0x0002")	# Base Board Information
+				"0x0002")	# Base Board Information				
 
 					value_header	"Motherboard"
 
@@ -895,6 +874,34 @@ Module_dmi() {
 					value_footer
 					;;
 			
+				"0x0000")	# BIOS Information
+
+					value_header	"BIOS"
+
+					add_attribute	'Vendor'
+					add_values		"$(grep -i vendor ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Revision'	'bios_version'
+					add_values		"$(grep -i version ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Date'	'bios_date'
+					add_values		"$(grep -i date ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+					
+					
+					add_attribute	'Serial number'	'bios_serial_number'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					value_footer
+					;;
+
+
 				"0x0003")	# Chassis Information
 
 					value_header	'Chassis'
@@ -908,7 +915,18 @@ Module_dmi() {
 					add_values		"$(grep -i type ${dmi_tmp} | \
 									awk -F: {'print $2'})"
 
-									
+
+					add_attribute	'Version' 	'chassis_version'
+					add_values		"$(grep -i version ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
+					add_attribute	'Serial number' \
+									'chassis_serial_number'
+					add_values		"$(grep -i serial ${dmi_tmp} | \
+									awk -F: {'print $2'})"
+
+
 					add_attribute	'Lock' 	'chassis_lock'
 					add_values		"$(grep -i lock ${dmi_tmp} | \
 									awk -F: {'print $2'})"
@@ -919,22 +937,10 @@ Module_dmi() {
 									awk -F: {'print $2'})"
 
 
-					add_attribute	'Serial number' \
-									'chassis_serial_number'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
-
-
-
 					value_footer
 					;;
 			
-
 			esac
-
-		#done
-
-		#IFS="$IFSbk"
 
 		done
 		
@@ -1462,20 +1468,36 @@ Module_terminal() {
 	flush_values
 }
 
+
 Module_printers() {
-	# this ugly hack prevents output if no printer is present, although needs debugging
-	#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
+# information of printers available to the system
+#
+# uses only lpstat (cups) and hasn't been tested on multi-printer
+# environments
 
 	moduleName="Printers"
 	module_header "${moduleName}"
 
-	add_name_value_pair 'printer'		"$(lpstat -a | awk {'print $1'})"
-	# TODO: test in a system with many printers
+	# first of all, check if lpstat is available
+	if [ "$(type -p lpstat)" ]; then
 
-	flush_name_value_pair
-	module_footer "${moduleName}"
+		#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
 
-	#	fi
+		add_attribute		'Printer'	'local_printer'
+
+		# as there may be several printers, print info from all
+		for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
+
+			add_values	"$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
+
+		done
+
+	fi
+
+
+	module_footer
+	flush_values
+
 }
 
 
