@@ -1708,12 +1708,14 @@ Module_distro() {
 	moduleName="Distribution"
 	module_header "${moduleName}"
 
-	# locate and echo the root directory
+	# locate and echo the root directory.
 	[ "$prefix" != '/' ] && \
 		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
 		local root_dir="$prefix"
 	add_attribute		'Root dir'
 	add_values			"$root_dir"
+
+	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
 	# look for lsb-release
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
