@@ -1737,9 +1737,9 @@ Module_distro() {
 
 		# Begin searching for distro identifying files
 		local found_files=""
-		local fil
-		for fil in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
-			[ -e $fil ] && found_files="$found_files $fil"
+		local myfile
+		for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+			[ -e $myfile ] && found_files="$found_files $myfile"
 		done
 
 		# Now make a list of distros from the $found_files list above
