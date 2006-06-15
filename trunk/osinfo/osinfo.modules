@@ -1715,7 +1715,7 @@ Module_distro() {
 
 	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
-	# look for lsb-release
+	# look for lsb-release if real root is used.
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 		add_attribute	'Distro ID'
 		add_values		"$(lsb_release -a 2> /dev/null | grep -i '^distributor' | \
