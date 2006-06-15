@@ -120,10 +120,10 @@ Module_hdd() {
 	else
 
 		# declare variables
-		totalsize=0; totalfree=0
+		local totalsize=0 totalfree=0
 
 		# detect all drives in the system
-		drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
+		local drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
 
 		# loop all detected drives
 		for drvdev in $drives; do
@@ -1733,15 +1733,13 @@ Module_distro() {
 	else
 
 		# Begin searching for distro identifying files
-		local found_files=""
-		local myfile
+		local found_files="" myfile
 		for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
 			[ -e $myfile ] && found_files="$found_files $myfile"
 		done
 
 		# Now make a list of distros from the $found_files list above
-		local found_distros=""
-		local distro_ident
+		local found_distros="" distro_ident
 		for distro_ident in $found_files; do
 			case $distro_ident in
 				"${root_dir}etc/SuSE-release")
@@ -1778,6 +1776,7 @@ Module_distro() {
 		done
 		# Remove leading spaces.
 		found_distros="$(echo "${found_distros}" | sed 's/^ *//')"
+
 		# Output distro name
 		case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
 			'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')

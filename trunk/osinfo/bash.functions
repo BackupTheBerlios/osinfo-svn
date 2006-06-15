@@ -265,6 +265,7 @@ function print_error()	{
 
 	local i usekdialog="$1"
 	shift 1
+
 	# Now the rest are the error messages.
 	if [ "$usekdialog" == "1" ]; then
 		local errorline="$1"
