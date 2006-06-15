@@ -71,36 +71,14 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hd
 ################################################################################
 
 
-Module_env() {
-# ENVIRONMENT VARIABLES
-#
-# xml only
-
-	moduleName="Environment variables"
-	module_header "${moduleName}"
-
-	## Write the header for output
-	add_attribute		$"System enviroment variables\n"	\
-						'system_enviroment_variables'
-	## Process all variables
-	for var in $(env); do
-
-		add_values	"${var}\n"
-
-	done
-
-	module_footer
-	flush_values
-
-}
 
 
 Module_hdd() {
 # HARD DISK DRIVES
-#
+
 # this module collects data of the hard disk drives attached to the system.
 # some information is unaccesible unless the partitions are mounted.
-#
+
 # S-ATA drives now display everything as nicely as IDE drives,
 # due to support in recent smartmontools (version 5.36).
 
@@ -154,7 +132,7 @@ Module_hdd() {
 
 			# $drvdev is the whole device address, eg "/dev/hda"
 			# $drvnode is just the device node, eg "hda"
-			# $drvnr is the drive number for this type of driver; eg. for sdc $drvnr=3
+			# $drvnr is the drive number for this type; eg. for sdc $drvnr=3
 			drvnode=$(echo $drvdev | awk -F/ {'print $NF'})
 			drvnr=$(( $(echo -n ${drvnode: -1:1} | \
 				tr 'a-z' 'A-Z' | od -A n -t u1) - 64));
@@ -166,6 +144,10 @@ Module_hdd() {
 			elif [ "$(echo $drvdev | grep sd)" ]; then
 
 				scan_hdd_sg
+
+			elif  [ "$(echo $drvdev | grep md)" ]; then
+
+				scan_hdd_md		# software RAID devices
 
 			else
 
@@ -670,10 +652,17 @@ function scan_hdd_sg() {
 
 }
 
+function scan_hdd_md() {
+#######################
+# SOFTWARE RAID ARRAYS
+
+	value_header	"todo"
+
+}
 
 Module_memory() {
 # MEMORY
-#
+
 # this module tells complete information of the memory
 # installed on the system.
 #
@@ -726,9 +715,7 @@ Module_memory() {
 
 
 Module_cdrom() {
-# CDROM
-#
-# information of cd/dvd devices
+# INFORMATION OF CD/DVD DEVICES
 
 	moduleName="CD/DVD drives"
 	module_header "${moduleName}"
@@ -743,7 +730,7 @@ Module_cdrom() {
 
 Module_dmi() {
 # DMI / OEM INFORMATION
-#
+
 # this module works as a replacement for module_oem. this is faster,
 # as it doesn't scan hardware. look below for excerpt from 'man dmidecode':
 #
@@ -755,7 +742,6 @@ Module_dmi() {
 # information without having to probe for the actual hardware.  While this
 # is a good point in terms of report speed and safeness,  this also makes
 # the presented information possibly unreliable.
-
 
 	moduleName="DMI information"
 	module_header "${moduleName}"
@@ -958,13 +944,12 @@ Module_dmi() {
 
 Module_oem() {
 # OEM INFORMATION (rewrite)
-#
+# this module is deprecated in favor of module_dmi
+
 # this module collects information from lshw, a somewhat rare package, which
 # tells a lot of interesting information of the system hardware.  it also seems
 # to be the only way to get the serial number of a branded computer, thus 'oem
-# info'.
-#
-# below is an excerpt from 'man lshw'
+# info'. below is an excerpt from 'man lshw'
 #
 # lshw  is a small tool to extract detailed information on the hardware
 # configuration of the machine. It can report exact memory configuration,
@@ -973,7 +958,6 @@ Module_oem() {
 # some PowerPC machines (PowerMac G4 is known to work).  It currently supports
 # DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
 # CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
-
 
 	local moduleName="OEM information"
 	module_header "${moduleName}"
@@ -1018,7 +1002,7 @@ Module_oem() {
 			local IFSbk="$IFS"
 			IFS="
 "; # a literal newline, do not indent!
-			# then process....
+
 			for info in $(cat $lshw_tmp  | sed -n "$this,$next{p;}"); do
 
 				# the data is avaiable here, printed line by line.
@@ -1198,11 +1182,7 @@ Module_oem() {
 
 Module_oem_old() {
 # OEM INFORMATION
-#
-# this module collects information from lshw, a somewhat rare package,
-# which tells a lot of interesting information of system hardware.
-# it also seems to be the only way to get the serial number of a
-# branded computer, thus 'oem info'.
+# deprecated, as this module has been rewritten. left here for reference.
 
 	moduleName="OEM information"
 	module_header "${moduleName}"
@@ -1338,7 +1318,7 @@ Module_oem_old() {
 
 
 Module_system() {
-# General information of the system
+# GENERAL INFORMATION OF THE SYSTEM
 
 	moduleName="System"
 	module_header "${moduleName}"
@@ -1367,7 +1347,7 @@ Module_system() {
 }
 
 Module_kernel() {
-# Operating system kernel
+# OPERATING SYSTEM KERNEL
 
 	moduleName="Kernel"
 	module_header "${moduleName}"
@@ -1395,7 +1375,7 @@ Module_kernel() {
 }
 
 Module_processor() {
-	# information of the cpu
+# INFORMATION OF THE CPU
 
 	moduleName="Processor"
 	module_header "${moduleName}"
@@ -1447,7 +1427,7 @@ Module_processor() {
 }
 
 Module_terminal() {
-# information of the terminal in use
+# INFORMATION OF THE TERMINAL IN USE
 
 	moduleName="Terminal info"
 	module_header "${moduleName}"
@@ -1470,8 +1450,8 @@ Module_terminal() {
 
 
 Module_printers() {
-# information of printers available to the system
-#
+# PRINTERS AVAILABLE TO THE SYSTEM
+
 # uses only lpstat (cups) and hasn't been tested on multi-printer
 # environments
 
@@ -1502,16 +1482,23 @@ Module_printers() {
 
 
 Module_users() {
+# USERS
+
+# this module reports the last logged user, and
+# other users that have logged in (that last can see).
+
 	moduleName="Users"
 	module_header "${moduleName}"
 
-	# TODO: ditch out user 'reboot'
 
 	add_attribute	'Last logged in user'	"last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
 
+
 	add_attribute	'All users'		"users"
-	add_values		"$(last | awk {'print $1'} | sort | uniq | grep '^[a-zA-Z]')"
+	add_values		"$(last | awk {'print $1'} | sort | uniq | \
+					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
+					# removes users 'reboot' and 'wtmp'
 
 
 
@@ -1521,7 +1508,7 @@ Module_users() {
 
 
 Module_services() {
-# information of system services
+# INFORMATION OF SYSTEM SERVICES
 
 # Gentoo: rc-status
 
@@ -1544,16 +1531,18 @@ Module_services() {
 
 Module_network() {
 # NETWORK
-#
+
 # this module detects the network settings of the computer.
 #
 # there are at least two methods to pull in information; ifconfig and iproute2.
 # ifconfig is used; there are at least two versions of ifconfig being used, and
 # all tested Linuxes have used the same, whereas FreeBSD v6 had different
 # output. the script should work on both versions.
-#
+
 # some changes have been made after testing with FreeBSD, so compitibility
 # may not be 100% anymore.
+
+# wireless support is in the works
 
 	moduleName="Network information"
 	module_header	"${moduleName}"
@@ -1696,17 +1685,26 @@ Module_network() {
 
 Module_distro() {
 # DISTRIBUTION
-#
+
 # this module will try to guess which Linux distrobution is installed.
 # the default tool to use is the lsb-release (Linux Standard Base
-# version reporting utility), which is just beginning to appear in distros.
+# version reporting utility)
+
 # a secondary id source are the unique files in /etc/, and as a last
-# resort the /etc/issue file.
-#
-# TODO: move reporting to the end of the module; use local variables
+# resort the /etc/issue file. this makes it possible to identify
+# a distro which resides in a chroot environment, or from a livecd.
 
 	moduleName="Distribution"
 	module_header "${moduleName}"
+
+	# TODO
+	# the extracted information is stored into these variables,
+	# defined by lsb_release and at the end of the function printed.
+	local distro_id
+	local distro_release
+	local distro_codename
+	local distro_description
+
 
 	# locate and echo the root directory.
 	[ "$prefix" != '/' ] && \
@@ -1872,6 +1870,8 @@ Module_distro() {
 		[ "$SlackwareBase" ] && \
 			add_values	'Based on Slackware version' "$SlackwareBase"
 
+		# 
+
 	fi
 
 	module_footer
@@ -1879,6 +1879,11 @@ Module_distro() {
 }
 
 Module_applications() {
+# APPLICATIONS
+
+# version information of standard *nix, dev, and dependency packages.
+# probably should take an additional switch like --X, --server, etc.
+
 	moduleName="Applications"
 	module_header "${moduleName}"
 
@@ -2065,4 +2070,25 @@ Module_devices() {
 	flush_values
 }
 
+Module_env() {
+# ENVIRONMENT VARIABLES
+#
+# xml only
+
+	moduleName="Environment variables"
+	module_header "${moduleName}"
+
+	## Write the header for output
+	add_attribute		$"System enviroment variables\n"	\
+						'system_enviroment_variables'
+	## Process all variables
+	for var in $(env); do
+
+		add_values	"${var}\n"
+
+	done
+
+	module_footer
+	flush_values
+}
 
