@@ -1,0 +1,8 @@
+
+Disk /dev/hdb: 40.0 GB, 40020664320 bytes
+255 heads, 63 sectors/track, 4865 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/hdb1   *           1          13      104391   83  Linux
+/dev/hdb2              14        4865    38973690   8e  Linux LVM

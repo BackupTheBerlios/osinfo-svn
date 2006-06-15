@@ -1,0 +1,5 @@
+Tiedostojärjestelmä   Koko  Käyt Vapaa Käy% Liitospiste
+/dev/mapper/VolGroup00-LogVol00
+                       35G  3,0G   31G   9% /
+/dev/hdb1              99M  9,7M   84M  11% /boot
+tmpfs                 252M     0  252M   0% /dev/shm

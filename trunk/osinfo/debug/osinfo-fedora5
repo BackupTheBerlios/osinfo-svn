@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="ISO8859-1" ?>
+<!DOCTYPE osinfo SYSTEM "osinfo.dtd">
+<osinfo>
+	<system>
+		<attribute name="operating_system" code="os">
+			$distro Linux $distro_version
+		</attribute>
+
+		<attribute name="operating_system_kernel" code="os_build">
+			Linux 2.6.15-1.2054_FC5
+		</attribute>
+
+		<attribute name="network_node_hostname" code="host_name">
+			client23.openlab
+		</attribute>
+
+		<attribute name="machine_hardware_name" code="system_type">
+			i686
+		</attribute>
+
+		<attribute name="system_locale" code="">
+		</attribute>
+
+		<attribute name="system_uptime" code="uptime">
+			6 min
+		</attribute>
+
+	</system>
+	<distribution>
+		<attribute name="root_dir" code="">
+			/
+		</attribute>
+
+		<attribute name="distro_id" code="">
+			FedoraCore
+		</attribute>
+
+		<attribute name="release" code="os_build">
+			5
+		</attribute>
+
+		<attribute name="codename" code="">
+			Bordeaux
+		</attribute>
+
+		<attribute name="description" code="">
+			Fedora Core release 5 (Bordeaux)
+		</attribute>
+
+	</distribution>
+	<kernel>
+		<attribute name="operating_system" code="">
+			GNU/Linux
+		</attribute>
+
+		<attribute name="kernel_release" code="">
+			2.6.15-1.2054_FC5
+		</attribute>
+
+	</kernel>
+	<processor>
+		<attribute name="count" code="processor_count">
+			1
+		</attribute>
+
+		<attribute name="vendor" code="processor_vendor">
+			AuthenticAMD
+		</attribute>
+
+		<attribute name="model" code="processor_model">
+			AMD Athlon(TM) XP 2000+
+		</attribute>
+
+		<attribute name="frequency" code="processor_speed">
+			1261.367 MHz
+		</attribute>
+
+		<attribute name="cache" code="">
+			256 KB
+		</attribute>
+
+		<attribute name="stepping" code="">
+			1
+		</attribute>
+
+	</processor>
+	<network_information>
+	<eth0>
+		<attribute name="mac" code="mac_address">
+			00:20:18:8E:35:84
+		</attribute>
+
+		<attribute name="ipv4" code="ip_address">
+			192.168.0.23
+		</attribute>
+
+		<attribute name="ipv6" code="">
+			fe80::220:18ff:fe8e:3584
+		</attribute>
+
+		<attribute name="nis_domain" code="">
+			(none)
+		</attribute>
+
+		<attribute name="dns_domain" code="domain">
+			openlab
+		</attribute>
+
+		<attribute name="fqdn" code="fully_qualified_domain_name">
+			client23.openlab
+		</attribute>
+
+		<attribute name="gateway" code="default_gateway">
+			192.168.0.1
+		</attribute>
+
+		<attribute name="broadcast" code="">
+			192.168.0.255
+		</attribute>
+
+		<attribute name="netmask" code="subnet_mask">
+			255.255.255.0
+		</attribute>
+
+		<attribute name="rx_bytes" code="">
+			4937157 (4.7 MiB)
+		</attribute>
+
+		<attribute name="tx_bytes" code="">
+			281297 (274.7 KiB)
+		</attribute>
+
+	</eth0>
+	<wlan>
+		<attribute name="associated_essid" code="">
+		</attribute>
+
+	</wlan>
+</network_information>
+<applications>
+	<attribute name="applications" code="software">
+		X Protocol Version 11, Revision 0, Release 7.0
+		GNU bash, version 3.1.7(1)-release (i386-redhat-linux-gnu)
+		tcsh 6.14.00 (Astron) 2005-03-25 (i386-intel-linux) options wide,nls,dl,al,kan,rh,color,filec
+		ls (GNU coreutils) 5.93
+		gcc (GCC) 4.1.0 20060304 (Red Hat 4.1.0-3)
+		GNU Make 3.80
+		GNU Awk 3.1.5
+		GNU sed versio 4.1.5
+		grep (GNU grep) 2.5.1
+		gzip 1.3.5
+		Perl v5.8.8 built for i386-linux-thread-multi
+		Python 2.4.2
+		udevinfo, version 084
+		lspci version 2.2.1
+		lshw
+		please install lshw
+		smartctl version 5.33 [i386-redhat-linux-gnu] Copyright (C) 2002-4 Bruce Allen
+		hdparm - get/set hard disk parameters - version v6.3
+	</attribute>
+
+</applications>
+<terminal_info>
+	<attribute name="terminal_type" code="">
+		linux
+	</attribute>
+
+	<attribute name="terminal_speed" code="">
+		38400
+	</attribute>
+
+	<attribute name="rows" code="">
+		30
+	</attribute>
+
+	<attribute name="columns" code="">
+		80
+	</attribute>
+
+</terminal_info>
+<devices>
+	<attribute name="multimedia_audio_controller" code="">
+		Creative Labs SB Live! EMU10k1 (rev 07) 
+	</attribute>
+
+	<attribute name="input_device_controller" code="">
+		Creative Labs SB Live! MIDI/Game Port (rev 07) 
+	</attribute>
+
+	<attribute name="firewire_(ieee_1394)" code="">
+		VIA Technologies, Inc. IEEE 1394 Host Controller (rev 46) 
+	</attribute>
+
+	<attribute name="ethernet_controller(s)" code="network_adapter">
+		
+	</attribute>
+
+	<attribute name="display_adapter(s)" code="display_adapter">
+		
+	</attribute>
+
+</devices>
+<disk_information>
+</dev/hdb>
+	<attribute name="ide_drive" code="hard_disk">
+		ST340810A
+	</attribute>
+
+	<attribute name="serial_number" code="">
+		3FB3ZFXJ
+	</attribute>
+
+	<attribute name="driver" code="">
+		ide-disk version 1.18
+	</attribute>
+
+	<attribute name="dma" code="">
+		(on)
+	</attribute>
+
+	<attribute name="s.m.a.r.t." code="">
+		Available - device has SMART capability.
+	</attribute>
+
+	<attribute name="lifetime" code="">
+		16086
+	</attribute>
+
+	<attribute name="temperature_(c)" code="">
+		41 
+	</attribute>
+
+	<attribute name="health_status" code="">
+		PASSED
+	</attribute>
+
+	<attribute name="geometry" code="">
+	</attribute>
+
+	<attribute name="capacity_(reported)" code="">
+		40.0 GB
+	</attribute>
+
+	<attribute name="capacity_(actual)" code="">
+		37.27 GB
+	</attribute>
+
+<partitioncapacityfreemountpointfilesystem>
+	<attribute name="__/dev/hdb1" code="">
+		98.7 MB
+		85.0%
+		/boot
+		Linux 
+	</attribute>
+
+	<attribute name="__/dev/hdb2" code="">
+		-
+		-
+		unmounted
+		Linux LVM 
+	</attribute>
+
+	<attribute name="free_(mounted)" code="">
+		.082 GB ; .220%
+	</attribute>
+
+</ Partition		capacity	free	mountpoint	filesystem>
+<oem_information>
+	<attribute name="osinfo_notification" code="">
+		Please install lshw to collect this information
+	</attribute>
+
+</oem_information>
+<dmi_information>
+<bios>
+	<attribute name="vendor" code="">
+		Award Software, Inc.
+	</attribute>
+
+	<attribute name="revision" code="bios_version">
+		ASUS A7S333 ACPI BIOS Revision 1005
+	</attribute>
+
+	<attribute name="date" code="bios_date">
+		10/30/2002
+	</attribute>
+
+	<attribute name="serial_number" code="bios_serial_number">
+	</attribute>
+
+</BIOS>
+<system_info>
+	<attribute name="manufacturer" code="system_manufacturer">
+		System Manufacturer
+	</attribute>
+
+	<attribute name="product_name" code="system_model">
+		System Name
+	</attribute>
+
+	<attribute name="system_version" code="">
+		System Version
+	</attribute>
+
+	<attribute name="oem_serial_number" code="computer_product_serial">
+		SYS-123456789
+	</attribute>
+
+	<attribute name="uuid" code="uuid">
+		Not Settable
+	</attribute>
+
+</System info>
+<motherboard>
+	<attribute name="manufacturer" code="mother_board_manufacturer">
+		ASUSTeK Computer INC.
+	</attribute>
+
+	<attribute name="model" code="mother_board_model">
+		A7S333
+	</attribute>
+
+	<attribute name="version" code="mother_board_version">
+		REV 1.xx
+	</attribute>
+
+	<attribute name="serial_number" code="mother_board_serial_number">
+		xxxxxxxxxxx
+	</attribute>
+
+</Motherboard>
+<chassis>
+	<attribute name="manufacturer" code="chassis_manufacturer">
+		Chassis Manufacture
+	</attribute>
+
+	<attribute name="type" code="chassis_type">
+		Tower
+	</attribute>
+
+	<attribute name="version" code="chassis_version">
+		Chassis Version
+	</attribute>
+
+	<attribute name="serial_number" code="chassis_serial_number">
+		Chassis Serial Number
+	</attribute>
+
+	<attribute name="lock" code="chassis_lock">
+		Not Present
+	</attribute>
+
+	<attribute name="asset_tag" code="chassis_asset_tag">
+		Asset-1234567890
+	</attribute>
+
+</Chassis>
+</dmi_information>
+</osinfo>

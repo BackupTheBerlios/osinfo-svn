@@ -721,13 +721,73 @@ Module_cdrom() {
 	moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
+	if [ ! "$(type -p lshw)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install lshw to collect this information"
 
+	elif [ ! "$(whoami)" == "root" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please run $appname as super-user to collect this information"
+
+	else
+
+		# TODO: use a common lshw temp file
+		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		lshw -xml  > $lshw_tmp
+
+		# this gets the line number of the wanted node from lshw '$this'
+		# and the line number of the next node '$next'
+		# then what's between those lines is printed to another tmp file
+		this="$(cat $lshw_tmp | grep -n "node id=\"cdrom" | \
+			awk -F: {'print $1'})"
+		next="$(cat $lshw_tmp | grep -n 'node id' | grep -A 1 cdrom | \
+			awk -F: {'print $1'} | sed -n "2{p;q}")"
+		((this++)) # this prevents the 'node' lines from printing
+		((next--))
+
+		# use a temp file to store cdrom information
+		cat ${lshw_tmp} | sed -n "$this,$next{p;}" > ${cdrom_tmp}
+
+		#cat $cdrom_tmp
+		#exit 0
+
+
+		add_attribute	'Model'	'cdrom'
+		add_values		"$(grep -i product ${cdrom_tmp} | \
+						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+		add_attribute	'Drive type'
+		add_values		"$(grep -i description ${cdrom_tmp} | \
+						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+		add_attribute	'Device node'
+		add_values		"$(grep -i 'logicalname' ${cdrom_tmp} | \
+						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+		add_attribute	'Serial number'
+		add_values		"$(grep -i serial ${cdrom_tmp} | \
+						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+		#add_attribute	'Capabilities'
+		#add_values		"$(grep -i capabilities ${cdrom_tmp} | \
+		#				sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+		#value_footer
+
+
+	fi
 
 	module_footer
 	flush_values
 
-
 }
+
 
 Module_dmi() {
 # DMI / OEM INFORMATION
@@ -778,7 +838,6 @@ Module_dmi() {
 		# (3) everything in between those lines contains interesting data
 
 		for myHANDLE in $HANDLES; do
-
 
 			this="$(cat ${dmi_info} | grep -n "Handle ${myHANDLE}" | \
 				awk -F: {'print $1'})"
@@ -934,7 +993,6 @@ Module_dmi() {
 	fi
 
 	# cleanup
-
 	rm -f $dmi_info $dmi_tmp
 
 	module_footer
@@ -1643,9 +1701,9 @@ Module_network() {
 	# under developement, does not yet work!
 
 	# note: for debugging, these variables are set here
-	iw_src="wlan-iwconfig-on"
+	iw_src="debug/wlan-iwconfig-on"
 	WLAN_DEVICES="eth1"
-	ap_src="wlan-stations"
+	ap_src="debug/wlan-stations"
 
 	if [ "$(type -p iwconfig)" ]; then
 
