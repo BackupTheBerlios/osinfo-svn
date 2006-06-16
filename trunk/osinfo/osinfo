@@ -263,7 +263,6 @@ function value_header() {
 	# in the $infostring array. it also adds a %header% tag which will be
 	# use by print_* functions to interpret how to parse the string.
 
-	#headers[${#headers[@]}]="$1"
 	#echo ${#infostring[@]}
 	infostring[${#infostring[@]}]="%header%$1"
 	#echo ${infostring[0]}
@@ -705,7 +704,7 @@ function print_stdout {
 
 
 ################################################################################
-# NOTE: this function is deprecated
+# NOTE: THIS FUNCTION IS DEPRECATED
 # Adds a identifier and a value to "$name_value_pair_list".
 # Parameters:
 #   1 string   Name

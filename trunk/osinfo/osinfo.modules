@@ -1560,17 +1560,35 @@ Module_users() {
 	module_header "${moduleName}"
 
 
+	add_attribute	'Current user'			"current_user"
+	add_values		"$(whoami)"
+
+
+	add_attribute	"User's X11 session"	"users_window_manager"
+	# KDE sets $DESKTOP_SESSION nicely, but Gnome doesn't.
+	local session_id="$(echo $DESKTOP_SESSION)"
+	if [ "$session_id" == "default" ]; then
+		if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
+			# try to get Gnome version
+			local gnome_version="$(gnome-about --version | awk {'print $NF'})"
+			session_id="Gnome $gnome_version"
+		fi
+	fi
+	add_values		"$session_id"
+
+	
+	add_attribute	"User's shell"
+	add_values		"$(echo $SHELL)"
+
+
 	add_attribute	'Last logged in user'	"last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
 
-	add_attribute	"User's X11 session"	"user_window_manager"
-	add_values		"$(echo $DESKTOP_SESSION)"
 
-	add_attribute	'All users'		"users"
+	add_attribute	'All users'				"users"
 	add_values		"$(last | awk {'print $1'} | sort | uniq | \
-					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')\n"
+					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
 					# removes users 'reboot' and 'wtmp'
-
 
 
 	module_footer
@@ -2152,6 +2170,9 @@ Module_devices() {
 			add_values		"${video_adapter[$i]}\n"
 		done
 	fi
+	#12:04 < LinuxNIT> is there a way to check and see how much ram my video card actually has available/is using? not just what i set in the xorg.conf
+	#12:04 < Kevin`> lspci -vv
+	#12:06 < LinuxNIT> IRegion 0: Memory at e8000000 (32-bit, prefetchable) [size=128M]
 
 	module_footer
 	flush_values
