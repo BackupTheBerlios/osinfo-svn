@@ -1552,9 +1552,9 @@ Module_printers() {
 Module_users() {
 # USERS
 
-# this module reports the last logged user, and
-# other users that have logged in (that last can see).
-# + the user's X11 session manager
+# reports the current user, the user's X11 session manager + shell
+# the last logged user, and other users that have logged in 
+# (that last can see).
 
 	moduleName="Users"
 	module_header "${moduleName}"
@@ -1562,6 +1562,10 @@ Module_users() {
 
 	add_attribute	'Current user'			"current_user"
 	add_values		"$(whoami)"
+
+
+	add_attribute	'Real name'				"real_name"
+	add_values		"$(cat /etc/passwd | grep $(whoami) | awk -F: {'print $5'})"
 
 
 	add_attribute	"User's X11 session"	"users_window_manager"
@@ -1586,10 +1590,26 @@ Module_users() {
 
 
 	add_attribute	'All users'				"users"
-	add_values		"$(last | awk {'print $1'} | sort | uniq | \
+	# because 'last' command, part of sysvinit core package,
+	# interprets the binary file /var/log/wtmp, but chomps off
+	# the loginname at 9 characters, we need to find the full names
+	# from the source file. a dirty hack...
+
+	local users="$(last | awk {'print $1'} | sort | uniq | \
 					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
 					# removes users 'reboot' and 'wtmp'
+	local user
+	local wtmp_file="/var/log/wtmp"
+	for user in $users; do
 
+		if [ ${#user} -ge 8 ]; then
+			# parse special chars to meta-chars
+			user="$(echo $user | sed 's/[[:punct:]]/\\&/g' )"
+			add_values	"$(grep -Eoa "$user[a-zA-Z+]*" ${wtmp_file} | uniq)\n"
+		else
+			add_values	"$user\n"
+		fi
+	done
 
 	module_footer
 	flush_values

@@ -612,6 +612,8 @@ function print_stdout {
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
 
+			#set -x
+
 			if [ "$attribute" == "open" ] && \
 				[ "${item: -1:2}" == "n" ] && \
 				[ "${value_string: -1:2}" == "t" ]; then
@@ -624,6 +626,8 @@ function print_stdout {
 
 				local value_string="${value_string}${tab_string}"
 			fi
+
+			set +x
 
 			# this evaluation counts the proper amount of tabs to add
 			# for beautiful identation.
