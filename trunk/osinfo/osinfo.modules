@@ -58,7 +58,7 @@
 
 MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
 MODULES_BSD='distro system applications terminal network'
-MODULES_LANFORCE='system processor network dmi devices users applications env'
+MODULES_LANFORCE='distro system processor network dmi devices users applications env'
 MODULES_BROKEN='printers services users cdrom memory'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
