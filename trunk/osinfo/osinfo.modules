@@ -1554,6 +1554,7 @@ Module_users() {
 
 # this module reports the last logged user, and
 # other users that have logged in (that last can see).
+# + the user's X11 session manager
 
 	moduleName="Users"
 	module_header "${moduleName}"
@@ -1562,10 +1563,12 @@ Module_users() {
 	add_attribute	'Last logged in user'	"last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
 
+	add_attribute	"User's X11 session"	"user_window_manager"
+	add_values		"$(echo $DESKTOP_SESSION)"
 
 	add_attribute	'All users'		"users"
 	add_values		"$(last | awk {'print $1'} | sort | uniq | \
-					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
+					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')\n"
 					# removes users 'reboot' and 'wtmp'
 
 
@@ -1755,6 +1758,7 @@ Module_network() {
 	module_footer
 	flush_values
 }
+
 
 ##
 # Gets data from lsb_release
@@ -1960,6 +1964,7 @@ Module_distro() {
 	flush_values
 }
 
+
 Module_applications() {
 # APPLICATIONS
 
@@ -2136,14 +2141,14 @@ Module_devices() {
 	#finally report the eth and video adapters
 	if [ "$eth_adapter" ]; then
 		add_attribute	'Ethernet controller(s)'	"network_adapter"
-		for i in $(seq 1 1 ${#eth_adapter[@]}); do
+		for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
 			add_values		"${eth_adapter[$i]}\n"
 		done
 	fi
 
 	if [ "$video_adapter" ]; then
 		add_attribute	'Display adapter(s)'		"display_adapter"
-		for i in $(seq 1 1 ${#eth_adapter[@]}); do
+		for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
 			add_values		"${video_adapter[$i]}\n"
 		done
 	fi
