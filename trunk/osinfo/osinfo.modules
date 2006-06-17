@@ -1768,7 +1768,7 @@ Module_network() {
 		#  -a        No such device
 
 			ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
-			grep -v LOOPBACK | grep -Ev '(^ )|(^--)' | \
+			grep -Ev '(^ )|(^--)|LOOPBACK' | \
 			awk  {'print $1'})"
 		fi
 
@@ -2158,16 +2158,24 @@ Module_devices() {
 			# (lanforce) requires this
 			# make sure that if several adapters are found, they don't
 			# get individual attributes
+			# AnMaster: Could you please tell me what you (ruxpin) mean with this? 
+			#           As there is nothing about network in lspci...
+			#           And Display adapter(s) seems broken.
+			#               01:00.0 VGA compatible controller: ATI Technologies Inc RV280 [Radeon 9200 PRO] (rev 01)
+			#               01:00.1 Display controller: ATI Technologies Inc RV280 [Radeon 9200 PRO] (Secondary) (rev 01)
+			#           And there is only one in osinfo. In osinfo --xml there is one normal and one empty for it.
+			#               <value>ATI Technologies Inc RV280 [Radeon 9200 PRO] (rev 01) </value>
+			#               <value></value>
+			#           Same in the lanforce output.
 
-			if [ "$(echo $description | grep -i 'network\|ethernet')" ]; then
+
+			if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
 
 				local eth_adapter[${#eth_adapter}]="$device"
 
-
-			elif [ "$(echo $description | grep -i 'vga\|display')" ]; then
+			elif [ "$(grep -i 'vga\|display' <<< "$description")" ]; then
 
 				local video_adapter[${#video_adapter}]="$device"
-
 
 			else
 				add_attribute	"$description"
@@ -2188,10 +2196,11 @@ Module_devices() {
 
 	if [ "$video_adapter" ]; then
 		add_attribute	'Display adapter(s)'		"display_adapter"
-		for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
+		for i in $(seq 0 1 $((${#video_adapter[@]}-1)) ); do
 			add_values		"${video_adapter[$i]}\n"
 		done
 	fi
+
 	#12:04 < LinuxNIT> is there a way to check and see how much ram my video card actually has available/is using? not just what i set in the xorg.conf
 	#12:04 < Kevin`> lspci -vv
 	#12:06 < LinuxNIT> IRegion 0: Memory at e8000000 (32-bit, prefetchable) [size=128M]
