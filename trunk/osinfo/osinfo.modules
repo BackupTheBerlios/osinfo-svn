@@ -1674,8 +1674,8 @@ Module_network() {
 		nw_src="ifconfig"
 
 		if [ "$SYSTEM" == "linux" ] ; then
-			ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | grep -v LOOPBACK | \
-			grep -Ev '(^ )|(^--)' | awk  {'print $1'})"
+			ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | \
+			grep -Ev '(^ )|(^--)|LOOPBACK' | awk  {'print $1'})"
 
 		else # *BSD ifconfig
 			ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | \
@@ -1749,6 +1749,7 @@ Module_network() {
 	#
 	# under developement, does not yet work!
 
+	# FIXME: This odd debug usage sucks... Better add a --debug if you realy need this.
 	# note: for debugging, these variables are set here
 	iw_src="debug/wlan-iwconfig-on"
 	WLAN_DEVICES="eth1"
@@ -2012,7 +2013,7 @@ Module_applications() {
 	moduleName="Applications"
 	module_header "${moduleName}"
 
-
+	local APPLICATIONS app
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
 
