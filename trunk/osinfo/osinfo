@@ -308,6 +308,7 @@ function value_footer() {
 			# then test if this has
 			#echo $found
 				infostring[${#infostring[@]}]="%footer%${item}"
+				#TODO: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 				break;
 			fi
 		fi
@@ -332,7 +333,7 @@ function add_attribute() {
 	# to interpret how to parse the string.
 
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
-
+	#TODO: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 function add_values {
@@ -415,8 +416,7 @@ function print_xml {
 
 			# the following sed removes all formatting tags
 			# from the value string. it's a tad slow, though.
-			item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
-				sed 's/^ *//')"
+			item="$(echo "${item}" | sed 's/\\[a-z]//g;s/^ *//')"
 			echo "${item}" | tee -a "${XMLFILE}"
 
 		else
@@ -442,7 +442,7 @@ function print_xml {
 
 				# validate xml
 				name="$(echo "${item}" | awk -F\; {'print $1'} | \
-					sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+					sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
 
 				code=$(echo "${item}" | awk -F\; {'print $2'})
 
@@ -469,7 +469,7 @@ function print_xml {
 
 				# validate xml
 				local name="$(echo ${item} | awk -F\; {'print $1'} | \
-					sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
 				echo -e "$(xml_tag_start "${name}")" | tee -a "${XMLFILE}"
 				((XML_INDENT++))
@@ -484,9 +484,10 @@ function print_xml {
 				done
 				item="$(echo ${item} | sed s/%footer%//)"
 
+				# FIXME: This is broken. Why?
 				# validate xml
 				local name="$(echo ${item} | awk -F\; {'print $1'} | \
-					sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
 				echo -e "$(xml_tag_stop "${item}")" | tee -a "${XMLFILE}"
 				header="closed"
