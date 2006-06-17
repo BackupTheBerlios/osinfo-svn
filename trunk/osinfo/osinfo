@@ -175,14 +175,15 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				;;
 			# Add something about this in PRINT_Help:
 			'--nc'|'--netcat')
-				if [ ! "$2" ] || [ ! "$3" ]; then
+				if [ "$2" ] && [ "$3" ]; then
+					netcat=1
+					HOST="$2"
+					PORT="$3"
+					shift 3
+				else
 					echo "You must set the target host and port!"
-					exit 0;
+					missing_arg "$1" 2
 				fi
-				netcat=1
-				HOST=$2
-				PORT=$3
-				shift 3
 				;;
 			'-v'|'--verbose')
 				isverbose=1
