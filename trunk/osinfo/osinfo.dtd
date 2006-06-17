@@ -1,5 +1,7 @@
 <!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives)*>
 
+
+
 <!ELEMENT cd_dvd_drives (attribute+)>
 <!ELEMENT devices (attribute+)>
 <!ELEMENT system_memory (attribute+)>

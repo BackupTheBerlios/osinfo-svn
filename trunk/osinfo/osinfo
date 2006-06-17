@@ -486,7 +486,6 @@ function print_xml {
 				done
 				item="$(sed 's/%footer%//' <<< "${item}")"
 
-				# FIXME: This is broken. Why?
 				# validate xml
 				local name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"

@@ -1889,7 +1889,7 @@ Module_distro() {
 			esac
 		done
 		# Remove leading spaces.
-		found_distros="$(echo "${found_distros}" | sed 's/^ *//')"
+		found_distros="$(sed 's/^ *//' <<< "${found_distros}")"
 
 
 		# Get distro name
@@ -1955,20 +1955,20 @@ Module_distro() {
 		# Output distro version
 		case "${found_distros}" in
 			'SuSE')
-				distro_release="$(fgrep 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
+				distro_release="$(grep -F 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
 			'Red Hat')
 				distro_release="$(cat ${root_dir}etc/redhat-release)" ;;
 			'Fedora')
 				distro_release="$(cat ${root_dir}etc/fedora-release)" ;;
 			'Slackware')
-				distro_release="$(fgrep 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+				distro_release="$(grep -F 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 			'Topologilinux')
-				distro_release="$(fgrep 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
-				local  SlackwareBase="$(fgrep 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+				distro_release="$(grep -F 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
+				local  SlackwareBase="$(grep -F 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 			'Gentoo')
 				distro_release="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
 			'misc')
-				# AnMaster: . is a wildcard meaning any single char. Isn't fgrep what you want?
+				# FIXME: AnMaster: . is a wildcard meaning any single char. Isn't grep -F what you want?
 				distro_release="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
 				# TODO: improve the grep
 		esac
@@ -2003,7 +2003,6 @@ Module_distro() {
 	flush_values
 }
 
-
 Module_applications() {
 # APPLICATIONS
 
@@ -2025,7 +2024,7 @@ Module_applications() {
 			apache2 php mysql smbd cups-config \
 			udevinfo lspci lshw dmidecode smartctl hdparm"
 
-	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
 
 		APPLICATIONS="X kde-config x11vnc \
 			csh bash ksh \
@@ -2037,9 +2036,9 @@ Module_applications() {
 	fi
 
 	## Write the header for output
-	add_attribute		$"Applications\n"		'software'
+	add_attribute $"Applications\n" 'software'
 
-
+	local missing_ERRMSG="if you want to be able to use all modules of osinfo"
 	## Process all applications
 	for app in ${APPLICATIONS}; do
 
@@ -2087,16 +2086,17 @@ Module_applications() {
 		else
 			case "$app" in
 				'lspci')
-					add_values 'lspci' 		"please install pciutils\n"
+					add_values 'lspci'      "please install pciutils ${missing_ERRMSG}\n"
 					;;
 				'lshw')
-					add_values 'lshw' 		"please install lshw\n"
+					add_values 'lshw'       "please install lshw ${missing_ERRMSG}\n"
 					;;
 				'smartctl')
-					add_values 'smartctl'	"please install smartmontools\n"
+					add_values 'smartctl'   "please install smartmontools ${missing_ERRMSG}\n"
 					;;
 				'dmidecode')
-					add_values 'demidecode'	'please install dmidecode\n'
+					add_values 'demidecode' "please install dmidecode ${missing_ERRMSG}\n"
+					;;
 			esac
 		fi
 	done
@@ -2123,7 +2123,7 @@ Module_devices() {
 
 		devices[$DEV_ARRAY]="$(
 
-			echo $DEVICE | sed -r 's/:_/:/g' | sed -r 's/(^_)//g' | tr ':' ' ' )"
+			echo $DEVICE | sed -r 's/:_/:/g;s/(^_)//g' | tr ':' ' ' )"
 
 			# with lspci 2.2 and later, the -m switch works fine
 			#	for DEVICE in $(lspci -m | tr ' ' '_'); do
@@ -2148,7 +2148,7 @@ Module_devices() {
 			grep -i $DO_NOT_OUTPUT)" ]; then
 
 			local description="$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
-					tr '_' ' ' | sed 's/^.//' | sed 's/^ *//')"
+					tr '_' ' ' | sed 's/^.//;s/^ *//')"
 			local device="$(echo ${devices[$DEV_ARRAY]} | \
 					awk {'print $2" "$3'} | tr '_' ' ')"
 
