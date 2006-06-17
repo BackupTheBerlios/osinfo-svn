@@ -404,6 +404,7 @@ function print_xml {
 	#  4 if the item begins with %header% => print header ; next
 	#  5 if the item begins with %footer% => print footer ; next
 
+	local itemnr item name code
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
@@ -416,7 +417,7 @@ function print_xml {
 
 			# the following sed removes all formatting tags
 			# from the value string. it's a tad slow, though.
-			item="$(echo "${item}" | sed 's/\\[a-z]//g;s/^ *//')"
+			item="$(sed 's/\\[a-z]//g;s/^ *//' <<< "${item}")"
 			echo "${item}" | tee -a "${XMLFILE}"
 
 		else
@@ -433,18 +434,18 @@ function print_xml {
 			fi
 
 			### NEW ATTRIBUTE TAG
-			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
+			if [ "$(grep '^%attribute%' <<< "${item}")" ]; then
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
 				# parse item
-				item="$(echo "${item}" | sed s/%attribute%//)"
+				item="$(sed s/%attribute%// <<< "${item}")"
 
 				# validate xml
 				name="$(echo "${item}" | awk -F\; {'print $1'} | \
 					sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
 
-				code=$(echo "${item}" | awk -F\; {'print $2'})
+				code=$(awk -F\; {'print $2'} <<< "${item}")
 
 				xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
 				((XML_INDENT++))
@@ -454,7 +455,7 @@ function print_xml {
 			#### HEADER TAG
 			# redundant: this will not go to xml
 
-			elif [ "$(echo ${item} | grep '^%header%')" ]; then
+			elif [ "$(grep '^%header%' <<< "${item}")" ]; then
 
 				# close open header tag.. this leaves the closing tag off
 				if [ "$header" == "open" ]; then
@@ -464,10 +465,10 @@ function print_xml {
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
-				item="$(echo ${item} | sed 's/%header%//')"
+				item="$(sed 's/%header%//' <<< "${item}")"
 
 				# validate xml
-				name="$(echo ${item} | awk -F\; {'print $1'} | \
+				name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
 				xml_tag_start "${name}" | tee -a "${XMLFILE}"
@@ -481,7 +482,7 @@ function print_xml {
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
-				item="$(echo ${item} | sed 's/%footer%//')"
+				item="$(sed 's/%footer%//' <<< "${item}")"
 
 				# FIXME: This is broken. Why?
 				# validate xml
@@ -908,8 +909,8 @@ for modul in $cmdsnames; do
 
 			cmdsnames="$MODULES_LINUX"
 			break;
-
-		elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+		# TODO: please check if this works on bsd and old bash
+		elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
 
 			cmdsnames="$MODULES_BSD"
 			break;
@@ -943,6 +944,7 @@ if [ "$usexml" == 1 ]; then
 	print_xml_header
 fi
 
+# TODO: Check that there are any modules given here and if not run PRINT_Help.
 for modul in $cmdsnames; do
 
 	case $modul in
