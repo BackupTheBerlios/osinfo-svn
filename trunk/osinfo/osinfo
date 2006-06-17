@@ -135,6 +135,8 @@ function PRINT_Help {
 	fi
 }
 
+# Before we break path hash some binaries so the script can find them (if they exist).
+hash kdialog &>/dev/null
 
 ######## SETTING USERSPACE VARIABLES
 # PATH here allows normal users to run ifconfig and lsmod
