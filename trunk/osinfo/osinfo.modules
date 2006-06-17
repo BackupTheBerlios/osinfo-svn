@@ -2213,6 +2213,7 @@ Module_env() {
 # ENVIRONMENT VARIABLES
 #
 # xml only
+# FIXME: Shouldn't be xml only...
 
 	moduleName="Environment variables"
 	module_header "${moduleName}"
