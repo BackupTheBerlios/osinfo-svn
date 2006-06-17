@@ -1,45 +1,45 @@
 #!/bin/bash
 #!/usr/local/bin/bash
 #################################################################################
-# OSINFO 									
-#										
-# osinfo lists system information available to the OS.				
-#										
-# everything is collected honoring the requirement of minimum dependencies;	
-# ie. using standard *nix tools. some information is unavailable		
-# without special (but quite common) packages, but the availability		
-# of these is tested, and no error messaged are produced if these rarer		
-# tools are missing. see info below for a list of dependencies.			
-#										
-# the script has been currently tested on the following Linux distros:		
-#  Gentoo 2005.1 and 2006.0							
-#  Ubuntu 5.10 and 6.06								
-#  Fedora Core 4 and 5								
-#  Red Hat 9									
-#  Suse 10.0									
-#  SlackWare									
-#										
-# and on FreeBSD 6.0								
-# on x86 and amd64 architectures with various hardware configurations,		
-#										
+# OSINFO
+#
+# osinfo lists system information available to the OS.
+#
+# everything is collected honoring the requirement of minimum dependencies;
+# ie. using standard *nix tools. some information is unavailable
+# without special (but quite common) packages, but the availability
+# of these is tested, and no error messaged are produced if these rarer
+# tools are missing. see info below for a list of dependencies.
+#
+# the script has been currently tested on the following Linux distros:
+#  Gentoo 2005.1 and 2006.0
+#  Ubuntu 5.10 and 6.06
+#  Fedora Core 4 and 5
+#  Red Hat 9
+#  Suse 10.0
+#  SlackWare
+#
+# and on FreeBSD 6.0
+# on x86 and amd64 architectures with various hardware configurations,
+#
 #################################################################################
-# list of (known) dependencies:							
-#										
-# bash 2.02									
-# GNU grep with support for extended regular expressions			
+# list of (known) dependencies:
+#
+# bash 2.02
+# GNU grep with support for extended regular expressions
 # awk, sed, seq, tr, bc
 # netcat (for sending the xml output over tcp)
-#										
+#
 # per module: (incomplete)
 # ----------
-# users: uniq, sort, last
-# dmi: dmidecode
-# oem: lshw
-# hdd: fdisk, df, udev, smartmontools (opt), hdparm (opt)
+# users:   uniq, sort, last
+# dmi:     dmidecode
+# oem:     lshw
+# hdd:     fdisk, df, udev, smartmontools (opt), hdparm (opt)
 # devices: lspci
 # network: standard linux networking tools (hostname, ifconfig, route)
-#		   wireless-tools (iwconfig, iwlist) - optional
-#										
+#          wireless-tools (iwconfig, iwlist) - optional
+#
 #################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                            #
 #                                                                               #
@@ -393,11 +393,11 @@ function print_xml {
 
 	# this function loops the $infostring and does the following steps
 	# for each item:
-	#	1 test if item does not begin with '%' => print value; next
-	#	2 if there is an attribute tag open => close it
-	#	3 if the item begins with %attribute% => print attribute ; next
-	#	4 if the item begins with %header% => print header ; next
-	#	5 if the item begins with %footer% => print footer ; next
+	#  1 test if item does not begin with '%' => print value; next
+	#  2 if there is an attribute tag open => close it
+	#  3 if the item begins with %attribute% => print attribute ; next
+	#  4 if the item begins with %header% => print header ; next
+	#  5 if the item begins with %footer% => print footer ; next
 
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
@@ -410,7 +410,7 @@ function print_xml {
 			done
 
 			# the following sed removes all formatting tags
-			# from the value string. it's a tad slow, though.			
+			# from the value string. it's a tad slow, though.
 			item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
 				sed 's/^ *//')"
 			echo "${item}" | tee -a "${XMLFILE}"
@@ -501,9 +501,9 @@ function print_lanforce_xml {
 	# works pretty much the same as print_xml()
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
-	
+
 		local item="${infostring[$itemnr]}"
-		
+
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
 			# only print values for which attribute is active
@@ -607,7 +607,7 @@ function print_stdout {
 		if [ ! "$(echo ${item} | grep '^%')" ]; then
 
 
-			# test if an attribute is open, 
+			# test if an attribute is open,
 			# whether the last item in value_string ended with newline
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
@@ -617,7 +617,7 @@ function print_stdout {
 			if [ "$attribute" == "open" ] && \
 				[ "${item: -1:2}" == "n" ] && \
 				[ "${value_string: -1:2}" == "t" ]; then
-			
+
 				unset tab_string
 				# the -1 is a hack, I was too tired to really debug this further
 				for i in $(seq 1 1 $(($max_indent-$diff_indent-1)) ); do
@@ -633,14 +633,14 @@ function print_stdout {
 			# for beautiful identation.
 
 			# lots of code has been commented for later debugging
-			
+
 				# bash always rounds downward, so 20/8 = 2
-				
+
 				# max indent is the indentation (in tabs) of the longest string
 				# diff indent is the difference between the current item and the max
 				local max_indent=$(($longest_string/$TABSIZE))
 				local diff_indent=$(($max_indent-${#name}/$TABSIZE))
-				
+
 				#echo "diff : $diff"
 				#if [ ${#name} -ne $TABSIZE ]; then
 				# bc might not be available everywhere. not sure about that.

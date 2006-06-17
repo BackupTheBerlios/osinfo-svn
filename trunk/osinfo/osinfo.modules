@@ -10,44 +10,44 @@
 # the modules.
 #
 # module_header	"Module name"
-#	each module should begin with this line.
-#	it will be printed in colour at stdout and as a tag to xml.
-#	it may contain spaces; in the xml tag they will be replaced by '_'
+#  each module should begin with this line.
+#  it will be printed in colour at stdout and as a tag to xml.
+#  it may contain spaces; in the xml tag they will be replaced by '_'
 #
 # value_header	"Header"
-# 	the argument is printed on a single line in bold to stdout,
-#	and as a <header> tag to the xml.
-#	each module may contain several calls of this type
+#  the argument is printed on a single line in bold to stdout,
+#  and as a <header> tag to the xml.
+#  each module may contain several calls of this type
 #
 # add_attribute "Common Name"	"xml_code"
-#	the first argument is printed at the first field to stdout,
-#	and the xml output is formulated as:
-#	<xml_code>
-#	 <value>foo</value>
-#	</xml_code>
-#	each module may contain several calls of this type.
-#	the previous attribute tag is automatically closed when a new
-#	one is introduced.
+#  the first argument is printed at the first field to stdout,
+#  and the xml output is formulated as:
+#  <xml_code>
+#   <value>foo</value>
+#  </xml_code>
+#  each module may contain several calls of this type.
+#  the previous attribute tag is automatically closed when a new
+#  one is introduced.
 #
 # add_values "value 1" "value 2" "value n"
-#	several values can be given;
-#	all of them will be separated with tab at stdout,
-#	and they will each get their own <value>foo</value> line at xml output.
-#	special characters as '\n' and '\t' can be used;
-#	they will not affect the xml output.
-#	each module may contain several calls of this type.
+#  several values can be given;
+#  all of them will be separated with tab at stdout,
+#  and they will each get their own <value>foo</value> line at xml output.
+#  special characters as '\n' and '\t' can be used;
+#  they will not affect the xml output.
+#  each module may contain several calls of this type.
 #
 # value_footer
-#	this call should follow a block of values, if the value_header
-#	function is called before them. this closes open header tags.
+#  this call should follow a block of values, if the value_header
+#  function is called before them. this closes open header tags.
 #
 # module_footer
-#	this call should immediately precede the flush_values call.
-#	this takes care of closing an open attribute tag.
+#  this call should immediately precede the flush_values call.
+#  this takes care of closing an open attribute tag.
 #
 # flush_values
-#	prints the values to xml file or to stdout.
-#	this should be the final command in a module.
+#  prints the values to xml file or to stdout.
+#  this should be the final command in a module.
 #
 #################################################################################
 # Written by Mikael Lammentausta and Arvid Norlander
