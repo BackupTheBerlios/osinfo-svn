@@ -25,6 +25,7 @@
 
 
 
-<!ELEMENT attribute (#PCDATA)>
+<!ELEMENT attribute (value+)>
 <!ATTLIST attribute name CDATA #REQUIRED
                     code CDATA #IMPLIED>
+<!ELEMENT value (#PCDATA)>

@@ -420,7 +420,7 @@ function print_xml {
 			# the following sed removes all formatting tags
 			# from the value string. it's a tad slow, though.
 			item="$(sed 's/\\[a-z]//g;s/^ *//' <<< "${item}")"
-			echo "${item}" | tee -a "${XMLFILE}"
+			xml_value "${item}" | tee -a "${XMLFILE}"
 
 		else
 
