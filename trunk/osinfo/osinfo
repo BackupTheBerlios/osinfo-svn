@@ -153,6 +153,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				;;
 			'-P'|'--prefix')
 				if [ $2 ]; then
+					# Make sure there is only one ending "/".
 					prefix="$(echo $2 | sed 's/\/*$/\//')"
 					shift 2
 				else
@@ -174,6 +175,8 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				shift 1
 				;;
 			# Add something about this in PRINT_Help:
+			# TODO: This seems to need --xml too. After all cmd args are passed check for
+			# TODO: "[ $netcat -eq 1 ] && [ $usexml -eq 0 ]; then errormessage" (or something like that).
 			'--nc'|'--netcat')
 				if [ "$2" ] && [ "$3" ]; then
 					netcat=1
