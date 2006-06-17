@@ -308,7 +308,7 @@ function value_footer() {
 			# then test if this has
 			#echo $found
 				infostring[${#infostring[@]}]="%footer%${item}"
-				#TODO: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+				# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 				break;
 			fi
 		fi
@@ -333,7 +333,7 @@ function add_attribute() {
 	# to interpret how to parse the string.
 
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
-	#TODO: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 function add_values {
