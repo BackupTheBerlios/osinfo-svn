@@ -1,7 +1,6 @@
-<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users)*>
+<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives)*>
 
-
-
+<!ELEMENT cd_dvd_drives (attribute+)>
 <!ELEMENT devices (attribute+)>
 <!ELEMENT system_memory (attribute+)>
 
@@ -25,7 +24,7 @@
 
 
 
-<!ELEMENT attribute (value+)>
+<!ELEMENT attribute (value*)>
 <!ATTLIST attribute name CDATA #REQUIRED
                     code CDATA #IMPLIED>
 <!ELEMENT value (#PCDATA)>

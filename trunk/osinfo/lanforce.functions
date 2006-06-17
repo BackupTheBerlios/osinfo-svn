@@ -63,7 +63,7 @@ function lanforce_dtd () {
                  follow-references     CDATA #REQUIRED>
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT text (#PCDATA)>
-	EOF
+EOF
 }
 
 
