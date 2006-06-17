@@ -516,8 +516,7 @@ function print_lanforce_xml {
 
 				# the following sed removes all formatting tags
 				# from the value string. it's a tad slow, though.
-				item="$(echo "${item}" | sed 's/\\[a-z]//g' | \
-					sed 's/^ *//')"
+				item="$(echo "${item}" | sed 's/\\[a-z]//g;s/^ *//')"
 				echo "   $(xml_value "${item}")" | tee -a "${XMLFILE}"
 
 			fi
@@ -540,7 +539,7 @@ function print_lanforce_xml {
 
 					# validate xml
 					local name="$(echo ${item} | awk -F\; {'print $1'} | \
-						sed 's/\\[a-z]//g' | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+						sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
 
 					echo -e "  $(xml_attribute_start ${name} ${code})" | \
 						tee -a "${XMLFILE}"
