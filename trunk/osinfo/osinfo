@@ -75,7 +75,7 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 #http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
-if [ "$(echo $SYSTEM | grep bsd)" ]; then
+if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	#Seq="$(type -p gseq)"
 	# TODO: Test if this works.
 	function seq() {
@@ -103,7 +103,7 @@ function PRINT_Help {
 		for MODULE in ${MODULES_LINUX}; do
 			echo -e "\t\t$MODULE"
 		done
-	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
 		for MODULE in ${MODULES_BSD}; do
 			echo -e "\t\t$MODULE"
 		done
@@ -295,13 +295,12 @@ function value_footer() {
 	for position in $(seq ${#infostring[@]} -1 0); do
 		item="$(echo ${infostring[$position]})"
 		# first collect %footer%s into $found array
-		if [ "$(echo ${item} | grep '^%footer%')" ]; then
-			found="$(echo ${item} | \
-				grep '^%footer%' | sed s/%footer%//)"
+		if [ "$(grep '^%footer%' <<< "${item}")" ]; then
+			found="$(grep '^%footer%' <<< "${item}" | sed s/%footer%//)"
 
 		# then continue and add a footer if it is not already found
-		elif [ "$(echo ${item} | grep '^%header%')" ]; then
-			item="$(echo ${item} | sed s/%header%//)"
+		elif [ "$(grep '^%header%' <<< "${item}")" ]; then
+			item="$(sed "s/%header%//" <<< "${item}")"
 
 			if [ "${item}" != "${found}" ]; then
 			#found[${#found[@]}]="$(echo ${item} | \
@@ -385,6 +384,7 @@ function flush_values {
 	else
 		print_lanforce_xml
 	fi
+	# FIXME: Where was infostring set?
 	unset infostring
 }
 
@@ -443,7 +443,7 @@ function print_xml {
 				item="$(sed s/%attribute%// <<< "${item}")"
 
 				# validate xml
-				name="$(echo "${item}" | awk -F\; {'print $1'} | \
+				name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
 
 				code=$(awk -F\; {'print $2'} <<< "${item}")
@@ -478,7 +478,7 @@ function print_xml {
 
 
 			### FOOTER TAG
-			elif [ "$(echo ${item} | grep '^%footer%')" ]; then
+			elif [ "$(grep '^%footer%' <<< "${item}" )" ]; then
 				((XML_INDENT--))
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
@@ -487,7 +487,7 @@ function print_xml {
 
 				# FIXME: This is broken. Why?
 				# validate xml
-				local name="$(echo ${item} | awk -F\; {'print $1'} | \
+				local name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
 				xml_tag_stop "${name}" | tee -a "${XMLFILE}"
@@ -510,7 +510,7 @@ function print_lanforce_xml {
 
 		local item="${infostring[$itemnr]}"
 
-		if [ ! "$(echo ${item} | grep '^%')" ]; then
+		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
 			# only print values for which attribute is active
 			# (prevents attributes with no code tag from printing)
@@ -518,7 +518,7 @@ function print_lanforce_xml {
 
 				# the following sed removes all formatting tags
 				# from the value string. it's a tad slow, though.
-				item="$(echo "${item}" | sed 's/\\[a-z]//g;s/^ *//')"
+				item="$(sed 's/\\[a-z]//g;s/^ *//' <<< "${item}")"
 				echo "   $(xml_value "${item}")" | tee -a "${XMLFILE}"
 
 			fi
@@ -531,16 +531,16 @@ function print_lanforce_xml {
 			fi
 
 			### ATTRIBUTE TAG
-			if [ "$(echo ${item} | grep '^%attribute%')" ]; then
+			if [ "$(grep '^%attribute%' <<< "${item}")" ]; then
 
-				local item="$(echo ${item} | sed s/%attribute%//)"
-				local code="$(echo ${item} | awk -F\; {'print $2'})"
+				local item="$(sed s/%attribute%// <<< "${item}")"
+				local code="$(awk -F\; {'print $2'} <<< "${item}")"
 
 				# only print attributes and values with a code
 				if [ "$code" != "" ]; then
 
 					# validate xml
-					local name="$(echo ${item} | awk -F\; {'print $1'} | \
+					local name="$(awk -F\; {'print $1'} <<< "${item}" | \
 						sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
 
 					echo -e "  $(xml_attribute_start ${name} ${code})" | \
@@ -588,9 +588,9 @@ function print_stdout {
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
-		if [ "$(echo ${item} | grep '^%attribute%')" ]; then
-			item="$(echo ${item} | sed s/%attribute%//)"
-			name=$(echo ${item} | awk -F\; {'print $1'})
+		if [ "$(grep '^%attribute%' <<< "${item}")" ]; then
+			item="$(sed s/%attribute%// <<< "${item}")"
+			name=$(awk -F\; {'print $1'} <<< "${item}")
 
 			if [ ${#name} -gt $longest_string ]; then
 				longest_string=${#name}
@@ -609,7 +609,7 @@ function print_stdout {
 		item="${infostring[$itemnr]}"
 
 		# this is a normal value item
-		if [ ! "$(echo ${item} | grep '^%')" ]; then
+		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
 
 			# test if an attribute is open,
@@ -686,16 +686,16 @@ function print_stdout {
 
 
 			# prints header
-			if [ "$(echo ${item} | grep '^%header%')" ]; then
-				local item="$(echo ${item} | sed s/%header%//)"
+			if [ "$(grep '^%header%' <<< "${item}")" ]; then
+				local item="$(sed s/%header%// <<< "${item}")"
 				local value_string="${value_string}${tBOLD}${item}${tSTD}\n";
 
 
 			# prints attribute
-			elif [ "$(echo "${item}" | grep '^%attribute%')" ]; then
+			elif [ "$(grep '^%attribute%' <<< "${item}")" ]; then
 
-				local item="$(echo "${item}" | sed s/%attribute%//)"
-				local name=$(echo "${item}" | awk -F\; {'print $1'})
+				local item="$(sed s/%attribute%// <<< "${item}")"
+				local name=$(awk -F\; {'print $1'} <<< "${item}")
 				local value_string="${value_string}${name}";
 				attribute="open"
 
@@ -778,8 +778,8 @@ function flush_name_value_pair {
 		); do
 
 		 #echo ${value}
-		 value1="$(echo ${value} | awk -F {'print $1'})"
-		 value2="$(echo ${value} | awk -F {'print $2'})"
+		 value1="$(awk -F {'print $1'} <<< "${value}")"
+		 value2="$(awk -F {'print $2'} <<< "${value}")"
 
 
 		 if [ ! "${openTag}" ]; then
