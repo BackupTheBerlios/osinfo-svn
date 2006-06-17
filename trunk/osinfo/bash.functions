@@ -288,7 +288,7 @@ function print_error()	{
 			done
 		fi
 		[ "$extraabortline" ] && errorline="${errorline}\n${extraabortline}"
-		/usr/kde/3.5/bin/kdialog --error  "$errorline" &> /dev/null
+		kdialog --error  "$errorline" &> /dev/null
 	else
 		for i in "$@"; do
 			echo -e "${tcRED}ERROR:${tSTD} $i"
