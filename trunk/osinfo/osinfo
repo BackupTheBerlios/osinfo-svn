@@ -89,27 +89,24 @@ lanforce=0
 usexml=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
-   prefix="/"
+prefix="/"
 
 function PRINT_Help {
+	local MODULE
 	print_line
 	gettext -s "${header}${appname} "$"displays information about the system""${tSTD}"
 	echo
 	gettext -s -e $"Arguments are names of modules to get info from:"
 	echo
-        if [ "$SYSTEM" == "linux" ] ; then
-
-			for MODULE in ${MODULES_LINUX}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        elif [ "$(echo $SYSTEM | grep bsd)" ]; then
-
-			for MODULE in ${MODULES_BSD}; do
-				echo -e "\t\t$MODULE"
-			done
-
-        fi
+	if [ "$SYSTEM" == "linux" ] ; then
+		for MODULE in ${MODULES_LINUX}; do
+			echo -e "\t\t$MODULE"
+		done
+	elif [ "$(echo $SYSTEM | grep bsd)" ]; then
+		for MODULE in ${MODULES_BSD}; do
+			echo -e "\t\t$MODULE"
+		done
+	fi
 	echo
 	gettext -s $"If arguments is \"all\" then list information from all modules."
 	echo
@@ -118,6 +115,7 @@ function PRINT_Help {
 	echo "  $(basename $0) "$"[--usage|--help]"
 	gettext -s "${tBOLD}"$"Options:""${tSTD}"
 	gettext -s "      --xml               "$"Printout in xml format to osinfo.xml"
+	gettext -s "      --lanforce          "$"Makes the output to osinfo.xml according to a special DTD."
 	gettext -s "  -v, --verbose           "$"Show more information"
 	gettext -s "      --kdialog           "$"Show the information using KDialog"
 	gettext -s "                            "$"from KDE. Experimental feature!"
@@ -168,13 +166,12 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				usexml=1
 				shift 1
 				;;
-			# Add something about this in PRINT_Help:
 			'--lanforce')
 				usexml=1
 				lanforce=1
 				shift 1
 				;;
-			# Add something about this in PRINT_Help:
+			# TODO: Add something about this option in PRINT_Help.
 			# TODO: This seems to need --xml too. After all cmd args are passed check for
 			# TODO: "[ $netcat -eq 1 ] && [ $usexml -eq 0 ]; then errormessage" (or something like that).
 			'--nc'|'--netcat')
