@@ -2219,8 +2219,8 @@ Module_env() {
 	module_header "${moduleName}"
 
 	## Write the header for output
-	add_attribute		$"System enviroment variables\n"	\
-						'system_enviroment_variables'
+	add_attribute   $"System enviroment variables\n" \
+	                'system_enviroment_variables'
 	## Process all variables
 	for var in $(env); do
 
