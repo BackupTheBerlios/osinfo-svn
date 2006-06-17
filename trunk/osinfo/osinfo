@@ -427,7 +427,7 @@ function print_xml {
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
-				echo -e "$(xml_attribute_stop)" | tee -a "${XMLFILE}"
+				xml_attribute_stop | tee -a "${XMLFILE}"
 				echo | tee -a "${XMLFILE}"
 				local attribute="closed"
 			fi
@@ -446,8 +446,7 @@ function print_xml {
 
 				code=$(echo "${item}" | awk -F\; {'print $2'})
 
-				echo -e "$(xml_attribute_start "${name}" "${code}")" | \
-					tee -a ${XMLFILE}
+				xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
 				((XML_INDENT++))
 				local attribute="open"
 
@@ -465,13 +464,13 @@ function print_xml {
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
-				item="$(echo ${item} | sed s/%header%//)"
+				item="$(echo ${item} | sed 's/%header%//')"
 
 				# validate xml
-				local name="$(echo ${item} | awk -F\; {'print $1'} | \
+				name="$(echo ${item} | awk -F\; {'print $1'} | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
-				echo -e "$(xml_tag_start "${name}")" | tee -a "${XMLFILE}"
+				xml_tag_start "${name}" | tee -a "${XMLFILE}"
 				((XML_INDENT++))
 				header="open"
 
@@ -482,14 +481,14 @@ function print_xml {
 				for indent in $(seq 1 1 $XML_INDENT); do
 					echo -ne "\t" | tee -a "${XMLFILE}"
 				done
-				item="$(echo ${item} | sed s/%footer%//)"
+				item="$(echo ${item} | sed 's/%footer%//')"
 
 				# FIXME: This is broken. Why?
 				# validate xml
 				local name="$(echo ${item} | awk -F\; {'print $1'} | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
-				echo -e "$(xml_tag_stop "${item}")" | tee -a "${XMLFILE}"
+				xml_tag_stop "${name}" | tee -a "${XMLFILE}"
 				header="closed"
 
 			fi
