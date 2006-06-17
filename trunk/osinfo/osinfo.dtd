@@ -1,0 +1,30 @@
+<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users)*>
+
+
+
+<!ELEMENT devices (attribute+)>
+<!ELEMENT system_memory (attribute+)>
+
+<!ELEMENT users (attribute+)>
+<!ELEMENT applications (attribute+)>
+<!ELEMENT terminal_info (attribute+)>
+
+<!ELEMENT processor (attribute+)>
+<!ELEMENT kernel (attribute+)>
+<!ELEMENT system (attribute+)>
+<!ELEMENT distribution (attribute+)>
+
+
+
+<!ELEMENT dmi_information (bios,system_info,motherboard,chassis)>
+
+<!ELEMENT bios (attribute+)>
+<!ELEMENT system_info (attribute+)>
+<!ELEMENT motherboard (attribute+)>
+<!ELEMENT chassis (attribute+)>
+
+
+
+<!ELEMENT attribute (#PCDATA)>
+<!ATTLIST attribute name CDATA #REQUIRED
+                    code CDATA #IMPLIED>
