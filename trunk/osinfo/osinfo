@@ -76,9 +76,10 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
 if [ "$(echo $SYSTEM | grep bsd)" ]; then
-	Seq="$(type -p gseq)"
+	#Seq="$(type -p gseq)"
+	# TODO: Test if this works.
 	function seq() {
-		$Seq "$@"
+		gseq "$@"
 	}
 fi
 
@@ -409,7 +410,7 @@ function print_xml {
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
-		if [ ! "$(echo ${item} | grep '^%')" ]; then
+		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
 			for indent in $(seq 1 1 $XML_INDENT); do
 				echo -ne "\t" | tee -a "${XMLFILE}"
