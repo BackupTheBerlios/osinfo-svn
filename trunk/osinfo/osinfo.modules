@@ -79,6 +79,16 @@ CheckReq_lshw() {
 	fi
 }
 
+CheckReq_dmidecode() {
+	if [ ! "$(type -p dmidecode)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install dmidecode to collect this information"
+		return 1
+	else
+		return 0
+	fi
+}
+
 CheckReq_root() {
 	if [ ! "$(whoami)" == "root" ]; then
 		add_attribute	"$appname notification"
@@ -819,16 +829,7 @@ Module_dmi() {
 	moduleName="DMI information"
 	module_header "${moduleName}"
 
-	if [ ! "$(type -p dmidecode)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install dmidecode to collect this information"
-
-	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
-
-	else
-
+	if CheckReq_dmidecode && CheckReq_root; then
 		# allocate the temp files
 		dmi_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		dmi_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
@@ -1034,15 +1035,7 @@ Module_oem() {
 	module_header "${moduleName}"
 
 
-	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install lshw to collect this information"
-
-	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
-
-	else
+	if CheckReq_lshw && CheckReq_root; then
 
 		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		lshw -xml > $lshw_tmp
@@ -1260,15 +1253,7 @@ Module_oem_old() {
 	module_header "${moduleName}"
 
 
-	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install LSHW to collect this information"
-
-	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
-
-	else
+	if CheckReq_lshw && CheckReq_root; then
 
 		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		lshw > $lshw_tmp
