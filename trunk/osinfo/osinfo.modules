@@ -70,6 +70,9 @@ MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network
 ################################################################################
 ################################################################################
 
+##
+# Checks for lshw and print a message if it doesn't exist
+# Returns 0 if lshw eixsts and 1 if it is missing.
 CheckReq_lshw() {
 	if [ ! "$(type -p lshw)" ]; then
 		add_attribute	"$appname notification"
@@ -80,6 +83,9 @@ CheckReq_lshw() {
 	fi
 }
 
+##
+# Checks for dmidecode and print a message if it doesn't exist
+# Returns 0 if dmidecode eixsts and 1 if it is missing.
 CheckReq_dmidecode() {
 	if [ ! "$(type -p dmidecode)" ]; then
 		add_attribute	"$appname notification"
@@ -90,6 +96,10 @@ CheckReq_dmidecode() {
 	fi
 }
 
+##
+# Checks if we are run as root and print a message if we are not.
+# Returns 0 if we are root and 1 if we are not.
+# TODO: Any reasons to base this on username and not $EUID?
 CheckReq_root() {
 	if [ ! "$(whoami)" == "root" ]; then
 		add_attribute	"$appname notification"
@@ -101,11 +111,23 @@ CheckReq_root() {
 }
 
 
-# TODO: Remove the temp file after all modules has run.
+##
+# Checks if lshw was already run.
+#  if it wasn't then run lshw and export the filename of the temporary file.
+#  otherwise just return.
 lshw_xml() {
 	if [ -z "$lshw_xml_file" ]; then
 		export lshw_xml_file="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml > $lshw_xml_file
+		lshw -xml > "$lshw_xml_file"
+	fi
+}
+
+##
+# Cleans up some temporary files.
+#  Currently this is only $lshw_xml_file
+cleanup_temp_files() {
+	if [ "$lshw_xml_file" ]; then
+		rm "$lshw_xml_file"
 	fi
 }
 
@@ -116,20 +138,18 @@ lshw_xml() {
 ################################################################################
 
 
-
-
-Module_hdd() {
+#######################
 # HARD DISK DRIVES
-
+#
 # this module collects data of the hard disk drives attached to the system.
 # some information is unaccesible unless the partitions are mounted.
-
+#
 # S-ATA drives now display everything as nicely as IDE drives,
 # due to support in recent smartmontools (version 5.36).
-
+#
 # used tools:
 # fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc
-
+Module_hdd() {
 	moduleName="Disk information"
 	module_header "${moduleName}"
 
@@ -280,7 +300,7 @@ Module_hdd() {
 	flush_values
 }
 
-scan_hdd_smart() {
+
 #########################
 # S.M.A.R.T. scanning
 #
@@ -292,7 +312,7 @@ scan_hdd_smart() {
 # for ide drives this is not a problem.
 #
 # this function takes one parameter, the driver to use. default is ata.
-
+scan_hdd_smart() {
 	local dev_type smart_info
 	if [ "$1" ]; then
 		dev_type="$1"
@@ -334,7 +354,7 @@ scan_hdd_smart() {
 
 }
 
-scan_hdd_partitions() {
+
 ####################
 # PARTITIONS
 #
@@ -344,7 +364,7 @@ scan_hdd_partitions() {
 # TODO: an array that stores data of how much is allocated for each FS
 # [partition ID=83] [size on hda1] [size on hda4]
 # [partition ID=7] [size on hda2] [size on hdb1]
-
+scan_hdd_partitions() {
 	DISKFREE=0
 	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
@@ -429,14 +449,14 @@ scan_hdd_partitions() {
 	done
 }
 
-scan_hdd_ide() {
+
 #################
 # IDE drives
 #
 # this function collects information of IDE drives in the system.
 #
 # udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
-
+scan_hdd_ide() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
@@ -449,7 +469,6 @@ scan_hdd_ide() {
 	# hdparm output is not read into a temp file, as
 	# it is unlikely to be used, and that would unnecessarily
 	# slow down this function.
-
 
 
 	########
@@ -538,7 +557,7 @@ scan_hdd_ide() {
 
 }
 
-scan_hdd_sg() {
+
 #################
 # SATA/SCSI/USB drives (sg driver)
 #
@@ -568,7 +587,7 @@ scan_hdd_sg() {
 # (released April 2006). this function is written in June 2006,
 # and for that the version of smartctl is checked before trying
 # to access SATA drives.
-
+scan_hdd_sg() {
 	# detect the available data sources
 	if [ "$(type -p udevinfo)" ]; then
 		# allocate a temp file
@@ -587,7 +606,6 @@ scan_hdd_sg() {
 	# hdparm output is not read into a temp file, as
 	# it is unlikely to be used, and that would unnecessarily
 	# slow down this function.
-
 
 
 	if [ "${udev_info}" ]; then
@@ -666,7 +684,6 @@ scan_hdd_sg() {
 	add_values		"$vendor$model"
 
 
-
 	###############
 	# Serial number
 	add_attribute	'Serial number'
@@ -701,17 +718,18 @@ scan_hdd_sg() {
 
 }
 
-scan_hdd_md() {
+
 #######################
 # SOFTWARE RAID ARRAYS
-
+scan_hdd_md() {
 	value_header	"todo"
 
 }
 
-Module_memory() {
-# MEMORY
 
+#######################
+# MEMORY
+#
 # this module tells complete information of the memory
 # installed on the system.
 #
@@ -722,7 +740,7 @@ Module_memory() {
 #
 #
 # requires root access
-
+Module_memory() {
 	moduleName="System memory"
 	module_header "${moduleName}"
 
@@ -730,16 +748,14 @@ Module_memory() {
 
 
 		# TODO: add support for memory type/speed detection thru lshw
-		# FIXME: if there's an open lshw.tmp, then it should be used
 		lshw_xml
-		local lshw_tmp="$lshw_xml_file"
 
 		# for some odd reason meminfo or free don't give a proper value
 
 		meminfo="/proc/meminfo"
 
 		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
-		totalram="$(grep 'id="memory' -A 20 ${lshw_tmp} | grep size | \
+		totalram="$(grep 'id="memory' -A 20 ${lshw_xml_file} | grep size | \
 			grep -Eo '[0-9]+')"
 
 		totalram="$(echo "$totalram/1024/1024" | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
@@ -755,30 +771,29 @@ Module_memory() {
 }
 
 
-Module_cdrom() {
 # INFORMATION OF CD/DVD DEVICES
+Module_cdrom() {
+
 
 	moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
 	if CheckReq_lshw && CheckReq_root; then
-		# TODO: use a common lshw temp file
 		lshw_xml
-		local lshw_tmp="$lshw_xml_file"
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 
 		# this gets the line number of the wanted node from lshw '$this'
 		# and the line number of the next node '$next'
 		# then what's between those lines is printed to another tmp file
-		this="$(grep -n "node id=\"cdrom" $lshw_tmp | \
+		this="$(grep -n "node id=\"cdrom" $lshw_xml_file | \
 			awk -F: {'print $1'})"
-		next="$(grep -n 'node id' $lshw_tmp | grep -A 1 cdrom | \
+		next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
 			awk -F: {'print $1'} | sed -n "2{p;q}")"
 		((this++)) # this prevents the 'node' lines from printing
 		((next--))
 
 		# use a temp file to store cdrom information
-		sed -n "$this,$next{p;}" ${lshw_tmp} > ${cdrom_tmp}
+		sed -n "$this,$next{p;}" ${lshw_xml_file} > ${cdrom_tmp}
 
 		#cat $cdrom_tmp
 		#exit 0
@@ -820,9 +835,9 @@ Module_cdrom() {
 }
 
 
-Module_dmi() {
+#######################
 # DMI / OEM INFORMATION
-
+#
 # this module works as a replacement for module_oem. this is faster,
 # as it doesn't scan hardware. look below for excerpt from 'man dmidecode':
 #
@@ -834,7 +849,7 @@ Module_dmi() {
 # information without having to probe for the actual hardware.  While this
 # is a good point in terms of report speed and safeness,  this also makes
 # the presented information possibly unreliable.
-
+Module_dmi() {
 	moduleName="DMI information"
 	module_header "${moduleName}"
 
@@ -1023,10 +1038,10 @@ Module_dmi() {
 }
 
 
-Module_oem() {
+#######################
 # OEM INFORMATION (rewrite)
 # this module is deprecated in favor of module_dmi
-
+#
 # this module collects information from lshw, a somewhat rare package, which
 # tells a lot of interesting information of the system hardware.  it also seems
 # to be the only way to get the serial number of a branded computer, thus 'oem
@@ -1039,6 +1054,8 @@ Module_oem() {
 # some PowerPC machines (PowerMac G4 is known to work).  It currently supports
 # DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
 # CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
+Module_oem() {
+
 
 	local moduleName="OEM information"
 	module_header "${moduleName}"
@@ -1046,7 +1063,6 @@ Module_oem() {
 
 	if CheckReq_lshw && CheckReq_root; then
 		lshw_xml
-		local lshw_tmp="$lshw_xml_file"
 
 		# the interesting entries:
 		# $hostname
@@ -1063,9 +1079,9 @@ Module_oem() {
 
 		for myNODE in $NODES; do
 
-			this="$(grep -n "node id=\""${myNODE}"\"" $lshw_tmp | \
+			this="$(grep -n "node id=\""${myNODE}"\"" $lshw_xml_file | \
 				awk -F: {'print $1'})"
-			next="$(grep -n 'node id' $lshw_tmp | grep -A 1 ${myNODE} | \
+			next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 ${myNODE} | \
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'node' lines from printing
 			((next--))
@@ -1074,7 +1090,7 @@ Module_oem() {
 			IFS="
 "; # a literal newline, do not indent!
 
-			for info in $(sed -n "$this,$next{p;}" $lshw_tmp); do
+			for info in $(sed -n "$this,$next{p;}" $lshw_xml_file); do
 
 				# the data is avaiable here, printed line by line.
 				# usually the fields are:
@@ -1250,7 +1266,6 @@ Module_oem() {
 
 }
 
-
 Module_oem_old() {
 # OEM INFORMATION
 # deprecated, as this module has been rewritten. left here for reference.
@@ -1296,9 +1311,9 @@ Module_oem_old() {
 		# all information of the node parsed to a single string.
 		for node in $(seq 0 1 $(
 
-				grep '\*' ${lshw_tmp} | wc -l
+				grep '\*' ${lshw_xml_file} | wc -l
 
-				#cat ${lshw_tmp} | sed 's/^ *//' | tr ' ' '_' | \
+				#cat ${lshw_xml_file} | sed 's/^ *//' | tr ' ' '_' | \
 				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
 
 				));	do
@@ -1308,7 +1323,7 @@ Module_oem_old() {
 		 #echo ${#hardware[@]}
 		 oem_str[$node]="$(
 
-			sed 's/^ *//g' ${lshw_tmp} | tr ' ' '_' | \
+			sed 's/^ *//g' ${lshw_xml_file} | tr ' ' '_' | \
 			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
 
 		)"
@@ -1381,46 +1396,48 @@ Module_oem_old() {
 }
 
 
-Module_system() {
 # GENERAL INFORMATION OF THE SYSTEM
+Module_system() {
 
 	moduleName="System"
 	module_header "${moduleName}"
 
-	add_attribute	"Operating system"			"os"
-	add_values		"$distro_id $(uname -s) $distro_release"
+	add_attribute "Operating system"			"os"
+	add_values    "$distro_id $(uname -s) $distro_release"
 
-	add_attribute	"Operating system kernel"	"os_build"
-	add_values		"$(uname -sr)"
+	add_attribute "Operating system kernel"	"os_build"
+	add_values    "$(uname -sr)"
 
-	add_attribute	"Network node hostname"	"host_name"
-	add_values		"$(hostname)"
+	add_attribute "Network node hostname"	"host_name"
+	add_values    "$(hostname)"
 
-	add_attribute	"Machine hardware name"	"system_type"
-	add_values		"$(uname -m)"
+	add_attribute "Machine hardware name"	"system_type"
+	add_values    "$(uname -m)"
 
-	add_attribute	"System locale"
-	add_values		"$(echo $LC_ALL)"
+	add_attribute "System locale"
+	add_values    "$(echo $LC_ALL)"
 
-	add_attribute	"System uptime"			"uptime"
-	add_values		"$(uptime | awk -F, {'print $1'} | \
-					grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
+	add_attribute "System uptime"			"uptime"
+	add_values    "$(uptime | awk -F, {'print $1'} | \
+	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
 	module_footer
 	flush_values
 }
 
-Module_kernel() {
+
 # OPERATING SYSTEM KERNEL
+Module_kernel() {
+	local kernel_makefile
 
 	moduleName="Kernel"
 	module_header "${moduleName}"
 
 	add_attribute "Operating system"
-	add_values		"$(uname -o)"
+	add_values    "$(uname -o)"
 
 	add_attribute "Kernel release"
-	add_values		"$(uname -r)"
+	add_values    "$(uname -r)"
 
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
@@ -1429,8 +1446,8 @@ Module_kernel() {
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
 	if [ -e "${kernel_makefile}" ]; then
-		add_attribute	"Kernel name"
-		add_values		"$(head ${kernel_makefile} | grep NAME | \
+		add_attribute "Kernel name"
+		add_values    "$(head ${kernel_makefile} | grep NAME | \
 						head -n 1 | awk -F= {'print $2'})"
 	fi
 
@@ -1438,20 +1455,23 @@ Module_kernel() {
 	flush_values
 }
 
-Module_processor() {
+
 # INFORMATION OF THE CPU
+Module_processor() {
 
 	moduleName="Processor"
 	module_header "${moduleName}"
 
+	local cpunr
+
 	# AnMaster: Why this line? Would it ever be anything else?
 	local cpuinfo="/proc/cpuinfo"
-	cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | awk {'print $NF'})"
+	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | awk {'print $NF'})"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
 	if [ ! "$cpu_count" ]; then
-		local cpu_count=1
+		cpu_count=1
 	fi
 
 	add_attribute	"Count"			"processor_count"
@@ -1490,8 +1510,9 @@ Module_processor() {
 	flush_values
 }
 
-Module_terminal() {
+
 # INFORMATION OF THE TERMINAL IN USE
+Module_terminal() {
 
 	moduleName="Terminal info"
 	module_header "${moduleName}"
@@ -1513,14 +1534,15 @@ Module_terminal() {
 }
 
 
-Module_printers() {
+#######################
 # PRINTERS AVAILABLE TO THE SYSTEM
-
 # uses only lpstat (cups) and hasn't been tested on multi-printer
 # environments
-
+Module_printers() {
 	moduleName="Printers"
 	module_header "${moduleName}"
+
+	local lp_nr
 
 	# first of all, check if lpstat is available
 	if [ "$(type -p lpstat)" ]; then
@@ -1544,17 +1566,15 @@ Module_printers() {
 
 }
 
-
-Module_users() {
+#######################
 # USERS
-
+#
 # reports the current user, the user's X11 session manager + shell
 # the last logged user, and other users that have logged in 
 # (that last can see).
-
+Module_users() {
 	moduleName="Users"
 	module_header "${moduleName}"
-
 
 	add_attribute	'Current user'			"current_user"
 	add_values		"$(whoami)"
@@ -1600,7 +1620,7 @@ Module_users() {
 
 		if [ ${#user} -ge 8 ]; then
 			# parse special chars to meta-chars
-			user="$(echo $user | sed 's/[[:punct:]]/\\&/g' )"
+			user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
 			add_values	"$(grep -Eoa "$user[a-zA-Z+]*" ${wtmp_file} | uniq)\n"
 		else
 			add_values	"$user\n"
@@ -1612,13 +1632,12 @@ Module_users() {
 }
 
 
-Module_services() {
 # INFORMATION OF SYSTEM SERVICES
-
+Module_services() {
 # Gentoo: rc-status
 
 # Fedora: /sbin/service --status-all
-#		  chkconfig --list
+#         chkconfig --list
 
 # Ubuntu:
 
@@ -1633,22 +1652,21 @@ Module_services() {
 }
 
 
-
-Module_network() {
+#######################
 # NETWORK
-
+#
 # this module detects the network settings of the computer.
 #
 # there are at least two methods to pull in information; ifconfig and iproute2.
 # ifconfig is used; there are at least two versions of ifconfig being used, and
 # all tested Linuxes have used the same, whereas FreeBSD v6 had different
 # output. the script should work on both versions.
-
+#
 # some changes have been made after testing with FreeBSD, so compitibility
 # may not be 100% anymore.
-
+#
 # wireless support is in the works
-
+Module_network() {
 	moduleName="Network information"
 	module_header	"${moduleName}"
 
@@ -1800,17 +1818,17 @@ distro_lsb_release() {
 	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
 }
 
-Module_distro() {
+#######################
 # DISTRIBUTION
-
+#
 # this module will try to guess which Linux distrobution is installed.
 # the default tool to use is the lsb-release (Linux Standard Base
 # version reporting utility)
-
+#
 # a secondary id source are the unique files in /etc/, and as a last
 # resort the /etc/issue file. this makes it possible to identify
 # a distro which resides in a chroot environment, or from a livecd.
-
+Module_distro() {
 	moduleName="Distribution"
 	module_header "${moduleName}"
 
@@ -1998,12 +2016,13 @@ Module_distro() {
 	flush_values
 }
 
-Module_applications() {
-# APPLICATIONS
 
+#######################
+# APPLICATIONS
+#
 # version information of standard *nix, dev, and dependency packages.
 # probably should take an additional switch like --X, --server, etc.
-
+Module_applications() {
 	moduleName="Applications"
 	module_header "${moduleName}"
 
@@ -2100,7 +2119,7 @@ Module_applications() {
 }
 
 
-Module_devices() {
+#######################
 # hardware devices of the system
 #
 # this function parses the physical devices in the computer from lspci.
@@ -2109,7 +2128,7 @@ Module_devices() {
 # the output verbosity can be increased to include devices in the
 # DO_NOT_OUTPUT string to include standard motherboard controllers
 # which are suppressed in the normal level of verbosity.
-
+Module_devices() {
 	moduleName="Devices"
 	module_header "${moduleName}"
 
@@ -2203,12 +2222,13 @@ Module_devices() {
 	flush_values
 }
 
-Module_env() {
+
+#######################
 # ENVIRONMENT VARIABLES
 #
 # xml only
 # FIXME: Shouldn't be xml only...
-
+Module_env() {
 	moduleName="Environment variables"
 	module_header "${moduleName}"
 

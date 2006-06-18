@@ -978,8 +978,8 @@ elif [ "$usekdialog" -ne 1 ]; then
 	print_line
 fi
 
-
-
+# Remove temporary files:
+cleanup_temp_files
 
 ############################################
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
