@@ -1674,7 +1674,7 @@ Module_network() {
 	# what are these needed for?
 
 	# allocate the temp file
-	nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
+	local nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
 
 
 	################################
@@ -1718,36 +1718,36 @@ Module_network() {
 		add_values    "$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
 		                 grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
-		add_attribute	'NIS domain'
-		add_values		"$(hostname -y 2> /dev/null)"
+		add_attribute 'NIS domain'
+		add_values    "$(hostname -y 2> /dev/null)"
 		# hostname produces stderr if no network is available
 
-		add_attribute	'DNS domain'	'domain'
-		add_values		"$(hostname -d 2> /dev/null)"
+		add_attribute  'DNS domain'	'domain'
+		add_values    "$(hostname -d 2> /dev/null)"
 
-		add_attribute	'FQDN'		"fully_qualified_domain_name"
-		add_values		"$(hostname -f 2> /dev/null)"
+		add_attribute 'FQDN'		"fully_qualified_domain_name"
+		add_values    "$(hostname -f 2> /dev/null)"
 
-		add_attribute	'Gateway'	"default_gateway"
-		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
+		add_attribute 'Gateway'	"default_gateway"
+		add_values    "$(route -n | awk '/^0.0.0.0/{print $2}')"
 
-		add_attribute	'Broadcast'
-		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
-						grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-						grep -Eo '[0-9\.]+' )"
+		add_attribute 'Broadcast'
+		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+		                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+		                 grep -Eo '[0-9\.]+' )"
 
-		add_attribute	'Netmask'	"subnet_mask"
-		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
-						grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
-						grep -Eo '[0-9\.fx]+' )"
+		add_attribute 'Netmask'	"subnet_mask"
+		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+		                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
+		                 grep -Eo '[0-9\.fx]+' )"
 
-		add_attribute	'RX bytes'
-		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
-						grep -i 'RX bytes' | awk -F: {'print $2'})"
+		add_attribute 'RX bytes'
+		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+		                 grep -i 'RX bytes' | awk -F: {'print $2'})"
 
-		add_attribute	'TX bytes'
-		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
-						grep -i 'TX bytes' | awk -F: {'print $2'})"
+		add_attribute 'TX bytes'
+		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+		                 grep -i 'TX bytes' | awk -F: {'print $2'})"
 
 		value_footer
 
@@ -1762,43 +1762,44 @@ Module_network() {
 
 	# FIXME: This odd debug usage sucks... Better add a --debug if you realy need this.
 	# note: for debugging, these variables are set here
-	iw_src="debug/wlan-iwconfig-on"
-	WLAN_DEVICES="eth1"
-	ap_src="debug/wlan-stations"
+	if [ "$isdebug" == 1 ]; then
+		iw_src="debug/wlan-iwconfig-on"
+		WLAN_DEVICES="eth1"
+		ap_src="debug/wlan-stations"
 
-	if [ "$(type -p iwconfig)" ]; then
+		if [ "$(type -p iwconfig)" ]; then
 
-		iw_src="iwconfig"
+			iw_src="iwconfig"
 
-		# not tested yet
-		if [ "$SYSTEM" == "linux" ] ; then
+			# not tested yet
+			if [ "$SYSTEM" == "linux" ] ; then
 
-		# FIXME: on my system w/ wireless-tools,
-		# but no wlan network (no working drivers)
-		#  iwconfig -a
-		#  -a        No such device
+			# FIXME: on my system w/ wireless-tools,
+			# but no wlan network (no working drivers)
+			#  iwconfig -a
+			#  -a        No such device
 
-			ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
-			grep -Ev '(^ )|(^--)|LOOPBACK' | \
-			awk  {'print $1'})"
+				ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
+				grep -Ev '(^ )|(^--)|LOOPBACK' | \
+				awk  {'print $1'})"
+			fi
+
 		fi
 
+		# info from access points (AP)
+		if [ "$(type -p iwlist)" ]; then
+			# tweak this a bit
+			ap_src="iwlist $WLAN_DEVICES scan"
+		fi
+
+		value_header  'wlan'
+
+		add_attribute "associated ESSID"
+		add_values    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
+		                 awk -F: {'print $2'})"
+
+		value_footer
 	fi
-	
-	# info from access points (AP)
-	if [ "$(type -p iwlist)" ]; then
-		# tweak this a bit
-		ap_src="iwlist $WLAN_DEVICES scan"
-	fi
-
-	value_header	'wlan'
-
-	add_attribute	"associated ESSID"
-	add_values		"$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
-					awk -F: {'print $2'})"
-
-	value_footer
-
 
 
 
