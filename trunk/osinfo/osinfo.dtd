@@ -1,4 +1,4 @@
-<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives)*>
+<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives| network_information)*>
 
 
 
@@ -14,6 +14,14 @@
 <!ELEMENT kernel (attribute+)>
 <!ELEMENT system (attribute+)>
 <!ELEMENT distribution (attribute+)>
+
+
+
+<!ELEMENT network_information (interface*)>
+
+<!ELEMENT interface (attribute+)>
+<!ATTLIST interface name CDATA #REQUIRED>
+
 
 
 
