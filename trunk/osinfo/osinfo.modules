@@ -276,18 +276,18 @@ function scan_hdd_smart() {
 
 	smartctl -a -d $dev_type ${drvdev} > $smart_info
 	add_attribute	'S.M.A.R.T.'
-	add_values		"$(cat ${smart_info} | grep 'SMART support' | \
+	add_values		"$(grep 'SMART support' ${smart_info} | \
 					head -n 1 | awk -F': ' {'print $2'})"
 
 	add_attribute	'Lifetime'
-	add_values		"$(cat $smart_info | grep -i power_on | awk {'print $NF'})"
+	add_values		"$(grep -i power_on $smart_info | awk {'print $NF'})"
 
 	add_attribute	'Temperature (C)'
-	add_values		"$(cat $smart_info | grep -i temperature_celsius | \
+	add_values		"$(grep -i temperature_celsius $smart_info | \
 					awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
 
 	add_attribute	'Health Status'
-	add_values		"$(cat $smart_info | grep -Ei '(health)+' | awk {'print $NF'})"
+	add_values		"$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
 
 	# cleanup
 	rm -f "$smart_info"
@@ -461,7 +461,7 @@ function scan_hdd_ide() {
 
 	if  [ "${udev_info}" ]; then
 
-		add_values		"$(cat ${udev_info} | grep SERIAL | awk -F= {'print $NF'})"
+		add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
 	elif [ "$(type -p hdparm)" ]; then
 
@@ -552,7 +552,7 @@ function scan_hdd_sg() {
 
 	if [ "${udev_info}" ]; then
 
-		local bus="$(cat ${udev_info} | grep -i ID_BUS | awk -F= {'print $NF'})"
+		local bus="$(grep -i ID_BUS ${udev_info} | awk -F= {'print $NF'})"
 		if [ "$(echo $bus | grep usb)" ]; then
 			# USB drive detected
 
@@ -591,7 +591,7 @@ function scan_hdd_sg() {
 
 	elif [ "${udev_info}" ]; then
 
-		local vendor="$(cat ${udev_info} | grep -i vendor | \
+		local vendor="$(grep -i vendor ${udev_info}  | \
 						awk -F= {'print $NF'}) "
 
 	elif [ -e "${proc_info}" ]; then
@@ -606,7 +606,7 @@ function scan_hdd_sg() {
 	# Model
 	if  [ "${udev_info}" ]; then
 
-		local model="$(cat ${udev_info} | grep -i model | \
+		local model="$(grep -i model ${udev_info} | \
 						awk -F= {'print $NF'})"
 
 	elif [ -e "${proc_info}" ]; then
@@ -633,7 +633,7 @@ function scan_hdd_sg() {
 
 	if  [ "${udev_info}" ]; then
 
-		add_values		"$(cat ${udev_info} | grep SERIAL | awk -F= {'print $NF'})"
+		add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
 	elif [ "$(type -p hdparm)" ]; then
 
@@ -707,10 +707,10 @@ Module_memory() {
 		meminfo="/proc/meminfo"
 
 		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
-		totalram="$(cat ${lshw_tmp} | grep 'id=\"memory' -A 20 | grep capacity | \
+		totalram="$(grep 'id="memory' -A 20 ${lshw_tmp} | grep size | \
 			grep -Eo '[0-9]+')"
 
-		totalram="$(echo $totalram/1024/1024 | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
+		totalram="$(echo "$totalram/1024/1024" | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
 
 		add_attribute	'RAM total'	'ram'
 		add_values		"$totalram MB"
@@ -1450,7 +1450,7 @@ Module_processor() {
 
 	# AnMaster: Why this line? Would it ever be anything else?
 	local cpuinfo="/proc/cpuinfo"
-	cpu_count="$(cat ${cpuinfo}  | grep 'cpu cores' | head -n 1 | awk {'print $NF'})"
+	cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | awk {'print $NF'})"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
@@ -1468,23 +1468,23 @@ Module_processor() {
 		fi
 
 		add_attribute	"Vendor"		"processor_vendor"
-		add_values		"$(cat ${cpuinfo} | grep 'vendor' | sed -n "$cpunr{p;q}" | \
+		add_values		"$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 
 		add_attribute	"Model"			"processor_model"
-		add_values		"$(cat ${cpuinfo}  | grep 'model name' | \
+		add_values		"$(grep 'model name' ${cpuinfo} | \
 						sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
 
 		add_attribute	"Frequency"		"processor_speed"
-		add_values		"$(cat ${cpuinfo} | grep 'cpu MHz' | sed -n "$cpunr{p;q}" | \
+		add_values		"$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2" MHz"'})"
 
 		add_attribute	"Cache"
-		add_values		"$(cat ${cpuinfo} | grep 'cache' | sed -n "$cpunr{p;q}" | \
+		add_values		"$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 
 		add_attribute	"Stepping"
-		add_values		"$(cat ${cpuinfo} | grep 'stepping' | sed -n "$cpunr{p;q}" | \
+		add_values		"$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 						awk -F': ' {'print $2'})"
 
 
