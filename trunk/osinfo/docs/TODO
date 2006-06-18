@@ -1,3 +1,26 @@
+FEATURES for 0.3:
+
+--version|-V
+fix user/root problem
+hard drive xml
+su_modules - run only su modules
+std_modules - non-su modules
+system_modules - a subset of modules
+mod_hdd
+daemon mode - see daemontools
+
+
+BUGS:
+-----
+
+
+
+
+GENERAL NOTES:
+--------
+
+* to check if the xml output is valid against the DTD run: xmllint --valid osinfo.xml
+
 * XML
 To handle XML we need a generic output interface.
 Source a file with with the interface. There should be one file for xml output, one for kdialog output and one for normal.
@@ -22,3 +45,5 @@ Source a file with with the interface. There should be one file for xml output, 
 	open tag. everything else is parsed to stdout or to xml. $indent variable is used to ensure proper format.
 * use if sentence for smartctl with IDE drives
 * parse all partition data into one line for each partition???
+
+
