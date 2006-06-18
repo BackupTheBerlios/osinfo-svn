@@ -14,8 +14,8 @@ else {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>osinfo</title>
-	<link rel="stylesheet" type="text/css" href="./res/css/print.css" media="print" />
-	<link rel="stylesheet" type="text/css" href="./res/css/screen.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="../res/css/print.css" media="print" />
+	<link rel="stylesheet" type="text/css" href="../res/css/screen.css" media="screen" />
 </head>
 
 <body>

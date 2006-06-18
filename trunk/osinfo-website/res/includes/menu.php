@@ -12,7 +12,7 @@ $islast       If true this is the last menuitem.
 Returns:
 Nothing
 */
-function print_menuitem($prefix, $title, &$relativeroot, $url, &$me, $islast) {
+function print_menuitem($prefix, $title, $relativeroot, $url, &$me, $islast) {
 	// Is this a link to the file this item will be used in?
 	if ($me == $url) {
 		// If true: Print $title bold.
@@ -67,8 +67,4 @@ function print_menu($relativeroot, $me, $title) {
 		</div>
 	<?php
 }
-?>
-
-
-
 ?>
