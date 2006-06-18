@@ -860,15 +860,15 @@ Module_dmi() {
 
 		for myHANDLE in $HANDLES; do
 
-			this="$(cat ${dmi_info} | grep -n "Handle ${myHANDLE}" | \
+			this="$(grep -n "Handle ${myHANDLE}" ${dmi_info} | \
 				awk -F: {'print $1'})"
-			next="$(cat ${dmi_info} | grep -n Handle | grep -A 1 ${myHANDLE} | \
+			next="$(grep -n Handle ${dmi_info} | grep -A 1 ${myHANDLE} | \
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'handle' lines from printing
 			((next--))
 
 			# use a temp file to store handle information
-			cat ${dmi_info} | sed -n "$this,$next{p;}" > ${dmi_tmp}
+			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
 
 
 			# here the data is processed
@@ -1062,9 +1062,9 @@ Module_oem() {
 
 		for myNODE in $NODES; do
 
-			this="$(cat $lshw_tmp | grep -n "node id=\""${myNODE}"\"" | \
+			this="$(grep -n "node id=\""${myNODE}"\"" $lshw_tmp | \
 				awk -F: {'print $1'})"
-			next="$(cat $lshw_tmp | grep -n 'node id' | grep -A 1 ${myNODE} | \
+			next="$(grep -n 'node id' $lshw_tmp | grep -A 1 ${myNODE} | \
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'node' lines from printing
 			((next--))
@@ -1073,7 +1073,7 @@ Module_oem() {
 			IFS="
 "; # a literal newline, do not indent!
 
-			for info in $(cat $lshw_tmp  | sed -n "$this,$next{p;}"); do
+			for info in $(sed -n "$this,$next{p;}" $lshw_tmp); do
 
 				# the data is avaiable here, printed line by line.
 				# usually the fields are:
@@ -1088,12 +1088,12 @@ Module_oem() {
 
 				# parse standard <foo> tags
 				# TODO: add support for capabilities tags
-				local tag="$(echo ${info} | grep -o '<[a-z]*>' | \
+				local tag="$(grep -o '<[a-z]*>' <<< ${info} | \
 							sed 's/<\([^>]*\)>/\1/')"
 							# matched everything between '<' and '>'
 
 				[ "$tag" ] && \
-				local value="$(echo ${info} | grep ${tag} | \
+				local value="$(grep ${tag} <<< ${info} | \
 							awk -F'<|>' {'print $3'})"
 
 				# here the data is processed
@@ -1692,15 +1692,13 @@ Module_network() {
 		# TODO: IP type (static or dynamic)
 		#add_attribute	'IP type'	"ip_type"
 
-		add_attribute	'IPv4'		"ip_address"
-		add_values		"$(cat ${nw_info} | \
-						grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-						grep -Eo '[0-9\.]+' )"
+		add_attribute 'IPv4'		"ip_address"
+		add_values    "$(grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${nw_info} | \
+		                 grep -Eo '[0-9\.]+' )"
 
-		add_attribute	'IPv6'
-		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
-						grep -i inet6 | \
-						grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
+		add_attribute 'IPv6'
+		add_values    "$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
+		                 grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
 
 		add_attribute	'NIS domain'
 		add_values		"$(hostname -y 2> /dev/null)"
@@ -1716,21 +1714,21 @@ Module_network() {
 		add_values		"$(route -n | awk '/^0.0.0.0/{print $2}')"
 
 		add_attribute	'Broadcast'
-		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
 						grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
 						grep -Eo '[0-9\.]+' )"
 
 		add_attribute	'Netmask'	"subnet_mask"
-		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
 						grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
 						grep -Eo '[0-9\.fx]+' )"
 
 		add_attribute	'RX bytes'
-		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
 						grep -i 'RX bytes' | awk -F: {'print $2'})"
 
 		add_attribute	'TX bytes'
-		add_values		"$(cat ${nw_info} | sed "s/  /\n/g" | \
+		add_values		"$(sed "s/  /\n/g" ${nw_info} | \
 						grep -i 'TX bytes' | awk -F: {'print $2'})"
 
 		value_footer
@@ -1778,7 +1776,7 @@ Module_network() {
 	value_header	'wlan'
 
 	add_attribute	"associated ESSID"
-	add_values		"$(cat "${iw_src}" | grep -Eo 'ESSID[:"A-Za-z/ ]*' | \
+	add_values		"$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
 					awk -F: {'print $2'})"
 
 	value_footer

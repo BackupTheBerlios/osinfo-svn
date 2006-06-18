@@ -878,7 +878,7 @@ module_header() {
 	elif [ $usexml -eq 1 ]; then
 
 		# make valid xml tag
-		xml_tag="$(echo ${1} | sed 's/ /_/g' | tr 'A-Z' 'a-z')"
+		xml_tag="$(sed 's/ /_/g' <<< "${1}" | tr 'A-Z' 'a-z')"
 		value_header "${xml_tag}"
 
 	else
@@ -907,17 +907,14 @@ for modul in $cmdsnames; do
 
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
-
 			cmdsnames="$MODULES_LINUX"
 			break;
 		# TODO: please check if this works on bsd and old bash
 		elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
-
 			cmdsnames="$MODULES_BSD"
 			break;
 		fi
 	elif [ $modul = 'lanforce' ]; then
-
 		lanforce=1
 		usexml=1
 		cmdsnames="$MODULES_LANFORCE"
@@ -926,8 +923,7 @@ for modul in $cmdsnames; do
 
 	validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
 	# why is validate_arg called?
-	# AnMaster: To check that the module exits. But there is no "$MODULES" any longer.
-	# AnMaster: That resulted in the TODO below.
+	# AnMaster: To check that the module exits at all.
 done
 
 if [ "$prefix" != '/' ] ; then
