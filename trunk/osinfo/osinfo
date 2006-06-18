@@ -723,7 +723,8 @@ function print_stdout {
 name_value_pair_list=""
 k_title=""
 
-function add_name_value_pair {
+add_name_value_pair() {
+	error_deprecated add_name_value_pair
 	name_value_pair_list="${name_value_pair_list}$(echo $1$2)\n"
 	# uses a funny character '' that later will be parsed.
 	# not very sophisticated. :/
@@ -746,7 +747,8 @@ function add_name_value_pair {
 # Uses colours
 # DEPRECATED
 # Uses the "column" tool
-function flush_name_value_pair {
+flush_name_value_pair() {
+	error_deprecated flush_name_value_pair
 	if [ "$usexml" == 1 ]; then
 
 

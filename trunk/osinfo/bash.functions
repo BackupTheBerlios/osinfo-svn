@@ -163,10 +163,22 @@ function print_found_notfound() {
 #   2 string   Exit status
 # Returns:
 #   Does not return
-function do_abort() {
+do_abort() {
 	print_negative_message "${tcRED}"$"Error:""${tSTD} ${1}"
 	print_negative_message $"Aborting"
 	exit $2
+}
+
+# Aborts program with message about deprecated function
+# Parameters:
+#   1 string   Name of function
+#   2 string   Name of file
+# Returns:
+#   Does not return
+error_deprecated() {
+	print_negative_message "${tcRED}Error:${tSTD} Function $1 in $2 is is dperecated. Please make sure not to use it."
+	print_negative_message "${tcRED}Error:${tSTD} As a end user you should never see this."
+	do_abort "Please contact the programmers about this (provide this exact error message to them)." 20
 }
 
 # Shows message about missing argument(s) and exits with status 1.
@@ -175,7 +187,7 @@ function do_abort() {
 #   2 integer  Optional: Number of arguments Std=1
 # Returns:
 #   Does not return
-function missing_arg() {
+missing_arg() {
 	if [ $2 ]; then
 		do_abort $"${1} requires ${2} arguments" 1
 	else
@@ -190,7 +202,7 @@ function missing_arg() {
 #   3 integer  Optional: Number of arguments Std=1
 # Returns:
 #   Does not return
-function wrong_arg() {
+wrong_arg() {
 	if [ $3 ]; then
 		do_abort $"${2} are invalid arguments to ${1}" 1
 	else
@@ -205,7 +217,7 @@ function wrong_arg() {
 # Returns:
 #   0 if valid
 #   1 else
-validate_arg () {
+validate_arg() {
 	local my_arg
 	for my_arg in $2; do
 		[ "$my_arg" = "$1" ] && return 0
@@ -219,7 +231,7 @@ validate_arg () {
 # Returns:
 #   0 if all arguments are integers/floating point values.
 #   1 if one or several of the arguments are strings.
-function AreDecimalNumbers() {
+AreDecimalNumbers() {
 	local argument
 	for argument in "$@"; do
 		expr "$argument" '+' '1' &>/dev/null
