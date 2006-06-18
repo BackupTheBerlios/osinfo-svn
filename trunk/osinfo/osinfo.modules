@@ -63,6 +63,31 @@ MODULES_BROKEN='printers services users cdrom memory'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 
+################################################################################
+################################################################################
+## General helper functions                                                   ##
+################################################################################
+################################################################################
+
+CheckReq_lshw() {
+	if [ ! "$(type -p lshw)" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please install lshw to collect this information"
+		return 1
+	else
+		return 0
+	fi
+}
+
+CheckReq_root() {
+	if [ ! "$(whoami)" == "root" ]; then
+		add_attribute	"$appname notification"
+		add_values		"Please run $appname as super-user to collect this information"
+		return 1
+	else
+		return 0
+	fi
+}
 
 
 ################################################################################
@@ -115,11 +140,7 @@ Module_hdd() {
 
 	# this module depends heavily on root access, so prevent other users
 	# of running this module
-	if [ "$(whoami)" != "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Run $appname as super-user to collect this information"
-	else
-
+	if CheckReq_root; then
 		# declare variables
 		local totalsize=0 totalfree=0
 
@@ -686,15 +707,7 @@ Module_memory() {
 	moduleName="System memory"
 	module_header "${moduleName}"
 
-	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install LSHW to collect this information"
-
-	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
-
-	else
+	if CheckReq_lshw && CheckReq_root; then
 
 
 		# TODO: add support for memory type/speed detection thru lshw
@@ -729,16 +742,7 @@ Module_cdrom() {
 	moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
-	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install lshw to collect this information"
-
-	elif [ ! "$(whoami)" == "root" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
-
-	else
-
+	if CheckReq_lshw && CheckReq_root; then
 		# TODO: use a common lshw temp file
 		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
@@ -747,15 +751,15 @@ Module_cdrom() {
 		# this gets the line number of the wanted node from lshw '$this'
 		# and the line number of the next node '$next'
 		# then what's between those lines is printed to another tmp file
-		this="$(cat $lshw_tmp | grep -n "node id=\"cdrom" | \
+		this="$(grep -n "node id=\"cdrom" $lshw_tmp | \
 			awk -F: {'print $1'})"
-		next="$(cat $lshw_tmp | grep -n 'node id' | grep -A 1 cdrom | \
+		next="$(grep -n 'node id' $lshw_tmp | grep -A 1 cdrom | \
 			awk -F: {'print $1'} | sed -n "2{p;q}")"
 		((this++)) # this prevents the 'node' lines from printing
 		((next--))
 
 		# use a temp file to store cdrom information
-		cat ${lshw_tmp} | sed -n "$this,$next{p;}" > ${cdrom_tmp}
+		sed -n "$this,$next{p;}" ${lshw_tmp} > ${cdrom_tmp}
 
 		#cat $cdrom_tmp
 		#exit 0
@@ -1565,7 +1569,7 @@ Module_users() {
 
 
 	add_attribute	'Real name'				"real_name"
-	add_values		"$(cat /etc/passwd | grep $(whoami) | awk -F: {'print $5'})"
+	add_values		"$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
 
 
 	add_attribute	"User's X11 session"	"users_window_manager"
@@ -1596,8 +1600,8 @@ Module_users() {
 	# from the source file. a dirty hack...
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
-					grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
-					# removes users 'reboot' and 'wtmp'
+	               grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
+	               # removes users 'reboot' and 'wtmp'
 	local user
 	local wtmp_file="/var/log/wtmp"
 	for user in $users; do
