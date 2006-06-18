@@ -41,13 +41,6 @@
 # FreeBSD cannot handle this color formatting!
 
 
-
-# Got this idea from C
-# Prevents things from messing up
-if [ "$use_bash_functions" != 'use_bash_functions' ]; then
-use_bash_functions='use_bash_functions'
-
-
 # Set the variable in $2 to the terminal cap $1
 # WARNING: Use this function ONLY for string caps!
 # Parameters:
@@ -213,6 +206,7 @@ function wrong_arg() {
 #   0 if valid
 #   1 else
 validate_arg () {
+	local my_arg
 	for my_arg in $2; do
 		[ "$my_arg" = "$1" ] && return 0
 	done
@@ -226,6 +220,7 @@ validate_arg () {
 #   0 if all arguments are integers/floating point values.
 #   1 if one or several of the arguments are strings.
 function AreDecimalNumbers() {
+	local argument
 	for argument in "$@"; do
 		expr "$argument" '+' '1' &>/dev/null
 		[ $? -eq 3 ] && return 1
@@ -240,6 +235,7 @@ function AreDecimalNumbers() {
 #   0 if all arguments are strings.
 #   1 if one or several of the arguments are integers/floating point values.
 function AreStrings() {
+	local argument
 	for argument in "$@"; do
 		expr "$argument" '+' '1' &>/dev/null
 		[ $? -eq 0 ] && return 1
@@ -296,5 +292,4 @@ function print_error()	{
 		[ "$extraabortline" ] && echo -e "${tcRED}${extraabortline}${tSTD}"
 	fi
 }
-fi
 
