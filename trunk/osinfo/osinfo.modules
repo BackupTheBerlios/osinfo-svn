@@ -99,6 +99,13 @@ CheckReq_root() {
 	fi
 }
 
+# TODO: Remove the temp file after all modules has run.
+lshw_xml() {
+	if [ -z "$lshw_xml_file" ]; then
+		export lshw_xml_file="$(mktemp /tmp/osinfo.XXXXXX)"
+		lshw -xml > $lshw_xml_file
+	fi
+}
 
 ################################################################################
 ################################################################################
@@ -722,8 +729,8 @@ Module_memory() {
 
 		# TODO: add support for memory type/speed detection thru lshw
 		# FIXME: if there's an open lshw.tmp, then it should be used
-		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml > $lshw_tmp
+		lshw_xml
+		local lshw_tmp="$lshw_xml_file"
 
 		# for some odd reason meminfo or free don't give a proper value
 
@@ -754,9 +761,9 @@ Module_cdrom() {
 
 	if CheckReq_lshw && CheckReq_root; then
 		# TODO: use a common lshw temp file
-		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		lshw_xml
+		local lshw_tmp="$lshw_xml_file"
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml  > $lshw_tmp
 
 		# this gets the line number of the wanted node from lshw '$this'
 		# and the line number of the next node '$next'
@@ -1036,10 +1043,8 @@ Module_oem() {
 
 
 	if CheckReq_lshw && CheckReq_root; then
-
-		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml > $lshw_tmp
-
+		lshw_xml
+		local lshw_tmp="$lshw_xml_file"
 
 		# the interesting entries:
 		# $hostname
@@ -1367,7 +1372,7 @@ Module_oem_old() {
 	fi
 
 	# cleanup
-	rm $lshw_tmp -f
+	#rm $lshw_tmp -f
 
 	module_footer
 	flush_values

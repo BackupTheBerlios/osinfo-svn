@@ -926,7 +926,8 @@ for modul in $cmdsnames; do
 
 	# validate_arg "$modul" "$MODULES" || wrong_module "$modul"
 	# why is validate_arg called?
-
+	# AnMaster: To check that the module exits. But there is no "$MODULES" any longer.
+	# AnMaster: That resulted in the TODO below.
 done
 
 if [ "$prefix" != '/' ] ; then
@@ -946,6 +947,8 @@ if [ "$usexml" == 1 ]; then
 fi
 
 # TODO: Check that there are any modules given here and if not run PRINT_Help.
+# TODO: Also check that there are no invalid module names given.
+# TODO: And that no module is given more than once.
 for modul in $cmdsnames; do
 
 	case $modul in
@@ -962,7 +965,6 @@ for modul in $cmdsnames; do
 		printers|\
 		oem|\
 		dmi|\
-		oem_rewrite|\
 		memory|\
 		cdrom|\
 		kernel|\
