@@ -580,8 +580,8 @@ function print_stdout {
 	# finally $value_string is printed at once.
 
 
-	# FIXME: get tabsize dynamically
-	TABSIZE=8
+	# Get tabsize dynamically
+	TABSIZE=$(tput it)
 
 	# this routine gets the longest header string in $infostring
 	longest_string=0
