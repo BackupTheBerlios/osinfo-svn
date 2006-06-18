@@ -1390,19 +1390,19 @@ Module_system() {
 	add_attribute	"Operating system"			"os"
 	add_values		"$distro_id $(uname -s) $distro_release"
 
-	add_attribute	$"Operating system kernel"	"os_build"
+	add_attribute	"Operating system kernel"	"os_build"
 	add_values		"$(uname -sr)"
 
-	add_attribute	$"Network node hostname"	"host_name"
+	add_attribute	"Network node hostname"	"host_name"
 	add_values		"$(hostname)"
 
-	add_attribute	$"Machine hardware name"	"system_type"
+	add_attribute	"Machine hardware name"	"system_type"
 	add_values		"$(uname -m)"
 
-	add_attribute	$"System locale"
+	add_attribute	"System locale"
 	add_values		"$(echo $LC_ALL)"
 
-	add_attribute	$"System uptime"			"uptime"
+	add_attribute	"System uptime"			"uptime"
 	add_values		"$(uptime | awk -F, {'print $1'} | \
 					grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
@@ -1416,10 +1416,10 @@ Module_kernel() {
 	moduleName="Kernel"
 	module_header "${moduleName}"
 
-	add_attribute	$"Operating system"
+	add_attribute "Operating system"
 	add_values		"$(uname -o)"
 
-	add_attribute	 $"Kernel release"
+	add_attribute "Kernel release"
 	add_values		"$(uname -r)"
 
 	# Unique kernel name
@@ -1429,7 +1429,7 @@ Module_kernel() {
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
 	if [ -e "${kernel_makefile}" ]; then
-		add_attribute	$"Kernel name"
+		add_attribute	"Kernel name"
 		add_values		"$(head ${kernel_makefile} | grep NAME | \
 						head -n 1 | awk -F= {'print $2'})"
 	fi
@@ -2032,7 +2032,7 @@ Module_applications() {
 	fi
 
 	## Write the header for output
-	add_attribute $"Applications\n" 'software'
+	add_attribute "Applications\n" 'software'
 
 	local missing_ERRMSG="if you want to be able to use all modules of osinfo"
 	## Process all applications
@@ -2214,7 +2214,7 @@ Module_env() {
 	module_header "${moduleName}"
 
 	## Write the header for output
-	add_attribute   $"System enviroment variables\n" \
+	add_attribute   'System enviroment variables\n' \
 	                'system_enviroment_variables'
 	## Process all variables
 	for var in $(env); do

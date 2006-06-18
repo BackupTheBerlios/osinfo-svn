@@ -136,8 +136,8 @@ print_negative_message() {
 # Returns:
 #   Does not return
 do_abort() {
-	print_negative_message "${tcRED}"$"Error:""${tSTD} ${1}"
-	print_negative_message $"Aborting"
+	print_negative_message "${tcRED}Error:${tSTD} ${1}"
+	print_negative_message "Aborting"
 	exit $2
 }
 
@@ -174,9 +174,9 @@ error_deprecated() {
 #   Does not return
 missing_arg() {
 	if [ $2 ]; then
-		do_abort $"${1} requires ${2} arguments" 1
+		do_abort "${1} requires ${2} arguments" 1
 	else
-		do_abort $"${1} requires an argument" 1
+		do_abort "${1} requires an argument" 1
 	fi
 }
 
@@ -189,9 +189,9 @@ missing_arg() {
 #   Does not return
 wrong_arg() {
 	if [ $3 ]; then
-		do_abort $"${2} are invalid arguments to ${1}" 1
+		do_abort "${2} are invalid arguments to ${1}" 1
 	else
-		do_abort $"${2} is an invalid argument to ${1}" 1
+		do_abort "${2} is an invalid argument to ${1}" 1
 	fi
 }
 
