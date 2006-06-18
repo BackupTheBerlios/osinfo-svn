@@ -171,7 +171,7 @@ do_abort() {
 
 # Prints a callstack.
 print_traceback() {
-	print_negative_message "Oops! A traceback."
+	print_negative_message "Traceback:"
 	local i=0 j=0
 	while [ "${FUNCNAME[$i]}" != "main" ]; do
 		let j=i+1
