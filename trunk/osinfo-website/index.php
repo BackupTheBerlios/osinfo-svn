@@ -14,9 +14,9 @@ else {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<title>osinfo</title>
-	<link rel="stylesheet" type="text/css" href="./res/css/print.css" media="print" />
-	<link rel="stylesheet" type="text/css" href="./res/css/screen.css" media="screen" />
+	<?php
+		print_header(".", "");
+	?>
 </head>
 
 <body>

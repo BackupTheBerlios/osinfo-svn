@@ -16,4 +16,10 @@ function print_footer() {
 	<?php
 }
 
+function print_header($relativeroot, $title) {
+	echo "<title>osinfo".$title."</title>";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"".$relativeroot."/res/css/print.css\" media=\"print\" />";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"".$relativeroot."/res/css/screen.css\" media=\"screen\" />";
+}
+
 ?>
