@@ -100,6 +100,7 @@ CheckReq_root() {
 	fi
 }
 
+
 # TODO: Remove the temp file after all modules has run.
 lshw_xml() {
 	if [ -z "$lshw_xml_file" ]; then
