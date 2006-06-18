@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO8859-1" ?>
+<!DOCTYPE osinfo SYSTEM "osinfo.dtd">
+<osinfo>
+	<network_information>
+		<interface name="eth0">
+			<attribute name="mac" code="mac_address">
+				<value>00:13:8F:5D:61:61</value>
+			</attribute>
+	
+			<attribute name="ipv4" code="ip_address">
+				<value>192.168.0.1</value>
+			</attribute>
+	
+			<attribute name="ipv6" code="">
+				<value>fe80::213:8fff:fe5d:6161</value>
+			</attribute>
+	
+			<attribute name="nis_domain" code="">
+				<value>(none)</value>
+			</attribute>
+	
+			<attribute name="dns_domain" code="domain">
+			</attribute>
+	
+			<attribute name="fqdn" code="fully_qualified_domain_name">
+			</attribute>
+	
+			<attribute name="gateway" code="default_gateway">
+				<value>192.168.0.254</value>
+			</attribute>
+	
+			<attribute name="broadcast" code="">
+				<value>192.168.0.255</value>
+			</attribute>
+	
+			<attribute name="netmask" code="subnet_mask">
+				<value>255.255.255.0</value>
+			</attribute>
+	
+			<attribute name="rx_bytes" code="">
+				<value>977197815 (931.9 Mb)</value>
+			</attribute>
+	
+			<attribute name="tx_bytes" code="">
+				<value>123397720 (117.6 Mb)</value>
+			</attribute>
+	
+		</interface>
+		<interface name="eth1">
+			<attribute name="mac" code="mac_address">
+			</attribute>
+	
+			<attribute name="ipv4" code="ip_address">
+			</attribute>
+	
+			<attribute name="ipv6" code="">
+			</attribute>
+	
+			<attribute name="nis_domain" code="">
+				<value>(none)</value>
+			</attribute>
+	
+			<attribute name="dns_domain" code="domain">
+			</attribute>
+	
+			<attribute name="fqdn" code="fully_qualified_domain_name">
+			</attribute>
+	
+			<attribute name="gateway" code="default_gateway">
+				<value>192.168.0.254</value>
+			</attribute>
+	
+			<attribute name="broadcast" code="">
+			</attribute>
+	
+			<attribute name="netmask" code="subnet_mask">
+			</attribute>
+	
+			<attribute name="rx_bytes" code="">
+				<value>0 (0.0 b)</value>
+			</attribute>
+	
+			<attribute name="tx_bytes" code="">
+				<value>0 (0.0 b)</value>
+			</attribute>
+	
+		</interface>
+		<interface name="wlan">
+			<attribute name="associated_essid" code="">
+				<value>Openlab</value>
+			</attribute>
+		</interface>
+	</network_information>
+</osinfo>
