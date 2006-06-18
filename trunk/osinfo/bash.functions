@@ -169,6 +169,18 @@ do_abort() {
 	exit $2
 }
 
+# Prints a callstack.
+print_traceback() {
+	print_negative_message "Oops! A traceback."
+	local i=0 j=0
+	while [ "${FUNCNAME[$i]}" != "main" ]; do
+		let j=i+1
+		echo "${FUNCNAME[$i]} ${BASH_SOURCE[$i]} -- ${BASH_LINENO[$i]} ${BASH_SOURCE[$j]}"
+		let i++
+	done | column -t | sed 's/--/-- Called from line/'
+}
+
+
 # Aborts program with message about deprecated function
 # Parameters:
 #   1 string   Name of function
@@ -177,6 +189,7 @@ do_abort() {
 #   Does not return
 error_deprecated() {
 	print_negative_message "${tcRED}Error:${tSTD} Function $1 in $2 is is dperecated. Please make sure not to use it."
+	print_traceback
 	print_negative_message "${tcRED}Error:${tSTD} As a end user you should never see this."
 	do_abort "Please contact the programmers about this (provide this exact error message to them)." 20
 }
