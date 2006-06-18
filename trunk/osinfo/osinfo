@@ -406,7 +406,7 @@ function print_xml {
 	#  4 if the item begins with %header% => print header ; next
 	#  5 if the item begins with %footer% => print footer ; next
 
-	local itemnr item name code
+	local itemnr item name code attribute
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
@@ -432,7 +432,7 @@ function print_xml {
 				done
 				xml_attribute_stop | tee -a "${XMLFILE}"
 				echo | tee -a "${XMLFILE}"
-				local attribute="closed"
+				attribute="closed"
 			fi
 
 			### NEW ATTRIBUTE TAG

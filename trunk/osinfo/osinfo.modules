@@ -1296,7 +1296,7 @@ Module_oem_old() {
 		# all information of the node parsed to a single string.
 		for node in $(seq 0 1 $(
 
-				cat ${lshw_tmp} | grep '\*' | wc -l
+				grep '\*' ${lshw_tmp} | wc -l
 
 				#cat ${lshw_tmp} | sed 's/^ *//' | tr ' ' '_' | \
 				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
@@ -1308,7 +1308,7 @@ Module_oem_old() {
 		 #echo ${#hardware[@]}
 		 oem_str[$node]="$(
 
-			cat ${lshw_tmp} | sed 's/^ *//g' | tr ' ' '_' | \
+			sed 's/^ *//g' ${lshw_tmp} | tr ' ' '_' | \
 			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
 
 		)"
@@ -1687,8 +1687,7 @@ Module_network() {
 		value_header	$interface_name
 
 		add_attribute	'MAC'		"mac_address"
-		add_values		"$(cat ${nw_info} | \
-						grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}')"
+		add_values		"$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
 
 		# TODO: IP type (static or dynamic)
 		#add_attribute	'IP type'	"ip_type"
