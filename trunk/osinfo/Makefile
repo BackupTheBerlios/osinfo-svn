@@ -2,6 +2,7 @@ helpers=bash.functions osinfo.modules xml.functions lanforce.functions
 mainapp=osinfo
 subdirs=docs
 appname=osinfo
+our_dtd=osinfo.dtd
 
 all:
 	@echo "Provide a command please"
@@ -19,6 +20,7 @@ dist:
 	mkdir -p dist/$(appname)
 	cp $(helpers) dist/$(appname)
 	cp $(mainapp) dist/$(appname)
+	cp $(our_dtd) dist/$(appname)
 	for dir in $(subdirs); do \
 		mkdir dist/$(appname)/$$dir ; \
 		cp $$dir/* dist/$(appname)/$$dir ; \
@@ -46,4 +48,7 @@ clean:
 	-rm -f *~ *.tmp
 	-rm -f docs/*~ docs/*.tmp
 
-.PHONY : all clean distclean
+checkxml:
+	xmllint --valid osinfo.xml
+
+.PHONY : all clean distclean checkxml
