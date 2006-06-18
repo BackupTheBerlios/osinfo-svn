@@ -65,6 +65,7 @@ XMLFILE="osinfo.xml"
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
+# NOTE: AnMaster: If you realy use bash it *should* understand ||.
 #	echo "This script has not been tested on other operating systems than Linux and FreeBSD."
 #	echo
 #	exit 0;
