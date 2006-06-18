@@ -3,14 +3,14 @@
 /*
 Prints a menuitem.
 Parameters:
-$prefix       Text to put before the item
-$title        The text of the link
-$relativeroot A string like "../.." that is the relative path to the root level.
-$url          The path to the link target from the root level.
-$me           The path to the file this menuitem will be used in.
-$islast       If true this is the last menuitem.
+ $prefix       Text to put before the item
+ $title        The text of the link
+ $relativeroot A string like "../.." that is the relative path to the root level.
+ $url          The path to the link target from the root level.
+ $me           The path to the file this menuitem will be used in.
+ $islast       If true this is the last menuitem.
 Returns:
-Nothing
+ Nothing
 */
 function print_menuitem($prefix, $title, $relativeroot, $url, &$me, $islast) {
 	// Is this a link to the file this item will be used in?
@@ -33,8 +33,9 @@ Prints the title and the menu.
 Parameters:
  $relativeroot A string like "../.." that is the relative path to the root level.
  $me           The path to the file this menu will be used in.
+ $title        The title of the page
 Returns:
-  Nothing
+ Nothing
 */
 function print_menu($relativeroot, $me, $title) {
 	?>

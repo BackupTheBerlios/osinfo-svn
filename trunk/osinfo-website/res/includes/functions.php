@@ -1,5 +1,12 @@
 <?php
 
+/*
+	Prints the footer
+	Parameters:
+		None
+	Returns:
+		Nothing
+*/
 function print_footer() {
 	?>
 		<hr class="hide" />
@@ -16,6 +23,14 @@ function print_footer() {
 	<?php
 }
 
+/*
+	Prints most of the <head>
+	Parameters:
+		$relativeroot A string like "../.." that is the relative path to the root level.
+		$title        String to add after "osinfo" in the <title> of page.
+	Returns:
+		Nothing
+*/
 function print_header($relativeroot, $title) {
 	echo "<title>osinfo".$title."</title>";
 	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"".$relativeroot."/res/css/print.css\" media=\"print\" />";
