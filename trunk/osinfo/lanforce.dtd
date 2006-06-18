@@ -1,0 +1,31 @@
+<!ELEMENT entityset (entity+)>
+<!ELEMENT entity (template, attribute*, note*)>
+<!ATTLIST entity id         CDATA #IMPLIED
+                 name       CDATA #REQUIRED
+                 ip         CDATA #IMPLIED>
+<!ELEMENT template EMPTY>
+<!ATTLIST template id       CDATA #IMPLIED
+                    name    CDATA #IMPLIED
+                    code    CDATA #REQUIRED>
+<!ELEMENT attribute (header?,(value|reference|embeddedreference|externalreference)*,footer?)>
+<!ATTLIST attribute id      CDATA #IMPLIED
+                     name   CDATA #IMPLIED
+                     code   CDATA #REQUIRED>
+<!ELEMENT header (#PCDATA)>
+<!ELEMENT value (#PCDATA)>
+<!ELEMENT reference EMPTY>
+<!ATTLIST reference id      CDATA #IMPLIED
+                     type   CDATA #IMPLIED>
+<!ELEMENT embeddedreference EMPTY>
+<!ATTLIST embeddedreference id         CDATA #IMPLIED
+                            type       CDATA #IMPLIED>
+<!ELEMENT externalreference EMPTY>
+<!ATTLIST externalreference name       CDATA #IMPLIED
+                            location   CDATA #IMPLIED>
+<!ELEMENT footer (#PCDATA)>
+<!ELEMENT note (name,text)>
+<!ATTLIST note   creator               CDATA #REQUIRED
+                 timestamp             CDATA #IMPLIED
+                 follow-references     CDATA #REQUIRED>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT text (#PCDATA)>
