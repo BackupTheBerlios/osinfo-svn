@@ -1,6 +1,4 @@
 <?php
-require_once("menu.php");
-
 
 function print_footer() {
 	?>
