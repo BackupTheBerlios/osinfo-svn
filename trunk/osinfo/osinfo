@@ -724,7 +724,7 @@ name_value_pair_list=""
 k_title=""
 
 add_name_value_pair() {
-	error_deprecated add_name_value_pair
+	error_deprecated add_name_value_pair osinfo
 	name_value_pair_list="${name_value_pair_list}$(echo $1$2)\n"
 	# uses a funny character '' that later will be parsed.
 	# not very sophisticated. :/
@@ -748,7 +748,7 @@ add_name_value_pair() {
 # DEPRECATED
 # Uses the "column" tool
 flush_name_value_pair() {
-	error_deprecated flush_name_value_pair
+	error_deprecated flush_name_value_pair osinfo
 	if [ "$usexml" == 1 ]; then
 
 
