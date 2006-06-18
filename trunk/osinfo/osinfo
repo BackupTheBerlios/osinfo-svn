@@ -50,7 +50,7 @@ major_version=0
 minor_version=2
 micro_version=6
 patch_version=0
-dev_status=dev
+dev_status=alpha
 
 # TODO: Import xml/kdialog/normal output libs here!
 source bash.functions
