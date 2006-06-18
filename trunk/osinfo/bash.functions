@@ -125,36 +125,8 @@ print_line() {
 }
 
 # TODO: document
-function print_negative_message() {
+print_negative_message() {
 	echo "${tcRED}${1}${tSTD}"
-}
-
-# Parmeters:
-#   NONE
-function print_nothing_found() {
-	print_negative_message $"  Nothing found"
-}
-
-# Parmeters:
-#   1 integer  0=Found
-#              1=Not found
-#   2 string   Prefix if found
-#   3 string   Prefix if not found
-#   4 string   Bold   bit of name of thing found or not found
-#   5 string   Normal bit of name of thing found or not found
-# Example:
-#   print_found_notfound $fmanstatus "A " "No " "man" " page"
-#     If $fmanstatus is 0 the result will be:
-#       "A man page was found!"                     # "found!" will be green
-#     If $fmanstatus is 1 the result will be:
-#       "No man page was found!"                    # "found!" will be red
-#     In both cases "man" will be bold
-function print_found_notfound() {
-	if [ $1 -eq 0 ]; then
-		echo "${tcGREEN}${2}${tSTD}${tBOLD}${4}${tSTD}${tcGREEN}$5 "$"was found!""${tSTD}"
-	elif [ $1 -ne 0 ]; then
-		echo "${tcRED}${3}${tSTD}${tBOLD}${4}${tSTD}${tcRED}$5 "$"was found!""${tSTD}"
-	fi
 }
 
 # Aborts program with message
@@ -259,7 +231,7 @@ AreDecimalNumbers() {
 # Returns:
 #   0 if all arguments are strings.
 #   1 if one or several of the arguments are integers/floating point values.
-function AreStrings() {
+AreStrings() {
 	local argument
 	for argument in "$@"; do
 		expr "$argument" '+' '1' &>/dev/null
@@ -268,26 +240,13 @@ function AreStrings() {
 	return 0
 }
 
-# Shows a identifier and a value.
-# Parmeters:
-#   1 string   Name
-#   2 string   Value
-#   3 integer  Column to print the = at
-function print_name_value_pair {
-	if [ "$3" ]; then
-		echo "${tBOLD}${1}${tSTD}$(tput hpa $(($3 + 1)))= $2"
-	else
-		echo "${tBOLD}${1}${tSTD}$(tput hpa 20)= $2"
-	fi
-}
-
 # Prints a error message.
 # Parmeters:
 #   1       integer  1 = use extra abort line.
 #   2       string     Optional extra abort line.
 #   2 or 3  integer  1 = use kdialog
 #   *       string   error messages
-function print_error()	{
+print_error()	{
 	local extraabortline=""
 	if [ "$1" == "1" ]; then
 		extraabortline="$2"
