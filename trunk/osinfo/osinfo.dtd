@@ -1,4 +1,4 @@
-<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives| network_information)*>
+<!ELEMENT osinfo (distribution|system|kernel|processor|applications|terminal_info|dmi_information|system_memory|devices|users|cd_dvd_drives|network_information)*>
 
 
 
