@@ -1796,7 +1796,7 @@ Module_network() {
 ##
 # Gets data from lsb_release
 # Parameters:
-#  $1  string   what value to get.
+#  1  string   what value to get.
 distro_lsb_release() {
 	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
 }

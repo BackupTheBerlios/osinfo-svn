@@ -291,7 +291,7 @@ function value_footer() {
 	#	fi
 	#done
 
-	found=""
+	local found="" position item
 	for position in $(seq ${#infostring[@]} -1 0); do
 		item="$(echo ${infostring[$position]})"
 		# first collect %footer%s into $found array
@@ -352,8 +352,8 @@ function add_values {
 	#done
 
 	# IFS need to be changed because the values are separated by newline
-	IFS_bak="$IFS" ; 	IFS="
-" # a literal newline, do not indent
+	local IFS_bak="$IFS" value
+	IFS=$'\n'
 	for value in $@; do
 		infostring[${#infostring[@]}]="$value"
 	done
