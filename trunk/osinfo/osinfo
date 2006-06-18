@@ -24,7 +24,7 @@
 #################################################################################
 # list of (known) dependencies:
 #
-# bash 2.02
+# bash 2.02 or later
 # GNU grep with support for extended regular expressions
 # awk, sed, seq, tr, bc
 # netcat (for sending the xml output over tcp)
