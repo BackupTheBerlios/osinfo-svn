@@ -1961,7 +1961,8 @@ Module_distro() {
 				distro_release="$(grep -F 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
 				local  SlackwareBase="$(grep -F 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 			'Gentoo')
-				distro_release="$(ls -ld /etc/make.profile --color=no | grep -Eo '[0-9]{4}\.[0-9]')";;
+				# AnMaster: Not sure if readlink is POSIX but it exists on Gentoo and we allready know this is Gentoo.
+				distro_release="$(readlink /etc/make.profile | grep -Eo '[0-9]{4}\.[0-9]')";;
 			'misc')
 				# FIXME: AnMaster: . is a wildcard meaning any single char. Isn't grep -F what you want?
 				distro_release="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
