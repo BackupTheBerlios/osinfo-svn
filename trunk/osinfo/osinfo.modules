@@ -271,7 +271,7 @@ Module_hdd() {
 	flush_values
 }
 
-function scan_hdd_smart() {
+scan_hdd_smart() {
 #########################
 # S.M.A.R.T. scanning
 #
@@ -325,7 +325,7 @@ function scan_hdd_smart() {
 
 }
 
-function scan_hdd_partitions() {
+scan_hdd_partitions() {
 ####################
 # PARTITIONS
 #
@@ -420,7 +420,7 @@ function scan_hdd_partitions() {
 	done
 }
 
-function scan_hdd_ide() {
+scan_hdd_ide() {
 #################
 # IDE drives
 #
@@ -529,7 +529,7 @@ function scan_hdd_ide() {
 
 }
 
-function scan_hdd_sg() {
+scan_hdd_sg() {
 #################
 # SATA/SCSI/USB drives (sg driver)
 #
@@ -692,7 +692,7 @@ function scan_hdd_sg() {
 
 }
 
-function scan_hdd_md() {
+scan_hdd_md() {
 #######################
 # SOFTWARE RAID ARRAYS
 
