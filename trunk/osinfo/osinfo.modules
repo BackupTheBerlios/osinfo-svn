@@ -1655,7 +1655,7 @@ Module_users() {
 
 
 	add_attribute	"User's shell"
-	add_values		"$(echo $SHELL)"
+	add_values		"$SHELL"
 
 
 	add_attribute	'Last logged in user'	"last_logged_user"
@@ -1764,8 +1764,8 @@ Module_network() {
 
 		value_header	$interface_name
 
-		add_attribute	'MAC'		"mac_address"
-		add_values		"$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
+		add_attribute 'MAC'		"mac_address"
+		add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
 
 		# TODO: IP type (static or dynamic)
 		#add_attribute	'IP type'	"ip_type"
@@ -2190,8 +2190,8 @@ Module_applications() {
 Module_devices() {
 	moduleName="Devices"
 	module_header "${moduleName}"
-	local DEVICE DEV_ARRAY
-	DEV_ARRAY=1;
+	local DEVICE
+	local DEV_ARRAY=1;
 	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 
 		devices[$DEV_ARRAY]="$(
@@ -2219,7 +2219,7 @@ Module_devices() {
 	for DEV_ARRAY in $(seq 1 1 ${#devices[@]}); do
 		#if [ ! "$(echo ${devices[$DEV_ARRAY]} | awk {'print $1'} | \
 		#	grep -i $DO_NOT_OUTPUT)" ]; then
-		if [ ! "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$DEV_ARRAY]})" ]; then
+		if [ -z "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$DEV_ARRAY]})" ]; then
 
 
 			# make an exception for display and ethernet adapters
@@ -2242,7 +2242,7 @@ Module_devices() {
 			# to output. I can't debug that right now.
 
 			local description="$(awk  '{ print $1 }' <<< ${devices[$DEV_ARRAY]} | \
-								tr '_' ' ' | sed 's/^.//;s/^ *//')"
+			                     tr '_' ' ' | sed 's/^.//;s/^ *//')"
 			local device="$(awk  '{ print $2" "$3 }' <<< ${devices[$DEV_ARRAY]} | \
 								tr '_' ' ')"
 
@@ -2259,8 +2259,8 @@ Module_devices() {
 
 			else
 
-				add_attribute	"$description"
-				add_values		"$device"
+				add_attribute "$description"
+				add_values    "$device"
 
 			fi
 
