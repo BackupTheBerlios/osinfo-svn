@@ -1536,6 +1536,9 @@ Module_terminal() {
 
 #######################
 # PRINTERS AVAILABLE TO THE SYSTEM
+
+# EXPERIMENTAL!
+
 # uses only lpstat (cups) and hasn't been tested on multi-printer
 # environments
 Module_printers() {
@@ -1632,14 +1635,19 @@ Module_users() {
 }
 
 
-# INFORMATION OF SYSTEM SERVICES
+###########################
+# SYSTEM SERVICES (daemons)
+
+# EXPERIMENTAL!
 Module_services() {
-# Gentoo: rc-status
 
-# Fedora: /sbin/service --status-all
-#         chkconfig --list
 
-# Ubuntu:
+	# Gentoo: rc-status
+
+	# Fedora: /sbin/service --status-all
+	#         chkconfig --list
+
+	# Ubuntu:
 
 	moduleName="Services"
 	module_header "${moduleName}"
@@ -1647,8 +1655,6 @@ Module_services() {
 
 	module_footer
 	flush_values
-
-
 }
 
 
@@ -1665,7 +1671,7 @@ Module_services() {
 # some changes have been made after testing with FreeBSD, so compitibility
 # may not be 100% anymore.
 #
-# wireless support is in the works
+# WIRELESS SUPPORT IS EXPERIMENTAL
 Module_network() {
 	moduleName="Network information"
 	module_header	"${moduleName}"
@@ -1833,11 +1839,9 @@ Module_distro() {
 	moduleName="Distribution"
 	module_header "${moduleName}"
 
-	# TODO
-	# the extracted information is stored into these variables,
-	# defined by lsb_release and at the end of the function printed.
-	# distro_id distro_release 
+	# distro_id, distro_release are used elsewhere, no not "localize" these
 	local distro_codename distro_description
+
 
 	# locate and echo the root directory.
 	# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
@@ -1846,16 +1850,16 @@ Module_distro() {
 		local root_dir="$prefix"
 	add_attribute		'Root dir'
 	add_values			"$root_dir"
-
 	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
+
 
 	# look for lsb-release if real root is used.
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 
 		distro_id="$(distro_lsb_release 'distributor')"
-		distro_release="$(distro_lsb_release 'distributor')"
+		distro_release="$(distro_lsb_release 'release')"
 		distro_codename="$(distro_lsb_release 'codename')"
-		distro_description="$(distro_lsb_release 'codename')"
+		distro_description="$(distro_lsb_release 'description')"
 
 	else
 

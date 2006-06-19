@@ -19,24 +19,28 @@
 #  SlackWare
 #
 # and on FreeBSD 6.0
-# on x86 and amd64 architectures with various hardware configurations,
+# on x86 and amd64 architectures (desktop and laptop) with various hardware 
+# configurations, ...
+# 
 #
 #################################################################################
 # list of (known) dependencies:
 #
 # bash 2.02 or later
 # GNU grep with support for extended regular expressions
-# awk, sed, seq, tr, bc
+# awk, sed, seq, tr, bc, uniq, sort
 # netcat (for sending the xml output over tcp)
 #
 # per module: (incomplete)
 # ----------
-# users:   uniq, sort, last
+# users:   last, file:/var/log/wtmp
 # dmi:     dmidecode
 # oem:     lshw
-# hdd:     fdisk, df, udev, smartmontools (opt), hdparm (opt)
+# memory:  lshw
+# cdrom:   lshw
+# hdd:     fdisk, df, udev, smartmontools (optional), hdparm (optional)
 # devices: lspci
-# network: standard linux networking tools (hostname, ifconfig, route)
+# network: net-tools (hostname, ifconfig, route)
 #          wireless-tools (iwconfig, iwlist) - optional
 #
 #################################################################################
@@ -49,7 +53,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=7
-patch_version=0
+patch_version=1
 dev_status=alpha
 
 # TODO: Import xml/kdialog/normal output libs here!
