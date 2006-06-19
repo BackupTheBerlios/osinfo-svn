@@ -145,6 +145,7 @@ function PRINT_Help {
 # Before we break path hash some binaries so the script can find them (if they exist).
 hash kdialog &>/dev/null
 
+
 ######## SETTING USERSPACE VARIABLES
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
@@ -152,7 +153,8 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 #[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
-if [ "$#" -gt 0 ]; then # there are arguments to the command
+####### PARSE THE COMMAND LINE ARGUMENTS
+if [ "$#" -gt 0 ]; then 
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
 			'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
@@ -188,7 +190,6 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				lanforce=1
 				shift 1
 				;;
-			# TODO: Add something about this option in PRINT_Help.
 			# TODO: This seems to need --xml too. After all cmd args are passed check for
 			# TODO: "[ $netcat -eq 1 ] && [ $usexml -eq 0 ]; then errormessage" (or something like that).
 			'--nc'|'--netcat')
@@ -210,7 +211,7 @@ if [ "$#" -gt 0 ]; then # there are arguments to the command
 				export isdebug=1
 				shift 1
 				;;
-			'--version')
+			'-V'|'--version')
 				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
 				echo "Copyright (C) 2005-2006 Arvid Norlander"
 				echo "Copyright (C) 2006 Mikael Lammentausta"

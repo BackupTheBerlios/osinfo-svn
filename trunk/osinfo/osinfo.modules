@@ -2187,7 +2187,6 @@ Module_devices() {
 			# ruxpin: I already though of fixing it, because I got two network cards
 			# to output. I can't debug that right now. 
 
-
 			local description="$(awk  '{ print $1 }' <<< ${devices[$DEV_ARRAY]} | \
 								tr '_' ' ' | sed 's/^.//;s/^ *//')"
 			local device="$(awk  '{ print $2" "$3 }' <<< ${devices[$DEV_ARRAY]} | \
@@ -2196,11 +2195,13 @@ Module_devices() {
 
 			if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
 
-				local eth_adapter[${#eth_adapter}]="$device"
+				# these values should not be local,
+				# older bash fails there
+				eth_adapter[${#eth_adapter[@]}]="$device"
 
 			elif [ "$(grep -i 'vga\|display' <<< "$description")" ]; then
 
-				local video_adapter[${#video_adapter}]="$device"
+				video_adapter[${#video_adapter[@]}]="$device"
 
 			else
 
@@ -2220,6 +2221,7 @@ Module_devices() {
 			add_values		"${eth_adapter[$i]}\n"
 		done
 	fi
+
 
 	if [ "$video_adapter" ]; then
 		add_attribute	'Display adapter(s)'		"display_adapter"
