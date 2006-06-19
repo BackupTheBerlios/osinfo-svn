@@ -932,9 +932,9 @@ Module_dmi() {
 		for myHANDLE in $HANDLES; do
 
 			this="$(grep -n "Handle ${myHANDLE}" ${dmi_info} | \
-				awk -F: {'print $1'})"
+			        awk -F: {'print $1'})"
 			next="$(grep -n Handle ${dmi_info} | grep -A 1 ${myHANDLE} | \
-				awk -F: {'print $1'} | sed -n "2{p;q}")"
+			        awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((this++)) # this prevents the 'handle' lines from printing
 			((next--))
 
@@ -950,10 +950,10 @@ Module_dmi() {
 					value_header	"System info"
 
 
-					add_attribute	'Manufacturer' \
-									'system_manufacturer'
-					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Manufacturer' \
+					              'system_manufacturer'
+					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
 					add_attribute	'Product name'	'system_model'
@@ -1468,7 +1468,7 @@ Module_system() {
 	add_values    "$(uname -m)"
 
 	add_attribute "System locale"
-	add_values    "$(echo $LC_ALL)"
+	add_values    "$LC_ALL"
 
 	add_attribute "System uptime"			"uptime"
 	add_values    "$(uptime | awk -F, {'print $1'} | \
@@ -1643,7 +1643,8 @@ Module_users() {
 
 	add_attribute	"User's X11 session"	"users_window_manager"
 	# KDE sets $DESKTOP_SESSION nicely, but Gnome doesn't.
-	local session_id="$(echo $DESKTOP_SESSION)"
+	# AnMaster: KDE doesn't set that for me (in konsole at least)
+	local session_id="$DESKTOP_SESSION"
 	if [ "$session_id" == "default" ]; then
 		if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
 			# try to get Gnome version
