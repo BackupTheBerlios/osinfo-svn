@@ -2190,7 +2190,7 @@ Module_applications() {
 Module_devices() {
 	moduleName="Devices"
 	module_header "${moduleName}"
-
+	local DEVICE DEV_ARRAY
 	DEV_ARRAY=1;
 	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 
