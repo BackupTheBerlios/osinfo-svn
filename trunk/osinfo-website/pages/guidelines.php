@@ -29,6 +29,7 @@ else {
 			<li>Put documentation comments of a function right before it. Not inside it.</li>
 			<li>Avoid UUOC (Useless Use of Cat (cat foo | grep bar). See <a href="http://www.ruhr.de/home/smallo/award.html">http://www.ruhr.de/home/smallo/award.html</a>).</li>
 			<li>If we fake results because of debugging: Do it only if <tt>$isdebug</tt> is <tt>1</tt>.</li>
+			<li>We use tabs of indetion and spaces for alignment.</li>
 		</ul>
 	</div>
 	<?php 
