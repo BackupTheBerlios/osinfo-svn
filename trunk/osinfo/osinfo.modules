@@ -137,6 +137,7 @@ lshw_xml() {
 #  Currently this is only $lshw_xml_file
 #
 # ruxpin: shouldn't this be 'rm -f osinfo.??????' ?
+# AnMaster: Um... We should store a list of temporary files we created in an array maybe?
 cleanup_temp_files() {
 	if [ "$lshw_xml_file" ]; then
 		rm -f "$lshw_xml_file"
