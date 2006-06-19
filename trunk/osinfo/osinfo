@@ -19,9 +19,9 @@
 #  SlackWare
 #
 # and on FreeBSD 6.0
-# on x86 and amd64 architectures (desktop and laptop) with various hardware 
+# on x86 and amd64 architectures (desktop and laptop) with various hardware
 # configurations, ...
-# 
+#
 #
 #################################################################################
 # list of (known) dependencies:
@@ -152,7 +152,7 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 
 ####### PARSE THE COMMAND LINE ARGUMENTS
-if [ "$#" -gt 0 ]; then 
+if [ "$#" -gt 0 ]; then
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
 			'--help'|'-help'|'--usage'|'-usage'|'-h'|'')

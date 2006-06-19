@@ -185,7 +185,7 @@ Module_hdd() {
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-	
+
 
 	# this module depends heavily on root access, so prevent other users
 	# of running this module
@@ -266,7 +266,7 @@ Module_hdd() {
 			totalfree=$(($totalfree+$DISKFREE))
 
 
-			
+
 			##################
 			# clear varibles
 			unset drive_capacity_real DISKFREE
@@ -330,7 +330,7 @@ Module_hdd() {
 
 ###### BEGIN HDD SUBFUNCTIONS #############
 #
-# these functions are called from mod_hdd and they generate no output, 
+# these functions are called from mod_hdd and they generate no output,
 # all data is stored into global variables:
 #
 # TODO: update all variable to reflect:
@@ -361,7 +361,7 @@ Module_hdd() {
 
 		# show precision if 1 decimal number (scale=1 to bc)
 		# and round to proper unit
-		if [ $drive_capacity -lt 1073741824 ]; then 
+		if [ $drive_capacity -lt 1073741824 ]; then
 			drive_capacity_real="$(bc -l <<< scale=1\;" \
 				"$drive_capacity/1024/1024 ) MB"
 		else
@@ -521,7 +521,7 @@ Module_hdd() {
 	#################
 	# IDE drives
 	#
-	# this function collects information of IDE drives in the system 
+	# this function collects information of IDE drives in the system
 	#
 	# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
 	scan_hdd_ide() {
@@ -558,7 +558,7 @@ Module_hdd() {
 							awk -F_ {'print $NF'})"
 		fi
 
-		# check whether we got anything else than empty $vendor string 
+		# check whether we got anything else than empty $vendor string
 		if [  "$(grep  '^\ *' <<< $vendor )" ]; then
 			drive_vendor="Unknown vendor"
 		fi
@@ -1484,7 +1484,7 @@ Module_kernel() {
 
 	moduleName="Kernel"
 	module_header "${moduleName}"
-	
+
 	local kernel_makefile
 
 	add_attribute "Operating system"
@@ -1627,7 +1627,7 @@ Module_printers() {
 # USERS
 #
 # reports the current user, the user's X11 session manager + shell
-# the last logged user, and other users that have logged in 
+# the last logged user, and other users that have logged in
 # (that last can see).
 Module_users() {
 	moduleName="Users"
@@ -1653,7 +1653,7 @@ Module_users() {
 	fi
 	add_values		"$session_id"
 
-	
+
 	add_attribute	"User's shell"
 	add_values		"$(echo $SHELL)"
 
@@ -1991,7 +1991,7 @@ Module_distro() {
 			'misc')
 				for misc_distro in 'Ubuntu' 'Fedora' 'SuSE'; do
 					if [ "$(grep -i ${misc_distro} ${distro_ident})" ]; then
-						
+
 						distro_id="${misc_distro}"
 					fi
 				done
@@ -2049,7 +2049,7 @@ Module_distro() {
 
 
 	# then output what we found..
-	
+
 	[ "${distro_id}" ] && \
 		add_attribute	'Distro ID'
 		add_values		"${distro_id}"
@@ -2228,7 +2228,7 @@ Module_devices() {
 			# make sure that if several adapters are found, they are
 			# printed as <value>s under the same <attribute> tag
 
-			# AnMaster: Could you please tell me what you (ruxpin) mean with this? 
+			# AnMaster: Could you please tell me what you (ruxpin) mean with this?
 			#           As there is nothing about network in lspci...
 			#           And Display adapter(s) seems broken.
 			#               01:00.0 VGA compatible controller: ATI Technologies Inc RV280 [Radeon 9200 PRO] (rev 01)
@@ -2239,7 +2239,7 @@ Module_devices() {
 			#           Same in the lanforce output.
 
 			# ruxpin: I already though of fixing it, because I got two network cards
-			# to output. I can't debug that right now. 
+			# to output. I can't debug that right now.
 
 			local description="$(awk  '{ print $1 }' <<< ${devices[$DEV_ARRAY]} | \
 								tr '_' ' ' | sed 's/^.//;s/^ *//')"
