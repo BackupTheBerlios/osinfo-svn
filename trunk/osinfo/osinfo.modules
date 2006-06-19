@@ -132,6 +132,7 @@ lshw_xml() {
 	fi
 }
 
+TempFiles=()
 ##
 # Cleans up some temporary files.
 #  Currently this is only $lshw_xml_file
@@ -142,8 +143,11 @@ cleanup_temp_files() {
 	if [ "$lshw_xml_file" ]; then
 		rm -f "$lshw_xml_file"
 	fi
+	local fil
+	for fil in "${TempFiles[@]}"; do
+		rm -f "$fil"
+	done
 }
-
 
 ################################################################################
 ################################################################################
@@ -383,6 +387,7 @@ Module_hdd() {
 
 		# allocate a temp file
 		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$smart_info")
 
 		### check the smartctl version >5.36
 		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
@@ -522,6 +527,7 @@ Module_hdd() {
 		if [ "$(type -p udevinfo)" ]; then
 			# allocate a temp file
 			local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$udev_info")
 			udevinfo -q all -n ${drvdev} > $udev_info
 		fi
 		if [ -e "/proc/ide/" ]; then
@@ -643,6 +649,7 @@ Module_hdd() {
 		if [ "$(type -p udevinfo)" ]; then
 			# allocate a temp file
 			local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$udev_info")
 			udevinfo -q all -n ${drvdev} > ${udev_info}
 		fi
 		if [ -e "/proc/scsi/" ]; then
@@ -834,6 +841,7 @@ Module_cdrom() {
 	if CheckReq_lshw && CheckReq_root; then
 		lshw_xml
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$cdrom_tmp")
 
 		# this gets the line number of the wanted node from lshw '$this'
 		# and the line number of the next node '$next'
@@ -911,7 +919,7 @@ Module_dmi() {
 		dmi_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		dmi_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		dmidecode > $dmi_info
-
+		TempFiles=("${TempFiles[@]}" "$dmi_info" "$dmi_tmp")
 
 		# the interesting handles:
 		# 0x0000 'BIOS Information'
@@ -1331,6 +1339,7 @@ Module_oem_old() {
 	if CheckReq_lshw && CheckReq_root; then
 
 		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$lshw_tmp")
 		lshw > $lshw_tmp
 
 		# principle:
@@ -1734,7 +1743,7 @@ Module_network() {
 
 	# allocate the temp file
 	local nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
-
+	TempFiles=("${TempFiles[@]}" "$nw_info")
 
 	################################
 	# DETECT (WIRED) NETWORK DEVICES
