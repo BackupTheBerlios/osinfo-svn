@@ -111,7 +111,7 @@ CheckReq_dmidecode() {
 # Returns 0 if we are root and 1 if we are not.
 # TODO: Any reasons to base this on username and not $EUID?
 CheckReq_root() {
-	if [ ! "$(whoami)" == "root" ]; then
+	if [ "$EUID" != 0 ]; then
 		add_attribute	"$appname notification"
 		add_values		"Please run $appname as super-user to collect this information"
 		return 1
