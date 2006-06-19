@@ -1,18 +1,26 @@
 FEATURES for 0.3:
 
-fix user/root problem
-hard drive xml
-su_modules - run only su modules
-std_modules - non-su modules
-system_modules - a subset of modules
-mod_hdd
-daemon mode - see daemontools
+*	fix user/root problem
+*	hard drive xml
+*	su_modules - run only su modules
+*	std_modules - non-su modules
+*	system_modules - a subset of modules
+*	mod_hdd
+*	daemon mode - see daemontools
+
+
+FEATURES FOR 0.4:
+
+*	general --debug switch that turns on traceback calls and 'set -x'
+	and directs them to a certain logfile, this would be user so that 
+	as the user base grows, be get new beta-testers, their errors can
+	be more easily debugged.
 
 
 BUGS:
 -----
 
-mod_applications: /dev/mem: Permission denied on RH9
+*	mod_applications: /dev/mem: Permission denied on RH9
 
 
 GENERAL NOTES:
