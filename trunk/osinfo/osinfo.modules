@@ -2035,7 +2035,7 @@ Module_applications() {
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
 
-		APPLICATIONS="X kde-config x11vnc \
+		APPLICATIONS="X kde-config gnome-about x11vnc \
 			bash csh ls \
 			gcc make \
 			awk sed grep gzip \
@@ -2043,7 +2043,7 @@ Module_applications() {
 			apache2 php mysql smbd cups-config \
 			udevinfo lspci lshw dmidecode smartctl hdparm"
 
-	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
+	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
 		APPLICATIONS="X kde-config x11vnc \
 			csh bash ksh \
@@ -2057,7 +2057,7 @@ Module_applications() {
 	## Write the header for output
 	add_attribute "Applications\n" 'software'
 
-	local missing_ERRMSG="if you want to be able to use all modules of osinfo"
+	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
 	## Process all applications
 	for app in ${APPLICATIONS}; do
 
@@ -2076,7 +2076,7 @@ Module_applications() {
 				'kde-config')
 					add_values	"$($app -version 2>&1 | grep KDE)\n"
 					;;
-				'gconftool')
+				'gnome-about')
 					add_values	"$($app --version 2>&1 )\n"
 					;;
 				'apache2'|'apache')
@@ -2095,10 +2095,10 @@ Module_applications() {
 					add_values	"$($app -W version 2>&1 | head -n 1 )\n"
 					;;
 				'dmidecode')
-					add_values	"dmidecode $(dmidecode -V)\n"
+					add_values	"dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
 				*)
-					add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n"
+						add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
 										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			esac

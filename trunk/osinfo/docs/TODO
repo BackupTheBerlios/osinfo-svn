@@ -12,8 +12,6 @@ daemon mode - see daemontools
 BUGS:
 -----
 
-mod_devices does not detect the network cards on RH9
-mod_apps: seq: when the starting value is larger than the limit, the increment must be negative on RH9 only
 mod_applications: /dev/mem: Permission denied on RH9
 
 

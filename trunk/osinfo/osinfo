@@ -407,6 +407,9 @@ function flush_values {
 		print_lanforce_xml
 	fi
 	# FIXME: Where was infostring set?
+	# infostring is set at functions add_*
+	# and needs to be reset here so that the informaton
+	# from this module will not be reprinter later
 	unset infostring
 }
 
@@ -638,22 +641,20 @@ function print_stdout {
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
 
-			#set -x
 
 			if [ "$attribute" == "open" ] && \
 				[ "${item: -1:2}" == "n" ] && \
 				[ "${value_string: -1:2}" == "t" ]; then
 
 				unset tab_string
-				# the -1 is a hack, I was too tired to really debug this further
-				for i in $(seq 1 1 $(($max_indent-$diff_indent-1)) ); do
+				# there's something slightly wrong here
+				for i in $(seq 0 1 $(($max_indent-$diff_indent-1)) ); do
 					local tab_string="${tab_string}\t"
 				done
 
 				local value_string="${value_string}${tab_string}"
 			fi
 
-			set +x
 
 			# this evaluation counts the proper amount of tabs to add
 			# for beautiful identation.
