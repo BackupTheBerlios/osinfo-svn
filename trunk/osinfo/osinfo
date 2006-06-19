@@ -430,7 +430,7 @@ function print_xml {
 	#  4 if the item begins with %header% => print header ; next
 	#  5 if the item begins with %footer% => print footer ; next
 
-	local itemnr item name code attribute
+	local itemnr item name code attribute header
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
