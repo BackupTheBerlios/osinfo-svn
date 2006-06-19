@@ -206,6 +206,7 @@ Module_hdd() {
 
 			if [ "$(echo $drvdev | grep hd)" ]; then
 
+				drive_type='IDE drive'
 				scan_hdd_ide
 
 			elif [ "$(echo $drvdev | grep sd)" ]; then
@@ -218,8 +219,7 @@ Module_hdd() {
 
 			else
 
-				add_attribute	"Description"
-				add_values		"Unknown device class"
+				drive_type="Unknown drive type"
 
 			fi
 
@@ -239,17 +239,17 @@ Module_hdd() {
 
 			###############################
 			# calculate total disk capacity
-			[[ $DISKSIZE -lt 1048576 ]] && \
+			[[ $drive_capacity -lt 1048576 ]] && \
 				#diskfr="$(($DISKFREE/1024)) MB"
 				diskfr="$(echo $DISKFREE/1024 | bc -l)" && \
 				diskfr="${diskfr:0:4} MB"
-			[[ $DISKSIZE -gt 1048576 ]] && \
+			[[ $drive_capacity -gt 1048576 ]] && \
 				#diskfr="$(($DISKFREE/1024/1024)) GB"
 				diskfr="$(echo $DISKFREE/1024/1024 | bc -l)" && \
 				diskfr="${diskfr:0:4} GB"
 
-			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
-			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)"
+			#diskpercfree="$(($DISKFREE*1024*100/$drive_capacity))" # rounds off improperly
+			diskpercfree="$(echo $DISKFREE*1024*100/$drive_capacity | bc -l)"
 			diskpercfree="${diskpercfree:0:4}"
 
 
@@ -257,14 +257,14 @@ Module_hdd() {
 			add_attribute	'Free (mounted)'
 			add_values		"${diskfr} ; ${diskpercfree}%"
 
-			totalsize=$(($totalsize+$DISKSIZE))
+			totalsize=$(($totalsize+$drive_capacity))
 			totalfree=$(($totalfree+$DISKFREE))
 
 
 			
 			##################
 			# clear varibles
-			unset DISKSIZE DISKFREE
+			unset drive_capacity_real DISKFREE
 
 
 		done
@@ -285,18 +285,26 @@ Module_hdd() {
 		############
 		# OUTPUT
 		if [ $usexml -eq 0 ]; then
-			add_attribute	'IDE drive'	'hard_disk'
-			add_values		"$vendor $model"
+			add_attribute	"$drive_type"
+				add_values	"$vendor $model"
 			add_attribute	'Serial number'
-			add_values		"$serial"
+				add_values	"$serial"
 			add_attribute	'Driver'
-			add_values		"$driver"
+				add_values	"$driver"
 			add_attribute	'DMA'
-			add_values		"$dma"
+				add_values	"$dma"
+			add_attribute	'Geometry'
+				add_values	"$drive_geometry"
+			add_attribute	'Capacity (reported)'
+				add_values	"$drive_capacity_label"
+			add_attribute	'Capacity (actual)'
+				add_values	"$drive_capacity_real"
+
 
 		else # formulate this a bit different for xml output
-			add_attribute	'IDE drive'	'hard_disk'
-			add_values		"IDE_drive $vendor $model ($serial) $capacity"
+			add_attribute	"$drive_type"	'hard_disk'
+			add_values		"$drive_type $vendor $model ($serial) \
+								$drive_capacity_label"
 
 		fi
 
@@ -314,43 +322,42 @@ Module_hdd() {
 # these functions are called from mod_hdd and they generate no output, 
 # all data is stored into global variables:
 #
-# drive_type, vendor, model, serial, driver, dma
-# geometry, capacity_label, capacity_real
+# TODO: update all variable to reflect:
+# drive_type, drive_vendor, drive_model, drive_serial, drive_driver, drive_dma
+# drive_geometry, drive_capacity_label, drive_capacity_real
 
 	scan_hdd_common() {
 	#################################################
 	# SCAN COMMON ATTRIBUTES OF ALL HARD DRIVE TYPES
 	#
 	# drive geometry and capacity
-			#################################
-			# common data for all drive types:
-			# drive geometry and capacity
 
-			add_attribute	'Geometry'
-			add_values		"$(fdisk -l | grep /dev/sda -A 1 | sed -n "2{p;q}")"
+		drive_geometry="$(fdisk -l | grep /dev/sda -A 1 | sed -n "2{p;q}")"
 
-			add_attribute	'Capacity (reported)'
-			add_values		"$(fdisk -l ${drvdev} | grep ${drvdev} | \
-							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
-			add_attribute	'Capacity (actual)'
-
-			# fdisk gives drive capacity in mega|gigabytes and bytes.			
-			# this is really quirky, since fdisk outputs two numbers,
-			# and the last grep here picks the one with FIVE or more
-			# numbers, so this might be a problem in some situations,
-			# but since the less precise value is rounded, it never
-			# should be more than four numbers, like '1032 MB'
-			DISKSIZE="$(fdisk -l $drvdev | head -n 2 | grep -Eo '[0-9]{5,}')"
-			if [ $DISKSIZE -lt 1073741824 ]; then 
-				DZ="$(echo $DISKSIZE/1024/1024 | bc -l)"
-				DZ="${DZ:0:5} MB"
-			else
-				DZ="$(echo $DISKSIZE/1024/1024/1024 | bc -l)" 
-				DZ="${DZ:0:5} GB"
-			fi
-			add_values		"$DZ"
+		drive_capacity_label="$(fdisk -l ${drvdev} | grep ${drvdev} | \
+			head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
 
 
+		# fdisk gives drive capacity in mega|gigabytes and bytes.
+
+		# this solution is really quirky, since fdisk outputs two numbers,
+		# and the last grep here picks the one with FIVE or more
+		# numbers, so this might be a problem in some situations,
+		# but since the less precise value (first) is rounded, it never
+		# should be more than four numbers, like '1032 MB'
+		drive_capacity="$(fdisk -l $drvdev | \
+			head -n 2 | grep -Eo '[0-9]{5,}')"
+
+
+		# show precision if 1 decimal number (scale=1 to bc)
+		# and round to proper unit
+		if [ $drive_capacity -lt 1073741824 ]; then 
+			drive_capacity_real="$(bc -l <<< scale=1\;" \
+				"$drive_capacity/1024/1024 ) MB"
+		else
+			drive_capacity_real="$(bc -l <<< scale=1\;" \
+				"$drive_capacity/1024/1024/1024 ) GB"
+		fi
 
 	}
 
@@ -420,7 +427,7 @@ Module_hdd() {
 		DISKFREE=0
 		partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
-		value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
+		#value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
 
 
 		# loop all partitions detected by fdisk
@@ -429,7 +436,7 @@ Module_hdd() {
 			partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
 				sed -n "${PARTNR}{p;q;}" )"
 
-			add_attribute	"  ${partition}"
+			#add_attribute	"  ${partition}"
 
 
 			# CAPACITY; if partition is mounted (=is in mtab)
@@ -463,10 +470,10 @@ Module_hdd() {
 
 
 				# capacity
-				add_values		"$pz\t"
+				#add_values		"$pz\t"
 
 				# free space
-				add_values		"$partpercfree%"
+				#add_values		"$partpercfree%"
 
 				# mountpoint
 				local mp="$(df -PT $partition | grep ^$partition | \
@@ -475,27 +482,27 @@ Module_hdd() {
 				if [ ${#mp} -lt 8 ]; then
 					mp="${mp}\t"
 				fi
-				add_values		"${mp}"
+				#add_values		"${mp}"
 
 			else	# detect capacity of an unmounted partition
 
 				# capacity
-				add_values		"-\t"
+				#add_values		"-\t"
 
 				# free space
 				add_values		"-"
 
 				# mountpoint
-				add_values		"unmounted"
+				#add_values		"unmounted"
 
 			fi
 
 			# filesystem
 			# because fdisk adds a '*' character for bootable partitions, awk gets
 			# messed up. that is why numbers are removed from the beginning of string.
-			add_values		"$(fdisk -l | grep ^${partition} | \
-							awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
-							sed 's/^[0-9 ]*//')"
+			#add_values		"$(fdisk -l | grep ^${partition} | \
+			#				awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
+			#				sed 's/^[0-9 ]*//')"
 							#(read Disk foo bar foobar something partition; echo "$partition"))"
 
 		done
@@ -509,8 +516,6 @@ Module_hdd() {
 	#
 	# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
 	scan_hdd_ide() {
-
-		drive_type='IDE drive'
 
 		# detect the available data sources
 		if [ "$(type -p udevinfo)" ]; then
