@@ -272,47 +272,53 @@ Module_hdd() {
 			unset drive_capacity_real DISKFREE
 
 
+
+			######################################
+			# calculate total system disk capacity
+			# report data of the whole system
+
+			totalpercfree=0
+
+			#add_attribute	"Total disk space"
+			#add_values		"Capacity: $(echo $totalsize)"
+			#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
+
+
+			############
+			# OUTPUT
+			if [ $usexml -eq 0 ]; then
+				add_attribute	"$drive_type"
+					add_values	"$drive_vendor $drive_model"
+				add_attribute	'Serial number'
+					add_values	"$drive_serial"
+				add_attribute	'Driver'
+					add_values	"$drive_driver"
+				add_attribute	'DMA'
+					add_values	"$drive_dma"
+				add_attribute	'Geometry'
+					add_values	"$drive_geometry"
+				add_attribute	'Capacity (reported)'
+					add_values	"$drive_capacity_label"
+				add_attribute	'Capacity (actual)'
+					add_values	"$drive_capacity_real"
+
+				add_attribute	'S.M.A.R.T.'
+					add_values	"$drive_smart"
+				add_attribute	'Lifetime'
+					add_values	"$drive_lifetime"
+				add_attribute	'Temperature (C)'
+					add_values	"$drive_tempC"
+				add_attribute	'Health Status'
+					add_values	"$drive_health"
+
+			else # formulate this a bit different for xml output
+				add_attribute	"$drive_type"	'hard_disk'
+				add_values		"$drive_type $vendor $model ($serial) \
+									$drive_capacity_label"
+
+			fi
+
 		done
-
-
-
-		######################################
-		# calculate total system disk capacity
-		# report data of the whole system
-
-		totalpercfree=0
-
-		#add_attribute	"Total disk space"
-		#add_values		"Capacity: $(echo $totalsize)"
-		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
-
-
-		############
-		# OUTPUT
-		if [ $usexml -eq 0 ]; then
-			add_attribute	"$drive_type"
-				add_values	"$vendor $model"
-			add_attribute	'Serial number'
-				add_values	"$serial"
-			add_attribute	'Driver'
-				add_values	"$driver"
-			add_attribute	'DMA'
-				add_values	"$dma"
-			add_attribute	'Geometry'
-				add_values	"$drive_geometry"
-			add_attribute	'Capacity (reported)'
-				add_values	"$drive_capacity_label"
-			add_attribute	'Capacity (actual)'
-				add_values	"$drive_capacity_real"
-
-
-		else # formulate this a bit different for xml output
-			add_attribute	"$drive_type"	'hard_disk'
-			add_values		"$drive_type $vendor $model ($serial) \
-								$drive_capacity_label"
-
-		fi
-
 
 	fi
 
@@ -331,17 +337,16 @@ Module_hdd() {
 # drive_type, drive_vendor, drive_model, drive_serial, drive_driver, drive_dma
 # drive_geometry, drive_capacity_label, drive_capacity_real
 
-	scan_hdd_common() {
 	#################################################
 	# SCAN COMMON ATTRIBUTES OF ALL HARD DRIVE TYPES
 	#
 	# drive geometry and capacity
+	scan_hdd_common() {
 
 		drive_geometry="$(fdisk -l | grep /dev/sda -A 1 | sed -n "2{p;q}")"
 
 		drive_capacity_label="$(fdisk -l ${drvdev} | grep ${drvdev} | \
 			head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
-
 
 		# fdisk gives drive capacity in mega|gigabytes and bytes.
 
@@ -378,7 +383,8 @@ Module_hdd() {
 	#
 	# this function takes one parameter, the driver to use. default is ata.
 	scan_hdd_smart() {
-		local dev_type smart_info
+
+		local dev_type smart_info version
 		if [ "$1" ]; then
 			dev_type="$1"
 		else
@@ -392,37 +398,34 @@ Module_hdd() {
 		### check the smartctl version >5.36
 		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
 			grep -Eo '[0-9]\.[0-9]+')";
-		diff="$(echo $version-5.36 | bc -l)"
-		if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
-			smart="sata-ok"
-		else
-			smart=$version
+		if [ ! "$smart" ]; then
+			diff="$(bc -s <<< $version-5.36 )"
+			if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
+				smart="sata-ok"
+			else
+				smart=$version
+			fi
 		fi
-		unset version
 
 		smartctl -a -d $dev_type ${drvdev} > $smart_info
-		add_attribute	'S.M.A.R.T.'
-		add_values		"$(grep 'SMART support' ${smart_info} | \
+
+		drive_smart="$(grep 'SMART support' ${smart_info} | \
 						head -n 1 | awk -F': ' {'print $2'})"
 
-		add_attribute	'Lifetime'
-		add_values		"$(grep -i power_on $smart_info | awk {'print $NF'})"
+		drive=lifetime="$(grep -i power_on $smart_info | awk {'print $NF'})"
 
-		add_attribute	'Temperature (C)'
-		add_values		"$(grep -i temperature_celsius $smart_info | \
+		drive_tempC="$(grep -i temperature_celsius $smart_info | \
 						awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
 
-		add_attribute	'Health Status'
-		add_values		"$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
-
-		# cleanup
-		rm -f "$smart_info"
+		drive_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
 
 	}
 
 
 	####################
 	# PARTITIONS
+	#
+	# NOTE: under construction. output is disabled.
 	#
 	# function extracts information of hard drive partitions.
 	#
@@ -547,31 +550,31 @@ Module_hdd() {
 			#
 			# this smart scan is not included into the scan_hdd_smart()
 			# because it would break the correct order of the report.
-			vendor="$(smartctl -i ${drvdev} | grep '^Model' | \
+			drive_vendor="$(smartctl -i ${drvdev} | grep '^Model' | \
 							awk -F: {'print $2'} | sed 's/^ *//')"
 
 		elif [ "${udev_info}" ]; then
-			vendor="$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
+			drive_vendor="$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
 							awk -F_ {'print $NF'})"
 		fi
 
 		# check whether we got anything else than empty $vendor string 
 		if [  "$(grep  '^\ *' <<< $vendor )" ]; then
-			vendor="Unknown vendor"
+			drive_vendor="Unknown vendor"
 		fi
 
 
 		#######
 		# Model
 		if  [ "${udev_info}" ]; then
-			model="$(udevinfo -q all -n ${drvdev} | grep -i model | \
+			drive_model="$(udevinfo -q all -n ${drvdev} | grep -i model | \
 							awk -F= {'print $NF'})"
 
 		elif [ -e "${proc_info}" ]; then
-			model="$(cat ${proc_info}/model)"
+			drive_model="$(cat ${proc_info}/model)"
 
 		elif [ "$(type -p hdparm)" ]; then
-			model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+			drive_model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 							awk -F= {'print $2'})"
 
 		fi
@@ -580,10 +583,10 @@ Module_hdd() {
 		###############
 		# Serial number
 		if  [ "${udev_info}" ]; then
-			serial="$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
+			drive_serial="$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
 		elif [ "$(type -p hdparm)" ]; then
-			serial="$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+			drive_serial="$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
 						 awk -F= {'print $2'})"
 		fi
 
@@ -591,14 +594,14 @@ Module_hdd() {
 		########
 		# Driver
 		if [ -e "/proc/ide/$drvnode" ]; then
-			driver="$(cat ${proc_info}/driver)"
+			drive_driver="$(cat ${proc_info}/driver)"
 		fi
 
 
 		############
 		# DMA STATUS
 		if [ "$(type -p hdparm)" ]; then
-			dma="$(hdparm ${drvdev} | grep dma | grep -Eo '\([onf]+\)')"
+			drive_dma="$(hdparm ${drvdev} | grep dma | grep -Eo '\([onf]+\)')"
 		fi
 
 
@@ -607,10 +610,6 @@ Module_hdd() {
 		if [ "$(type -p smartctl)" ]; then
 			scan_hdd_smart ata
 		fi
-
-
-		# cleanup
-		rm -f "$udev_info"
 
 	}
 
@@ -702,17 +701,17 @@ Module_hdd() {
 			# this smart scan is not included into the scan_hdd_smart()
 			# because it would break the correct order of the report.
 
-			vendor="$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
+			drive_vendor="$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
 							awk -F: {'print $2'} | sed 's/^ *//') "
 
 		elif [ "${udev_info}" ]; then
 
-			vendor="$(grep -i vendor ${udev_info}  | \
+			drive_vendor="$(grep -i vendor ${udev_info}  | \
 							awk -F= {'print $NF'}) "
 
 		elif [ -e "${proc_info}" ]; then
 
-			vendor="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+			drive_vendor="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
 							awk {'print $1'}) "
 							#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
 		fi
@@ -722,17 +721,17 @@ Module_hdd() {
 		# Model
 		if  [ "${udev_info}" ]; then
 
-			model="$(grep -i model ${udev_info} | \
+			drive_model="$(grep -i model ${udev_info} | \
 							awk -F= {'print $NF'})"
 
 		elif [ -e "${proc_info}" ]; then
 
-			model="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+			drive_model="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
 							awk {'print $2" "$3'})"
 
 		elif [ "$(type -p hdparm)" ]; then
 
-			model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+			drive_model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
 							awk -F= {'print $2'})"
 		fi
 
@@ -744,15 +743,13 @@ Module_hdd() {
 
 		###############
 		# Serial number
-		add_attribute	'Serial number'
-
 		if  [ "${udev_info}" ]; then
 
-			add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
+			drive_serial="$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
 		elif [ "$(type -p hdparm)" ]; then
 
-			add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+			drive_serial="$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
 							awk -F= {'print $2'})"
 		fi
 
@@ -760,19 +757,16 @@ Module_hdd() {
 		########
 		# Driver
 		if [ -e "${proc_info}" ]; then
-			add_attribute	'Driver'
-			add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
+			drive_driver="Linux SCSI Generic (sg) v.$(cat ${sg_version})"
 		fi
 
-		#add_attribute	'DMA'
-		#add_values		"n/a" #enabled/disabled
+
+		#TODO: dma status
+
 
 		if [ "$smart" = "sata-ok" ]; then
 			scan_hdd_smart ata
 		fi
-
-		# cleanup
-		rm -f $udev_info
 
 	}
 
@@ -1450,9 +1444,6 @@ Module_oem_old() {
 
 	fi
 
-	# cleanup
-	#rm $lshw_tmp -f
-
 	module_footer
 	flush_values
 }
@@ -1490,10 +1481,11 @@ Module_system() {
 
 # OPERATING SYSTEM KERNEL
 Module_kernel() {
-	local kernel_makefile
 
 	moduleName="Kernel"
 	module_header "${moduleName}"
+	
+	local kernel_makefile
 
 	add_attribute "Operating system"
 	add_values    "$(uname -o)"
@@ -1504,7 +1496,7 @@ Module_kernel() {
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
 		kernel_makefile="/usr/src/linux/Makefile"
-	elif [ "$(ls /usr/src/ | grep linux)" ]; then
+	elif [ "$(ls /usr/src/linux*)" ]; then
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
 	if [ -e "${kernel_makefile}" ]; then
