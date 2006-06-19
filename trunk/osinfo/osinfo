@@ -475,7 +475,7 @@ function print_xml {
 
 				xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
 				((XML_INDENT++))
-				local attribute="open"
+				attribute="open"
 
 
 			#### HEADER TAG
@@ -511,7 +511,7 @@ function print_xml {
 				item="$(sed 's/%footer%//' <<< "${item}")"
 
 				# validate xml
-				local name="$(awk -F\; {'print $1'} <<< "${item}" | \
+				name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s/ /_/g;s|/|_|g' | tr 'A-Z' 'a-z')"
 
 				xml_tag_stop "${name}" | tee -a "${XMLFILE}"
