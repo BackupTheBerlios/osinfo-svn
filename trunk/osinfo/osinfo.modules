@@ -2307,7 +2307,8 @@ Module_devices() {
 # xml only
 # FIXME: Shouldn't be xml only...
 # ruxpin: no, this information is useless to produce to stdout, as the 'env' command
-#	does the same.. 
+# does the same..
+# AnMaster: ah ok.
 Module_env() {
 	moduleName="Environment variables"
 	module_header "${moduleName}"

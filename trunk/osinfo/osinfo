@@ -80,8 +80,6 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 
 # AnMaster: Why do we need gseq and not seq on *BSD?
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
-	#Seq="$(type -p gseq)"
-	# TODO: Test if this works.
 	function seq() {
 		gseq "$@"
 	}
