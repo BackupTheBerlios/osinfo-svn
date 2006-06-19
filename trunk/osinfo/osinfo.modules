@@ -337,6 +337,7 @@ Module_hdd() {
 # drive_type, drive_vendor, drive_model, drive_serial, drive_driver, drive_dma
 # drive_geometry, drive_capacity_label, drive_capacity_real
 
+
 	#################################################
 	# SCAN COMMON ATTRIBUTES OF ALL HARD DRIVE TYPES
 	#
@@ -821,14 +822,11 @@ Module_memory() {
 
 	module_footer
 	flush_values
-
 }
 
 
 # INFORMATION OF CD/DVD DEVICES
 Module_cdrom() {
-
-
 	moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
@@ -886,7 +884,6 @@ Module_cdrom() {
 
 	module_footer
 	flush_values
-
 }
 
 
@@ -1089,7 +1086,6 @@ Module_dmi() {
 
 	module_footer
 	flush_values
-
 }
 
 
@@ -1110,8 +1106,6 @@ Module_dmi() {
 # DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
 # CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
 Module_oem() {
-
-
 	local moduleName="OEM information"
 	module_header "${moduleName}"
 
@@ -1318,14 +1312,13 @@ Module_oem() {
 
 	module_footer
 	flush_values
-
 }
+
 
 Module_oem_old() {
 # OEM INFORMATION
 # deprecated, as this module has been rewritten. left here for reference.
 #AnMaster: why? you can just look at an older revision in svn. If this is not used anywhere it should be deleted before a release.
-
 	moduleName="OEM information"
 	module_header "${moduleName}"
 	error_deprecated Module_oem_old osinfo.modules
@@ -1451,7 +1444,6 @@ Module_oem_old() {
 
 # GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
-
 	moduleName="System"
 	module_header "${moduleName}"
 
@@ -1481,7 +1473,6 @@ Module_system() {
 
 # OPERATING SYSTEM KERNEL
 Module_kernel() {
-
 	moduleName="Kernel"
 	module_header "${moduleName}"
 
@@ -1512,7 +1503,6 @@ Module_kernel() {
 
 # INFORMATION OF THE CPU
 Module_processor() {
-
 	moduleName="Processor"
 	module_header "${moduleName}"
 
@@ -1567,7 +1557,6 @@ Module_processor() {
 
 # INFORMATION OF THE TERMINAL IN USE
 Module_terminal() {
-
 	moduleName="Terminal info"
 	module_header "${moduleName}"
 
@@ -1620,8 +1609,8 @@ Module_printers() {
 
 	module_footer
 	flush_values
-
 }
+
 
 #######################
 # USERS
@@ -1894,9 +1883,8 @@ Module_distro() {
 	moduleName="Distribution"
 	module_header "${moduleName}"
 
-	# distro_id, distro_release are used elsewhere, no not "localize" these
-	local distro_codename distro_description
-
+	# NOTE: do not make distro_* variables local, as they might be used
+	# in other modules
 
 	# locate and echo the root directory.
 	# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
@@ -2297,11 +2285,7 @@ Module_devices() {
 #######################
 # ENVIRONMENT VARIABLES
 #
-# xml only
-# FIXME: Shouldn't be xml only...
-# ruxpin: no, this information is useless to produce to stdout, as the 'env' command
-# does the same..
-# AnMaster: ah ok.
+# xml only, stdout is not needed
 Module_env() {
 	moduleName="Environment variables"
 	module_header "${moduleName}"
