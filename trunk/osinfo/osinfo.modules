@@ -3,6 +3,7 @@
 # OSINFO MODULES
 #
 # osinfo lists system information available to the OS.
+#
 # this file contains the osinfo modules and module subfunctions.
 # modules can be freely added; the data processing and outputting is taken
 # care of by other functions. these are accessed by the following functions,
@@ -56,6 +57,13 @@
 #   --Advanced Bash Scripting Guide (ABS)
 #################################################################################
 
+
+## META-MODULES
+#
+# the order of modules inside this varibale here is important,
+# because some global variables are collected by some modules and used by others.
+#
+# mod_system should come after mod_distro
 MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
 MODULES_BSD='distro system applications terminal network'
 MODULES_LANFORCE='distro system processor network dmi devices users applications env'
@@ -64,6 +72,8 @@ MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hd
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
 MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users'
+
+
 ################################################################################
 ################################################################################
 ## General helper functions                                                   ##
@@ -125,11 +135,14 @@ lshw_xml() {
 ##
 # Cleans up some temporary files.
 #  Currently this is only $lshw_xml_file
+#
+# ruxpin: shouldn't this be 'rm -f osinfo.??????' ?
 cleanup_temp_files() {
 	if [ "$lshw_xml_file" ]; then
-		rm "$lshw_xml_file"
+		rm -f "$lshw_xml_file"
 	fi
 }
+
 
 ################################################################################
 ################################################################################
@@ -150,7 +163,7 @@ cleanup_temp_files() {
 # used tools:
 # fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc
 Module_hdd() {
-	moduleName="Disk information"
+	local moduleName="Disk information"
 	module_header "${moduleName}"
 
 	# developement status:
@@ -167,15 +180,7 @@ Module_hdd() {
 	# FREEBSD: To check the status of drives, use the following:
 	# ${PREFIX}/sbin/smartctl -a ad0          for first ATA drive
 	# ${PREFIX}/sbin/smartctl -a da0          for first SCSI drive
-	#
-	# there are at least two methods to parse an alphabetical seq number:
-	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
-	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
-	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
-	#
-	# to use tab as a field separator in awk:
-	# awk $'-F\t' {}
-
+	
 
 	# this module depends heavily on root access, so prevent other users
 	# of running this module
@@ -190,6 +195,7 @@ Module_hdd() {
 		for drvdev in $drives; do
 
 			value_header	 ${drvdev}
+
 
 			# $drvdev is the whole device address, eg "/dev/hda"
 			# $drvnode is just the device node, eg "hda"
@@ -213,10 +219,109 @@ Module_hdd() {
 			else
 
 				add_attribute	"Description"
-				add_values		"Unknown device type"
+				add_values		"Unknown device class"
 
 			fi
 
+
+
+			#####################
+			# scan the partitions
+			scan_hdd_partitions
+
+
+
+			###############################
+			# scan common attributes
+			scan_hdd_common
+
+
+
+			###############################
+			# calculate total disk capacity
+			[[ $DISKSIZE -lt 1048576 ]] && \
+				#diskfr="$(($DISKFREE/1024)) MB"
+				diskfr="$(echo $DISKFREE/1024 | bc -l)" && \
+				diskfr="${diskfr:0:4} MB"
+			[[ $DISKSIZE -gt 1048576 ]] && \
+				#diskfr="$(($DISKFREE/1024/1024)) GB"
+				diskfr="$(echo $DISKFREE/1024/1024 | bc -l)" && \
+				diskfr="${diskfr:0:4} GB"
+
+			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
+			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)"
+			diskpercfree="${diskpercfree:0:4}"
+
+
+
+			add_attribute	'Free (mounted)'
+			add_values		"${diskfr} ; ${diskpercfree}%"
+
+			totalsize=$(($totalsize+$DISKSIZE))
+			totalfree=$(($totalfree+$DISKFREE))
+
+
+			
+			##################
+			# clear varibles
+			unset DISKSIZE DISKFREE
+
+
+		done
+
+
+
+		######################################
+		# calculate total system disk capacity
+		# report data of the whole system
+
+		totalpercfree=0
+
+		#add_attribute	"Total disk space"
+		#add_values		"Capacity: $(echo $totalsize)"
+		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
+
+
+		############
+		# OUTPUT
+		if [ $usexml -eq 0 ]; then
+			add_attribute	'IDE drive'	'hard_disk'
+			add_values		"$vendor $model"
+			add_attribute	'Serial number'
+			add_values		"$serial"
+			add_attribute	'Driver'
+			add_values		"$driver"
+			add_attribute	'DMA'
+			add_values		"$dma"
+
+		else # formulate this a bit different for xml output
+			add_attribute	'IDE drive'	'hard_disk'
+			add_values		"IDE_drive $vendor $model ($serial) $capacity"
+
+		fi
+
+
+	fi
+
+	# finalize
+	module_footer
+	flush_values
+}
+
+
+###### BEGIN HDD SUBFUNCTIONS #############
+#
+# these functions are called from mod_hdd and they generate no output, 
+# all data is stored into global variables:
+#
+# drive_type, vendor, model, serial, driver, dma
+# geometry, capacity_label, capacity_real
+
+	scan_hdd_common() {
+	#################################################
+	# SCAN COMMON ATTRIBUTES OF ALL HARD DRIVE TYPES
+	#
+	# drive geometry and capacity
 			#################################
 			# common data for all drive types:
 			# drive geometry and capacity
@@ -227,7 +332,6 @@ Module_hdd() {
 			add_attribute	'Capacity (reported)'
 			add_values		"$(fdisk -l ${drvdev} | grep ${drvdev} | \
 							head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
-
 			add_attribute	'Capacity (actual)'
 
 			# fdisk gives drive capacity in mega|gigabytes and bytes.			
@@ -247,484 +351,427 @@ Module_hdd() {
 			add_values		"$DZ"
 
 
-			#####################
-			# scan the partitions
 
-			scan_hdd_partitions
+	}
+
+	#########################
+	# S.M.A.R.T. scanning
+	#
+	# smartmontools are handy in getting the extended parameters
+	# of hard drives. only version 5.36 and onward support SATA drives
+	# and the version may be a bit uncommon, as it was released in April 2006.
+	# all major distros should begin to include it in their packages,
+	# so this should be relatively common in late 2006.
+	# for ide drives this is not a problem.
+	#
+	# this function takes one parameter, the driver to use. default is ata.
+	scan_hdd_smart() {
+		local dev_type smart_info
+		if [ "$1" ]; then
+			dev_type="$1"
+		else
+			dev_type=ata
+		fi
+
+		# allocate a temp file
+		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
+
+		### check the smartctl version >5.36
+		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
+			grep -Eo '[0-9]\.[0-9]+')";
+		diff="$(echo $version-5.36 | bc -l)"
+		if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
+			smart="sata-ok"
+		else
+			smart=$version
+		fi
+		unset version
+
+		smartctl -a -d $dev_type ${drvdev} > $smart_info
+		add_attribute	'S.M.A.R.T.'
+		add_values		"$(grep 'SMART support' ${smart_info} | \
+						head -n 1 | awk -F': ' {'print $2'})"
+
+		add_attribute	'Lifetime'
+		add_values		"$(grep -i power_on $smart_info | awk {'print $NF'})"
+
+		add_attribute	'Temperature (C)'
+		add_values		"$(grep -i temperature_celsius $smart_info | \
+						awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
+
+		add_attribute	'Health Status'
+		add_values		"$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
+
+		# cleanup
+		rm -f "$smart_info"
+
+	}
 
 
-			###############################
-			# calculate total disk capacity
+	####################
+	# PARTITIONS
+	#
+	# function extracts information of hard drive partitions.
+	#
+	# TODO: an array that stores data of how much is allocated for each FS
+	# [partition ID=83] [size on hda1] [size on hda4]
+	# [partition ID=7] [size on hda2] [size on hdb1]
+	scan_hdd_partitions() {
+		DISKFREE=0
+		partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
 
-			[[ $DISKSIZE -lt 1048576 ]] && \
-				#diskfr="$(($DISKFREE/1024)) MB"
-				diskfr="$(echo $DISKFREE/1024 | bc -l)" && \
-				diskfr="${diskfr:0:4} MB"
-			[[ $DISKSIZE -gt 1048576 ]] && \
-				#diskfr="$(($DISKFREE/1024/1024)) GB"
-				diskfr="$(echo $DISKFREE/1024/1024 | bc -l)" && \
-				diskfr="${diskfr:0:4} GB"
-
-			#diskpercfree="$(($DISKFREE*1024*100/$DISKSIZE))" # rounds off improperly
-			diskpercfree="$(echo $DISKFREE*1024*100/$DISKSIZE | bc -l)"
-			diskpercfree="${diskpercfree:0:4}"
-
-			add_attribute	'Free (mounted)'
-			add_values		"${diskfr} ; ${diskpercfree}%"
-
-			totalsize=$(($totalsize+$DISKSIZE))
-			totalfree=$(($totalfree+$DISKFREE))
+		value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
 
 
-			unset DISKSIZE
-			unset DISKFREE
+		# loop all partitions detected by fdisk
+
+		for PARTNR in $(seq 1 1 $partitions_on_drive); do
+			partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
+				sed -n "${PARTNR}{p;q;}" )"
+
+			add_attribute	"  ${partition}"
+
+
+			# CAPACITY; if partition is mounted (=is in mtab)
+			#
+			# BUG: submounted (=system for automounting usb sticks) partitions
+			# are considered unmounted, while they are not!
+
+			if [ "$(df -Plk | grep $partition)" ]; then
+
+				# the partition size is calculated from the value given by df,
+				# and the float division is computed by bc.
+				# the output of bc is then concatenated by parameter expansion.
+
+				# df reports in kb
+				# small partitions are reported in MB, larger in GB
+				partsize="$(df -Plk | grep $partition | awk {'print $2'})"
+				partfree="$(df -Plk | grep $partition | awk {'print $4'})"
+
+				[[ $partsize -lt 1048576 ]] && \
+					pz="$(echo $partsize/1024 | bc -l)" && \
+					pz="${pz:0:4} MB"
+				[[ $partsize -gt 1048576 ]] && \
+					pz="$(echo $partsize/1024/1024 | bc -l)" && \
+					pz="${pz:0:4} GB"
+
+				#partpercfree="$(($partfree*100/$partsize))" # rounds off improperly
+				partpercfree="$(echo $partfree*100/$partsize | bc -l)"
+				partpercfree="${partpercfree:0:4}"
+
+				DISKFREE=$(($DISKFREE+$partfree))
+
+
+				# capacity
+				add_values		"$pz\t"
+
+				# free space
+				add_values		"$partpercfree%"
+
+				# mountpoint
+				local mp="$(df -PT $partition | grep ^$partition | \
+							awk {'print $NF'})"
+				# check the number of tabs to add for stdout indent
+				if [ ${#mp} -lt 8 ]; then
+					mp="${mp}\t"
+				fi
+				add_values		"${mp}"
+
+			else	# detect capacity of an unmounted partition
+
+				# capacity
+				add_values		"-\t"
+
+				# free space
+				add_values		"-"
+
+				# mountpoint
+				add_values		"unmounted"
+
+			fi
+
+			# filesystem
+			# because fdisk adds a '*' character for bootable partitions, awk gets
+			# messed up. that is why numbers are removed from the beginning of string.
+			add_values		"$(fdisk -l | grep ^${partition} | \
+							awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
+							sed 's/^[0-9 ]*//')"
+							#(read Disk foo bar foobar something partition; echo "$partition"))"
 
 		done
+	}
 
 
+	#################
+	# IDE drives
+	#
+	# this function collects information of IDE drives in the system 
+	#
+	# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
+	scan_hdd_ide() {
 
-		######################################
-		# calculate total system disk capacity
-		# report data of the whole system
+		drive_type='IDE drive'
 
-		totalpercfree=0
-
-		#add_attribute	"Total disk space"
-		#add_values		"Capacity: $(echo $totalsize)"
-		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
-
-	fi
-
-	# finalize
-	module_footer
-	flush_values
-}
-
-
-#########################
-# S.M.A.R.T. scanning
-#
-# smartmontools are handy in getting the extended parameters
-# of hard drives. only version 5.36 and onward support SATA drives
-# and the version may be a bit uncommon, as it was released in April 2006.
-# all major distros should begin to include it in their packages,
-# so this should be relatively common in late 2006.
-# for ide drives this is not a problem.
-#
-# this function takes one parameter, the driver to use. default is ata.
-scan_hdd_smart() {
-	local dev_type smart_info
-	if [ "$1" ]; then
-		dev_type="$1"
-	else
-		dev_type=ata
-	fi
-
-	# allocate a temp file
-	smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
-
-	### check the smartctl version >5.36
-	version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
-		grep -Eo '[0-9]\.[0-9]+')";
-	diff="$(echo $version-5.36 | bc -l)"
-	if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
-		smart="sata-ok"
-	else
-		smart=$version
-	fi
-	unset version
-
-	smartctl -a -d $dev_type ${drvdev} > $smart_info
-	add_attribute	'S.M.A.R.T.'
-	add_values		"$(grep 'SMART support' ${smart_info} | \
-					head -n 1 | awk -F': ' {'print $2'})"
-
-	add_attribute	'Lifetime'
-	add_values		"$(grep -i power_on $smart_info | awk {'print $NF'})"
-
-	add_attribute	'Temperature (C)'
-	add_values		"$(grep -i temperature_celsius $smart_info | \
-					awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
-
-	add_attribute	'Health Status'
-	add_values		"$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
-
-	# cleanup
-	rm -f "$smart_info"
-
-}
+		# detect the available data sources
+		if [ "$(type -p udevinfo)" ]; then
+			# allocate a temp file
+			local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
+			udevinfo -q all -n ${drvdev} > $udev_info
+		fi
+		if [ -e "/proc/ide/" ]; then
+			local proc_info="/proc/ide/${drvnode}"
+		fi
+		# hdparm output is not read into a temp file, as
+		# it is unlikely to be used, and that would unnecessarily
+		# slow down this function.
 
 
-####################
-# PARTITIONS
-#
-# function extracts information of hard drive partitions.
-#
-#
-# TODO: an array that stores data of how much is allocated for each FS
-# [partition ID=83] [size on hda1] [size on hda4]
-# [partition ID=7] [size on hda2] [size on hdb1]
-scan_hdd_partitions() {
-	DISKFREE=0
-	partitions_on_drive="$(fdisk -l $drvdev | grep ^$drvdev | wc -l)"
+		########
+		# Vendor
+		if [ "$(type -p smartctl)" ]; then
 
-	value_header		"  Partition\t\tcapacity\tfree\tmountpoint\tfilesystem"
+			# because smartctl uses its own database to report the HDD vendor,
+			# it is preferred over udev.
+			#
+			# this smart scan is not included into the scan_hdd_smart()
+			# because it would break the correct order of the report.
+			vendor="$(smartctl -i ${drvdev} | grep '^Model' | \
+							awk -F: {'print $2'} | sed 's/^ *//')"
 
+		elif [ "${udev_info}" ]; then
+			vendor="$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
+							awk -F_ {'print $NF'})"
+		fi
 
-	# loop all partitions detected by fdisk
-
-	for PARTNR in $(seq 1 1 $partitions_on_drive); do
-		partition="$(fdisk -l $drvdev | grep ^$drvdev | awk {'print $1'} | \
-			sed -n "${PARTNR}{p;q;}" )"
-
-		add_attribute	"  ${partition}"
+		# check whether we got anything else than empty $vendor string 
+		if [  "$(grep  '^\ *' <<< $vendor )" ]; then
+			vendor="Unknown vendor"
+		fi
 
 
-		# CAPACITY; if partition is mounted (=is in mtab)
-		#
-		# BUG: submounted (=system for automounting usb sticks) partitions
-		# are considered unmounted, while they are not!
+		#######
+		# Model
+		if  [ "${udev_info}" ]; then
+			model="$(udevinfo -q all -n ${drvdev} | grep -i model | \
+							awk -F= {'print $NF'})"
 
-		if [ "$(df -Plk | grep $partition)" ]; then
+		elif [ -e "${proc_info}" ]; then
+			model="$(cat ${proc_info}/model)"
 
-			# the partition size is calculated from the value given by df,
-			# and the float division is computed by bc.
-			# the output of bc is then concatenated by parameter expansion.
+		elif [ "$(type -p hdparm)" ]; then
+			model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+							awk -F= {'print $2'})"
 
-			# df reports in kb
-			# small partitions are reported in MB, larger in GB
-			partsize="$(df -Plk | grep $partition | awk {'print $2'})"
-			partfree="$(df -Plk | grep $partition | awk {'print $4'})"
-
-			[[ $partsize -lt 1048576 ]] && \
-				pz="$(echo $partsize/1024 | bc -l)" && \
-				pz="${pz:0:4} MB"
-			[[ $partsize -gt 1048576 ]] && \
-				pz="$(echo $partsize/1024/1024 | bc -l)" && \
-				pz="${pz:0:4} GB"
-
-			#partpercfree="$(($partfree*100/$partsize))" # rounds off improperly
-			partpercfree="$(echo $partfree*100/$partsize | bc -l)"
-			partpercfree="${partpercfree:0:4}"
-
-			DISKFREE=$(($DISKFREE+$partfree))
+		fi
 
 
-			# capacity
-			add_values		"$pz\t"
+		###############
+		# Serial number
+		if  [ "${udev_info}" ]; then
+			serial="$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
-			# free space
-			add_values		"$partpercfree%"
+		elif [ "$(type -p hdparm)" ]; then
+			serial="$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+						 awk -F= {'print $2'})"
+		fi
 
-			# mountpoint
-			local mp="$(df -PT $partition | grep ^$partition | \
-						awk {'print $NF'})"
-			# check the number of tabs to add for stdout indent
-			if [ ${#mp} -lt 8 ]; then
-				mp="${mp}\t"
+
+		########
+		# Driver
+		if [ -e "/proc/ide/$drvnode" ]; then
+			driver="$(cat ${proc_info}/driver)"
+		fi
+
+
+		############
+		# DMA STATUS
+		if [ "$(type -p hdparm)" ]; then
+			dma="$(hdparm ${drvdev} | grep dma | grep -Eo '\([onf]+\)')"
+		fi
+
+
+		############
+		# SMART info
+		if [ "$(type -p smartctl)" ]; then
+			scan_hdd_smart ata
+		fi
+
+
+		# cleanup
+		rm -f "$udev_info"
+
+	}
+
+
+	#################
+	# SATA/SCSI/USB drives (sg driver)
+	#
+	# this function collects information of SATA/SCSI/USB drives,
+	# because under Linux they all use the same SCSI drivers.
+	#
+	# the information in stored into two or three locations, depending
+	# on the kernel and whether the system uses devfs or udev.
+	# since devfs is deprecated, it is not used at all.
+	# the /proc/scsi/ system is deprecated from 2.6 on, but it is left
+	# here for legacy support.
+	#
+	# usb drives, when properly detected by the Linux kernel,
+	# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
+	# which can be found both in the beforementioned location and also
+	# in /proc/scsi/sg/devices, can be used to identify the device
+	# in /proc/scsi/usb-storage/*.
+	#
+	# as the devices are (hopefully) linearily, the devices catalogue
+	# can be used to identify which /dev/sd* node is a certain scsi#.
+	#
+	# this is not true in the case of custom udev rules. although
+	# a good practise is to let kernel do its magic and create a
+	# link node to that device, so this is unlikely to be a problem.
+	#
+	# smartmontools support SATA drives from version 5.36 on
+	# (released April 2006). this function is written in June 2006,
+	# and for that the version of smartctl is checked before trying
+	# to access SATA drives.
+	scan_hdd_sg() {
+		# detect the available data sources
+		if [ "$(type -p udevinfo)" ]; then
+			# allocate a temp file
+			local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
+			udevinfo -q all -n ${drvdev} > ${udev_info}
+		fi
+		if [ -e "/proc/scsi/" ]; then
+			local proc_info="/proc/scsi/scsi"
+			local scsi_devices="/proc/scsi/sg/devices"
+			local scsi_devstrings="/proc/scsi/sg/device_strs"
+			local usb_devstrings="/proc/scsi/usb-storage/"
+			local sg_version="/proc/scsi/sg/version"
+
+			local scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
+		fi
+		# hdparm output is not read into a temp file, as
+		# it is unlikely to be used, and that would unnecessarily
+		# slow down this function.
+
+
+		if [ "${udev_info}" ]; then
+
+			local bus="$(grep -i ID_BUS ${udev_info} | awk -F= {'print $NF'})"
+			if [ "$(echo $bus | grep usb)" ]; then
+				# USB drive detected
+
+				drive_type='USB drive'
+
 			fi
-			add_values		"${mp}"
 
-		else	# detect capacity of an unmounted partition
+			# test if the scsi_nr is found in /proc/scsi/usb-storage/
+		elif [ -e "${proc_info}" ]; then
 
-			# capacity
-			add_values		"-\t"
+			if [ -e "${usb_devstrings}${scsi_nr}" ]; then
+				local usb_info="${usb_devstrings}/${scsi_nr}"
+				drive_type='USB drive'
+			fi
 
-			# free space
-			add_values		"-"
+		else
+		# SATA/SCSI drive
 
-			# mountpoint
-			add_values		"unmounted"
-
-		fi
-
-		# filesystem
-		# because fdisk adds a '*' character for bootable partitions, awk gets
-		# messed up. that is why numbers are removed from the beginning of string.
-		add_values		"$(fdisk -l | grep ^${partition} | \
-						awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
-						sed 's/^[0-9 ]*//')"
-						#(read Disk foo bar foobar something partition; echo "$partition"))"
-
-	done
-}
-
-
-#################
-# IDE drives
-#
-# this function collects information of IDE drives in the system.
-#
-# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
-scan_hdd_ide() {
-	# detect the available data sources
-	if [ "$(type -p udevinfo)" ]; then
-		# allocate a temp file
-		local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
-		udevinfo -q all -n ${drvdev} > $udev_info
-	fi
-	if [ -e "/proc/ide/" ]; then
-		local proc_info="/proc/ide/${drvnode}"
-	fi
-	# hdparm output is not read into a temp file, as
-	# it is unlikely to be used, and that would unnecessarily
-	# slow down this function.
-
-
-	########
-	# Vendor
-	if [ "$(type -p smartctl)" ]; then
-
-		# because smartctl uses its own database to report the HDD vendor,
-		# it is preferred over udev.
-		#
-		# this smart scan is not included into the scan_hdd_smart()
-		# because it would break the correct order of the report.
-
-		local vendor="$(smartctl -i ${drvdev} | grep '^Model' | \
-						awk -F: {'print $2'} | sed 's/^ *//') "
-
-	elif [ "${udev_info}" ]; then
-
-		local vendor="$(udevinfo -q all -n ${drvdev} | grep -i vendor | \
-						awk -F_ {'print $NF'}) "
-	fi
-
-
-	#######
-	# Model
-	if  [ "${udev_info}" ]; then
-
-		local model="$(udevinfo -q all -n ${drvdev} | grep -i model | \
-						awk -F= {'print $NF'})"
-
-	elif [ -e "${proc_info}" ]; then
-
-		local model="$(cat ${proc_info}/model)"
-
-	elif [ "$(type -p hdparm)" ]; then
-
-		local model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
-						awk -F= {'print $2'})"
-	fi
-
-
-	# report both vendor and model on one line
-	add_attribute	'IDE drive'	'hard_disk'
-	add_values		"$vendor$model"
-
-
-	###############
-	# Serial number
-	add_attribute	'Serial number'
-
-	if  [ "${udev_info}" ]; then
-
-		add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
-
-	elif [ "$(type -p hdparm)" ]; then
-
-		add_values  "$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
-		             awk -F= {'print $2'})"
-	fi
-
-
-	########
-	# Driver
-	if [ -e "/proc/ide/$drvnode" ]; then
-		add_attribute	'Driver'
-		add_values		"$(cat ${proc_info}/driver)"
-	fi
-
-
-	#####
-	# DMA
-	if [ "$(type -p hdparm)" ]; then
-		add_attribute	'DMA'
-		add_values		"$(hdparm ${drvdev} | grep dma | grep -Eo '\([onf]+\)')"
-	fi
-
-
-	############
-	# SMART info
-	if [ "$(type -p smartctl)" ]; then
-		scan_hdd_smart ata
-	fi
-
-
-	# cleanup
-	rm -f "$udev_info"
-
-}
-
-
-#################
-# SATA/SCSI/USB drives (sg driver)
-#
-# this function collects information of SATA/SCSI/USB drives,
-# because under Linux they all use the same SCSI drivers.
-#
-# the information in stored into two or three locations, depending
-# on the kernel and whether the system uses devfs or udev.
-# since devfs is deprecated, it is not used at all.
-# the /proc/scsi/ system is deprecated from 2.6 on, but it is left
-# here for legacy support.
-#
-# usb drives, when properly detected by the Linux kernel,
-# are added to /proc/scsi/scsi info sheet, and the assigned scsi number
-# which can be found both in the beforementioned location and also
-# in /proc/scsi/sg/devices, can be used to identify the device
-# in /proc/scsi/usb-storage/*.
-#
-# as the devices are (hopefully) linearily, the devices catalogue
-# can be used to identify which /dev/sd* node is a certain scsi#.
-#
-# this is not true in the case of custom udev rules. although
-# a good practise is to let kernel do its magic and create a
-# link node to that device, so this is unlikely to be a problem.
-#
-# smartmontools support SATA drives from version 5.36 on
-# (released April 2006). this function is written in June 2006,
-# and for that the version of smartctl is checked before trying
-# to access SATA drives.
-scan_hdd_sg() {
-	# detect the available data sources
-	if [ "$(type -p udevinfo)" ]; then
-		# allocate a temp file
-		local udev_info="$(mktemp /tmp/osinfo.XXXXXX)"
-		udevinfo -q all -n ${drvdev} > ${udev_info}
-	fi
-	if [ -e "/proc/scsi/" ]; then
-		local proc_info="/proc/scsi/scsi"
-		local scsi_devices="/proc/scsi/sg/devices"
-		local scsi_devstrings="/proc/scsi/sg/device_strs"
-		local usb_devstrings="/proc/scsi/usb-storage/"
-		local sg_version="/proc/scsi/sg/version"
-
-		local scsi_nr="$(sed -n "$drvnr{p;q;}" ${scsi_devices} | awk {'print $1'})"
-	fi
-	# hdparm output is not read into a temp file, as
-	# it is unlikely to be used, and that would unnecessarily
-	# slow down this function.
-
-
-	if [ "${udev_info}" ]; then
-
-		local bus="$(grep -i ID_BUS ${udev_info} | awk -F= {'print $NF'})"
-		if [ "$(echo $bus | grep usb)" ]; then
-			# USB drive detected
-
-			local drive_type='USB drive'
+			drive_type='SATA/SCSI drive'
 
 		fi
 
-		# test if the scsi_nr is found in /proc/scsi/usb-storage/
-	elif [ -e "${proc_info}" ]; then
 
-		if [ -e "${usb_devstrings}${scsi_nr}" ]; then
-			local usb_info="${usb_devstrings}/${scsi_nr}"
-			local drive_type='USB drive'
+		########
+		# Vendor
+		if [ "$smart" = "sata-ok" ]; then
+
+			# because smartctl uses its own database to report the HDD vendor,
+			# it is preferred over udev.
+			#
+			# this smart scan is not included into the scan_hdd_smart()
+			# because it would break the correct order of the report.
+
+			vendor="$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
+							awk -F: {'print $2'} | sed 's/^ *//') "
+
+		elif [ "${udev_info}" ]; then
+
+			vendor="$(grep -i vendor ${udev_info}  | \
+							awk -F= {'print $NF'}) "
+
+		elif [ -e "${proc_info}" ]; then
+
+			vendor="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+							awk {'print $1'}) "
+							#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
 		fi
 
-	else
-	# SATA/SCSI drive
 
-		local drive_type='SATA/SCSI drive'
+		#######
+		# Model
+		if  [ "${udev_info}" ]; then
 
-	fi
+			model="$(grep -i model ${udev_info} | \
+							awk -F= {'print $NF'})"
 
+		elif [ -e "${proc_info}" ]; then
 
-	########
-	# Vendor
-	if [ "$smart" = "sata-ok" ]; then
+			model="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
+							awk {'print $2" "$3'})"
 
-		# because smartctl uses its own database to report the HDD vendor,
-		# it is preferred over udev.
-		#
-		# this smart scan is not included into the scan_hdd_smart()
-		# because it would break the correct order of the report.
+		elif [ "$(type -p hdparm)" ]; then
 
-		local vendor="$(smartctl -i -d ata ${drvdev} | grep '^Model' | \
-						awk -F: {'print $2'} | sed 's/^ *//') "
-
-	elif [ "${udev_info}" ]; then
-
-		local vendor="$(grep -i vendor ${udev_info}  | \
-						awk -F= {'print $NF'}) "
-
-	elif [ -e "${proc_info}" ]; then
-
-		local vendor="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
-						awk {'print $1'}) "
-						#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
-	fi
+			model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
+							awk -F= {'print $2'})"
+		fi
 
 
-	#######
-	# Model
-	if  [ "${udev_info}" ]; then
-
-		local model="$(grep -i model ${udev_info} | \
-						awk -F= {'print $NF'})"
-
-	elif [ -e "${proc_info}" ]; then
-
-		local model="$(sed -n "$drvnr{p;q;}" "${scsi_devstrings}" | \
-						awk {'print $2" "$3'})"
-
-	elif [ "$(type -p hdparm)" ]; then
-
-		local model="$(hdparm -i ${drvdev} | grep -Eio 'Model=\w+' | \
-						awk -F= {'print $2'})"
-	fi
+		# report both vendor and model on one line
+		add_attribute	"$drive_type"		'hard_disk'
+		add_values		"$vendor$model"
 
 
-	# report both vendor and model on one line
-	add_attribute	"$drive_type"		'hard_disk'
-	add_values		"$vendor$model"
+		###############
+		# Serial number
+		add_attribute	'Serial number'
+
+		if  [ "${udev_info}" ]; then
+
+			add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
+
+		elif [ "$(type -p hdparm)" ]; then
+
+			add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
+							awk -F= {'print $2'})"
+		fi
 
 
-	###############
-	# Serial number
-	add_attribute	'Serial number'
+		########
+		# Driver
+		if [ -e "${proc_info}" ]; then
+			add_attribute	'Driver'
+			add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
+		fi
 
-	if  [ "${udev_info}" ]; then
+		#add_attribute	'DMA'
+		#add_values		"n/a" #enabled/disabled
 
-		add_values		"$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
+		if [ "$smart" = "sata-ok" ]; then
+			scan_hdd_smart ata
+		fi
 
-	elif [ "$(type -p hdparm)" ]; then
+		# cleanup
+		rm -f $udev_info
 
-		add_values		"$(hdparm -i ${drvdev} | grep -Eio 'serialno=\w+' | \
-						awk -F= {'print $2'})"
-	fi
-
-
-	########
-	# Driver
-	if [ -e "${proc_info}" ]; then
-		add_attribute	'Driver'
-		add_values		"Linux SCSI Generic (sg) v.$(cat ${sg_version})"
-	fi
-
-	#add_attribute	'DMA'
-	#add_values		"n/a" #enabled/disabled
-
-	if [ "$smart" = "sata-ok" ]; then
-		scan_hdd_smart ata
-	fi
-
-	# cleanup
-	rm -f $udev_info
-
-}
+	}
 
 
-#######################
-# SOFTWARE RAID ARRAYS
-scan_hdd_md() {
-	value_header	"todo"
+	#######################
+	# SOFTWARE RAID ARRAYS
+	scan_hdd_md() {
+		value_header	"todo"
 
-}
+	}
+
+###### END OF HDD SUBFUNCTIONS #############
 
 
 #######################

@@ -45,4 +45,11 @@ Source a file with with the interface. There should be one file for xml output, 
 * use if sentence for smartctl with IDE drives
 * parse all partition data into one line for each partition???
 
+	# there are at least two methods to parse an alphabetical seq number:
+	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
+	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
+	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
+	#
+	# to use tab as a field separator in awk:
+	# awk $'-F\t' {}
 
