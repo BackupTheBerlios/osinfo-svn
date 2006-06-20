@@ -1014,7 +1014,7 @@ Module_memory() {
 
 # INFORMATION OF CD/DVD DEVICES
 Module_cdrom() {
-	moduleName="CD/DVD drives"
+	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
 	if CheckReq_lshw && CheckReq_root; then
@@ -1027,45 +1027,54 @@ Module_cdrom() {
 		# then what's between those lines is printed to another tmp file
 		this="$(grep -n "node id=\"cdrom" $lshw_xml_file | \
 			awk -F: {'print $1'})"
-		next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
-			awk -F: {'print $1'} | sed -n "2{p;q}")"
-		((this++)) # this prevents the 'node' lines from printing
-		((next--))
 
-		# use a temp file to store cdrom information
-		sed -n "$this,$next{p;}" ${lshw_xml_file} > ${cdrom_tmp}
+		# check whether there are cdrom drives in the system..
+		if [ "$this"  ]; then 
+		
+			next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
+				awk -F: {'print $1'} | sed -n "2{p;q}")"
+			((this++)) # this prevents the 'node' lines from printing
+			((next--))
 
-		#cat $cdrom_tmp
-		#exit 0
+			# use a temp file to store cdrom information
+			sed -n "$this,$next{p;}" ${lshw_xml_file} > ${cdrom_tmp}
 
-
-		add_attribute	'Model'	'cdrom'
-		add_values		"$(grep -i product ${cdrom_tmp} | \
-						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
-
-		add_attribute	'Drive type'
-		add_values		"$(grep -i description ${cdrom_tmp} | \
-						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			#cat $cdrom_tmp
+			#exit 0
 
 
-		add_attribute	'Device node'
-		add_values		"$(grep -i 'logicalname' ${cdrom_tmp} | \
-						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			add_attribute	'Model'	'cdrom'
+			add_values		"$(grep -i product ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 
-		add_attribute	'Serial number'
-		add_values		"$(grep -i serial ${cdrom_tmp} | \
-						sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			add_attribute	'Drive type'
+			add_values		"$(grep -i description ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 
-		#add_attribute	'Capabilities'
-		#add_values		"$(grep -i capabilities ${cdrom_tmp} | \
-		#				sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			add_attribute	'Device node'
+			add_values		"$(grep -i 'logicalname' ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 
-		#value_footer
+			add_attribute	'Serial number'
+			add_values		"$(grep -i serial ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
+
+			#add_attribute	'Capabilities'
+			#add_values		"$(grep -i capabilities ${cdrom_tmp} | \
+			#				sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+
+			#value_footer
+
+		else
+
+			add_values		'No cdrom drives detected'
+
+		fi
 
 	fi
 
