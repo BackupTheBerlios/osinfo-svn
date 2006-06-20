@@ -24,7 +24,7 @@ BUGS:
 *	fix indentation in print_stdout, modules where same value has
 	multiple items are affected
 *	system memory is not properly detected
-*	su detection does not work properly inside sudo shell
+*	mod_hdd does not work properly inside sudo shell
 
 
 GENERAL NOTES:
