@@ -1,0 +1,28 @@
+          <node id="cdrom" claimed="true" class="disk" handle="IDE:ide0:hda">
+           <description>DVD writer</description>
+           <product>BENQ DVD DD DW1640</product>
+           <physid>0</physid>
+           <businfo>ide@0.0</businfo>
+           <logicalname>/dev/hda</logicalname>
+           <dev>3d:0d</dev>
+           <version>BSGB</version>
+           <serial>9JB5U150F351907675PP</serial>
+           <configuration>
+            <setting id="mode" value="udma2" />
+           </configuration>
+           <capabilities>
+            <capability id="packet" >ATAPI packet device</capability>
+            <capability id="atapi" >ATAPI</capability>
+            <capability id="cdrom" >can read CD-ROMs</capability>
+            <capability id="removable" >support is removable</capability>
+            <capability id="nonmagnetic" >support is non-magnetic (optical)</capability>
+            <capability id="dma" >Direct Memory Access</capability>
+            <capability id="lba" >Large Block Addressing</capability>
+            <capability id="iordy" >I/O ready reporting</capability>
+            <capability id="audio" >Audio CD playback</capability>
+            <capability id="cd-r" >CD-R burning</capability>
+            <capability id="cd-rw" >CD-RW burning</capability>
+            <capability id="dvd" >DVD playback</capability>
+            <capability id="dvd-r" >DVD-R burning</capability>
+           </capabilities>
+

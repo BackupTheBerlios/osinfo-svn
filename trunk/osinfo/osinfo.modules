@@ -271,7 +271,7 @@ Module_hdd() {
 			# TODO: use array for these values, no need to unset then
 
 				value_header	 ${drvdev}
-
+				
 				add_attribute	"$hdd_type"
 					add_values	"$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
 				add_attribute	'Serial number'
@@ -295,8 +295,8 @@ Module_hdd() {
 					add_values	"$hdd_tempC"
 				add_attribute	'Health Status'
 					add_values	"$hdd_health"
-# FIXME: vv
-value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
+					
+				value_header	"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# dev node
@@ -509,18 +509,6 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$smart_info")
 
-		### check the smartctl version >5.36
-		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
-			grep -Eo '[0-9]\.[0-9]+')";
-		if [ ! "$smart" ]; then
-			diff="$(bc -s <<< $version-5.36 )"
-			if [ ! "${diff:0:1}" = "-" ]; then # this is a newer version
-				smart="sata-ok"
-			else
-				smart=$version
-			fi
-		fi
-
 		smartctl -a -d $dev_type ${dev_scan} > $smart_info
 
 		hdd_smart="$(grep 'SMART support' ${smart_info} | \
@@ -631,6 +619,7 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 			fi
 
 		done
+
 	}
 
 
@@ -844,14 +833,12 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 			local scsi_devstrings="/proc/scsi/sg/device_strs"
 			local usb_devstrings="/proc/scsi/usb-storage/"
 			local sg_version="/proc/scsi/sg/version"
-
 			local scsi_nr="$(sed -n "$dev_nodenr{p;q;}" ${scsi_devices} | \
 				awk {'print $1'})"
 		fi
 		# hdparm output is not read into a temp file, as
 		# it is unlikely to be used, and that would unnecessarily
 		# slow down this function.
-
 
 		if [ "${udev_info}" ]; then
 
@@ -860,6 +847,8 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 
 				hdd_type='USB drive'
 
+			else
+				hdd_type='SATA/SCSI drive'
 			fi
 
 		# test if the scsi_nr is found in /proc/scsi/usb-storage/
@@ -870,12 +859,11 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 				hdd_type='USB drive'
 			fi
 
-		else	# SATA/SCSI drive
-
+		else	# no udev and no /proc/scsi. odd.
+		
 			hdd_type='SATA/SCSI drive'
-
+			
 		fi
-
 
 		########
 		# Vendor
@@ -944,13 +932,19 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 
 		#TODO: dma status
 
-
 		#############################
-		# scan for SMART attributes
-		if [ "$smart" = "sata-ok" ]; then
-			scan_hdd_smart ${dev_scan} ata
+		# check the smartctl version >5.36
+		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
+			grep -Eo '[0-9]\.[0-9]+')";
+		if [ ! "$smart" ]; then
+			diff="$(bc -s <<< $version-5.36 )"
+			if [ ! "${diff:0:1}" = "-" ]; then 
+			# this is a newer version which supports SATA
+			# scan for SMART attributes
+				scan_hdd_smart ${dev_scan} ata
+			fi
 		fi
-
+		
 	}
 
 
@@ -1062,10 +1056,17 @@ Module_cdrom() {
 			add_values		"$(grep -i serial ${cdrom_tmp} | \
 							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
+			# TODO
+			# Configuration: first IDE channel master
+			# etc
+
 
 			#add_attribute	'Capabilities'
-			#add_values		"$(grep -i capabilities ${cdrom_tmp} | \
-			#				sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			#add_values		"$(grep -i capabilities ${cdrom_tmp})" #| \
+							#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			# dvd-r, dvd+r, DL, etc...
+			# generally grep cd|dvd 
+			# debug with debug/lshw-dvdwriter
 
 
 			#value_footer
