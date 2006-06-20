@@ -66,7 +66,7 @@
 # mod_system should come after mod_distro
 MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
 MODULES_BSD='distro system applications terminal network'
-MODULES_LANFORCE='distro system processor network dmi devices users applications env'
+MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications env'
 MODULES_BROKEN='printers services users cdrom memory'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
@@ -339,15 +339,13 @@ value_header		"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 			### XML OUTPUT
 			else 
 
-				add_attribute	"$hdd_type"	'hard_disk'
+				add_attribute	"$hdd_type"			'hard_disk'
+				# TODO: how to break these into many lines?
 				add_values		"$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
 
+				add_attribute	"partitions"		'drive'
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-				add_attribute	"${hdd_pt_node[$hdd_pt]}"		'drive'
-				add_values		"${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]}" 
-				#add_values		"$xml_valstring"
-				#echo $xml_valstring
-				#exit 0
+					add_values		"${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]}" 
 				done
 
 			fi

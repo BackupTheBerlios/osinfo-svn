@@ -13,6 +13,7 @@ FEATURES FOR 0.4:
 	and directs them to a certain logfile, this would be user so that 
 	as the user base grows, be get new beta-testers, their errors can
 	be more easily debugged.
+*	detect system encoding
 
 
 BUGS:
