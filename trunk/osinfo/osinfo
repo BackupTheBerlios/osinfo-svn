@@ -18,6 +18,8 @@
 #  Suse 10.0
 #  SlackWare
 #
+# oldest tested bash is version 2.05.0
+#
 # and on FreeBSD 6.0
 # on x86 and amd64 architectures (desktop and laptop) with various hardware
 # configurations, ...
@@ -52,8 +54,8 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=7
-patch_version=1
+micro_version=8
+patch_version=0
 dev_status=alpha
 
 # TODO: Import xml/kdialog/normal output libs here!
@@ -75,10 +77,10 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #	exit 0;
 #fi
 
-#On *BSD, coreutils are prepended with 'g' to imply 'GNU'
-#http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 
 # AnMaster: Why do we need gseq and not seq on *BSD?
+# answer: On *BSD, coreutils are prepended with 'g' to imply 'GNU'
+# http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	function seq() {
 		gseq "$@"
@@ -86,6 +88,7 @@ if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 fi
 
 
+# initialize global variables
 isverbose=0
 isdebug=0
 usekdialog=0
@@ -253,7 +256,6 @@ function print_xml_header () {
 }
 
 function print_xml_footer () {
-
 	if [ "$lanforce" == 1 ]; then
 		lf_entity_stop | tee -a "${XMLFILE}"
 		#lf_note
@@ -359,7 +361,6 @@ function add_attribute() {
 function add_values {
 
 	# this function inserts the input string or strings into the $infostring[] array.
-	# FIXME: newline detection is broken.
 
 	# check the number of input values.
 	# modules may output a blank string, and because that is also considered
@@ -404,10 +405,10 @@ function flush_values {
 	else
 		print_lanforce_xml
 	fi
-	# FIXME: Where was infostring set?
+
 	# infostring is set at functions add_*
 	# and needs to be reset here so that the informaton
-	# from this module will not be reprinter later
+	# from this module will not be reprinted later
 	unset infostring
 }
 
@@ -633,13 +634,11 @@ function print_stdout {
 		# this is a normal value item
 		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
-
 			# test if an attribute is open,
 			# whether the last item in value_string ended with newline
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
-
-
+			# FIXME: doesn't work right. 
 			if [ "$attribute" == "open" ] && \
 				[ "${item: -1:2}" == "n" ] && \
 				[ "${value_string: -1:2}" == "t" ]; then
@@ -650,7 +649,7 @@ function print_stdout {
 					local tab_string="${tab_string}\t"
 				done
 
-				local value_string="${value_string}${tab_string}"
+				#local value_string="${value_string}${tab_string}"
 			fi
 
 
@@ -688,11 +687,7 @@ function print_stdout {
 				#fi
 
 
-
-
-
-
-			local value_string="${value_string}\t${item}\t";
+			local value_string="${value_string}${item}\t";
 
 
 		else
@@ -716,7 +711,7 @@ function print_stdout {
 
 				local item="$(sed s/%attribute%// <<< "${item}")"
 				local name=$(awk -F\; {'print $1'} <<< "${item}")
-				local value_string="${value_string}${name}";
+				local value_string="${value_string}${name}\t";
 				attribute="open"
 
 

@@ -1,11 +1,9 @@
 FEATURES for 0.3:
 
-*	fix user/root problem
-*	hard drive xml
+*	fix user/root problem *	hard drive xml
 *	su_modules - run only su modules
 *	std_modules - non-su modules
 *	system_modules - a subset of modules
-*	mod_hdd
 *	daemon mode - see daemontools
 
 
@@ -21,6 +19,7 @@ BUGS:
 -----
 
 *	mod_applications: /dev/mem: Permission denied on RH9
+*	fix indentation in print_stdout
 
 
 GENERAL NOTES:
@@ -53,11 +52,17 @@ Source a file with with the interface. There should be one file for xml output, 
 * use if sentence for smartctl with IDE drives
 * parse all partition data into one line for each partition???
 
+
+PROGRAMMING TIPS:
+
 	# there are at least two methods to parse an alphabetical seq number:
 	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
 	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
 	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
-	#
+
 	# to use tab as a field separator in awk:
 	# awk $'-F\t' {}
+
+	# instead of awk, read can sometimes be used:
+	# fdisk -l | read a b c d e partition; echo "$partition"
 
