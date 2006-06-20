@@ -6,6 +6,8 @@ FEATURES for 0.3:
 *	system_modules - a subset of modules
 *	daemon mode - see daemontools
 *	move locale from mod_system to mod_users
+*	rename all modules from 'some_module' to 'mod_some_module'
+*	meta-modules are called with ./osinfo
 
 
 FEATURES FOR 0.4:
@@ -25,6 +27,8 @@ BUGS:
 	multiple items are affected
 *	system memory is not properly detected
 *	mod_hdd does not work properly inside sudo shell
+*	mod_system should call mod_distro
+
 
 
 GENERAL NOTES:
