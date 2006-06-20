@@ -20,6 +20,7 @@ FEATURES for 0.4:
 ----------------
 
 *	detect system encoding
+*	don't display what isn't detected (without the -vv flag)
 *	module aliases
 *	mod_network: wlan
 *	mod_hdd: scan_md
@@ -29,6 +30,8 @@ FEATURES FOR 0.5:
 ----------------
 
 *	mod_hdd: scan_LVM
+*	integrate udev ruleset more tightly
+*	osinfo as a frontend for custom udev rules
 
 
 BUGS:
