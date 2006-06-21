@@ -638,7 +638,7 @@ function print_stdout {
 			# whether the last item in value_string ended with newline
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
-			# FIXME: doesn't work right. 
+			# FIXME: doesn't work right.
 			if [ "$attribute" == "open" ] && \
 				[ "${item: -1:2}" == "n" ] && \
 				[ "${value_string: -1:2}" == "t" ]; then
@@ -801,8 +801,14 @@ for modul in $cmdsnames; do
 	fi
 
 	# FIXME: breaks meta-modules
-	#validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
+	# FIX meta modules instead. And keep module list up to date...
+	validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
 	# validate_arg is called to check that the module exits at all.
+	# AnMaster: If we DON'T validate user input *and* use eval below we
+	#           are *realy* stupid. So don't comment that out.
+	#           Instead update the variable MODULES_ALL in osinfo.modules
+	#           We MUST validate the user input if we are going to use eval
+	#           otherwise someone could use that to run something evil (as root), like rm -rf /.
 
 done
 
@@ -825,10 +831,11 @@ fi
 
 # this calls the module definitions. as there are Meta-modules
 # and the actual modules, we first check if there's a Meta-module
-# of that name. in that case, it is used. 
+# of that name. in that case, it is used.
 for module in $cmdsnames; do
 
 	# FIXME: eval is evil, is there another way to do this?
+	# AnMaster: What the hell are you doing?
 	eval metamod="\${Meta_${module}}"
 
 	if [ "$(echo $metamod)" ]; then
