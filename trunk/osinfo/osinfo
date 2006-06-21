@@ -772,6 +772,7 @@ module_footer() {
 # THE "MAIN" FUNCTION
 
 # check the operating system module support etc
+# AnMaster: FIXME: Should be done *after* meta modules as well as before? moment 22...
 for modul in $cmdsnames; do
 
 	# TODO: check that the module being called is supported on the running OS
@@ -835,7 +836,8 @@ fi
 for module in $cmdsnames; do
 
 	# FIXME: eval is evil, is there another way to do this?
-	# AnMaster: What the hell are you doing for?
+	# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before? 
+	#           that would solve it.
 	eval metamod="\${Meta_${module}}"
 
 	if [ "$(echo $metamod)" ]; then

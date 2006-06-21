@@ -62,7 +62,8 @@
 #
 # can be also used as aliases on the command line,
 # but not inside another meta-module
-
+# AnMaster: I think this isn't very useful at all... Also you need to get rid of eval if you plan to use it... 
+#           Maybe a case like we do for normal modules...?
 Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services printers'
 Meta_lanforce='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
 Meta_system='distro system kernel processor'
