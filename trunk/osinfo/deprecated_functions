@@ -1,0 +1,273 @@
+Module_oem_old() {
+# OEM INFORMATION
+# deprecated, as this module has been rewritten. left here for reference.
+	moduleName="OEM information"
+	module_header "${moduleName}"
+	error_deprecated Module_oem_old osinfo.modules
+
+	if CheckReq_lshw && CheckReq_root; then
+
+		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$lshw_tmp")
+		lshw > $lshw_tmp
+
+		# principle:
+		# (1) output of lshw is stripped out of newlines, switched spaces with _ and
+		#     added %newline% to denote a value pair
+		# (2) this is put into hardware array, because bash doesn't support
+		#     two-dimensional arrays
+		# (3) a for loop then checks each array element for OUTPUT type node ID.
+		# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied,
+		#     values are sent with add_values()
+
+
+		# the verbosity of this module can be controlled by modifying the
+		# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
+
+		OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk"
+		DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
+
+		[[ "$isverbose" -eq 1 ]] &&
+		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
+
+
+		# this loop fills the $hardware[] array with entries from lshw.
+		#
+		# 1) the leading spaces are removed
+		# 2) whitespaces are converted to underscores
+		# 3) newlines are replaced by '%newline%'
+		# 4) the '*' character is the node identifier in lshw.
+		#
+		# the product of this is an array, where an item contains
+		# all information of the node parsed to a single string.
+		for node in $(seq 0 1 $(
+
+				grep '\*' ${lshw_xml_file} | wc -l
+
+				#cat ${lshw_xml_file} | sed 's/^ *//' | tr ' ' '_' | \
+				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
+
+				));	do
+
+		 #hardware_debug[$HW]="foo"
+		 #echo $HW
+		 #echo ${#hardware[@]}
+		 oem_str[$node]="$(
+
+			sed 's/^ *//g' ${lshw_xml_file} | tr ' ' '_' | \
+			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
+
+		)"
+
+		done
+
+	# then fix the first node so that the hostname isn't printed
+		oem_str[0]="-${oem_str[0]}"
+
+
+		# parse the string in a loop
+		for node in $(seq 0 1 ${#oem_str[@]}); do
+
+		# if the oem_string contains an interesting node...
+			if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
+			grep -i $OUTPUT)" ]; then # we want output
+
+			myELEMENT=1;
+
+			# then parse all elements in the array
+			while [ "$(echo ${oem_str[$node]} | \
+				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do
+
+
+			 # if the node doesn't contain info we don't want..
+				if [ ! "$(echo ${oem_str[$node]} | \
+					awk -F'%newline%' {'print $'$myELEMENT' '} | \
+					grep -i $DO_NOT_OUTPUT)" ]; then
+
+					# the oem_string is extracted into a variable
+					oem_node="$(echo ${oem_str[$node]} | \
+						awk -F'%newline%' {'print $'$myELEMENT' '})"
+
+					# then prune out the *-foo nodes
+					# and send the data to add_values()
+					if [ ! "$(echo ${oem_node} | grep '^-')" ]; then
+
+						add_attribute	"  $(echo ${oem_node} | \
+							awk -F":_" {'print $1'} | tr '_' ' ')"
+
+						add_values		"  $(echo ${oem_node} | \
+							awk -F":_" {'print $2'} | tr '_' ' ')"
+
+					fi
+
+					# 'description' values are printed as headers
+				elif [ "$(echo ${oem_str[$node]} | \
+					awk -F'%newline%' {'print $'$myELEMENT' '} | \
+					grep -i 'description')" ]; then
+
+					value_header	"$(echo ${oem_str[$node]} | \
+						awk -F'%newline%' {'print $'$myELEMENT' '} | \
+						awk -F":_" {'print $2'} | tr '_' ' ')"
+
+				fi
+
+				((myELEMENT++));
+			done
+			fi
+		done
+
+
+	fi
+
+	module_footer
+	flush_values
+}
+
+
+################################################################################
+# NOTE: THIS FUNCTION IS DEPRECATED
+# Adds a identifier and a value to "$name_value_pair_list".
+# Parameters:
+#   1 string   Name
+#   2 string   Value
+#
+# WARNING: Do NOT indent! Uses a TWO line string!
+
+name_value_pair_list=""
+k_title=""
+
+add_name_value_pair() {
+	error_deprecated add_name_value_pair osinfo
+	name_value_pair_list="${name_value_pair_list}$(echo $1$2)\n"
+	# uses a funny character '' that later will be parsed.
+	# not very sophisticated. :/
+
+
+	[ "$usekdialog" == "1" ] && let "linecount = $linecount + 1"
+
+	# kdialog is unmaintained, but left here for future revisions.
+
+	#$(echo "$1" | tr ' ' '_')Å$(echo "$2" | tr ' ' '_')"
+	# Uses "Å" (AltGr+L) because it is uncommon
+	#TODO: sed don't work with non Latin space replacement. Why?
+}
+################################################################################
+
+
+
+
+################################################################################
+# Prints "$name_value_pair_list" then empties the "$name_value_pair_list"
+# Uses colours
+# DEPRECATED
+# Uses the "column" tool
+flush_name_value_pair() {
+	error_deprecated flush_name_value_pair osinfo
+	if [ "$usexml" == 1 ]; then
+
+
+		##############################################
+		# this outputs XML
+		# Operation method: breaks value pair list into components, runs a for loop
+		# and parses the items into xml. needs a variable to aid the process.
+		# Could be better. :)
+
+
+		#### OUTER OPENING TAG
+		if [ "$value_pair_header" ]; then
+			for indent in $(seq 0 1 $XML_INDENT); do
+				echo -ne "\t" | tee -a "${XMLFILE}"
+			done
+			((XML_INDENT++))
+			echo -e "$(xml_tag_start "${value_pair_header}")" 	| tee -a "${XMLFILE}"		# open tag
+			unset value_pair_header
+		fi
+
+		unset openTag
+		#			tr -s '' '\n' | \
+		for value in $(
+			echo  -e "$name_value_pair_list" | \
+				tr -s ' ' ''
+			# TODO: is it possible to run a for loop with the whitescapes, each line only
+			# constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
+		); do
+
+		 #echo ${value}
+		 value1="$(awk -F {'print $1'} <<< "${value}")"
+		 value2="$(awk -F {'print $2'} <<< "${value}")"
+
+
+		 if [ ! "${openTag}" ]; then
+			 #echo "new tag"
+			 #echo $value1
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 done
+			 ((XML_INDENT++))
+			 echo -e "$(xml_tag_start "${value1}")" | tr '' ' '	| tee -a "${XMLFILE}"	# open tag
+			 openTag=${value1}
+
+			 if [  "${value2}" ]; then
+				 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+				 done
+				 #echo "write data"
+				 #echo $value2
+
+				 echo -e "${value2}"  | tr '' ' '		| tee -a "${XMLFILE}"	# write content
+			 fi
+
+			 #echo "close tag"
+			 #echo $value1
+			 ((XML_INDENT--))
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 done
+			 echo -e "$(xml_tag_stop "${openTag}")"  | tr '' ' '	| tee -a "${XMLFILE}"		# close tag
+			 unset openTag;
+		 fi
+
+
+		 #### OUTER CLOSING TAG
+		 if [ "$value_pair_footer" ]; then
+			 for indent in $(seq 0 1 $XML_INDENT); do echo -ne "\t" | tee -a "${XMLFILE}"
+			 done
+			 ((XML_INDENT--))
+			 echo -e "$(xml_tag_stop "${value_pair_footer}")" 	| tee -a "${XMLFILE}"		# close
+			 unset value_pair_footer
+		 fi
+
+		done
+		##############################################
+
+	elif [ "$usekdialog" -eq 1 ]; then
+
+		##############################################
+		# this outputs to KDIALOG
+		# this is completely unmaintained. doesn't work
+
+		TMPFILE="${TMPDIR:-/tmp}/${appname}.1.$$"
+		echo -e "\n$value_pair_header"
+		echo  "$name_value_pair_list" | \
+			tr '' '\t' | \
+			tr '' ' ' > $TMPFILE
+		kdialog --textbox "$TMPFILE" 600 "$linecount" --title "$k_title"
+		rm $TMPFILE
+
+	else
+
+		# FIXME: This bit doesn't work at all on Gentoo 2006.0 64-bit
+		#set -x
+		###############################################
+		# output to STDOUT
+
+		[[ "$value_pair_header" ]] && echo -e "\n$value_pair_header"
+		echo -e "$name_value_pair_list" | \
+			column -ts '' | \
+			sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/" | \
+			tr '' '\t'
+		#set +x
+	fi
+
+	unset name_value_pair_list
+	unset value_pair_header
+	linecount=0
+}
+################################################################################

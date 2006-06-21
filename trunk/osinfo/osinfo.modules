@@ -112,7 +112,6 @@ CheckReq_dmidecode() {
 ##
 # Checks if we are run as root and print a message if we are not.
 # Returns 0 if we are root and 1 if we are not.
-# TODO: Any reasons to base this on username and not $EUID?
 CheckReq_root() {
 	if [ "$EUID" != 0 ]; then
 		add_attribute	"$appname notification"
@@ -137,11 +136,8 @@ lshw_xml() {
 
 TempFiles=()
 ##
-# Cleans up some temporary files.
-#  Currently this is only $lshw_xml_file
+# Cleans up some temporary files in the TempFiles array.
 #
-# ruxpin: shouldn't this be 'rm -f osinfo.??????' ?
-# AnMaster: Um... We should store a list of temporary files we created in an array maybe?
 cleanup_temp_files() {
 	if [ "$lshw_xml_file" ]; then
 		rm -f "$lshw_xml_file"
@@ -1530,139 +1526,12 @@ Module_oem() {
 }
 
 
-Module_oem_old() {
-# OEM INFORMATION
-# deprecated, as this module has been rewritten. left here for reference.
-#AnMaster: why? you can just look at an older revision in svn. If this is not used anywhere it should be deleted before a release.
-	moduleName="OEM information"
-	module_header "${moduleName}"
-	error_deprecated Module_oem_old osinfo.modules
-
-	if CheckReq_lshw && CheckReq_root; then
-
-		lshw_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$lshw_tmp")
-		lshw > $lshw_tmp
-
-		# principle:
-		# (1) output of lshw is stripped out of newlines, switched spaces with _ and
-		#     added %newline% to denote a value pair
-		# (2) this is put into hardware array, because bash doesn't support
-		#     two-dimensional arrays
-		# (3) a for loop then checks each array element for OUTPUT type node ID.
-		# (4) another loop checks for DO_NOT_OUTPUT ; if this is satisfied,
-		#     values are sent with add_values()
-
-
-		# the verbosity of this module can be controlled by modifying the
-		# OUTPUT and DO_NOT_OUTPUT strings. the example below should be clear.
-
-		OUTPUT="$(hostname)\|cpu\|core\|firmware\|memory\|cdrom\|disk"
-		DO_NOT_OUTPUT="description\|capabilities\|configuration\|resources\|physical\|bus"
-
-		[[ "$isverbose" -eq 1 ]] &&
-		OUTPUT=$OUTPUT"\|ide\|pci\|usb"
-
-
-		# this loop fills the $hardware[] array with entries from lshw.
-		#
-		# 1) the leading spaces are removed
-		# 2) whitespaces are converted to underscores
-		# 3) newlines are replaced by '%newline%'
-		# 4) the '*' character is the node identifier in lshw.
-		#
-		# the product of this is an array, where an item contains
-		# all information of the node parsed to a single string.
-		for node in $(seq 0 1 $(
-
-				grep '\*' ${lshw_xml_file} | wc -l
-
-				#cat ${lshw_xml_file} | sed 's/^ *//' | tr ' ' '_' | \
-				#sed ':a;N;$!ba;s/\n/%node%/g' | awk -F"*" {'print NF'}
-
-				));	do
-
-		 #hardware_debug[$HW]="foo"
-		 #echo $HW
-		 #echo ${#hardware[@]}
-		 oem_str[$node]="$(
-
-			sed 's/^ *//g' ${lshw_xml_file} | tr ' ' '_' | \
-			sed ':a;N;$!ba;s/\n/%newline%/g' | awk -F"*" {'print $('$node'+1) '}
-
-		)"
-
-		done
-
-	# then fix the first node so that the hostname isn't printed
-		oem_str[0]="-${oem_str[0]}"
-
-
-		# parse the string in a loop
-		for node in $(seq 0 1 ${#oem_str[@]}); do
-
-		# if the oem_string contains an interesting node...
-			if [ "$(echo ${oem_str[$node]} | awk -F'%newline%' {'print $1'} | \
-			grep -i $OUTPUT)" ]; then # we want output
-
-			myELEMENT=1;
-
-			# then parse all elements in the array
-			while [ "$(echo ${oem_str[$node]} | \
-				awk -F'%newline%' {'print NF'})" -gt "$myELEMENT" ]; do
-
-
-			 # if the node doesn't contain info we don't want..
-				if [ ! "$(echo ${oem_str[$node]} | \
-					awk -F'%newline%' {'print $'$myELEMENT' '} | \
-					grep -i $DO_NOT_OUTPUT)" ]; then
-
-					# the oem_string is extracted into a variable
-					oem_node="$(echo ${oem_str[$node]} | \
-						awk -F'%newline%' {'print $'$myELEMENT' '})"
-
-					# then prune out the *-foo nodes
-					# and send the data to add_values()
-					if [ ! "$(echo ${oem_node} | grep '^-')" ]; then
-
-						add_attribute	"  $(echo ${oem_node} | \
-							awk -F":_" {'print $1'} | tr '_' ' ')"
-
-						add_values		"  $(echo ${oem_node} | \
-							awk -F":_" {'print $2'} | tr '_' ' ')"
-
-					fi
-
-					# 'description' values are printed as headers
-				elif [ "$(echo ${oem_str[$node]} | \
-					awk -F'%newline%' {'print $'$myELEMENT' '} | \
-					grep -i 'description')" ]; then
-
-					value_header	"$(echo ${oem_str[$node]} | \
-						awk -F'%newline%' {'print $'$myELEMENT' '} | \
-						awk -F":_" {'print $2'} | tr '_' ' ')"
-
-				fi
-
-				((myELEMENT++));
-			done
-			fi
-		done
-
-
-	fi
-
-	module_footer
-	flush_values
-}
-
-
 # GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
 	moduleName="System"
 	module_header "${moduleName}"
 
-	add_attribute "Operating system"			"os"
+	add_attribute "Operating system"		"os"
 	add_values    "$distro_id $(uname -s) $distro_release"
 
 	add_attribute "Operating system kernel"	"os_build"
@@ -1673,9 +1542,6 @@ Module_system() {
 
 	add_attribute "Machine hardware name"	"system_type"
 	add_values    "$(uname -m)"
-
-	add_attribute "System locale"
-	add_values    "$LC_ALL"
 
 	add_attribute "System uptime"			"uptime"
 	add_values    "$(uptime | awk -F, {'print $1'} | \
@@ -1846,8 +1712,11 @@ Module_users() {
 
 
 	add_attribute	"User's X11 session"	"users_window_manager"
-	# KDE sets $DESKTOP_SESSION nicely, but Gnome doesn't.
+	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 	# AnMaster: KDE doesn't set that for me (in konsole at least)
+	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
+	# any ideas where else to look?
+
 	local session_id="$DESKTOP_SESSION"
 	if [ "$session_id" == "default" ]; then
 		if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
@@ -1861,6 +1730,10 @@ Module_users() {
 
 	add_attribute	"User's shell"
 	add_values		"$SHELL"
+
+
+	add_attribute	"User's locale"
+	add_values		"$LC_ALL"
 
 
 	add_attribute	'Last logged in user'	"last_logged_user"
