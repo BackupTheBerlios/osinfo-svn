@@ -397,14 +397,14 @@ Module_hdd() {
 	# CALCULATES THE TOTAL DISK USAGE OF A DRIVE
 	#
 	# Sets variables:
-	#	hdd_used[]           # total used space in kB
-	#	hdd_free[]           # total free   - " -
-	#	hdd_used_pc[]        # ratio of used/total capacity
-	#	hdd_free_pc[]        # ratio of free/total capacity
-	#	hdd_mnt_pc[]         # ratio of mounted/total disk capacity
-	#	hdd_mnt_free_pc[]    # ratio of free/used on mounted
-	#	hdd_mnt_used_pc[]    # ratio of used/free on mounted
-	#	hdd_mnt_capacity[]   # total capacity in mounted partitions
+	#  hdd_used[]           # total used space in kB
+	#  hdd_free[]           # total free   - " -
+	#  hdd_used_pc[]        # ratio of used/total capacity
+	#  hdd_free_pc[]        # ratio of free/total capacity
+	#  hdd_mnt_pc[]         # ratio of mounted/total disk capacity
+	#  hdd_mnt_free_pc[]    # ratio of free/used on mounted
+	#  hdd_mnt_used_pc[]    # ratio of used/free on mounted
+	#  hdd_mnt_capacity[]   # total capacity in mounted partitions
 	#
 	calculate_hdd_usage() {
 	
@@ -465,12 +465,12 @@ Module_hdd() {
 	# geometry and capacity
 	#
 	# Sets variables:
-	#	hdd_geometry
-	#	hdd_capacity_label	is the value given by the vendor
-	#	hdd_capacity			is the true capacity of the drive
+	#  hdd_geometry
+	#  hdd_capacity_label	is the value given by the vendor
+	#  hdd_capacity			is the true capacity of the drive
 	#
 	# Parameters:
-	#	(1) drive device
+	#  (1) drive device
 	#
 	scan_hdd_common() {
 
@@ -498,8 +498,8 @@ Module_hdd() {
 	# for ide drives this is not a problem.
 	#
 	# Parameters:
-	#	(1) drive device
-	#	(2) device type (man smartctl for details)
+	#  (1) drive device
+	#  (2) device type (man smartctl for details)
 	#
 	scan_hdd_smart() {
 
@@ -537,20 +537,20 @@ Module_hdd() {
 	# hdd_pt_ID, which should be used to identify the parameters of the
 	# partition in hdd_pt_node[hdd_pt_ID]. the arrays this function creates:
 	#
-	# 	hdd_pt_ID         # this is an internal reference number
-	#	hdd_pt_node[]     # partition devfs/udev node, e.g. "/dev/hda1"
-	#	hdd_pt_blocks[]   # size of the partition in 1 kB blocks
-	#	hdd_pt_capacity[] # capacity of the partition  - " -
-	#	hdd_pt_used[]     # used space  - " -
-	#	hdd_pt_free[]     # free space  - " -
-	#	hdd_pt_used_pc[]  # used space in percentage, e.g. "84.5%"
-	#	hdd_pt_free_pc[]  # free space in percentage
-	#	hdd_pt_mp[]       # mount point
-	#	hdd_pt_fs[]       # filesystem type
-	#	hdd_pt_fs_size[]  # space allocated by the filesystem
+	#  hdd_pt_ID         # this is an internal reference number
+	#  hdd_pt_node[]     # partition devfs/udev node, e.g. "/dev/hda1"
+	#  hdd_pt_blocks[]   # size of the partition in 1 kB blocks
+	#  hdd_pt_capacity[] # capacity of the partition  - " -
+	#  hdd_pt_used[]     # used space  - " -
+	#  hdd_pt_free[]     # free space  - " -
+	#  hdd_pt_used_pc[]  # used space in percentage, e.g. "84.5%"
+	#  hdd_pt_free_pc[]  # free space in percentage
+	#  hdd_pt_mp[]       # mount point
+	#  hdd_pt_fs[]       # filesystem type
+	#  hdd_pt_fs_size[]  # space allocated by the filesystem
 	#
 	# Parameters:
-	#	(1) drive device
+	#  (1) drive device
 	#
 	scan_hdd_partitions() {
 
@@ -632,8 +632,8 @@ Module_hdd() {
 	# MAKES HDD SIZE REPORTS HUMAN-READABLE
 	#
 	# Parameters:
-	#	(1) input value in kB
-	#	(2) significant digits _after_ decimal, default 1
+	#  (1) input value in kB
+	#  (2) significant digits _after_ decimal, default 1
 	#
 	hdd_human_readable() {
 
@@ -645,8 +645,7 @@ Module_hdd() {
 			local digits="${2}"
 		fi
 
-
-		#	dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
+		# dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
 		case $(bc -s <<< ${value}/1024 | wc -m ) in
 			'1'|'2'|'3'|'4')
 				local dim='MB'
@@ -690,9 +689,9 @@ Module_hdd() {
 	# udevinfo, /proc/ide/, smartmontools and hdparm are used as the data source.
 	#
 	# Parameters:
-	#	(1) drive device
-	#	(2) drive node in the /dev/ tree
-	#	(3) the node number in the bus
+	#  (1) drive device
+	#  (2) drive node in the /dev/ tree
+	#  (3) the node number in the bus
 	#
 	scan_hdd_ide() {
 
@@ -818,9 +817,9 @@ Module_hdd() {
 	# to access SATA drives.
 	#
 	# Parameters:
-	#	(1) drive device
-	#	(2) drive node in the /dev/ tree
-	#	(3) the node number in the bus
+	#  (1) drive device
+	#  (2) drive node in the /dev/ tree
+	#  (3) the node number in the bus
 	#
 	scan_hdd_sata() {
 
@@ -957,9 +956,9 @@ Module_hdd() {
 	#######################
 	# SOFTWARE RAID ARRAYS
 	# Parameters:
-	#	(1) drive device
-	#	(2) drive node in the /dev/ tree
-	#	(3) the node number in the bus
+	#  (1) drive device
+	#  (2) drive node in the /dev/ tree
+	#  (3) the node number in the bus
 	#
 	scan_hdd_raid() {
 		value_header	"todo"
@@ -1681,7 +1680,7 @@ Module_printers() {
 	# first of all, check if lpstat is available
 	if [ "$(type -p lpstat)" ]; then
 
-		#	if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
+		#  if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
 
 		add_attribute		'Printer'	'local_printer'
 
@@ -1783,19 +1782,22 @@ Module_users() {
 
 # http://linuxhelp.blogspot.com/2006/04/enabling-and-disabling-services-during_01.html
 
-# Gentoo: 
-#	rc-status
+# Gentoo (and Gentoo based):
+#  rc-status
 
 # Fedora & RedHat, Suse:
-#	/sbin/service --status-all
-#	chkconfig --list
+#  /sbin/service --status-all
+#  chkconfig --list
 
 # Ubuntu/Debian:
-#	sysv-init
-#	'runlevel' gives to values: "previous current", grep on the current
+#  sysv-init
+#  'runlevel' gives to values: "previous current", grep on the current
 
 # Slackware:
-#	not scripted?
+#  not scripted?
+#  AnMaster: wrong. But to change what services are started you edit the bootscripts (written in bash).
+#  (there are 7 or 8 IIRC, one for each runlevel, 1 for kernel modules to load, 1 for local and 1 for system startup)
+#  There is no sane way to get "running services" from Slackware (at least last time I used Slackware: 9.0 I think).
 Module_services() {
 
 	moduleName="Services"
