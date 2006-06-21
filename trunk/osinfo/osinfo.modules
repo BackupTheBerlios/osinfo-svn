@@ -974,7 +974,6 @@ Module_hdd() {
 # free RAM, but slightly incorrect number because it's the total
 # ram after kernel has allocated some for system services.
 #
-#
 # requires root access
 Module_memory() {
 	moduleName="System memory"
@@ -1006,7 +1005,8 @@ Module_memory() {
 }
 
 
-# INFORMATION OF CD/DVD DEVICES
+##################
+# CD/DVD DEVICES
 Module_cdrom() {
 	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
@@ -1014,47 +1014,63 @@ Module_cdrom() {
 	if CheckReq_lshw && CheckReq_root; then
 		lshw_xml
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$cdrom_tmp")
+		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$udev_tmp")
 
 		# this gets the line number of the wanted node from lshw '$this'
 		# and the line number of the next node '$next'
 		# then what's between those lines is printed to another tmp file
-		this="$(grep -n "node id=\"cdrom" $lshw_xml_file | \
+		first_node="$(grep -n "node id=\"cdrom" $lshw_xml_file | \
 			awk -F: {'print $1'})"
 
 		# check whether there are cdrom drives in the system..
-		if [ "$this"  ]; then 
+		if [ "$first_node"  ]; then 
 		
-			next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
+			# TODO: detect how many drives. atm it only supports one drive.
+			local ID=1
+
+			# do a for loop here by ID
+
+			next_node="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
 				awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((this++)) # this prevents the 'node' lines from printing
-			((next--))
+			((first_node++)) # this prevents the 'node' lines from printing
+			((next_node--))
 
 			# use a temp file to store cdrom information
-			sed -n "$this,$next{p;}" ${lshw_xml_file} > ${cdrom_tmp}
+			sed -n "$first_node,$next_node{p;}" ${lshw_xml_file} > ${cdrom_tmp}
+
+			# collect information
+
+			cdrom_model[$ID]="$(grep -i product ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+			cdrom_type[$ID]="$(grep -i description ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+			cdrom_type[$ID]="$(grep -i serial ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+			cdrom_node[$ID]="$(grep -i 'logicalname' ${cdrom_tmp} | \
+							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			
+			#udevinfo -q all -n "${cdrom_node[$ID]}" > ${udev_tmp}
 
 			#cat $cdrom_tmp
 			#exit 0
 
-
+			
 			add_attribute	'Model'	'cdrom'
-			add_values		"$(grep -i product ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
+			add_values		"${cdrom_model[$ID]}"
 
 			add_attribute	'Drive type'
-			add_values		"$(grep -i description ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			add_values		"${cdrom_type[$ID]}"
 
 
 			add_attribute	'Device node'
-			add_values		"$(grep -i 'logicalname' ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
+			add_values		"${cdrom_node[$ID]}"
 
 			add_attribute	'Serial number'
-			add_values		"$(grep -i serial ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			add_values		"${cdrom_type[$ID]}"
 
 			# TODO
 			# Configuration: first IDE channel master

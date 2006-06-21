@@ -32,6 +32,14 @@ FEATURES FOR 0.5:
 *	mod_hdd: scan_LVM
 *	integrate udev ruleset more tightly
 *	osinfo as a frontend for custom udev rules
+*	mod_cdrom: several drives are supported
+
+
+LATER FEATURES:
+--------------
+
+*	general usb device detection: cameras etc
+*	hal/dbus stuff
 
 
 BUGS:
