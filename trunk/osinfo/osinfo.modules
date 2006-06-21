@@ -1709,7 +1709,8 @@ Module_users() {
 	moduleName="Users"
 	module_header "${moduleName}"
 
-	add_attribute	'Current user'			"current_user"
+	value_header	'Current user'
+	add_attribute	"Unix name"				'active_user'
 	add_values		"$(whoami)"
 
 
@@ -1742,11 +1743,14 @@ Module_users() {
 	add_values		"$LC_ALL"
 
 
-	add_attribute	'Last logged in user'	"last_logged_user"
+	value_footer
+	value_header	'Last logged in user'
+	[ $usexml = 1 ] &&	add_attribute	'Last login' "last_logged_user"
 	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
+	value_footer
 
-
-	add_attribute	'All users'				"users"
+	value_header	'\nAll users\t\tlast login'
+	[ $usexml = 1 ] &&	add_attribute	'All users' "users"
 	# because 'last' command, part of sysvinit core package,
 	# interprets the binary file /var/log/wtmp, but chomps off
 	# the loginname at 9 characters, we need to find the full names

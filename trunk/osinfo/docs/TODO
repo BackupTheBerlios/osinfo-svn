@@ -47,7 +47,7 @@ BUGS:
 *	mod_hdd does not work properly inside sudo shell
 *	mod_system should call mod_distro
 *	mod_hdd doesn't work on fedora!
-*	with meta-modules, the submodules also output; duplicates
+*	module_footer doesn't produce </moduleName> tag
 
 
 
