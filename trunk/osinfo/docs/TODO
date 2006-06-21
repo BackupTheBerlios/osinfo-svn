@@ -15,12 +15,12 @@ FEATURES for 0.4:
 
 *	detect system encoding
 *	don't display what isn't detected (without the -vv flag)
-*	module aliases
 *	mod_network: wlan
 *	fix: user/root problem
 *	su_modules - run only su modules
 *	std_modules - non-su modules
 *	mod_hdd: scan_md
+*	mod_cdrom: several drives are supported
 
 
 FEATURES FOR 0.5:
@@ -29,7 +29,6 @@ FEATURES FOR 0.5:
 *	mod_hdd: scan_LVM
 *	integrate udev ruleset more tightly
 *	osinfo as a frontend for custom udev rules
-*	mod_cdrom: several drives are supported
 
 
 LATER FEATURES:
@@ -47,6 +46,8 @@ BUGS:
 	multiple items are affected
 *	mod_hdd does not work properly inside sudo shell
 *	mod_system should call mod_distro
+*	mod_hdd doesn't work on fedora!
+*	with meta-modules, the submodules also output; duplicates
 
 
 

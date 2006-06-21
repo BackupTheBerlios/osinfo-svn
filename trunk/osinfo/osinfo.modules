@@ -1569,7 +1569,7 @@ Module_kernel() {
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
 		kernel_makefile="/usr/src/linux/Makefile"
-	elif [ "$(ls /usr/src/linux*)" ]; then
+	elif [ "$(ls /usr/src/linux* 2> /dev/null)" ]; then
 		kernel_makefile="/usr/src/linux*/Makefile"
 	fi
 	if [ -e "${kernel_makefile}" ]; then
@@ -1786,17 +1786,15 @@ Module_users() {
 
 # Slackware:
 #	not scripted?
-
-# EXPERIMENTAL!
 Module_services() {
 
 	moduleName="Services"
 	module_header "${moduleName}"
 
 		# these functions handle scanning, they'll echo output
-		if [ "$(type -p rc-update)" ]; then
+		if [ "$(type -p rc-status)" ]; then
 			# Gentoo
-			local services="$(scan_services_rc-update)"
+			local services="$(scan_services_rc-status)"
 
 		elif [ "$(type -p sysv-rc-conf)" ]; then
 			# Debian and Ubuntu, if they've got the package
@@ -1829,21 +1827,29 @@ Module_services() {
 # 
 
 	# this script is used on gentoo
-	scan_services_rc-update() {
+	scan_services_rc-status() {
 	
-		echo foo bar baz
+		echo $(rc-status | awk '/started/{print $1}')
 
 	}
 
-	scan_services_sysv-rc-conf() {
-	
-		echo foo bar baz
+	# this works on debian-based systems, probably on many others as well
+	scan_services_sysv() {
+
+		local runlevel=$(runlevel | awk {'print $2'})
+
+		echo $(sysv-rc-conf --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}')
 
 	}
 
 	scan_services_chkconfig() {
+
+		# similar to sysv-rc-conf
+		# works on rpm-based systems
 	
-		echo foo bar baz
+		local runlevel=$(runlevel | awk {'print $2'})
+
+		echo $(chkconfig --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}')
 
 	}
 
