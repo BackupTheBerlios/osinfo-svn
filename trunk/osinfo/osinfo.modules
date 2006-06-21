@@ -60,14 +60,17 @@
 
 ## META-MODULES
 #
-# the order of modules inside this varibale here is important,
-# because some global variables are collected by some modules and used by others.
-#
-# mod_system should come after mod_distro
+# can be also used as aliases
+
+Meta_system='distro system kernel processor'
+Meta_cpu='processor'
+Meta_apps='applications'
+Meta_net='network'
+
 MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
 MODULES_BSD='distro system applications terminal network'
 MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications env'
-MODULES_BROKEN='printers services users cdrom memory'
+MODULES_BROKEN='services'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
@@ -1064,7 +1067,6 @@ Module_cdrom() {
 
 			add_attribute	'Drive type'
 			add_values		"${cdrom_type[$ID]}"
-
 
 			add_attribute	'Device node'
 			add_values		"${cdrom_node[$ID]}"

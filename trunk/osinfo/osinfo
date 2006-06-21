@@ -918,9 +918,13 @@ module_footer() {
 
 
 
-#################
-# "main" function
+#######################
+# THE "MAIN" FUNCTION
 for modul in $cmdsnames; do
+
+	#case $modul in
+
+	#esac
 
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
@@ -938,9 +942,10 @@ for modul in $cmdsnames; do
 		break;
 	fi
 
-	validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
-	# why is validate_arg called?
-	# AnMaster: To check that the module exits at all.
+	#validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
+	# validate_arg is called to check that the module exits at all.
+	# FIXME: breaks meta-modules
+
 done
 
 if [ "$prefix" != '/' ] ; then
@@ -959,30 +964,29 @@ if [ "$usexml" == 1 ]; then
 	print_xml_header
 fi
 
-# TODO: Check that there are any modules given here and if not run PRINT_Help.
-# TODO: And that no module is given more than once.
-for modul in $cmdsnames; do
 
-	case $modul in
-		#		uname)              eval "Module_Cmd_${modul}";;
-		terminal|\
-		network|\
-		distro|\
-		devices|\
-		users|\
-		processor|\
-		system|\
-		services|\
-		hdd|\
-		printers|\
-		oem|\
-		dmi|\
-		memory|\
-		cdrom|\
-		kernel|\
-		env|\
-		applications) Module_${modul};;
-	esac
+# this calls the module definitions. as there are Meta-modules
+# and the actual modules, we first check if there's a Meta-module
+# of that name. in that case, it is used. 
+for module in $cmdsnames; do
+
+	if [ "\${Meta_${module}}" ]; then
+	
+		# FIXME: eval is evil, is there another way to do this?
+		eval metamod="\${Meta_${module}}"
+
+		for submodule in $metamod; do
+
+			Module_${submodule}
+
+		done
+
+	else
+
+		Module_${module}
+
+	fi
+
 done
 
 #[ "$usekdialog" -ne 1 ]  #&& print_line
