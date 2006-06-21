@@ -786,17 +786,17 @@ for modul in $cmdsnames; do
 
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
-			cmdsnames="$MODULES_LINUX"
+			#cmdsnames="$MODULES_LINUX"
 			break;
 		# TODO: please check if this works on bsd and old bash
 		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
-			cmdsnames="$MODULES_BSD"
+			#cmdsnames="$MODULES_BSD"
 			break;
 		fi
 	elif [ $modul = 'lanforce' ]; then
 		lanforce=1
 		usexml=1
-		cmdsnames="$MODULES_LANFORCE"
+		#cmdsnames="$MODULES_LANFORCE"
 		break;
 	fi
 

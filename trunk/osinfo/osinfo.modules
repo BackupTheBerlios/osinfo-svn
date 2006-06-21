@@ -60,17 +60,22 @@
 
 ## META-MODULES
 #
-# can be also used as aliases
+# can be also used as aliases on the command line,
+# but not inside another meta-module
 
+Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services printers'
+Meta_lanforce='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
 Meta_apps='applications'
 Meta_net='network'
 
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services'
+# these are used to control run access
+
+MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services printers'
 MODULES_BSD='distro system applications terminal network'
-MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
+MODULES_LANFORCE=''
 MODULES_BROKEN=''
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
