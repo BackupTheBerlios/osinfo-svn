@@ -68,11 +68,11 @@ Meta_apps='applications'
 Meta_net='network'
 
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
+MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services'
 MODULES_BSD='distro system applications terminal network'
-MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications env'
-MODULES_BROKEN='services'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi'
+MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
+MODULES_BROKEN=''
+MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
 MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users'
@@ -1044,10 +1044,10 @@ Module_cdrom() {
 			cdrom_model[$ID]="$(grep -i product ${cdrom_tmp} | \
 							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
-			cdrom_type[$ID]="$(grep -i description ${cdrom_tmp} | \
+			cdrom_type[$ID]="$(grep -i descr ${cdrom_tmp} | \
 							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
-			cdrom_type[$ID]="$(grep -i serial ${cdrom_tmp} | \
+			cdrom_serial[$ID]="$(grep -i serial ${cdrom_tmp} | \
 							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			cdrom_node[$ID]="$(grep -i 'logicalname' ${cdrom_tmp} | \
@@ -1069,7 +1069,7 @@ Module_cdrom() {
 			add_values		"${cdrom_node[$ID]}"
 
 			add_attribute	'Serial number'
-			add_values		"${cdrom_type[$ID]}"
+			add_values		"${cdrom_serial[$ID]}"
 
 			# TODO
 			# Configuration: first IDE channel master
