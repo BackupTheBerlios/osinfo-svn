@@ -67,6 +67,7 @@ Meta_cpu='processor'
 Meta_apps='applications'
 Meta_net='network'
 
+
 MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users'
 MODULES_BSD='distro system applications terminal network'
 MODULES_LANFORCE='distro system processor memory network dmi hdd devices cdrom users printers applications env'
@@ -1770,27 +1771,86 @@ Module_users() {
 ###########################
 # SYSTEM SERVICES (daemons)
 
+# http://linuxhelp.blogspot.com/2006/04/enabling-and-disabling-services-during_01.html
+
+# Gentoo: 
+#	rc-status
+
+# Fedora & RedHat, Suse:
+#	/sbin/service --status-all
+#	chkconfig --list
+
+# Ubuntu/Debian:
+#	sysv-init
+#	'runlevel' gives to values: "previous current", grep on the current
+
+# Slackware:
+#	not scripted?
+
 # EXPERIMENTAL!
 Module_services() {
 
-
-	# Gentoo: rc-status
-
-	# Fedora: /sbin/service --status-all
-	#         chkconfig --list
-
-	# Ubuntu:
-
 	moduleName="Services"
 	module_header "${moduleName}"
+
+		# these functions handle scanning, they'll echo output
+		if [ "$(type -p rc-update)" ]; then
+			# Gentoo
+			local services="$(scan_services_rc-update)"
+
+		elif [ "$(type -p sysv-rc-conf)" ]; then
+			# Debian and Ubuntu, if they've got the package
+			local services="$(scan_services_sysv)"
+			
+		elif [ "$(type -p chkconfig)" ]; then
+			# Red Hat, Fedora Core, SuSE
+			local services="$(scan_services_chkconfig)"
+		fi
+
+
+		# attribute only for xml
+		if [ $usexml = 1 ]; then
+			add_attribute	'Services'	'service'
+		fi
+
+
+		# then report what scan found
+		for srv in $services; do
+			add_values	"$srv\n"
+		done
 
 
 	module_footer
 	flush_values
 }
 
+#################################
+### SERVICE MODULE SUBFUNCTIONS
+# 
 
-#######################
+	# this script is used on gentoo
+	scan_services_rc-update() {
+	
+		echo foo bar baz
+
+	}
+
+	scan_services_sysv-rc-conf() {
+	
+		echo foo bar baz
+
+	}
+
+	scan_services_chkconfig() {
+	
+		echo foo bar baz
+
+	}
+
+#################################
+
+
+##########
 # NETWORK
 #
 # this module detects the network settings of the computer.
@@ -2186,7 +2246,9 @@ Module_applications() {
 	fi
 
 	## Write the header for output
-	add_attribute "Applications\n" 'software'
+	if [ $usexml = 1 ]; then
+		add_attribute "Applications" 'software'
+	fi
 
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
 	## Process all applications

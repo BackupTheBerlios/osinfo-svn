@@ -1,14 +1,8 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	fix: user/root problem
-*	su_modules - run only su modules
-*	std_modules - non-su modules
+
 *	daemon mode - see daemontools
-*	move locale from mod_system to mod_users
-*	rename all modules from 'some_module' to 'mod_some_module'
-*	meta-modules are called with ./osinfo
-*	value_header: should output \n before the header
 *	fix: system memory is not properly detected
 *	general --debug switch that turns on traceback calls and 'set -x'
 	and directs them to a certain logfile, this would be user so that 
@@ -23,6 +17,9 @@ FEATURES for 0.4:
 *	don't display what isn't detected (without the -vv flag)
 *	module aliases
 *	mod_network: wlan
+*	fix: user/root problem
+*	su_modules - run only su modules
+*	std_modules - non-su modules
 *	mod_hdd: scan_md
 
 

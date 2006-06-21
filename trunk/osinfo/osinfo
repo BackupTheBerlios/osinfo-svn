@@ -770,16 +770,26 @@ module_footer() {
 
 #######################
 # THE "MAIN" FUNCTION
+
+# check the operating system module support etc
 for modul in $cmdsnames; do
 
-	# TODO: move to meta-modules
+	# TODO: check that the module being called is supported on the running OS
+	# this is the place to put all env variables to be set for some module
+
+	# TODO: something like this...shouldn't burden the script too much
+	# with excessive loops
+	#allowed_modules=''
+	#if ! CheckReq_root; then
+	#	allowed_modules=$MODULES_ALL-$MODULES_SU_ONLY
+	#fi
 
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
 			cmdsnames="$MODULES_LINUX"
 			break;
 		# TODO: please check if this works on bsd and old bash
-		elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
+		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 			cmdsnames="$MODULES_BSD"
 			break;
 		fi
@@ -790,9 +800,9 @@ for modul in $cmdsnames; do
 		break;
 	fi
 
+	# FIXME: breaks meta-modules
 	#validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
 	# validate_arg is called to check that the module exits at all.
-	# FIXME: breaks meta-modules
 
 done
 
