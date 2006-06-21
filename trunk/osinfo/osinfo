@@ -345,24 +345,20 @@ function value_footer() {
 }
 
 
+# This function inserts the input string(s) as the last available item
+# in the $infostring array, with a field delimiter of ";".
+# it also adds an %attribute% tag which will be use by print_* functions
+# to interpret how to parse the string.
+# Parameters:
+#  1 free-form name    (eg. Operating system)   (required)
+#  2 code tag for xml  (eg. os)                 (optional)
 function add_attribute() {
-
-	# parameters:
-	#	1 free-form name    (eg. Operating system)   (required)
-	#	2 code tag for xml  (eg. os)                 (optional)
-
-	# this function inserts the input string(s) as the last available item
-	# in the $infostring array, with a field delimiter of ";".
-	# it also adds an %attribute% tag which will be use by print_* functions
-	# to interpret how to parse the string.
-
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
+# This function inserts the input string or strings into the $infostring[] array.
 function add_values {
-
-	# this function inserts the input string or strings into the $infostring[] array.
 
 	# check the number of input values.
 	# modules may output a blank string, and because that is also considered
@@ -421,16 +417,15 @@ function flush_values {
 # this set of functions formulates the items in $infostring for output.
 # detailed information is given in each function.
 
+
+# This function loops the $infostring and does the following steps
+# for each item:
+#  1 test if item does not begin with '%' => print value; next
+#  2 if there is an attribute tag open => close it
+#  3 if the item begins with %attribute% => print attribute ; next
+#  4 if the item begins with %header% => print header ; next
+#  5 if the item begins with %footer% => print footer ; next
 function print_xml {
-
-	# this function loops the $infostring and does the following steps
-	# for each item:
-	#  1 test if item does not begin with '%' => print value; next
-	#  2 if there is an attribute tag open => close it
-	#  3 if the item begins with %attribute% => print attribute ; next
-	#  4 if the item begins with %header% => print header ; next
-	#  5 if the item begins with %footer% => print footer ; next
-
 	local itemnr item name code attribute header
 
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
@@ -525,15 +520,14 @@ function print_xml {
 }
 
 
+# This functions prepares the output xml to conform to the LanForce dtd.
+# LanForce is a commercial company who hired a dev to do this script 
+# and that dev continued on an existing script.
+# works pretty much the same as print_xml()
 function print_lanforce_xml {
-
-	# this functions prepares the output xml to conform to the LanForce dtd.
-	# LanForce is a commercial company who hired a dev to do this script :)
-	# works pretty much the same as print_xml()
-
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 
-		local item="${infostring[$itemnr]}"
+		local item="${infostring[$itemnr]}" attribute code
 
 		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
@@ -587,23 +581,20 @@ function print_lanforce_xml {
 
 }
 
-
+# This function formulates $infostring for stdout
+# header tags are printed; attribute names are printed;
+# values for each attribute are printed on the same line
+# separated with a tab.
+#
+# $value_string is formulated in the following steps:
+#  1 Test if item does not begin with '%' => add value + tab to string; next
+#  2 If there is an attribute tag open => add newline to string
+#  3 If the item begins with %attribute% => add attribute + tab to string
+#    If there is a need to add more tabs for indentation, add tabs ; next
+#  4 If the item begins with %header% => add header + newline to string; next
+#
+#  Finally $value_string is printed at once.
 function print_stdout {
-
-	# this function formulates $infostring for stdout
-	# header tags are printed; attribute names are printed;
-	# values for each attribute are printed on the same line
-	# separated with a tab.
-
-	# $value_string is formulated in the following steps:
-	#	1 test if item does not begin with '%' => add value + tab to string; next
-	#	2 if there is an attribute tag open => add newline to string
-	#	3 if the item begins with %attribute% => add attribute + tab to string
-	#		if there is a need to add more tabs for indentation, add tabs ; next
-	#	4 if the item begins with %header% => add header + newline to string; next
-
-	# finally $value_string is printed at once.
-
 
 	# Get tabsize dynamically
 	TABSIZE=$(tput it)
