@@ -1762,7 +1762,7 @@ Module_users() {
 		if [ ${#user} -ge 8 ]; then
 			# parse special chars to meta-chars
 			user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-			add_values	"$(grep -Eoa "$user[a-zA-Z+]*" ${wtmp_file} | uniq)\n"
+			add_values	"$(grep -Eoa "$user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)\n"
 		else
 			add_values	"$user\n"
 		fi
@@ -1834,7 +1834,7 @@ Module_services() {
 	# this script is used on gentoo
 	scan_services_rc-status() {
 	
-		echo $(rc-status | awk '/started/{print $1}')
+		echo $(rc-status | awk '/started/{print $1}' | sort)
 
 	}
 
@@ -1843,7 +1843,7 @@ Module_services() {
 
 		local runlevel=$(runlevel | awk {'print $2'})
 
-		echo $(sysv-rc-conf --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}')
+		echo $(sysv-rc-conf --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}' | sort)
 
 	}
 
@@ -1854,7 +1854,7 @@ Module_services() {
 	
 		local runlevel=$(runlevel | awk {'print $2'})
 
-		echo $(chkconfig --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}')
+		echo $(chkconfig --list 2> /dev/null | awk '/'$runlevel'\:on/{print $1}' | sort)
 
 	}
 
