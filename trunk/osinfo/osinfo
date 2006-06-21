@@ -835,7 +835,7 @@ fi
 for module in $cmdsnames; do
 
 	# FIXME: eval is evil, is there another way to do this?
-	# AnMaster: What the hell are you doing?
+	# AnMaster: What the hell are you doing for?
 	eval metamod="\${Meta_${module}}"
 
 	if [ "$(echo $metamod)" ]; then
