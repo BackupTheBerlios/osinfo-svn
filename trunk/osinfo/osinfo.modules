@@ -667,6 +667,7 @@ Module_hdd() {
 			*)
 				local dim='kB'
 				local denominator="1"
+				;;
 		esac
 
 		local hdd_val="$(bc -s <<< scale=$digits\;${value}/${denominator}) $dim"
