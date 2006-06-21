@@ -58,13 +58,14 @@ micro_version=8
 patch_version=1
 dev_status=alpha
 
-# TODO: Import xml/kdialog/normal output libs here!
+# source some files
 source bash.functions
 source osinfo.modules
 source xml.functions
 source lanforce.functions
-#. bash_Debug_functions.sh
-DEBUG=on
+
+# AnMaster: Why? there is $isdebug below... Read the code before you add something more that once...
+#DEBUG=on
 
 XMLFILE="osinfo.xml"
 
@@ -292,6 +293,7 @@ function value_header() {
 
 	#echo ${#infostring[@]}
 	infostring[${#infostring[@]}]="%header%\n${1}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	#echo ${infostring[0]}
 }
 
