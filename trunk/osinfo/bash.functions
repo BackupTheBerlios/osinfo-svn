@@ -54,6 +54,7 @@ check_cap () {
 	local sup_cap=0
 	tput $1 &>/dev/null
 	[ $? -ne 0 ] && sup_cap=1
+	# Eval is safe here as this should never be called with user input
 	if [ $sup_cap -eq 0 ]; then
 		eval "$2=\"\$(tput $1)\""
 	else

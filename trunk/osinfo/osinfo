@@ -830,6 +830,10 @@ for module in $cmdsnames; do
 	#           that would solve it.
 	# ruxpin: that would require a modification to this list after adding a module,
 	#         which I want to avoid.
+	# AnMaster: local modulename="Meta_${module}"
+	#           metamod="${!modulename}"
+	#           Needs bash 3 at least.
+	#           Or base it on some declare magic.
 	eval metamod="\${Meta_${module}}"
 
 	if [ "$(echo $metamod)" ]; then
