@@ -64,8 +64,6 @@ source osinfo.modules
 source xml.functions
 source lanforce.functions
 
-# AnMaster: Why? there is $isdebug below... Read the code before you add something more that once...
-#DEBUG=on
 
 XMLFILE="osinfo.xml"
 
@@ -828,9 +826,10 @@ fi
 # of that name. in that case, it is used.
 for module in $cmdsnames; do
 
-	# FIXME: eval is evil, is there another way to do this?
 	# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before? 
 	#           that would solve it.
+	# ruxpin: that would require a modification to this list after adding a module,
+	#         which I want to avoid.
 	eval metamod="\${Meta_${module}}"
 
 	if [ "$(echo $metamod)" ]; then
