@@ -63,9 +63,9 @@
 # can be also used as aliases on the command line,
 # but not inside another meta-module
 
-# AnMaster: I think this isn't very useful at all... Also you need to get rid of eval if you plan to use it... 
+# AnMaster: I think this isn't very useful at all... Also you need to get rid of eval if you plan to use it...
 #           Maybe a case like we do for normal modules...?
-# ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to combine the two modules because the latter depends on the former. this may well repeat later with other modules too. and besides a subset of modules is useful, we may not fully realise it yet. 
+# ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to combine the two modules because the latter depends on the former. this may well repeat later with other modules too. and besides a subset of modules is useful, we may not fully realise it yet.
 
 Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services printers'
 Meta_lanforce='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
@@ -1601,7 +1601,7 @@ Module_processor() {
 
 	# AnMaster: Why this line? Would it ever be anything else?
 	# ruxpin: perhaps on *bsd or some other system. in any case I don't like
-	#	hardcoding file paths into the code. 
+	#	hardcoding file paths into the code.
 	local cpuinfo="/proc/cpuinfo"
 	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | awk {'print $NF'})"
 
@@ -1800,10 +1800,10 @@ Module_users() {
 #  'runlevel' gives to values: "previous current", grep on the current
 
 # Slackware:
-#	There is no sane way to get "running services" from Slackware 
+#	There is no sane way to get "running services" from Slackware
 #	(at least last time I used Slackware: 9.0 I think).
 #	to change what services are started you edit the bootscripts (written in bash).
-#	(there are 7 or 8 IIRC, one for each runlevel, 1 for kernel modules to load, 
+#	(there are 7 or 8 IIRC, one for each runlevel, 1 for kernel modules to load,
 #	1 for local and 1 for system startup)
 Module_services() {
 

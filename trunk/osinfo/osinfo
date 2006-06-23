@@ -519,7 +519,7 @@ function print_xml {
 
 
 # This functions prepares the output xml to conform to the LanForce dtd.
-# LanForce is a commercial company who hired a dev to do this script 
+# LanForce is a commercial company who hired a dev to do this script
 # and that dev continued on an existing script.
 # works pretty much the same as print_xml()
 function print_lanforce_xml {
@@ -826,7 +826,7 @@ fi
 # of that name. in that case, it is used.
 for module in $cmdsnames; do
 
-	# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before? 
+	# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before?
 	#           that would solve it.
 	# ruxpin: that would require a modification to this list after adding a module,
 	#         which I want to avoid.
