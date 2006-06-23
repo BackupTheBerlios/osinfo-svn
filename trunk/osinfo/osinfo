@@ -794,7 +794,7 @@ for modul in $cmdsnames; do
 
 	# FIXME: breaks meta-modules
 	# FIX meta modules instead. And keep module list up to date...
-	validate_arg "$modul" "$MODULES_ALL" || wrong_module "$modul"
+	validate_arg "$modul" "$MODULES_ALL $MODULES_META" || wrong_module "$modul"
 	# validate_arg is called to check that the module exits at all.
 	# AnMaster: If we DON'T validate user input *and* use eval below we
 	#           are *realy* stupid. So don't comment that out.

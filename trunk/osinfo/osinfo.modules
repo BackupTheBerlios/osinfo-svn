@@ -73,7 +73,7 @@ Meta_system='distro system kernel processor'
 Meta_cpu='processor'
 Meta_apps='applications'
 Meta_net='network'
-
+MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access
 
