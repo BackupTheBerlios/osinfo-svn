@@ -463,7 +463,7 @@ function print_xml {
 
 				# validate xml
 				name="$(awk -F\; {'print $1'} <<< "${item}" | \
-					sed 's/\\[a-z]//g;s/ /_/g' | tr 'A-Z' 'a-z')"
+					sed 's/\\[a-z]//g' | tr 'A-Z' 'a-z')"
 
 				code=$(awk -F\; {'print $2'} <<< "${item}")
 
@@ -736,7 +736,7 @@ module_header() {
 	elif [ $usexml -eq 1 ]; then
 
 		# make valid xml tag
-		xml_tag="$(sed 's/ /_/g' <<< "${1}" | tr 'A-Z' 'a-z')"
+		xml_tag="$(tr ' A-Z' '_a-z' <<< "${1}")"
 		value_header "${xml_tag}"
 
 	else
