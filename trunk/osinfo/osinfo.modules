@@ -98,8 +98,8 @@ MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network
 # Returns 0 if lshw eixsts and 1 if it is missing.
 CheckReq_lshw() {
 	if [ ! "$(type -p lshw)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install lshw to collect this information"
+		add_attribute "$appname notification"
+		add_values    "Please install lshw to collect this information"
 		return 1
 	else
 		return 0
@@ -111,8 +111,8 @@ CheckReq_lshw() {
 # Returns 0 if dmidecode eixsts and 1 if it is missing.
 CheckReq_dmidecode() {
 	if [ ! "$(type -p dmidecode)" ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please install dmidecode to collect this information"
+		add_attribute "$appname notification"
+		add_values    "Please install dmidecode to collect this information"
 		return 1
 	else
 		return 0
@@ -124,8 +124,8 @@ CheckReq_dmidecode() {
 # Returns 0 if we are root and 1 if we are not.
 CheckReq_root() {
 	if [ "$EUID" != 0 ]; then
-		add_attribute	"$appname notification"
-		add_values		"Please run $appname as super-user to collect this information"
+		add_attribute "$appname notification"
+		add_values    "Please run $appname as super-user to collect this information"
 		return 1
 	else
 		return 0
@@ -281,64 +281,64 @@ Module_hdd() {
 
 				value_header	 ${drvdev}
 
-				add_attribute	"$hdd_type"
-					add_values	"$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
-				add_attribute	'Serial number'
-					add_values	"$hdd_serial"
-				add_attribute	'Driver'
-					add_values	"$hdd_driver"
-				add_attribute	'DMA'
-					add_values	"$hdd_dma"
-				add_attribute	'Geometry'
-					add_values	"$hdd_geometry"
-				add_attribute	'Capacity (reported)'
-					add_values	"$hdd_capacity_label"
-				add_attribute	'Capacity (actual)'
-					add_values	"$(hdd_human_readable $hdd_capacity)"
+				add_attribute "$hdd_type"
+					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
+				add_attribute 'Serial number'
+					add_values  "$hdd_serial"
+				add_attribute 'Driver'
+					add_values  "$hdd_driver"
+				add_attribute 'DMA'
+					add_values  "$hdd_dma"
+				add_attribute 'Geometry'
+					add_values  "$hdd_geometry"
+				add_attribute 'Capacity (reported)'
+					add_values  "$hdd_capacity_label"
+				add_attribute 'Capacity (actual)'
+					add_values  "$(hdd_human_readable $hdd_capacity)"
 
-				add_attribute	'S.M.A.R.T.'
-					add_values	"$hdd_smart"
-				add_attribute	'Lifetime'
-					add_values	"$hdd_lifetime"
-				add_attribute	'Temperature (C)'
-					add_values	"$hdd_tempC"
-				add_attribute	'Health Status'
-					add_values	"$hdd_health"
+				add_attribute 'S.M.A.R.T.'
+					add_values  "$hdd_smart"
+				add_attribute 'Lifetime'
+					add_values  "$hdd_lifetime"
+				add_attribute 'Temperature (C)'
+					add_values  "$hdd_tempC"
+				add_attribute 'Health Status'
+					add_values  "$hdd_health"
 
 				value_header	"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# dev node
-					add_attribute	"  ${hdd_pt_node[$hdd_pt]}"
+					add_attribute "  ${hdd_pt_node[$hdd_pt]}"
 
 					if [ "${hdd_pt_mp[$hdd_pt]}" ]; then #mount point exists
 
 						# mount point
-						add_values		"${hdd_pt_mp[$hdd_pt]}"
+						add_values    "${hdd_pt_mp[$hdd_pt]}"
 
 						# blocks
-						add_values		"$(hdd_human_readable \
-										${hdd_pt_blocks[$hdd_pt]})"
+						add_values    "$(hdd_human_readable \
+						               ${hdd_pt_blocks[$hdd_pt]})"
 						# free
-						add_values		"$(hdd_human_readable \
-										${hdd_pt_free[$hdd_pt]})"
-						#add_values		"${hdd_pt_free_pc[$hdd_pt]})"
+						add_values    "$(hdd_human_readable \
+						               ${hdd_pt_free[$hdd_pt]})"
+						#add_values    "${hdd_pt_free_pc[$hdd_pt]})"
 
 						# fs type
-						add_values		"${hdd_pt_fs[$hdd_pt]}"
+						add_values    "${hdd_pt_fs[$hdd_pt]}"
 
 					else
 
 						# blocks
-						add_values		"-"
-						add_values		"$(hdd_human_readable \
-										${hdd_pt_blocks[$hdd_pt]})"
+						add_values    "-"
+						add_values    "$(hdd_human_readable \
+						               ${hdd_pt_blocks[$hdd_pt]})"
 
 						# free would come here
-						add_values		''
+						add_values    ''
 
 						# fs type
-						add_values		"${hdd_pt_fs[$hdd_pt]}"
+						add_values    "${hdd_pt_fs[$hdd_pt]}"
 
 
 					fi
@@ -348,13 +348,13 @@ Module_hdd() {
 			### XML OUTPUT
 			else
 
-				add_attribute	"$hdd_type"			'hard_disk'
+				add_attribute "$hdd_type"			'hard_disk'
 				# TODO: how to break these into many lines?
-				add_values		"$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
+				add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
 
-				add_attribute	"partitions"		'drive'
+				add_attribute "partitions"		'drive'
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					add_values		"${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]}"
+					add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]}"
 				done
 
 			fi
@@ -375,9 +375,9 @@ Module_hdd() {
 
 		#totalpercfree=0
 
-		#add_attribute	"Total disk space"
-		#add_values		"Capacity: $(echo $totalsize)"
-		#add_values		"Free: $(echo -e $totalfree ; $totalpercfree %)"
+		#add_attribute "Total disk space"
+		#add_values    "Capacity: $(echo $totalsize)"
+		#add_values    "Free: $(echo -e $totalfree ; $totalpercfree %)"
 
 
 		#DISKFREE=$(($DISKFREE+$partfree))
@@ -521,12 +521,12 @@ Module_hdd() {
 		smartctl -a -d $dev_type ${dev_scan} > $smart_info
 
 		hdd_smart="$(grep 'SMART support' ${smart_info} | \
-						head -n 1 | awk -F': ' {'print $2'})"
+		             head -n 1 | awk -F': ' {'print $2'})"
 
 		hdd_lifetime="$(grep -i power_on $smart_info | awk {'print $NF'})"
 
 		hdd_tempC="$(grep -i temperature_celsius $smart_info | \
-						awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
+		             awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
 
 		hdd_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
 
@@ -591,8 +591,8 @@ Module_hdd() {
 			# character to denote bootable partitions. the numbers are removed
 			# from the beginning of string with sed.
 			hdd_pt_fs[$ID]="$(fdisk -l | grep ^${hdd_pt_node[$ID]} | \
-				awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
-				sed 's/^[0-9 ]*//')"
+			                  awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
+			                  sed 's/^[0-9 ]*//')"
 
 
 			# if partition is mounted (=is in mtab)
@@ -727,11 +727,11 @@ Module_hdd() {
 			# this smart scan is not included into the scan_hdd_smart()
 			# because it would break the correct order of the report.
 			hdd_vendor="$(smartctl -i ${dev_scan} | grep '^Model' | \
-							awk -F: {'print $2'} | sed 's/^ *//')"
+			              awk -F: {'print $2'} | sed 's/^ *//')"
 
 		elif [ "${udev_info}" ]; then
 			hdd_vendor="$(udevinfo -q all -n ${dev_scan} | grep -i vendor | \
-							awk -F_ {'print $NF'})"
+			              awk -F_ {'print $NF'})"
 		fi
 
 		# check whether we got anything else than empty $vendor string
@@ -744,14 +744,14 @@ Module_hdd() {
 		# Model
 		if  [ "${udev_info}" ]; then
 			hdd_model="$(udevinfo -q all -n ${dev_scan} | grep -i model | \
-							awk -F= {'print $NF'})"
+			             awk -F= {'print $NF'})"
 
 		elif [ -e "${proc_info}" ]; then
 			hdd_model="$(cat ${proc_info}/model)"
 
 		elif [ "$(type -p hdparm)" ]; then
 			hdd_model="$(hdparm -i ${dev_scan} | grep -Eio 'Model=\w+' | \
-							awk -F= {'print $2'})"
+			             awk -F= {'print $2'})"
 
 		fi
 
@@ -763,7 +763,7 @@ Module_hdd() {
 
 		elif [ "$(type -p hdparm)" ]; then
 			hdd_serial="$(hdparm -i ${dev_scan} | grep -Eio 'serialno=\w+' | \
-						 awk -F= {'print $2'})"
+			              awk -F= {'print $2'})"
 		fi
 
 
@@ -843,7 +843,7 @@ Module_hdd() {
 			local usb_devstrings="/proc/scsi/usb-storage/"
 			local sg_version="/proc/scsi/sg/version"
 			local scsi_nr="$(sed -n "$dev_nodenr{p;q;}" ${scsi_devices} | \
-				awk {'print $1'})"
+			                 awk {'print $1'})"
 		fi
 		# hdparm output is not read into a temp file, as
 		# it is unlikely to be used, and that would unnecessarily
@@ -885,18 +885,18 @@ Module_hdd() {
 			# because it would break the correct order of the report.
 
 			hdd_vendor="$(smartctl -i -d ata ${dev_scan} | grep '^Model' | \
-							awk -F: {'print $2'} | sed 's/^ *//') "
+			              awk -F: {'print $2'} | sed 's/^ *//') "
 
 		elif [ "${udev_info}" ]; then
 
 			hdd_vendor="$(grep -i vendor ${udev_info}  | \
-							awk -F= {'print $NF'}) "
+			              awk -F= {'print $NF'}) "
 
 		elif [ -e "${proc_info}" ]; then
 
 			hdd_vendor="$(sed -n "$dev_nodenr{p;q;}" "${scsi_devstrings}" | \
-							awk {'print $1'}) "
-							#"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
+			              awk {'print $1'}) "
+			              #"$(grep -i vendor ${usb_info} | awk -F': ' {'print $2'})"
 		fi
 
 
@@ -905,17 +905,17 @@ Module_hdd() {
 		if  [ "${udev_info}" ]; then
 
 			hdd_model="$(grep -i model ${udev_info} | \
-							awk -F= {'print $NF'})"
+			             awk -F= {'print $NF'})"
 
 		elif [ -e "${proc_info}" ]; then
 
 			hdd_model="$(sed -n "$dev_nodenr{p;q;}" "${scsi_devstrings}" | \
-							awk {'print $2" "$3'})"
+			             awk {'print $2" "$3'})"
 
 		elif [ "$(type -p hdparm)" ]; then
 
 			hdd_model="$(hdparm -i ${dev_scan} | grep -Eio 'Model=\w+' | \
-							awk -F= {'print $2'})"
+			             awk -F= {'print $2'})"
 		fi
 
 
@@ -928,7 +928,7 @@ Module_hdd() {
 		elif [ "$(type -p hdparm)" ]; then
 
 			hdd_serial="$(hdparm -i ${dev_scan} | grep -Eio 'serialno=\w+' | \
-							awk -F= {'print $2'})"
+			              awk -F= {'print $2'})"
 		fi
 
 
@@ -1000,12 +1000,12 @@ Module_memory() {
 
 		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
 		totalram="$(grep 'id="memory' -A 20 ${lshw_xml_file} | grep size | \
-			grep -Eo '[0-9]+')"
+		            grep -Eo '[0-9]+')"
 
 		totalram="$(echo "$totalram/1024/1024" | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
 
-		add_attribute	'RAM total'	'ram'
-		add_values		"$totalram MB"
+		add_attribute 'RAM total'	'ram'
+		add_values    "$totalram MB"
 
 	fi
 
@@ -1041,7 +1041,7 @@ Module_cdrom() {
 			# do a for loop here by ID
 
 			next_node="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
-				awk -F: {'print $1'} | sed -n "2{p;q}")"
+			             awk -F: {'print $1'} | sed -n "2{p;q}")"
 			((first_node++)) # this prevents the 'node' lines from printing
 			((next_node--))
 
@@ -1051,16 +1051,16 @@ Module_cdrom() {
 			# collect information
 
 			cdrom_model[$ID]="$(grep -i product ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			                    sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			cdrom_type[$ID]="$(grep -i descr ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			cdrom_serial[$ID]="$(grep -i serial ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			                     sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			cdrom_node[$ID]="$(grep -i 'logicalname' ${cdrom_tmp} | \
-							sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			#udevinfo -q all -n "${cdrom_node[$ID]}" > ${udev_tmp}
 
@@ -1068,25 +1068,25 @@ Module_cdrom() {
 			#exit 0
 
 
-			add_attribute	'Model'	'cdrom'
-			add_values		"${cdrom_model[$ID]}"
+			add_attribute 'Model'	'cdrom'
+			add_values    "${cdrom_model[$ID]}"
 
-			add_attribute	'Drive type'
-			add_values		"${cdrom_type[$ID]}"
+			add_attribute 'Drive type'
+			add_values    "${cdrom_type[$ID]}"
 
-			add_attribute	'Device node'
-			add_values		"${cdrom_node[$ID]}"
+			add_attribute 'Device node'
+			add_values    "${cdrom_node[$ID]}"
 
-			add_attribute	'Serial number'
-			add_values		"${cdrom_serial[$ID]}"
+			add_attribute 'Serial number'
+			add_values    "${cdrom_serial[$ID]}"
 
 			# TODO
 			# Configuration: first IDE channel master
 			# etc
 
 
-			#add_attribute	'Capabilities'
-			#add_values		"$(grep -i capabilities ${cdrom_tmp})" #| \
+			#add_attribute 'Capabilities'
+			#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
 							#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 			# dvd-r, dvd+r, DL, etc...
 			# generally grep cd|dvd
@@ -1097,7 +1097,7 @@ Module_cdrom() {
 
 		else
 
-			add_values		'No cdrom drives detected'
+			add_values    'No cdrom drives detected'
 
 		fi
 
@@ -1174,25 +1174,25 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Product name'	'system_model'
-					add_values		"$(grep -i product ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Product name'	'system_model'
+					add_values    "$(grep -i product ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'System version'
-					add_values		"$(grep -i version ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'System version'
+					add_values    "$(grep -i version ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'OEM serial number' \
-									'computer_product_serial'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'OEM serial number' \
+					              'computer_product_serial'
+					add_values    "$(grep -i serial ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'UUID' 	'uuid'
-					add_values		"$(grep -i uuid ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'UUID' 	'uuid'
+					add_values    "$(grep -i uuid ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
 					value_footer
@@ -1203,28 +1203,28 @@ Module_dmi() {
 					value_header	"Motherboard"
 
 
-					add_attribute	'Manufacturer' \
-									'mother_board_manufacturer'
-					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Manufacturer' \
+					              'mother_board_manufacturer'
+					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Model' \
-									'mother_board_model'
-					add_values		"$(grep -i product ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Model' \
+					              'mother_board_model'
+					add_values    "$(grep -i product ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Version' \
-									'mother_board_version'
-					add_values		"$(grep -i version ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Version' \
+					              'mother_board_version'
+					add_values    "$(grep -i version ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Serial number' \
-									'mother_board_serial_number'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Serial number' \
+					              'mother_board_serial_number'
+					add_values    "$(grep -i serial ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
 					value_footer
@@ -1234,24 +1234,24 @@ Module_dmi() {
 
 					value_header	"BIOS"
 
-					add_attribute	'Vendor'
-					add_values		"$(grep -i vendor ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Vendor'
+					add_values    "$(grep -i vendor ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Revision'	'bios_version'
-					add_values		"$(grep -i version ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Revision'	'bios_version'
+					add_values    "$(grep -i version ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Date'	'bios_date'
-					add_values		"$(grep -i date ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Date'	'bios_date'
+					add_values    "$(grep -i date ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Serial number'	'bios_serial_number'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Serial number'	'bios_serial_number'
+					add_values    "$(grep -i serial ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
 					value_footer
@@ -1262,35 +1262,35 @@ Module_dmi() {
 
 					value_header	'Chassis'
 
-					add_attribute	'Manufacturer' 	'chassis_manufacturer'
-					add_values		"$(grep -i manufacturer ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Manufacturer' 	'chassis_manufacturer'
+					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Type' 	'chassis_type'
-					add_values		"$(grep -i type ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Type' 	'chassis_type'
+					add_values    "$(grep -i type ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Version' 	'chassis_version'
-					add_values		"$(grep -i version ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Version' 	'chassis_version'
+					add_values    "$(grep -i version ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Serial number' \
-									'chassis_serial_number'
-					add_values		"$(grep -i serial ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Serial number' \
+					              'chassis_serial_number'
+					add_values    "$(grep -i serial ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Lock' 	'chassis_lock'
-					add_values		"$(grep -i lock ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Lock' 	'chassis_lock'
+					add_values    "$(grep -i lock ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
-					add_attribute	'Asset tag' 'chassis_asset_tag'
-					add_values		"$(grep -i asset ${dmi_tmp} | \
-									awk -F: {'print $2'})"
+					add_attribute 'Asset tag' 'chassis_asset_tag'
+					add_values    "$(grep -i asset ${dmi_tmp} | \
+					                 awk -F: {'print $2'})"
 
 
 					value_footer
@@ -1411,14 +1411,14 @@ Module_oem() {
 
 							'product')
 
-								add_attribute	'System name'
-								add_values		"$value"
+								add_attribute 'System name'
+								add_values    "$value"
 								;;
 
 							'version')
 
-								add_attribute	'System version'
-								add_values		"$value"
+								add_attribute 'System version'
+								add_values    "$value"
 								;;
 
 							'serial')
@@ -1430,8 +1430,8 @@ Module_oem() {
 
 							#*)
 
-								#add_attribute	"$tag"
-								#add_values		"$value"
+								#add_attribute "$tag"
+								#add_values    "$value"
 								#;;
 
 						esac
@@ -1488,25 +1488,25 @@ Module_oem() {
 
 							'vendor')
 
-								add_attribute	'Vendor'
-								add_values		"$value"
+								add_attribute 'Vendor'
+								add_values    "$value"
 								;;
 
 							'version')
 
-								add_attribute	'Revision'	'bios_version'
-								add_values		"$value"
+								add_attribute 'Revision'	'bios_version'
+								add_values    "$value"
 
 								# trying to extract date from version
-								add_attribute	'Date'	'bios_date'
-								add_values		"$(echo $value | \
-									grep -Eo '([0-9]{2,4}[-./][0-9]{2}[-./][0-9]{2,4})+')"
+								add_attribute 'Date'	'bios_date'
+								add_values    "$(echo $value | \
+								                 grep -Eo '([0-9]{2,4}[-./][0-9]{2}[-./][0-9]{2,4})+')"
 								;;
 
 							'date')
 
-								add_attribute	'Date'	'bios_date'
-								add_values		"$value"
+								add_attribute 'Date'	'bios_date'
+								add_values    "$value"
 
 								;;
 
@@ -1584,7 +1584,7 @@ Module_kernel() {
 	if [ -e "${kernel_makefile}" ]; then
 		add_attribute "Kernel name"
 		add_values    "$(head ${kernel_makefile} | grep NAME | \
-						head -n 1 | awk -F= {'print $2'})"
+		                 head -n 1 | awk -F= {'print $2'})"
 	fi
 
 	module_footer
@@ -1611,8 +1611,8 @@ Module_processor() {
 		cpu_count=1
 	fi
 
-	add_attribute	"Count"			"processor_count"
-	add_values		$cpu_count
+	add_attribute "Count"			"processor_count"
+	add_values    $cpu_count
 
 	for cpunr in $(seq 1 1 $cpu_count); do
 
@@ -1620,25 +1620,25 @@ Module_processor() {
 			value_header	"Processor $cpunr"
 		fi
 
-		add_attribute	"Vendor"		"processor_vendor"
-		add_values		"$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-						awk -F': ' {'print $2'})"
+		add_attribute "Vendor"		"processor_vendor"
+		add_values    "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                 awk -F': ' {'print $2'})"
 
-		add_attribute	"Model"			"processor_model"
-		add_values		"$(grep 'model name' ${cpuinfo} | \
-						sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
+		add_attribute "Model"			"processor_model"
+		add_values    "$(grep 'model name' ${cpuinfo} | \
+		                 sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
 
-		add_attribute	"Frequency"		"processor_speed"
-		add_values		"$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-						awk -F': ' {'print $2" MHz"'})"
+		add_attribute "Frequency"		"processor_speed"
+		add_values    "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                 awk -F': ' {'print $2" MHz"'})"
 
-		add_attribute	"Cache"
-		add_values		"$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-						awk -F': ' {'print $2'})"
+		add_attribute "Cache"
+		add_values    "$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                 awk -F': ' {'print $2'})"
 
-		add_attribute	"Stepping"
-		add_values		"$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-						awk -F': ' {'print $2'})"
+		add_attribute "Stepping"
+		add_values    "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                 awk -F': ' {'print $2'})"
 
 
 	done
@@ -1653,17 +1653,17 @@ Module_terminal() {
 	moduleName="Terminal info"
 	module_header "${moduleName}"
 
-	add_attribute	"Terminal type"
-	add_values		"$TERM"
+	add_attribute "Terminal type"
+	add_values    "$TERM"
 
-	add_attribute	"Terminal speed"
-	add_values		"$(stty speed)"
+	add_attribute "Terminal speed"
+	add_values    "$(stty speed)"
 
-	add_attribute	"Rows"
-	add_values		"$(stty size | awk '{print $1}')"
+	add_attribute "Rows"
+	add_values    "$(stty size | awk '{print $1}')"
 
-	add_attribute	"Columns"
-	add_values		"$(stty size | awk '{print $2}')"
+	add_attribute "Columns"
+	add_values    "$(stty size | awk '{print $2}')"
 
 	module_footer
 	flush_values
@@ -1688,12 +1688,12 @@ Module_printers() {
 
 		#  if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
 
-		add_attribute		'Printer'	'local_printer'
+		add_attribute 	'Printer'	'local_printer'
 
 		# as there may be several printers, print info from all
 		for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
 
-			add_values	"$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
+			add_values  "$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
 
 		done
 
@@ -1716,15 +1716,15 @@ Module_users() {
 	module_header "${moduleName}"
 
 	value_header	'Current user'
-	add_attribute	"Unix name"				'active_user'
-	add_values		"$(whoami)"
+	add_attribute "Unix name"				'active_user'
+	add_values    "$(whoami)"
 
 
-	add_attribute	'Real name'				"real_name"
-	add_values		"$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
+	add_attribute 'Real name'				"real_name"
+	add_values    "$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
 
 
-	add_attribute	"User's X11 session"	"users_window_manager"
+	add_attribute "User's X11 session"	"users_window_manager"
 	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 	# AnMaster: KDE doesn't set that for me (in konsole at least)
 	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
@@ -1738,25 +1738,25 @@ Module_users() {
 			session_id="Gnome $gnome_version"
 		fi
 	fi
-	add_values		"$session_id"
+	add_values    "$session_id"
 
 
-	add_attribute	"User's shell"
-	add_values		"$SHELL"
+	add_attribute "User's shell"
+	add_values    "$SHELL"
 
 
-	add_attribute	"User's locale"
-	add_values		"$LC_ALL"
+	add_attribute "User's locale"
+	add_values    "$LC_ALL"
 
 
 	value_footer
 	value_header	'Last logged in user'
-	[ $usexml = 1 ] &&	add_attribute	'Last login' "last_logged_user"
-	add_values		"$(last -1 | head -n 1 | awk {'print $1'})"
+	[ $usexml = 1 ] &&	add_attribute 'Last login' "last_logged_user"
+	add_values    "$(last -1 | head -n 1 | awk {'print $1'})"
 	value_footer
 
 	value_header	'\nAll users\t\tlast login'
-	[ $usexml = 1 ] &&	add_attribute	'All users' "users"
+	[ $usexml = 1 ] &&	add_attribute 'All users' "users"
 	# because 'last' command, part of sysvinit core package,
 	# interprets the binary file /var/log/wtmp, but chomps off
 	# the loginname at 9 characters, we need to find the full names
@@ -1772,9 +1772,9 @@ Module_users() {
 		if [ ${#user} -ge 8 ]; then
 			# parse special chars to meta-chars
 			user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-			add_values	"$(grep -Eoa "$user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)\n"
+			add_values  "$(grep -Eoa "$user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)\n"
 		else
-			add_values	"$user\n"
+			add_values  "$user\n"
 		fi
 	done
 
@@ -1827,13 +1827,13 @@ Module_services() {
 
 		# attribute only for xml
 		if [ $usexml = 1 ]; then
-			add_attribute	'Services'	'service'
+			add_attribute 'Services'	'service'
 		fi
 
 
 		# then report what scan found
 		for srv in $services; do
-			add_values	"$srv\n"
+			add_values  "$srv\n"
 		done
 
 
@@ -1858,7 +1858,7 @@ Module_services() {
 		local runlevel=$(runlevel | awk {'print $2'})
 
 		echo $(sysv-rc-conf --list 2> /dev/null | \
-			awk '/'$runlevel'\:on/{print $1}' | sort)
+		       awk '/'$runlevel'\:on/{print $1}' | sort)
 
 	}
 
@@ -1870,7 +1870,7 @@ Module_services() {
 		local runlevel=$(runlevel | awk {'print $2'})
 
 		echo $(chkconfig --list 2> /dev/null | \
-			awk '/'$runlevel'\:on/{print $1}' | sort)
+		       awk '/'$runlevel'\:on/{print $1}' | sort)
 
 	}
 
@@ -1933,7 +1933,7 @@ Module_network() {
 		add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
 
 		# TODO: IP type (static or dynamic)
-		#add_attribute	'IP type'	"ip_type"
+		#add_attribute 'IP type'	"ip_type"
 
 		add_attribute 'IPv4'		"ip_address"
 		add_values    "$(grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${nw_info} | \
@@ -2005,8 +2005,8 @@ Module_network() {
 			#  -a        No such device
 
 				ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
-				grep -Ev '(^ )|(^--)|LOOPBACK' | \
-				awk  {'print $1'})"
+				               grep -Ev '(^ )|(^--)|LOOPBACK' | \
+				               awk  {'print $1'})"
 			fi
 
 		fi
@@ -2066,8 +2066,8 @@ Module_distro() {
 	[ "$prefix" != '/' ] && \
 		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
 		local root_dir="$prefix"
-	add_attribute		'Root dir'
-	add_values			"$root_dir"
+	add_attribute 'Root dir'
+	add_values    "$root_dir"
 	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
 
@@ -2093,33 +2093,33 @@ Module_distro() {
 			case $distro_ident in
 				"${root_dir}etc/SuSE-release")
 					found_distros="$found_distros SuSE"
-					break;
+					break
 					;;
 				"${root_dir}etc/fedora-release")
 					found_distros="$found_distros Fedora Core"
-					break;
+					break
 					;;
 				"${root_dir}etc/redhat-release")
 					found_distros="$found_distros Red Hat"
-					break;
+					break
 					;;
 				"${root_dir}etc/slackware-version")
 					found_distros="$found_distros Slackware"
-					break;
+					break
 					;;
 				"${root_dir}etc/Topologilinux-version")
 					found_distros="$found_distros Topologilinux"
-					break;
+					break
 					;;
 				"${root_dir}etc/gentoo-release")
 					found_distros="$found_distros Gentoo"
-					break;
+					break
 					;;
 				# if nothing previous matches, then use /etc/issue
 				# AnMaster: Inform user that this might be very wrong...
 				"${root_dir}etc/issue")
 					found_distros="$found_distros misc"
-					break;
+					break
 					;;
 			esac
 		done
@@ -2155,7 +2155,6 @@ Module_distro() {
 			'misc')
 				for misc_distro in 'Ubuntu' 'Fedora' 'SuSE'; do
 					if [ "$(grep -i ${misc_distro} ${distro_ident})" ]; then
-
 						distro_id="${misc_distro}"
 					fi
 				done
@@ -2164,8 +2163,8 @@ Module_distro() {
 			'')
 				# Abort if no distro found
 				print_error 1 "This module will abort." "$usekdialog" \
-					"You have zero distros installed or use a distro " \
-					"not recognised by ${appname}"
+				              "You have zero distros installed or use a distro " \
+				              "not recognised by ${appname}"
 				return 1
 				;;
 
@@ -2215,24 +2214,24 @@ Module_distro() {
 	# then output what we found..
 
 	[ "${distro_id}" ] && \
-		add_attribute	'Distro ID'
-		add_values		"${distro_id}"
+		add_attribute 'Distro ID'
+		add_values    "${distro_id}"
 
 	[ "${distro_release}" ] && \
-		add_attribute	'Release'
-		add_values		"$distro_release"
+		add_attribute 'Release'
+		add_values    "$distro_release"
 
 	[ "${distro_codename}" ] && \
-		add_attribute	'Codename'
-		add_values		"$distro_codename"
+		add_attribute 'Codename'
+		add_values    "$distro_codename"
 
 	[ "${distro_description}" ] && \
-		add_attribute	'Description'
-		add_values		"$distro_description"
+		add_attribute 'Description'
+		add_values    "$distro_description"
 
 	[ "$SlackwareBase" ] && \
-		add_values	'Based on Slackware version' \
-					"$SlackwareBase"
+		add_values  'Based on Slackware version' \
+		            "$SlackwareBase"
 
 
 	module_footer
@@ -2288,37 +2287,37 @@ Module_applications() {
 								grep -Eo 'v[ A-Za-z0-9.-]*')\n"
 					;;
 				'python')
-					add_values	"$($app -V 2>&1 | head -n 1 )\n"
+					add_values  "$($app -V 2>&1 | head -n 1 )\n"
 					;;
 				'X')
-					add_values	"$($app -version 2>&1 | grep Revision)\n"
+					add_values  "$($app -version 2>&1 | grep Revision)\n"
 					;;
 				'kde-config')
-					add_values	"$($app -version 2>&1 | grep KDE)\n"
+					add_values  "$($app -version 2>&1 | grep KDE)\n"
 					;;
 				'gnome-about')
-					add_values	"$($app --version 2>&1 )\n"
+					add_values  "$($app --version 2>&1 )\n"
 					;;
 				'apache2'|'apache')
-					add_values	"$($app -V | head -n 1 | awk -F': ' {'print $2'})\n"
+					add_values  "$($app -V | head -n 1 | awk -F': ' {'print $2'})\n"
 					;;
 				'cups-config')
-					add_values	"Cups $($app --version 2>&1 )\n"
+					add_values  "Cups $($app --version 2>&1 )\n"
 					;;
 				'smbd')
-					add_values	"Samba $($app -V 2>&1 )\n"
+					add_values  "Samba $($app -V 2>&1 )\n"
 					;;
 				'udevinfo')
-					add_values	"$($app -V 2>&1 )\n"
+					add_values  "$($app -V 2>&1 )\n"
 					;;
 				'awk')
-					add_values	"$($app -W version 2>&1 | head -n 1 )\n"
+					add_values  "$($app -W version 2>&1 | head -n 1 )\n"
 					;;
 				'dmidecode')
-					add_values	"dmidecode $(dmidecode -V 2> /dev/null )\n"
+					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
 				*)
-						add_values	"$($app --version 2>&1 | grep '\w' | head -n 1)\n"
+						add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
 										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			esac
@@ -2410,7 +2409,7 @@ Module_devices() {
 			local description="$(awk  '{ print $1 }' <<< ${devices[$DEV_ARRAY]} | \
 			                     tr '_' ' ' | sed 's/^.//;s/^ *//')"
 			local device="$(awk  '{ print $2" "$3 }' <<< ${devices[$DEV_ARRAY]} | \
-								tr '_' ' ')"
+			                tr '_' ' ')"
 
 
 			if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
@@ -2436,17 +2435,17 @@ Module_devices() {
 
 	#then report the eth and video adapters
 	if [ "$eth_adapter" ]; then
-		add_attribute	'Ethernet controller(s)'	"network_adapter"
+		add_attribute 'Ethernet controller(s)'	"network_adapter"
 		for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
-			add_values		"${eth_adapter[$i]}\n"
+			add_values    "${eth_adapter[$i]}\n"
 		done
 	fi
 
 
 	if [ "$video_adapter" ]; then
-		add_attribute	'Display adapter(s)'		"display_adapter"
+		add_attribute 'Display adapter(s)'		"display_adapter"
 		for i in $(seq 0 1 $((${#video_adapter[@]}-1)) ); do
-			add_values		"${video_adapter[$i]}\n"
+			add_values    "${video_adapter[$i]}\n"
 		done
 	fi
 
@@ -2473,7 +2472,7 @@ Module_env() {
 	## Process all variables
 	for var in $(env); do
 
-		add_values	"${var}\n"
+		add_values  "${var}\n"
 
 	done
 
