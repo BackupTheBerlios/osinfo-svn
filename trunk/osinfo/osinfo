@@ -230,8 +230,6 @@ else
 	PRINT_Help
 fi
 
-
-
 ############################################
 # XML HEADER & FOOTER FUNCTIONS
 
@@ -779,17 +777,17 @@ for modul in $cmdsnames; do
 	if [ $modul = 'all' ]; then
 		if [ "$SYSTEM" == "linux" ] ; then
 			#cmdsnames="$MODULES_LINUX"
-			break;
+			break
 		# TODO: please check if this works on bsd and old bash
 		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 			#cmdsnames="$MODULES_BSD"
-			break;
+			break
 		fi
 	elif [ $modul = 'lanforce' ]; then
 		lanforce=1
 		usexml=1
 		#cmdsnames="$MODULES_LANFORCE"
-		break;
+		break
 	fi
 
 	# FIXME: breaks meta-modules
@@ -820,6 +818,9 @@ if [ "$usexml" == 1 ]; then
 	print_xml_header
 fi
 
+if [ -z "$cmdsnames" ]; then 
+	PRINT_Help
+fi
 
 # this calls the module definitions. as there are Meta-modules
 # and the actual modules, we first check if there's a Meta-module
