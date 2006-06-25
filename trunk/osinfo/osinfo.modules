@@ -1715,7 +1715,7 @@ Module_users() {
 	moduleName="Users"
 	module_header "${moduleName}"
 
-	value_header	'Current user'
+	value_header	"${tcGREEN}Current user"
 	add_attribute "Unix name"				'active_user'
 	add_values    "$(whoami)"
 
@@ -1750,12 +1750,12 @@ Module_users() {
 
 
 	value_footer
-	value_header	'Last logged in user'
+	value_header	"${tcGREEN}Last logged in user"
 	[ $usexml = 1 ] &&	add_attribute 'Last login' "last_logged_user"
 	add_values    "$(last -1 | head -n 1 | awk {'print $1'})"
 	value_footer
 
-	value_header	'\nAll users\t\tlast login'
+	value_header	"\n${tcGREEN}All users\t\tlast login"
 	[ $usexml = 1 ] &&	add_attribute 'All users' "users"
 	# because 'last' command, part of sysvinit core package,
 	# interprets the binary file /var/log/wtmp, but chomps off
