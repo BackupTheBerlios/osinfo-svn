@@ -199,7 +199,7 @@ Module_hdd() {
 		local hdd_total_capacity=0 hdd_total_used=0 hdd_total_free=0 hdd_ID=0
 
 		# detect all drives in the system
-		local drives="$(fdisk -l | grep Disk | grep -Eo '\/(dev)\/\w'+)"
+		local drives="$(fdisk -l | grep -Eo '\/(dev)\/[a-z]+' | uniq )"
 
 		# collect data of all detected drives in this loop
 		for drvdev in $drives; do
@@ -296,14 +296,16 @@ Module_hdd() {
 				add_attribute 'Capacity (actual)'
 					add_values  "$(hdd_human_readable $hdd_capacity)"
 
-				add_attribute 'S.M.A.R.T.'
-					add_values  "$hdd_smart"
-				add_attribute 'Lifetime'
-					add_values  "$hdd_lifetime"
-				add_attribute 'Temperature (C)'
-					add_values  "$hdd_tempC"
-				add_attribute 'Health Status'
-					add_values  "$hdd_health"
+				if [ "$(type -p smartctl)" ]; then
+					add_attribute 'S.M.A.R.T.'
+						add_values  "$hdd_smart"
+					add_attribute 'Lifetime'
+						add_values  "$hdd_lifetime"
+					add_attribute 'Temperature (C)'
+						add_values  "$hdd_tempC"
+					add_attribute 'Health Status'
+						add_values  "$hdd_health"
+				fi
 
 				value_header	"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
 
@@ -786,7 +788,6 @@ Module_hdd() {
 		if [ "$(type -p smartctl)" ]; then
 			scan_hdd_smart ${dev_scan} ata
 		fi
-
 	}
 
 
@@ -941,12 +942,14 @@ Module_hdd() {
 
 		#TODO: dma status
 
+
 		#############################
-		# check the smartctl version >5.36
-		version="$(smartctl --version | grep -Eo 'version [0-9.]+' | \
-			grep -Eo '[0-9]\.[0-9]+')";
-		if [ ! "$smart" ]; then
-			diff="$(bc -s <<< $version-5.36 )"
+		# check the smartctl version >5.36		 
+		if [ "$(type -p smartctl)" ]; then
+			local smartctl_version="$(smartctl --version | \
+				grep -Eo 'version [0-9.]+' | grep -Eo '[0-9]\.[0-9]+')";
+			diff="$(bc -s <<< $smartctl_version-5.36 )"
+			# check if the difference is (not) negative
 			if [ ! "${diff:0:1}" = "-" ]; then
 			# this is a newer version which supports SATA
 			# scan for SMART attributes

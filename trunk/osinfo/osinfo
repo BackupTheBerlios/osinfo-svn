@@ -55,7 +55,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=2
+patch_version=3
 dev_status=alpha
 
 # source some files
@@ -205,6 +205,11 @@ if [ "$#" -gt 0 ]; then
 				;;
 			'-v'|'--verbose')
 				isverbose=1
+				shift 1
+				;;
+			'-D'|'--fulldebug')
+				export isdebug=1
+				set -x
 				shift 1
 				;;
 			'--debug')
