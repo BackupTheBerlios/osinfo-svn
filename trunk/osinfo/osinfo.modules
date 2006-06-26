@@ -1137,36 +1137,54 @@ Module_dmi() {
 		TempFiles=("${TempFiles[@]}" "$dmi_info" "$dmi_tmp")
 
 		# the interesting handles:
-		# 0x0000 'BIOS Information'
-		# 0x0001 'System Information'
-		# 0x0002 'Base Board Information'
-		# 0x0003 'Chassis Information'
+		# 0x0000 or 0x0001 = 'BIOS Information'
+		# 0x0001 or 0x0002 = 'System Information'
+		# 0x0002 or 0x0003 = 'Base Board Information'
+		# 0x0003 or 0x0004 = 'Chassis Information'
+		# 0x0004 or 0x0005 = 'Processor Information'
+		# .... and more
 
-		local HANDLES="0x0000 0x0001 0x0002 0x0003"
+		# since the first handle is not always static, deduce it
+		
+		#local HANDLES="0x0001 0x0001 0x0002 0x0003"
+
+		local HANDLES="BIOS information,System information,Base Board information,Chassis information"
 
 		# following loop extracts the data under the nodes variable.
 
-		# (1) get the line number where the 'node id=$HANDLES'
+		# (1) get the line number where the description occurs
 		# (2) get the line number of the next 'node id'
 		# (3) everything in between those lines contains interesting data
 
-		for myHANDLE in $HANDLES; do
 
-			this="$(grep -n "Handle ${myHANDLE}" ${dmi_info} | \
+		# IFS need to be changed because the values are separated by newline
+		local IFS_bak="$IFS" value
+		IFS=$','
+
+		for handle_desc in ${HANDLES}; do
+
+			#handle_desc="$(sed s/^[^a-zA-Z]*// <<< $handle_desc)"
+
+			handle_nr="$(grep -in ${handle_desc} ${dmi_info} -B 1 | head -n 1 | \
+			        grep -Eo '0x[0-9]+')"
+#set -x
+			this="$(grep -in ${handle_nr} ${dmi_info}  | \
 			        awk -F: {'print $1'})"
-			next="$(grep -n Handle ${dmi_info} | grep -A 1 ${myHANDLE} | \
+			next="$(grep -n Handle ${dmi_info} | grep -A 1 ${handle_nr} | \
 			        awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((this++)) # this prevents the 'handle' lines from printing
-			((next--))
+			((this++)) 
+			((next--)) # this prevents the 'handle' lines from printing
 
 			# use a temp file to store handle information
 			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
 
+			local handleID="$(head -n 1 ${dmi_tmp})"
+
 
 			# here the data is processed
-			case $myHANDLE in
+			case $handleID in
 
-				"0x0001")	# System Information
+				"System Information")
 
 					value_header	"System info"
 
@@ -1201,7 +1219,7 @@ Module_dmi() {
 					value_footer
 					;;
 
-				"0x0002")	# Base Board Information
+				"Base Board Information")	 
 
 					value_header	"Motherboard"
 
@@ -1233,7 +1251,7 @@ Module_dmi() {
 					value_footer
 					;;
 
-				"0x0000")	# BIOS Information
+				"BIOS Information")	 
 
 					value_header	"BIOS"
 
@@ -1261,7 +1279,7 @@ Module_dmi() {
 					;;
 
 
-				"0x0003")	# Chassis Information
+				"Chassis Information")	# Chassis Information
 
 					value_header	'Chassis'
 
@@ -1303,10 +1321,9 @@ Module_dmi() {
 
 		done
 
-	fi
+		IFS="$IFS_bak"
 
-	# cleanup
-	rm -f $dmi_info $dmi_tmp
+	fi
 
 	module_footer
 	flush_values

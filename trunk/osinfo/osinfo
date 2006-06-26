@@ -315,10 +315,12 @@ function value_footer() {
 	#		break;
 	#	fi
 	#done
+	local IFS_bak="$IFS"
+	IFS=$' \t\n'
 
 	local found="" position item
 	for position in $(seq ${#infostring[@]} -1 0); do
-		item="$(echo ${infostring[$position]})"
+		item="${infostring[$position]}"
 		# first collect %footer%s into $found array
 		if [ "$(grep '^%footer%' <<< "${item}")" ]; then
 			found="$(grep '^%footer%' <<< "${item}" | sed s/%footer%//)"
@@ -338,6 +340,8 @@ function value_footer() {
 			fi
 		fi
 	done
+
+	IFS="$IFS_bak"
 
 	#for VL in $(seq 0 ${#infostring[@]}); do
 #		echo ${infostring[$VL]}
