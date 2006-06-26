@@ -1580,12 +1580,16 @@ Module_system() {
 	add_attribute "Machine hardware name"	"system_type"
 	add_values    "$(uname -m)"
 
+	add_attribute "System encoding"
+	add_values    "?"
+
 	add_attribute "System uptime"			"uptime"
 	add_values    "$(uptime | awk -F, {'print $1'} | \
 	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
 	module_footer
 	flush_values
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -1616,6 +1620,7 @@ Module_kernel() {
 
 	module_footer
 	flush_values
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -1786,7 +1791,7 @@ Module_users() {
 	[ $usexml = 1 ] &&	add_attribute 'All users' "users"
 	# because 'last' command, part of sysvinit core package,
 	# interprets the binary file /var/log/wtmp, but chomps off
-	# the loginname at 9 characters, we need to find the full names
+	# the loginname at 8 characters, we need to find the full names
 	# from the source file. a dirty hack...
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
@@ -2014,7 +2019,7 @@ Module_network() {
 
 	# FIXME: This odd debug usage sucks... Better add a --debug if you realy need this.
 	# note: for debugging, these variables are set here
-	if [ "$isdebug" == 1 ]; then
+	if [ "$fake" == 1 ]; then
 		iw_src="debug/wlan-iwconfig-on"
 		WLAN_DEVICES="eth1"
 		ap_src="debug/wlan-stations"
