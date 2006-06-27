@@ -1,0 +1,47 @@
+    <node id="memory" claimed="true" class="memory" handle="DMI:001E">
+     <description>System Memory</description>
+     <physid>1e</physid>
+     <slot>System board or motherboard</slot>
+     <size units="bytes">1073741824</size>
+      <node id="bank:0" claimed="true" class="memory" handle="DMI:001F">
+       <description>DIMM 400 MHz (2.5 ns)</description>
+       <product>None</product>
+       <vendor>None</vendor>
+       <physid>0</physid>
+       <serial>None</serial>
+       <slot>A0</slot>
+       <size units="bytes">268435456</size>
+       <width units="bits">64</width>
+       <clock units="Hz">400000000</clock>
+      </node>
+      <node id="bank:1" claimed="true" class="memory" handle="DMI:0020">
+       <description>DIMM 400 MHz (2.5 ns)</description>
+       <product>None</product>
+       <vendor>None</vendor>
+       <physid>1</physid>
+       <serial>None</serial>
+       <slot>A1</slot>
+       <size units="bytes">536870912</size>
+       <width units="bits">64</width>
+       <clock units="Hz">400000000</clock>
+      </node>
+      <node id="bank:2" claimed="true" class="memory" handle="DMI:0021">
+       <description>DIMM 400 MHz (2.5 ns)</description>
+       <product>None</product>
+       <vendor>None</vendor>
+       <physid>2</physid>
+       <serial>None</serial>
+       <slot>A2</slot>
+       <size units="bytes">268435456</size>
+       <width units="bits">64</width>
+       <clock units="Hz">400000000</clock>
+      </node>
+      <node id="bank:3" claimed="true" class="memory" handle="DMI:0022">
+       <description>DIMM [empty]</description>
+       <product>None</product>
+       <vendor>None</vendor>
+       <physid>3</physid>
+       <serial>None</serial>
+       <slot>A3</slot>
+      </node>
+    </node>
