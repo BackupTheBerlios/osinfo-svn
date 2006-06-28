@@ -76,18 +76,18 @@ Meta_lanforce='distro system processor memory network dmi hdd devices cdrom user
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
 Meta_apps='applications'
-Meta_network='devices network'
-MODULES_META='all lanforce system cpu apps network'
+Meta_net='network wlan'
+MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services printers'
+MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services printers wlan'
 MODULES_BSD='distro system applications terminal network'
 MODULES_BROKEN=''
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan'
 
 
 ################################################################################
@@ -1744,7 +1744,7 @@ Module_services() {
 #
 # WIRELESS SUPPORT IS EXPERIMENTAL
 Module_network() {
-	moduleName="Network information"
+	local moduleName="Network information"
 	module_header	"${moduleName}"
 
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
@@ -1830,6 +1830,15 @@ Module_network() {
 
 	done
 
+	module_footer
+	flush_values
+	
+}
+
+#fake module, combine with network
+Module_wlan() {
+	local moduleName="Wlan information"
+	module_header	"${moduleName}"
 
 	###################################################
 	# DETECT WIRELESS NETWORK DEVICES AND ACCESS POINTS
@@ -1839,6 +1848,7 @@ Module_network() {
 
 	# note: for debugging, these variables are set here
 	if [ "$fake" == 1 ]; then
+
 		iw_src="debug/wlan-iwconfig-on"
 		WLAN_DEVICES="eth1"
 		ap_src="debug/wlan-stations"
@@ -1863,7 +1873,7 @@ Module_network() {
 
 		fi
 
-	fi
+	fi 
 
 
 	#for device in $WLAN_DEVICES
@@ -1887,7 +1897,8 @@ Module_network() {
 		add_attribute   'link strength'
 
 		value_footer
-	
+		
+		
 
 	module_footer
 	flush_values

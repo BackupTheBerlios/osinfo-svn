@@ -93,6 +93,7 @@ isdebug=0
 usekdialog=0
 lanforce=0
 usexml=0
+fake=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
@@ -217,10 +218,11 @@ if [ "$#" -gt 0 ]; then
 				export isdebug=1
 				shift 1
 				;;
-			'--fake')
+			'--dev')
 				# for faking input from files to debug stuff, for example
 				# LVM drives when no such drives are available
-				fake=1
+				export fake=1
+				shift 1
 				;;
 			'-V'|'--version')
 				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
