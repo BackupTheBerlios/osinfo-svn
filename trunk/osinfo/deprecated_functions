@@ -1,6 +1,231 @@
 #!/bin/bash
 echo "Don't run this file"
 exit 1
+#######################
+# OEM INFORMATION (rewrite)
+# this module is deprecated in favor of module_dmi
+#
+# also, this is broken due to extr_lshw subfunction, this function
+# is caught in an eternal loop, no idea why. probably easy to solve.
+#
+# this module collects information from lshw, a somewhat rare package, which
+# tells a lot of interesting information of the system hardware.  it also seems
+# to be the only way to get the serial number of a branded computer, thus 'oem
+# info'. below is an excerpt from 'man lshw'
+#
+# lshw  is a small tool to extract detailed information on the hardware
+# configuration of the machine. It can report exact memory configuration,
+# firmware version, mainboard configuration, CPU version and  speed,  cache
+# configuration,  bus  speed, etc. on DMI-capable x86 or IA-64 systems and on
+# some PowerPC machines (PowerMac G4 is known to work).  It currently supports
+# DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
+# CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
+Module_oem() {
+	local moduleName="OEM information"
+	module_header "${moduleName}"
+
+	if CheckReq_lshw && CheckReq_root; then
+
+		# the interesting entries:
+		# $hostname
+		# core
+		# firmware
+
+		local NODES="$(hostname) core firmware"
+
+		oem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$oem_info" )
+
+		# following loop extracts the data under the nodes variable.
+
+		# (1) get the line number where the 'node id=$NODES'
+		# (2) get the line number of the next 'node id'
+		# (3) everything in between those lines contains interesting data
+
+		for myNODE in $NODES; do
+
+			extr_lshw_xml_node $myNODE > $oem_tmp
+
+			local IFSbk="$IFS"
+			IFS=$'\n'
+
+			#for info in $(); do
+			for info in $(cat $oem_tmp); do
+
+				# the data is avaiable here, printed line by line.
+				# usually the fields are:
+
+				# <description>
+				# <product>
+				# <vendor>
+				# <version>
+				# <serial>
+
+				# then there special fields. see 'lshw -xml'
+
+				# parse standard <foo> tags
+				# TODO: add support for capabilities tags
+				local tag="$(grep -o '<[a-z]*>' <<< ${info} | \
+							sed 's/<\([^>]*\)>/\1/')"
+							# matched everything between '<' and '>'
+
+				[ "$tag" ] && \
+				local value="$(grep ${tag} <<< ${info} | \
+							awk -F'<|>' {'print $3'})"
+
+				# here the data is processed
+				case $myNODE in
+
+					"$(hostname)")	# OEM info
+
+						if [ "$printed" != "oem" ]; then
+							value_header	"OEM info"
+							local printed="oem"
+						fi
+
+						case $tag in
+
+							'description')
+
+								add_attribute 'System model' \
+								              'system_model'
+								add_values    "$value"
+								;;
+
+							'vendor')
+
+								add_attribute 'System manufacturer' \
+								              'system_manufacturer'
+								add_values    "$value"
+								;;
+
+							'product')
+
+								add_attribute 'System name'
+								add_values    "$value"
+								;;
+
+							'version')
+
+								add_attribute 'System version'
+								add_values    "$value"
+								;;
+
+							'serial')
+
+								add_attribute 'OEM serial number' \
+								              'computer_product_serial'
+								add_values    "$value"
+								;;
+
+							#*)
+
+								#add_attribute "$tag"
+								#add_values    "$value"
+								#;;
+
+						esac
+
+						value_footer
+						;;
+
+					'core')			# mobo info
+
+						if [ "$printed" != "mobo" ]; then
+							value_header	"Motherboard"
+							local printed="mobo"
+						fi
+
+						case $tag in
+
+							'vendor')
+
+								add_attribute 'Make'
+								add_values    "$value"
+								;;
+
+							'product')
+
+								add_attribute 'Model'
+								add_values    "$value"
+								;;
+
+							'version')
+
+								add_attribute 'Revision'
+								add_values    "$value"
+								;;
+
+							'serial')
+								add_attribute 'Serial number' \
+								              'mother_board_serial_number'
+								add_values    "$value"
+								;;
+
+						esac
+
+						value_footer
+						;;
+
+					'firmware')		# BIOS info
+
+						if [ "$printed" != "bios" ]; then
+							value_header	"BIOS"
+							local printed="bios"
+						fi
+
+						case $tag in
+
+							'vendor')
+
+								add_attribute 'Vendor'
+								add_values    "$value"
+								;;
+
+							'version')
+
+								add_attribute 'Revision'	'bios_version'
+								add_values    "$value"
+
+								# trying to extract date from version
+								add_attribute 'Date'	'bios_date'
+								add_values    "$(echo $value | \
+								                 grep -Eo '([0-9]{2,4}[-./][0-9]{2}[-./][0-9]{2,4})+')"
+								;;
+
+							'date')
+
+								add_attribute 'Date'	'bios_date'
+								add_values    "$value"
+
+								;;
+
+							'serial')
+								add_attribute 'Serial number' \
+								              'bios_serial_number'
+								add_values    "$value"
+								;;
+
+						esac
+
+						#value_footer
+						# this produces an eternal loop
+						;;
+
+				esac
+
+			done
+
+			IFS="$IFSbk"
+
+		done
+	fi
+
+	module_footer
+	flush_values
+}
+
+
 Module_oem_old() {
 # OEM INFORMATION
 # deprecated, as this module has been rewritten. left here for reference.

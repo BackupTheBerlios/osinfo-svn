@@ -143,7 +143,59 @@ CheckReq_root() {
 lshw_xml() {
 	if [ -z "$lshw_xml_file" ]; then
 		export lshw_xml_file="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml > "$lshw_xml_file"
+		lshw -xml | grep -n . > "$lshw_xml_file"
+	fi
+}
+
+###############################
+# extracts a node from lshw_xml
+#
+#	parameters:
+#	(1) node id
+extr_lshw_xml_node() {
+	local node_id="${1}"
+
+	lshw_xml
+
+	# this gets the line number of the wanted node from lshw 
+	# and the line number of the next node 
+	# then what's between those lines is echoed
+	local first_node="$(grep  "node id=\"${node_id}" $lshw_xml_file)"
+	
+	if [ "$first_node" ]; then
+		local begin="$(awk -F: {'print $1'} <<< ${first_node})"
+		local node_indent="$(awk -F: {'print $2'} <<< "${first_node}" | \
+			grep -Eo '^\ *' | wc -m)"
+
+		IFS_bak=$IFS; IFS=$'\n' ; 
+		
+		# this loop takes care that all subnodes are included, by comparing
+		# the xml indentation level. not very elegant..
+		#for node in $(grep -n 'node id' $lshw_xml_file | \
+		#	grep -A 10 node\ id=\"${node_id}); do
+
+		for node in $(sed -n "$(($begin+1)),\${p;}" $lshw_xml_file | grep \\node); do
+
+			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
+				wc -m)" == "$node_indent" ]; then
+
+				local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
+
+
+				#local nigeb="$(grep -m 1 "${node}" $lshw_xml_file | \
+				#	awk -F: {'print $1'})"
+
+				break; 
+
+			fi
+		
+		done 
+		
+		IFS=$IFS_bak
+
+		# then output this to whichever function called this
+		sed -n "$begin,$nigeb{p;}" $lshw_xml_file | sed 's/^[0-9]*\://'
+
 	fi
 }
 
@@ -990,25 +1042,24 @@ Module_hdd() {
 # ram after kernel has allocated some for system services.
 #
 # requires root access
+#
+# TODO: add support for memory type/speed detection thru lshw
 Module_memory() {
-	moduleName="System memory"
+	local moduleName="System memory"
 	module_header "${moduleName}"
 
 	if CheckReq_lshw && CheckReq_root; then
 
+		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
-		# TODO: add support for memory type/speed detection thru lshw
-		lshw_xml
+		extr_lshw_xml_node memory > $mem_tmp
 
-		# for some odd reason meminfo or free don't give a proper value
+		# meminfo or free don't give a proper value, so we use lshw
+		# meminfo="/proc/meminfo"
 
-		meminfo="/proc/meminfo"
-
-		#totalram="$(cat ${meminfo} | grep -i memtotal | grep -Eo [0-9]+)"
-		totalram="$(grep 'id="memory' -A 20 ${lshw_xml_file} | grep size | \
-		            grep -Eo '[0-9]+')"
-
-		totalram="$(echo "$totalram/1024/1024" | bc -l | grep -Eo '[0-9]+\.[0-9]{1}')"
+		totalram="$(grep bank\:0 -B 10 ${mem_tmp} | grep size | grep -Eo '[0-9]+')"
+		totalram="$(bc -l <<< scale=1\;$totalram/1024/1024)"
 
 		add_attribute 'RAM total'	'ram'
 		add_values    "$totalram MB"
@@ -1027,32 +1078,20 @@ Module_cdrom() {
 	module_header "${moduleName}"
 
 	if CheckReq_lshw && CheckReq_root; then
-		lshw_xml
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$udev_tmp")
 
-		# this gets the line number of the wanted node from lshw '$this'
-		# and the line number of the next node '$next'
-		# then what's between those lines is printed to another tmp file
-		first_node="$(grep -n "node id=\"cdrom" $lshw_xml_file | \
-			awk -F: {'print $1'})"
+		extr_lshw_xml_node cdrom > $cdrom_tmp
 
 		# check whether there are cdrom drives in the system..
-		if [ "$first_node"  ]; then
+		if [ -s "$cdrom_tmp"  ]; then
 
 			# TODO: detect how many drives. atm it only supports one drive.
 			local ID=1
 
 			# do a for loop here by ID
 
-			next_node="$(grep -n 'node id' $lshw_xml_file | grep -A 1 cdrom | \
-			             awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((first_node++)) # this prevents the 'node' lines from printing
-			((next_node--))
-
-			# use a temp file to store cdrom information
-			sed -n "$first_node,$next_node{p;}" ${lshw_xml_file} > ${cdrom_tmp}
 
 			# collect information
 
@@ -1066,13 +1105,11 @@ Module_cdrom() {
 			                     sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 			cdrom_node[$ID]="$(grep -i 'logicalname' ${cdrom_tmp} | \
-			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
 
 			#udevinfo -q all -n "${cdrom_node[$ID]}" > ${udev_tmp}
 
 			#cat $cdrom_tmp
-			#exit 0
-
 
 			add_attribute 'Model'	'cdrom'
 			add_values    "${cdrom_model[$ID]}"
@@ -1129,7 +1166,7 @@ Module_cdrom() {
 # is a good point in terms of report speed and safeness,  this also makes
 # the presented information possibly unreliable.
 Module_dmi() {
-	moduleName="DMI information"
+	local moduleName="DMI information"
 	module_header "${moduleName}"
 
 	if CheckReq_dmidecode && CheckReq_root; then
@@ -1338,229 +1375,6 @@ Module_dmi() {
 }
 
 
-#######################
-# OEM INFORMATION (rewrite)
-# this module is deprecated in favor of module_dmi
-#
-# this module collects information from lshw, a somewhat rare package, which
-# tells a lot of interesting information of the system hardware.  it also seems
-# to be the only way to get the serial number of a branded computer, thus 'oem
-# info'. below is an excerpt from 'man lshw'
-#
-# lshw  is a small tool to extract detailed information on the hardware
-# configuration of the machine. It can report exact memory configuration,
-# firmware version, mainboard configuration, CPU version and  speed,  cache
-# configuration,  bus  speed, etc. on DMI-capable x86 or IA-64 systems and on
-# some PowerPC machines (PowerMac G4 is known to work).  It currently supports
-# DMI (x86 and IA-64 only), OpenFirmware device tree (PowerPC only),  PCI/AGP,
-# CPUID  (x86),IDE/ATA/ATAPI, PCMCIA (only tested on x86), SCSI and USB.
-Module_oem() {
-	local moduleName="OEM information"
-	module_header "${moduleName}"
-
-
-	if CheckReq_lshw && CheckReq_root; then
-		lshw_xml
-
-		# the interesting entries:
-		# $hostname
-		# core
-		# firmware
-
-		local NODES="$(hostname) core firmware"
-
-		# following loop extracts the data under the nodes variable.
-
-		# (1) get the line number where the 'node id=$NODES'
-		# (2) get the line number of the next 'node id'
-		# (3) everything in between those lines contains interesting data
-
-		for myNODE in $NODES; do
-
-			this="$(grep -n "node id=\""${myNODE}"\"" $lshw_xml_file | \
-				awk -F: {'print $1'})"
-			next="$(grep -n 'node id' $lshw_xml_file | grep -A 1 ${myNODE} | \
-				awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((this++)) # this prevents the 'node' lines from printing
-			((next--))
-
-			local IFSbk="$IFS"
-			IFS=$'\n'
-
-			for info in $(sed -n "$this,$next{p;}" $lshw_xml_file); do
-
-				# the data is avaiable here, printed line by line.
-				# usually the fields are:
-
-				# <description>
-				# <product>
-				# <vendor>
-				# <version>
-				# <serial>
-
-				# then there special fields. see 'lshw -xml'
-
-				# parse standard <foo> tags
-				# TODO: add support for capabilities tags
-				local tag="$(grep -o '<[a-z]*>' <<< ${info} | \
-							sed 's/<\([^>]*\)>/\1/')"
-							# matched everything between '<' and '>'
-
-				[ "$tag" ] && \
-				local value="$(grep ${tag} <<< ${info} | \
-							awk -F'<|>' {'print $3'})"
-
-				# here the data is processed
-				case $myNODE in
-
-					"$(hostname)")	# OEM info
-
-						if [ "$printed" != "oem" ]; then
-							value_header	"OEM info"
-							local printed="oem"
-						fi
-
-						case $tag in
-
-							'description')
-
-								add_attribute 'System model' \
-								              'system_model'
-								add_values    "$value"
-								;;
-
-							'vendor')
-
-								add_attribute 'System manufacturer' \
-								              'system_manufacturer'
-								add_values    "$value"
-								;;
-
-							'product')
-
-								add_attribute 'System name'
-								add_values    "$value"
-								;;
-
-							'version')
-
-								add_attribute 'System version'
-								add_values    "$value"
-								;;
-
-							'serial')
-
-								add_attribute 'OEM serial number' \
-								              'computer_product_serial'
-								add_values    "$value"
-								;;
-
-							#*)
-
-								#add_attribute "$tag"
-								#add_values    "$value"
-								#;;
-
-						esac
-
-						value_footer
-						;;
-
-					'core')			# mobo info
-
-						if [ "$printed" != "mobo" ]; then
-							value_header	"Motherboard"
-							local printed="mobo"
-						fi
-
-						case $tag in
-
-							'vendor')
-
-								add_attribute 'Make'
-								add_values    "$value"
-								;;
-
-							'product')
-
-								add_attribute 'Model'
-								add_values    "$value"
-								;;
-
-							'version')
-
-								add_attribute 'Revision'
-								add_values    "$value"
-								;;
-
-							'serial')
-								add_attribute 'Serial number' \
-								              'mother_board_serial_number'
-								add_values    "$value"
-								;;
-
-						esac
-
-						value_footer
-						;;
-
-					'firmware')		# BIOS info
-
-						if [ "$printed" != "bios" ]; then
-							value_header	"BIOS"
-							local printed="bios"
-						fi
-
-						case $tag in
-
-							'vendor')
-
-								add_attribute 'Vendor'
-								add_values    "$value"
-								;;
-
-							'version')
-
-								add_attribute 'Revision'	'bios_version'
-								add_values    "$value"
-
-								# trying to extract date from version
-								add_attribute 'Date'	'bios_date'
-								add_values    "$(echo $value | \
-								                 grep -Eo '([0-9]{2,4}[-./][0-9]{2}[-./][0-9]{2,4})+')"
-								;;
-
-							'date')
-
-								add_attribute 'Date'	'bios_date'
-								add_values    "$value"
-
-								;;
-
-							'serial')
-								add_attribute 'Serial number' \
-								              'bios_serial_number'
-								add_values    "$value"
-								;;
-
-						esac
-
-						#value_footer
-						# this produces an eternal loop
-						;;
-
-				esac
-
-			done
-
-			IFS="$IFSbk"
-
-		done
-	fi
-
-	module_footer
-	flush_values
-}
 
 
 # GENERAL INFORMATION OF THE SYSTEM
@@ -1709,6 +1523,8 @@ Module_terminal() {
 
 # uses only lpstat (cups) and hasn't been tested on multi-printer
 # environments
+#
+# TODO: add some kind of timeout function
 Module_printers() {
 	moduleName="Printers"
 	module_header "${moduleName}"

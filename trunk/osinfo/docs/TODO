@@ -1,7 +1,6 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-
 *	daemon mode - see daemontools
 *	fix: system memory is not properly detected
 *	general --debug switch that turns on traceback calls and 'set -x'
