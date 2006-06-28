@@ -2,7 +2,6 @@ FEATURES and FIXES for 0.3:
 --------------------------
 
 *	daemon mode - see daemontools
-*	fix: system memory is not properly detected
 *	general --debug switch that turns on traceback calls and 'set -x'
 	and directs them to a certain logfile, this would be user so that 
 	as the user base grows, be get new beta-testers, their errors can
@@ -35,6 +34,8 @@ LATER FEATURES:
 
 *	general usb device detection: cameras etc
 *	hal/dbus stuff
+*	window manager version
+*	--checkdep switch
 
 
 BUGS:
@@ -43,54 +44,30 @@ BUGS:
 *	mod_applications: /dev/mem: Permission denied on RH9
 *	fix indentation in print_stdout, modules where same value has
 	multiple items are affected
-*	mod_hdd does not work properly inside sudo shell
-*	mod_system should call mod_distro
 *	mod_hdd doesn't work on fedora!
 *	module_footer doesn't produce </moduleName> tag
 
 
 
 GENERAL NOTES:
---------
+-------------
 
-* to check if the xml output is valid against the DTD run: xmllint --valid osinfo.xml
+*	to check if the xml output is valid against the DTD run: xmllint --valid osinfo.xml
+*	change value_header => add_value_header
 
-* XML
-To handle XML we need a generic output interface.
-Source a file with with the interface. There should be one file for xml output, one for kdialog output and one for normal.
-
-* Get rid of eval.
-* is it possible to run a for loop with the whitescapes, each line only
-	constituting a new item in the loop, (not using whitescape, rather \n as the mark)?
-	example:
-		for line in `echo -e "foo\nbar baz"`; do echo $line; done
-	would output:
-		foo
-		bar baz
-	or is the only way to handle this to be creative with tr?
-	This problems occurs in a couple of places in the script
-
-* add a version sniffer for Gnome and fix X and KDE entries too in case they don't work everywhere
-* add --checkdep 
-* look into daemontools for the init script
-* change value_header => add_value_header
-* the headers array is fine, it's parsed linearly. if the entry in the array is not numbers only,
-	it means it is a header or a footer. the footer has a %footer% identifier which closes the previous
-	open tag. everything else is parsed to stdout or to xml. $indent variable is used to ensure proper format.
-* use if sentence for smartctl with IDE drives
-* parse all partition data into one line for each partition???
 
 
 PROGRAMMING TIPS:
+----------------
 
-	# there are at least two methods to parse an alphabetical seq number:
-	# awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
-	# NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
-	# the latter works by subtracting the ASCII offset (64) from the uppercase character.
+*	there are at least two methods to parse an alphabetical seq number:
+	 awk '{ ind=index("ABCDEFGHIJKLMNOPQRSTUVWXYZ", toupper($0)); print ind; }' <<< $'b\no\ns\na\ni'
+	 NUM=$(( $(echo -n 'A' | tr 'a-z' 'A-Z' | od -A n -t u1) - 64)); echo $NUM
+	 the latter works by subtracting the ASCII offset (64) from the uppercase character.
 
-	# to use tab as a field separator in awk:
-	# awk $'-F\t' {}
+*	to use tab as a field separator in awk:
+	 awk $'-F\t' {}
 
-	# instead of awk, read can sometimes be used:
-	# fdisk -l | read a b c d e partition; echo "$partition"
+*	instead of awk, read can sometimes be used:
+	fdisk -l | read a b c d e partition; echo "$partition"
 
