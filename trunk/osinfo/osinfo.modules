@@ -1496,11 +1496,15 @@ Module_processor() {
 
 # INFORMATION OF THE TERMINAL IN USE
 Module_terminal() {
-	moduleName="Terminal info"
+	local moduleName="Terminal info"
 	module_header "${moduleName}"
 
 	add_attribute "Terminal type"
 	add_values    "$TERM"
+
+	# TODO
+	add_attribute "Terminal encoding"
+	add_values    "?"
 
 	add_attribute "Terminal speed"
 	add_values    "$(stty speed)"
@@ -1833,61 +1837,57 @@ Module_network() {
 	#
 	# under developement, does not yet work!
 
-	# FIXME: This odd debug usage sucks... Better add a --debug if you realy need this.
 	# note: for debugging, these variables are set here
 	if [ "$fake" == 1 ]; then
 		iw_src="debug/wlan-iwconfig-on"
 		WLAN_DEVICES="eth1"
 		ap_src="debug/wlan-stations"
 
-		if [ "$(type -p iwconfig)" ]; then
+	elif [ "$(type -p iwconfig)" ]; then
+
+		# not tested yet
+		if [ "$SYSTEM" == "linux" ] ; then
+
+		# FIXME: on my system w/ wireless-tools,
+		# but no wlan network (no working drivers)
+		#  iwconfig -a
+		#  -a        No such device
+
+			WLAN_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
+			               grep -Ev '(^ )|(^--)|LOOPBACK' | \
+			               awk  {'print $1'})"
+
 
 			iw_src="iwconfig"
-
-			# not tested yet
-			if [ "$SYSTEM" == "linux" ] ; then
-
-			# FIXME: on my system w/ wireless-tools,
-			# but no wlan network (no working drivers)
-			#  iwconfig -a
-			#  -a        No such device
-
-				ETH_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
-				               grep -Ev '(^ )|(^--)|LOOPBACK' | \
-				               awk  {'print $1'})"
-			fi
-
-		fi
-
-		# info from access points (AP)
-		if [ "$(type -p iwlist)" ]; then
-			# tweak this a bit
 			ap_src="iwlist $WLAN_DEVICES scan"
+
 		fi
 
-		value_header  'wlan'
-
-		add_attribute	'wireless device'
-		add_values		"$WLAN_DEVICES" # actually, one device
-
-		add_attribute	'wireless adapter'
-		#add_values "some_device_from_mod_devices"
-
-		add_attribute	'associated ESSID'
-		add_values		"$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
-		                awk -F: {'print $2'})"
-
-		add_attribute	'encryption type'
-
-		add_attribute	'link strength'
-
-		value_footer
 	fi
 
 
+	#for device in $WLAN_DEVICES
+	#or
+	#for ap in $access_points ?
 
-	# cleanup
-	rm -f ${nw_info}
+		value_header    'wlan'
+
+		add_attribute   'wireless device'
+		add_values      ""  # the device associated to this AP
+
+		add_attribute   'wireless adapter'
+		#add_values     "some_device_from_mod_devices"
+
+		add_attribute   'associated ESSID'
+		add_values      "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
+		                awk -F: {'print $2'})"
+
+		add_attribute   'encryption type'
+
+		add_attribute   'link strength'
+
+		value_footer
+	
 
 	module_footer
 	flush_values
