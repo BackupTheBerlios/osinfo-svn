@@ -143,58 +143,65 @@ CheckReq_root() {
 lshw_xml() {
 	if [ -z "$lshw_xml_file" ]; then
 		export lshw_xml_file="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml | grep -n . > "$lshw_xml_file"
+		lshw -xml > "$lshw_xml_file"
 	fi
 }
 
-###############################
-# extracts a node from lshw_xml
+##################################
+# extracts a node from input file
 #
 #	parameters:
 #	(1) node id
-extr_lshw_xml_node() {
+#	(2) input file
+#	(3) node closer, defaults to 'node id'
+extr_node() {
 	local node_id="${1}"
+	local input_file="${2}"
+	local node_closer="${3}"
 
-	lshw_xml
+	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$input_tmp" )
+
+	grep -n . ${input_file} > $input_tmp
+
+	[ ! "$node_closer" ] && node_closer="${node_id}"
 
 	# this gets the line number of the wanted node from lshw 
 	# and the line number of the next node 
 	# then what's between those lines is echoed
-	local first_node="$(grep  "node id=\"${node_id}" $lshw_xml_file)"
+	local first_node="$(grep  "${node_id}" $input_tmp)"
 	
 	if [ "$first_node" ]; then
 		local begin="$(awk -F: {'print $1'} <<< ${first_node})"
 		local node_indent="$(awk -F: {'print $2'} <<< "${first_node}" | \
 			grep -Eo '^\ *' | wc -m)"
 
-		IFS_bak=$IFS; IFS=$'\n' ; 
 		
 		# this loop takes care that all subnodes are included, by comparing
-		# the xml indentation level. not very elegant..
-		#for node in $(grep -n 'node id' $lshw_xml_file | \
-		#	grep -A 10 node\ id=\"${node_id}); do
+		# the indentation level. not very elegant..
+		# basically it just searches for $node_closer and gets the line#
+		IFS_bak="$IFS"; IFS=$'\n' ; 
+		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | grep ${node_closer}); do
 
-		for node in $(sed -n "$(($begin+1)),\${p;}" $lshw_xml_file | grep \\node); do
-
+			# if the indentation matches...
 			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
-				wc -m)" == "$node_indent" ]; then
+			wc -m)" == "$node_indent" ]; then
 
+				# read the line# to $nigeb (begin backwards)
 				local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
-
-
-				#local nigeb="$(grep -m 1 "${node}" $lshw_xml_file | \
-				#	awk -F: {'print $1'})"
-
+				((nigeb--)) # this prevents the closing node to displaying
+							# as sometimes this may not be wanted
 				break; 
 
 			fi
 		
-		done 
-		
+		done
+		# if the closing node wasn't found, read to EOF
+		[ ! "$nigeb" ] && nigeb="$"
 		IFS=$IFS_bak
 
 		# then output this to whichever function called this
-		sed -n "$begin,$nigeb{p;}" $lshw_xml_file | sed 's/^[0-9]*\://'
+		sed -n "$begin,$nigeb{p;}" $input_file 
 
 	fi
 }
@@ -1053,7 +1060,8 @@ Module_memory() {
 		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
-		extr_lshw_xml_node memory > $mem_tmp
+		lshw_xml
+		extr_node "node id=\"memory" $lshw_xml_file \\node > $mem_tmp
 
 		# meminfo or free don't give a proper value, so we use lshw
 		# meminfo="/proc/meminfo"
@@ -1082,7 +1090,8 @@ Module_cdrom() {
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$udev_tmp")
 
-		extr_lshw_xml_node cdrom > $cdrom_tmp
+		lshw_xml
+		extr_node "node id=\"cdrom" $lshw_xml_file \\node > $cdrom_tmp
 
 		# check whether there are cdrom drives in the system..
 		if [ -s "$cdrom_tmp"  ]; then
@@ -1831,27 +1840,27 @@ Module_network() {
 	done
 
 	module_footer
-	flush_values
-	
+	flush_values	
 }
 
-#fake module, combine with network
+###################################################
+# MODULE WLAN
+#
+# detects wireless network access points
+#
+# uses wireless-tools (iwconfig, iwlist)
+# Linux only
+#
+# under developement, does not yet work!
 Module_wlan() {
 	local moduleName="Wlan information"
 	module_header	"${moduleName}"
 
-	###################################################
-	# DETECT WIRELESS NETWORK DEVICES AND ACCESS POINTS
-	# with iwconfig, Linux only
-	#
-	# under developement, does not yet work!
-
-	# note: for debugging, these variables are set here
-
 	#iw_src="$(mktemp /tmp/osinfo.XXXXXX)"
 	#ap_src="$(mktemp /tmp/osinfo.XXXXXX)"
-	#TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src")
-
+	cell_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	#TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
+	TempFiles=("${TempFiles[@]}" "$cell_tmp")
 
 	if [ "$fake" == 1 ]; then
 
@@ -1879,25 +1888,40 @@ Module_wlan() {
 
 		fi
 
+	else
+
+		echo "use --dev to run this module"
+		exit 1
+
 	fi 
 
+	IFS_bak="$IFS"
+	IFS=$'\n'
 
-	#for device in $wlan_devices
-	#or
-	#for ap in $access_points ?
+	# process all access points
+	for access_point in $(grep -i cell ${ap_src}); do
 
-		value_header    'wlan'
+		# this functions extracts each cell into a temp file
+		extr_node $access_point $ap_src Cell > $cell_tmp
 
-		add_attribute   'associated ESSID'
-		add_values      "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
-		                awk -F: {'print $2'})"
+		value_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | sed 's/\"//g')"
 
-		add_attribute   'device node'
-		add_values      "$(grep -Eo '^[a-z0-9]'+ ${iw_src})"
-						# the device associated to this AP
+		if [ $accociated ]; then
+			#access_points[${access_points[@]}]="$(grep -A 1 -i ${access_point}" \
+			#awk -F: '/ESSID/ {print $2}' | sed 's/\"//g' )"
 
-		add_attribute   'device'
-		#add_values     "some_device_from_mod_devices"
+
+			#add_attribute   'associated ESSID'
+			#value_header    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
+			#                awk -F: {'print $2'})" 
+
+			add_attribute   'device node'
+			add_values      "$(grep -Eo '^[a-z0-9]'+ ${iw_src})"
+							# the device associated to this AP
+
+			add_attribute   'device'
+			#add_values     "some_device_from_mod_devices"
+		fi
 
 		add_attribute   'encryption type'
 
@@ -1917,8 +1941,10 @@ Module_wlan() {
 
 
 		value_footer
+	
+	done
 		
-		
+	IFS="$IFS_bak"
 
 	module_footer
 	flush_values

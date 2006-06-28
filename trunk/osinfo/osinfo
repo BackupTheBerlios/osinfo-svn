@@ -294,35 +294,22 @@ function print_xml_footer () {
 # detailed information is given in each function.
 
 
+# this function inserts the input string as the last available item
+# in the $infostring array. it also adds a %header% tag which will be
+# use by print_* functions to interpret how to parse the string.
 function value_header() {
 
-	# this function inserts the input string as the last available item
-	# in the $infostring array. it also adds a %header% tag which will be
-	# use by print_* functions to interpret how to parse the string.
-
-	#echo ${#infostring[@]}
-	infostring[${#infostring[@]}]="%header%\n${1}"
+	infostring[${#infostring[@]}]="%header%\n${tcGREEN}${1}${tSTD}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	#echo ${infostring[0]}
 }
 
 
+# this function searches the $infostring array backwards,
+# looking for open headers.
 function value_footer() {
-
-	# this function searches the $infostring array backwards,
-	# looking for open headers.
 
 	# NEEDS DEBUGGING!
 
-	#for HDR in $(seq ${#headers[@]} -1 0); do
-	#echo ${headers[$HDR]}
-	#	if [ "$(echo ${headers[$HDR]} | grep -Eo '^[A-�-�]+')" ]; then
-			#echo $HDR
-	#		headers[${#headers[@]}]="%footer%${headers[$HDR]}"
-		        #value_string="/$HDR\n";
-	#		break;
-	#	fi
-	#done
 	local IFS_bak="$IFS"
 	IFS=$' \t\n'
 
@@ -352,9 +339,21 @@ function value_footer() {
 	IFS="$IFS_bak"
 
 	#for VL in $(seq 0 ${#infostring[@]}); do
-#		echo ${infostring[$VL]}
-#	done
+	#	echo ${infostring[$VL]}
+	#done
 
+}
+
+
+# this function inserts the input string as the last available item
+# in the $infostring array. it also adds a %header% tag which will be
+# use by print_* functions to interpret how to parse the string.
+# this function differs from value_header in that it adds an xml attribute
+function add_header() {
+
+	infostring[${#infostring[@]}]="%header%\n${1}"
+	infostring[${#infostring[@]}]="%attribute%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -390,21 +389,6 @@ function add_values {
 		infostring[${#infostring[@]}]="$value"
 	done
 	IFS="$IFS_bak"
-
-
-	# THIS IS FOR DEBUGGING
-
-	#	for HDR in $(seq 1 ${#headers[@]}); do
-	#		echo ${headers[$HDR]}
-	#	done
-
-	#	for VL in $(seq 1 ${#values[@]}); do
-	#		echo ${values[$VL]}
-	#	done
-
-	#	echo ${#headers[@]}
-	#	echo ${#values[@]}
-
 }
 
 
@@ -529,7 +513,6 @@ function print_xml {
 			fi
 		fi
 	done
-
 }
 
 
@@ -591,7 +574,6 @@ function print_lanforce_xml {
 			#fi
 		fi
 	done
-
 }
 
 # This function formulates $infostring for stdout
@@ -608,7 +590,6 @@ function print_lanforce_xml {
 #
 #  Finally $value_string is printed at once.
 function print_stdout {
-
 	# Get tabsize dynamically
 	TABSIZE=$(tput it)
 
@@ -735,7 +716,6 @@ function print_stdout {
 ################################################################################
 # Module functions
 # ------------------------------------------------------------------------------
-
 function wrong_module() {
 	do_abort "${1} is not a valid module!" 1
 }
