@@ -1847,10 +1847,16 @@ Module_wlan() {
 	# under developement, does not yet work!
 
 	# note: for debugging, these variables are set here
+
+	#iw_src="$(mktemp /tmp/osinfo.XXXXXX)"
+	#ap_src="$(mktemp /tmp/osinfo.XXXXXX)"
+	#TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src")
+
+
 	if [ "$fake" == 1 ]; then
 
 		iw_src="debug/wlan-iwconfig-on"
-		WLAN_DEVICES="eth1"
+		wlan_devices="eth1"
 		ap_src="debug/wlan-stations"
 
 	elif [ "$(type -p iwconfig)" ]; then
@@ -1863,38 +1869,52 @@ Module_wlan() {
 		#  iwconfig -a
 		#  -a        No such device
 
-			WLAN_DEVICES="$(iwconfig -a | grep BROADCAST -B 3 | \
+			wlan_devices="$(iwconfig -a | grep BROADCAST -B 3 | \
 			               grep -Ev '(^ )|(^--)|LOOPBACK' | \
 			               awk  {'print $1'})"
 
 
 			iw_src="iwconfig"
-			ap_src="iwlist $WLAN_DEVICES scan"
+			ap_src="iwlist $wlan_devices scan"
 
 		fi
 
 	fi 
 
 
-	#for device in $WLAN_DEVICES
+	#for device in $wlan_devices
 	#or
 	#for ap in $access_points ?
 
 		value_header    'wlan'
 
-		add_attribute   'wireless device'
-		add_values      ""  # the device associated to this AP
-
-		add_attribute   'wireless adapter'
-		#add_values     "some_device_from_mod_devices"
-
 		add_attribute   'associated ESSID'
 		add_values      "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
 		                awk -F: {'print $2'})"
 
+		add_attribute   'device node'
+		add_values      "$(grep -Eo '^[a-z0-9]'+ ${iw_src})"
+						# the device associated to this AP
+
+		add_attribute   'device'
+		#add_values     "some_device_from_mod_devices"
+
 		add_attribute   'encryption type'
 
-		add_attribute   'link strength'
+		add_attribute   'link quality'
+		add_values      "$(grep -Eo 'Link Quality[\=:][a-Z0-9]+' ${iw_src} | \
+						awk -F"=|:" '{print $2}')"
+
+
+		add_attribute   'mode'
+		add_values      "$(grep -Eo 'Mode[\=:][a-Z]+' ${iw_src} | \
+						awk -F"=|:" '{print $2}')"
+
+		add_attribute   'channel'
+		add_values      "$(grep -Eo 'Channel[\=:][a-Z0-9]+' ${iw_src} | \
+						awk -F"=|:" '{print $2}')"
+
+
 
 		value_footer
 		
