@@ -55,7 +55,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=4
+patch_version=5
 dev_status=alpha
 
 # source some files
@@ -65,7 +65,6 @@ source xml.functions
 source lanforce.functions
 
 
-XMLFILE="osinfo.xml"
 
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
@@ -97,6 +96,8 @@ fake=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
+XMLFILE="osinfo.xml"
+
 
 
 function PRINT_Help {
@@ -371,17 +372,6 @@ function add_attribute() {
 
 # This function inserts the input string or strings into the $infostring[] array.
 function add_values {
-
-	# check the number of input values.
-	# modules may output a blank string, and because that is also considered
-	# to be a string, this eval(uation) compares the strings one by one.
-	#AMT_VALUES=0
-	#for i in $(seq 1 1 $#); do
-	#	if [ "$(eval "echo \$$i")" != "" ]; then
-	#		((AMT_VALUES++))
-	#	fi
-	#done
-
 	# IFS need to be changed because the values are separated by newline
 	local IFS_bak="$IFS" value
 	IFS=$'\n'
@@ -626,9 +616,10 @@ function print_stdout {
 			# (prevents sequential values like in mod_hdd be affected)
 			# and the previous item ended with other than a tab (\t)
 			# FIXME: doesn't work right.
+			#set -x
 			if [ "$attribute" == "open" ] && \
-				[ "${item: -1:2}" == "n" ] && \
-				[ "${value_string: -1:2}" == "t" ]; then
+				[ "${item: -1:1}" == "\n" ] && \
+				[ "${value_string: -1:1}" == "\t" ]; then
 
 				unset tab_string
 				# there's something slightly wrong here
@@ -638,6 +629,7 @@ function print_stdout {
 
 				#local value_string="${value_string}${tab_string}"
 			fi
+			#set +x
 
 
 			# this evaluation counts the proper amount of tabs to add
@@ -674,7 +666,7 @@ function print_stdout {
 				#fi
 
 
-			local value_string="${value_string}${item}\t";
+			local value_string="${value_string}${item}";
 
 
 		else
@@ -709,7 +701,6 @@ function print_stdout {
 
 	# this sed makes the first item bold
 	echo -e "${value_string}\n" #| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
-
 }
 
 
