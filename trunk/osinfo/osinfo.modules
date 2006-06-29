@@ -1384,8 +1384,6 @@ Module_dmi() {
 }
 
 
-
-
 # GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
 	local moduleName="System"
@@ -1558,6 +1556,13 @@ Module_printers() {
 
 		done
 
+		add_attribute	'model'
+		add_attribute	'location'
+		add_attribute	'server'
+		add_attribute	'spooler'
+		add_attribute	'status'
+		add_attribute	'completed jobs'
+
 	fi
 
 
@@ -1726,7 +1731,6 @@ Module_services() {
 
 #################################
 ### SERVICE MODULE SUBFUNCTIONS
-#
 
 	# this script is used on gentoo
 	scan_services_rc-status() {
