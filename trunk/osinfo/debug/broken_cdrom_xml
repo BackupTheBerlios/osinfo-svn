@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO8859-1" ?>
+<!DOCTYPE osinfo SYSTEM "osinfo.dtd">
+<osinfo>
+	<[32m[1mcd_dvd_drives[0>
+		<attribute name="model" code="cdrom">
+			<value>BENQ DVD DD DW1640</value>
+			<value>PLEXTOR CD-R PX-W2410A</value>
+			<value>82801EB (ICH5) SATA Controller</value>
+			<value>ST3200822AS</value>
+			<value>82801EB/ER (ICH5/ICH5R) SMBus Controller</value>
+		</attribute>
+
+		<attribute name="drive type" code="">
+			<value>DVD writer</value>
+			<value>IDE Channel 1</value>
+			<value>IDE interface</value>
+			<value>SCSI Disk</value>
+			<value>Linux swap / Solaris partition</value>
+			<value>HPFS/NTFS partition</value>
+			<value>Extended partition</value>
+			<value>Linux filesystem partition</value>
+			<value>SMBus</value>
+		</attribute>
+
+		<attribute name="device node" code="">
+			<value>/dev/hda</value>
+		</attribute>
+
+		<attribute name="serial number" code="">
+			<value>9JB5U150F351907675PP</value>
+			<value>4LJ2YC8E</value>
+			<value><node id="serial" class="bus" handle="PCI:00:1f.3"></value>
+		</attribute>
+
+	</[32m[1mcd_dvd_drives[0>
+</osinfo>
