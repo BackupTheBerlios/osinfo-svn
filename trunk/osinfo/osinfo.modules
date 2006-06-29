@@ -1656,7 +1656,8 @@ Module_users() {
 
 		# get the login count
 		count="$(last | grep $user | wc -l)"
-		add_values      "$count\n"
+		add_values      "$count"
+		add_values		'\n'
 
 
 	done
