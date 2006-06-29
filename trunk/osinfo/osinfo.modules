@@ -72,7 +72,7 @@
 # TODO: make meta modules run the dependencies silent.
 
 Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services printers'
-Meta_lanforce='distro system processor memory network dmi hdd devices cdrom users printers applications services env'
+Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
 Meta_apps='applications'
@@ -81,9 +81,9 @@ MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services printers wlan'
+MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services wlan'
 MODULES_BSD='distro system applications terminal network'
-MODULES_BROKEN=''
+MODULES_BROKEN='printers wlan'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
@@ -1388,7 +1388,7 @@ Module_dmi() {
 
 # GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
-	moduleName="System"
+	local moduleName="System"
 	module_header "${moduleName}"
 
 	add_attribute "Operating system"		"os"
@@ -1418,7 +1418,7 @@ Module_system() {
 
 # OPERATING SYSTEM KERNEL
 Module_kernel() {
-	moduleName="Kernel"
+	local moduleName="Kernel"
 	module_header "${moduleName}"
 
 	local kernel_makefile
@@ -1449,7 +1449,7 @@ Module_kernel() {
 
 # INFORMATION OF THE CPU
 Module_processor() {
-	moduleName="Processor"
+	local moduleName="Processor"
 	module_header "${moduleName}"
 
 	local cpunr
@@ -1539,7 +1539,7 @@ Module_terminal() {
 #
 # TODO: add some kind of timeout function
 Module_printers() {
-	moduleName="Printers"
+	local moduleName="Printers"
 	module_header "${moduleName}"
 
 	local lp_nr
@@ -1573,7 +1573,7 @@ Module_printers() {
 # the last logged user, and other users that have logged in
 # (that last can see).
 Module_users() {
-	moduleName="Users"
+	local moduleName="Users"
 	module_header "${moduleName}"
 
 	value_header	"${tcGREEN}Current user"
@@ -1667,8 +1667,7 @@ Module_users() {
 #	(there are 7 or 8 IIRC, one for each runlevel, 1 for kernel modules to load,
 #	1 for local and 1 for system startup)
 Module_services() {
-
-	moduleName="Services"
+	local moduleName="Services"
 	module_header "${moduleName}"
 
 		# these functions handle scanning, they'll echo output
@@ -1882,7 +1881,6 @@ Module_wlan() {
 			               grep -Ev '(^ )|(^--)|LOOPBACK' | \
 			               awk  {'print $1'})"
 
-
 			iw_src="iwconfig"
 			ap_src="iwlist $wlan_devices scan"
 
@@ -1947,12 +1945,6 @@ Module_wlan() {
 						awk -F"=|:" '{print $2}')"
 
 
-
-
-
-
-
-
 		value_footer
 	
 	done
@@ -1983,7 +1975,7 @@ distro_lsb_release() {
 # resort the /etc/issue file. this makes it possible to identify
 # a distro which resides in a chroot environment, or from a livecd.
 Module_distro() {
-	moduleName="Distribution"
+	local moduleName="Distribution"
 	module_header "${moduleName}"
 
 	# NOTE: do not make distro_* variables local, as they might be used
@@ -2173,7 +2165,7 @@ Module_distro() {
 # version information of standard *nix, dev, and dependency packages.
 # probably should take an additional switch like --X, --server, etc.
 Module_applications() {
-	moduleName="Applications"
+	local moduleName="Applications"
 	module_header "${moduleName}"
 
 	local APPLICATIONS app
@@ -2284,7 +2276,7 @@ Module_applications() {
 # TODO: is there a way to link these devices to specific udev nodes?
 #       udevinfo 087 hadn't got the data lspci has
 Module_devices() {
-	moduleName="Devices"
+	local moduleName="Devices"
 	module_header "${moduleName}"
 	local DEVICE
 	local DEV_ARRAY=1;
@@ -2394,7 +2386,7 @@ Module_devices() {
 #
 # xml only, stdout is not needed
 Module_env() {
-	moduleName="Environment variables"
+	local moduleName="Environment variables"
 	module_header "${moduleName}"
 
 	## Write the header for output
