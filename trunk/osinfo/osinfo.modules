@@ -1576,16 +1576,16 @@ Module_users() {
 	local moduleName="Users"
 	module_header "${moduleName}"
 
-	value_header	"${tcGREEN}Current user"
-	add_attribute "Unix name"				'active_user'
-	add_values    "$(whoami)"
+	value_header   "Current user"
+	add_attribute  "Unix name"				'active_user'
+	add_values     "$(whoami)"
 
 
-	add_attribute 'Real name'				"real_name"
-	add_values    "$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
+	add_attribute  'Real name'				"real_name"
+	add_values     "$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
 
 
-	add_attribute "User's X11 session"	"users_window_manager"
+	add_attribute  "User's X11 session"	"users_window_manager"
 	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 	# AnMaster: KDE doesn't set that for me (in konsole at least)
 	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
@@ -1599,44 +1599,66 @@ Module_users() {
 			session_id="Gnome $gnome_version"
 		fi
 	fi
-	add_values    "$session_id"
+	add_values     "$session_id"
 
 
-	add_attribute "User's shell"
-	add_values    "$SHELL"
+	add_attribute  "User's shell"
+	add_values     "$SHELL"
 
 
-	add_attribute "User's locale"
-	add_values    "$LC_ALL"
-
+	add_attribute  "User's locale"
+	add_values     "$LC_ALL"
 
 	value_footer
-	value_header	"${tcGREEN}Last logged in user"
+
+
+	value_header   "Last logged in user"
 	[ $usexml = 1 ] &&	add_attribute 'Last login' "last_logged_user"
-	add_values    "$(last -1 | head -n 1 | awk {'print $1'})"
+	add_values     "$(last -1 | head -n 1 | awk {'print $1'})\n"
 	value_footer
 
-	value_header	"\n${tcGREEN}All users\t\tlast login"
+
+	value_header   "All users\t\tlast login\t\tlogin count"
 	[ $usexml = 1 ] &&	add_attribute 'All users' "users"
-	# because 'last' command, part of sysvinit core package,
-	# interprets the binary file /var/log/wtmp, but chomps off
-	# the loginname at 8 characters, we need to find the full names
-	# from the source file. a dirty hack...
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
 	               grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
-	               # removes users 'reboot' and 'wtmp'
-	local user
+	               # removes fake users 'reboot' and 'wtmp'
 	local wtmp_file="/var/log/wtmp"
+	local last_login
+	local count
+	local f_user
+	local user
+
 	for user in $users; do
 
+		# get the full username
+		#
+		# because 'last' command, part of the sysvinit core package,
+		# interprets the binary file /var/log/wtmp, but chomps off
+		# the loginname at 8 characters, we need to find the full names
+		# from the source file. a dirty hack but may well be the only way...
 		if [ ${#user} -ge 8 ]; then
 			# parse special chars to meta-chars
-			user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-			add_values  "$(grep -Eoa "$user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)\n"
+			f_user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
+			f_user="$(grep -Eoa "$f_user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)"
+			add_values  "$f_user"
+
 		else
-			add_values  "$user\n"
+			add_values  "$user"
 		fi
+
+		# get the last login date & time
+		last_login="$(date -d "$(last | grep -m 1 $user | \
+			awk {'print $3" "$4" "$5" "$6'})" +"%Y-%m-%d %T")"
+		add_values      "$last_login"
+
+
+		# get the login count
+		count="$(last | grep $user | wc -l)"
+		add_values      "$count\n"
+
+
 	done
 
 	module_footer

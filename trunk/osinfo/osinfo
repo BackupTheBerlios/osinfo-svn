@@ -581,20 +581,25 @@ function print_lanforce_xml {
 #  Finally $value_string is printed at once.
 function print_stdout {
 	# Get tabsize dynamically
-	TABSIZE=$(tput it)
+	local TABSIZE=$(tput it)
 
 	# this routine gets the longest header string in $infostring
-	longest_string=0
+	local longest_attrib=0 value_nr=0
+	local item name
+
 	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
 		item="${infostring[$itemnr]}"
 		#echo $item
 		if [ "$(grep '^%attribute%' <<< "${item}")" ]; then
+
+			# prune out the attribute id and the xml code tag
 			item="$(sed s/%attribute%// <<< "${item}")"
 			name=$(awk -F\; {'print $1'} <<< "${item}")
 
-			if [ ${#name} -gt $longest_string ]; then
-				longest_string=${#name}
+			if [ ${#name} -gt $longest_attrib ]; then
+				longest_attrib=${#name}
 			fi
+			
 		fi
 	done
 
@@ -605,44 +610,84 @@ function print_stdout {
 	# info (begin with %), then it is copied to $value_string.
 
 	INDEX=0 ; value_string="" ; attribute="closed"
-	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1)) ); do
 		item="${infostring[$itemnr]}"
 
-		# this is a normal value item
+		# print the value item and deduce proper indentation.
 		if [ ! "$(grep '^%' <<< "${item}")" ]; then
 
-			# test if an attribute is open,
-			# whether the last item in value_string ended with newline
-			# (prevents sequential values like in mod_hdd be affected)
-			# and the previous item ended with other than a tab (\t)
-			# FIXME: doesn't work right.
 			#set -x
-			if [ "$attribute" == "open" ] && \
-				[ "${item: -1:1}" == "\n" ] && \
-				[ "${value_string: -1:1}" == "\t" ]; then
-
-				unset tab_string
-				# there's something slightly wrong here
-				for i in $(seq 0 1 $(($max_indent-$diff_indent-1)) ); do
-					local tab_string="${tab_string}\t"
-				done
-
-				#local value_string="${value_string}${tab_string}"
+			# this checks whether the value is at a start of string
+			#if [ "${value_string}" = *$'\n' ]; then
+			# FIXME: -1:2 is a dirty hack. newline is not properly detected
+			if [ "${value_string: -1:2}" == "\n" ]; then
+				value_nr=0
 			fi
 			#set +x
 
+			#[ $value_nr -gt 1 ] && exit 0
 
-			# this evaluation counts the proper amount of tabs to add
-			# for beautiful identation.
+			# increase the horizontal slot id of the value
+			((value_nr++))
 
-			# lots of code has been commented for later debugging
+			# this array holds the value string lengths for each
+			# horizontal position (value_nr)
+			[ ! ${longest_value[$value_nr]} ] && longest_value[$value_nr]=0
+			if [ ${#item} -gt ${longest_value[$value_nr]} ]; then
+				longest_value[$value_nr]=${#item}
+			fi
 
-				# bash always rounds downward, so 20/8 = 2
+			# if the value is not first, check indentation
+			# FIXME: this is broken
+			if [ ${value_nr} -gt 1 ]; then
+			#if [ 1=0 ]; then
+			#echo "item: "${#item}
+			#echo "max: "${longest_value[$value_nr]}
+			#echo "value_nr: "$value_nr
 
-				# max indent is the indentation (in tabs) of the longest string
-				# diff indent is the difference between the current item and the max
-				local max_indent=$(($longest_string/$TABSIZE))
-				local diff_indent=$(($max_indent-${#name}/$TABSIZE))
+				unset tab_string
+
+				#set -x
+				# max_indent is the indentation (in tabs) of the longest
+				# value string. diff_indent is the difference between 
+				# the length of the current item and the max_indent
+
+				# also:
+				# awk 'END { printf("%1d\n",15/8+.5); }' </dev/null 
+
+				local max_indent="$(bc -l <<< " \
+						"${longest_value[$value_nr]}/$TABSIZE)"
+				local tabs_to_add="$(bc -l <<< $max_indent-${#item}/$TABSIZE)"
+				# round up
+				if [ "${tabs_to_add}:0:1" != "." ] && \
+					[ "${tabs_to_add:2:3}" != "000" ]; then
+						tabs_to_add="$(bc -s <<< $tabs_to_add+1)"
+				fi
+
+				tabs_to_add="${tabs_to_add:0:1}"
+
+				#tabs_to_add="$(bc -l <<< $tabs_to_add/$TABSIZE)"
+				# same applies here..
+				#((tabs_to_add++))
+
+				#set +x
+				if [ $tabs_to_add -ge 1 ]; then
+					for i in $(seq 1 1 $tabs_to_add); do
+						local tab_string="${tab_string}\t"
+					done
+				fi
+
+				local value_string="${value_string}${item}${tab_string}"
+
+
+			else # the first value for the attribute
+			#set +x
+
+				# max_indent is the indentation (in tabs) of the longest
+				# attribute string. tabs_to_add is the difference between 
+				# the length of the current item and the max_indent
+				local max_indent=$(($longest_attrib/$TABSIZE))
+				local tabs_to_add=$(($max_indent-${#name}/$TABSIZE))
 
 				#echo "diff : $diff"
 				#if [ ${#name} -ne $TABSIZE ]; then
@@ -654,28 +699,30 @@ function print_stdout {
 				#if [ ${#name} -ne $TABSIZE ]; then
 				#if [ $diff -ne 0 ]; then
 					#tabs_to_add=$(($diff/$TABSIZE+1))
-					local tabs_to_add=$diff_indent
+					#local tabs_to_add=$diff_indent
 					#echo "tabs to add : " $tabs_to_add
 					if [ $tabs_to_add -ge 1 ]; then
 						unset tab_string
 						for i in $(seq 1 1 $tabs_to_add); do
 							local tab_string="${tab_string}\t"
 						done
-						local value_string="${value_string}${tab_string}"
 					fi
 				#fi
+				
+				local value_string="${value_string}${tab_string}${item}";
+				#local value_string="${value_string}${item}";
+
+			fi
 
 
-			local value_string="${value_string}${item}";
-
-
-		else
-
+		else # print attributes and headers
 
 			# if an attribute is open, print a newline
 			if [ "$attribute" == "open" ]; then
 				local value_string="${value_string}\n"
 				attribute="closed"
+				unset longest_value
+				value_nr=0
 			fi
 
 
@@ -683,6 +730,7 @@ function print_stdout {
 			if [ "$(grep '^%header%' <<< "${item}")" ]; then
 				local item="$(sed s/%header%// <<< "${item}")"
 				local value_string="${value_string}${tBOLD}${item}${tSTD}\n";
+				value_nr=0
 
 
 			# prints attribute
@@ -692,15 +740,18 @@ function print_stdout {
 				local name=$(awk -F\; {'print $1'} <<< "${item}")
 				local value_string="${value_string}${name}\t";
 				attribute="open"
+				value_nr=0
 
 
 			fi
 		fi
 	done
-	#local value_string=${value_string}"\n";
 
+	#local value_string=$(column -t <<< ${value_string})
+
+	echo -e "${value_string}\n" 
 	# this sed makes the first item bold
-	echo -e "${value_string}\n" #| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
+	#| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
 }
 
 
