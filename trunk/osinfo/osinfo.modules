@@ -71,7 +71,7 @@
 #         of modules is useful, we may not fully realise it yet. 
 # TODO: make meta modules run the dependencies silent.
 
-Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services printers'
+Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services'
 Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
@@ -1550,11 +1550,9 @@ Module_printers() {
 		add_attribute 	'Printer'	'local_printer'
 
 		# as there may be several printers, print info from all
-		for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
-
-			add_values  "$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
-
-		done
+		#for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
+		#	add_values  "$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
+		#done
 
 		add_attribute	'model'
 		add_attribute	'location'
@@ -1564,7 +1562,6 @@ Module_printers() {
 		add_attribute	'completed jobs'
 
 	fi
-
 
 	module_footer
 	flush_values
@@ -1664,7 +1661,6 @@ Module_users() {
 		add_values      "$count"
 		add_values		'\n'
 
-
 	done
 
 	module_footer
@@ -1701,14 +1697,17 @@ Module_services() {
 		# these functions handle scanning, they'll echo output
 		if [ "$(type -p rc-status)" ]; then
 			# Gentoo
+			value_header	'rc-status'
 			local services="$(scan_services_rc-status)"
 
 		elif [ "$(type -p sysv-rc-conf)" ]; then
 			# Debian and Ubuntu, if they've got the package
+			value_header	'sysv-rc-conf'
 			local services="$(scan_services_sysv)"
 
 		elif [ "$(type -p chkconfig)" ]; then
 			# Red Hat, Fedora Core, SuSE
+			value_header	'chkconfig'
 			local services="$(scan_services_chkconfig)"
 		fi
 
@@ -1869,6 +1868,7 @@ Module_network() {
 	flush_values	
 }
 
+
 ###################################################
 # MODULE WLAN
 #
@@ -1982,14 +1982,6 @@ Module_wlan() {
 	flush_values
 }
 
-
-##
-# Gets data from lsb_release
-# Parameters:
-#  1  string   what value to get.
-distro_lsb_release() {
-	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
-}
 
 #######################
 # DISTRIBUTION
@@ -2183,6 +2175,14 @@ Module_distro() {
 
 	module_footer
 	flush_values
+}
+
+## DISTRIBUTION SUBFUNCTIONS
+# Gets data from lsb_release
+# Parameters:
+#  1  string   what value to get.
+distro_lsb_release() {
+	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
 }
 
 

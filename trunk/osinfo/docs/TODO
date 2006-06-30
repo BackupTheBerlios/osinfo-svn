@@ -52,8 +52,11 @@ BUGS:
 GENERAL NOTES:
 -------------
 
-*	to check if the xml output is valid against the DTD run: xmllint --valid osinfo.xml
-*	change value_header => add_value_header
+*	"svn revert somefile" to revert uncommited changes
+	"svn up -r revnr somename" to revert to a specific version
+
+*	"xmllint --valid osinfo.xml" to check if the xml output is valid 
+	against the DTD 
 
 
 
