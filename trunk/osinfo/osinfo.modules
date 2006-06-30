@@ -155,39 +155,61 @@ lshw_xml() {
 #	(2) input file
 #	(3) node closer, defaults to 'node id'
 extr_node() {
+set -x
 	local node_id="${1}"
 	local input_file="${2}"
 	local node_closer="${3}"
+set +x
 
 	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 	TempFiles=("${TempFiles[@]}" "$input_tmp" )
 
+	# add line numbers
 	grep -n . ${input_file} > $input_tmp
 
 	[ ! "$node_closer" ] && node_closer="${node_id}"
 
-	# this gets the line number of the wanted node from lshw 
-	# and the line number of the next node 
-	# then what's between those lines is echoed
-	local first_node="$(grep  "${node_id}" $input_tmp)"
-	
-	if [ "$first_node" ]; then
-		local begin="$(awk -F: {'print $1'} <<< ${first_node})"
-		local node_indent="$(awk -F: {'print $2'} <<< "${first_node}" | \
-			grep -Eo '^\ *' | wc -m)"
+	local all_nodes="$(grep  "${node_id}" $input_tmp)"
 
+	# detect how many matching nodes were found	
+	local node_count="$(wc -l <<< "${all_nodes}")"
+
+	# put the nodes into an array
+	#local first_node="$(grep  "${node_id}" $input_tmp)" #remove 
+	local nr nodes
+	for nr in $(seq 1 1 $node_count); do
+		nodes[${#nodes[@]}]="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
+	done
+
+	# loop
+
+	if [ "$first_node" ]; then
+		# this gets the line number of the wanted node from lshw 
+		local begin="$(awk -F: {'print $1'} <<< ${first_node})"
+		set -x
+		echo "$(awk -F: {'print $2'} <<< "${first_node}" )" #| grep -Eo '^[ ]*' )"
+		local node_indent="$(awk -F: {'print $2'} <<< "${first_node}" | \
+			grep -Eo '^[ ]*' | wc -m)"
+		echo $node_indent
+set +x
+exit 0
 		
 		# this loop takes care that all subnodes are included, by comparing
 		# the indentation level. not very elegant..
 		# basically it just searches for $node_closer and gets the line#
 		IFS_bak="$IFS"; IFS=$'\n' ; 
-		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | grep ${node_closer}); do
+		set -x
+		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
+				grep ${node_closer}); do
+		echo $node
 
 			# if the indentation matches...
 			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
 			wc -m)" == "$node_indent" ]; then
+		set +x
 
 				# read the line# to $nigeb (begin backwards)
+				# the line number of the closing node
 				local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
 				((nigeb--)) # this prevents the closing node to displaying
 							# as sometimes this may not be wanted
@@ -196,11 +218,13 @@ extr_node() {
 			fi
 		
 		done
+		exit 0
 		# if the closing node wasn't found, read to EOF
 		[ ! "$nigeb" ] && nigeb="$"
 		IFS=$IFS_bak
 
-		# then output this to whichever function called this
+		# then what's between the first node and the closing id 
+		# is echoed to whichever function called this
 		sed -n "$begin,$nigeb{p;}" $input_file 
 
 	fi
@@ -541,7 +565,6 @@ Module_hdd() {
 	#  (1) drive device
 	#
 	scan_hdd_common() {
-
 		local dev_scan="${1}"
 
 		hdd_geometry="$(fdisk -l | grep ${dev_scan} -A 1 | sed -n "2{p;q}")"
@@ -552,7 +575,6 @@ Module_hdd() {
 
 		# fdisk gives drive capacity in kB
 		hdd_capacity="$(fdisk -s $dev_scan)"
-
 	}
 
 	#########################
@@ -570,7 +592,6 @@ Module_hdd() {
 	#  (2) device type (man smartctl for details)
 	#
 	scan_hdd_smart() {
-
 		local dev_scan="${1}" dev_type smart_info version
 		if [ "$2" ]; then
 			dev_type="$2"
@@ -593,7 +614,6 @@ Module_hdd() {
 		             awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
 
 		hdd_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
-
 	}
 
 
@@ -1061,7 +1081,7 @@ Module_memory() {
 		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
 		lshw_xml
-		extr_node "node id=\"memory" $lshw_xml_file \\node > $mem_tmp
+		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
 
 		# meminfo or free don't give a proper value, so we use lshw
 		# meminfo="/proc/meminfo"
@@ -1085,13 +1105,18 @@ Module_cdrom() {
 	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
+	echo 'under developement'
+	exit 1
+
 	if CheckReq_lshw && CheckReq_root; then
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$udev_tmp")
 
 		lshw_xml
-		extr_node "node id=\"cdrom" $lshw_xml_file \\node > $cdrom_tmp
+		extr_node "node id=\"cdrom" $lshw_xml_file \/node > $cdrom_tmp
+		cat $cdrom_tmp
+		exit 0
 
 		# check whether there are cdrom drives in the system..
 		if [ -s "$cdrom_tmp"  ]; then
