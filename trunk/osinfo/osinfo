@@ -57,15 +57,15 @@ minor_version=2
 micro_version=8
 patch_version=5
 dev_status=alpha
+release_date='2006-06-30'
 
-# source some files
+# source the necessary files
 source bash.functions
 source osinfo.modules
 source xml.functions
 source lanforce.functions
 
-
-
+# guess the operating system
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
@@ -76,8 +76,7 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #fi
 
 
-# AnMaster: Why do we need gseq and not seq on *BSD?
-# answer: On *BSD, coreutils are prepended with 'g' to imply 'GNU'
+# On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	function seq() {
@@ -97,7 +96,6 @@ fake=0
 # To put this in a variable allows info on non-running systems
 prefix="/"
 XMLFILE="osinfo.xml"
-
 
 
 function PRINT_Help {
@@ -145,11 +143,11 @@ function PRINT_Help {
 	fi
 }
 
-# Before we break path hash some binaries so the script can find them (if they exist).
-hash kdialog &>/dev/null
-
 
 ######## SETTING USERSPACE VARIABLES
+#
+# Before we break path hash some binaries so the script can find them (if they exist).
+hash kdialog &>/dev/null
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 # LC_ALL makes is possible to print to stdout, due to support for '' :)
@@ -227,6 +225,7 @@ if [ "$#" -gt 0 ]; then
 				;;
 			'-V'|'--version')
 				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
+				echo "Release date: "$(date -d $release_date +%A\ %e\ %B\ %Y)
 				echo "Copyright (C) 2005-2006 Arvid Norlander"
 				echo "Copyright (C) 2006 Mikael Lammentausta"
 				echo "This is free software; see the source for copying conditions.  There is ${tBOLD}NO"
@@ -243,6 +242,7 @@ if [ "$#" -gt 0 ]; then
 else
 	PRINT_Help
 fi
+
 
 ############################################
 # XML HEADER & FOOTER FUNCTIONS
@@ -307,10 +307,8 @@ function value_header() {
 
 # this function searches the $infostring array backwards,
 # looking for open headers.
+# NEEDS DEBUGGING!
 function value_footer() {
-
-	# NEEDS DEBUGGING!
-
 	local IFS_bak="$IFS"
 	IFS=$' \t\n'
 
@@ -351,7 +349,6 @@ function value_footer() {
 # use by print_* functions to interpret how to parse the string.
 # this function differs from value_header in that it adds an xml attribute
 function add_header() {
-
 	infostring[${#infostring[@]}]="%header%\n${1}"
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
@@ -798,16 +795,15 @@ module_footer() {
 
 #######################
 # THE "MAIN" FUNCTION
-
-# check the operating system module support etc
-# AnMaster: FIXME: Should be done *after* meta modules as well as before? moment 22...
+#
+# this is the place to put all env variables to be set for some module
 for modul in $cmdsnames; do
 
 	# TODO: check that the module being called is supported on the running OS
-	# this is the place to put all env variables to be set for some module
 
-	# TODO: something like this...shouldn't burden the script too much
-	# with excessive loops
+	# TODO: something like this to not even attempt to run REQ_ROOT modules
+	#       as normal user, but shouldn't burden the script too much
+	#       with excessive loops
 	#allowed_modules=''
 	#if ! CheckReq_root; then
 	#	allowed_modules=$MODULES_ALL-$MODULES_SU_ONLY
@@ -829,15 +825,14 @@ for modul in $cmdsnames; do
 		break
 	fi
 
-	# FIXME: breaks meta-modules
-	# FIX meta modules instead. And keep module list up to date...
 	validate_arg "$modul" "$MODULES_ALL $MODULES_META" || wrong_module "$modul"
 	# validate_arg is called to check that the module exits at all.
 	# AnMaster: If we DON'T validate user input *and* use eval below we
 	#           are *realy* stupid. So don't comment that out.
 	#           Instead update the variable MODULES_ALL in osinfo.modules
 	#           We MUST validate the user input if we are going to use eval
-	#           otherwise someone could use that to run something evil (as root), like rm -rf /.
+	#           otherwise someone could use that to run something evil 
+	#			(as root), like rm -rf /.
 
 done
 
