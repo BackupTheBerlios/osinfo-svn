@@ -19,6 +19,7 @@ FEATURES for 0.4:
 *	std_modules - non-su modules
 *	mod_hdd: scan_md
 *	mod_cdrom: several drives are supported
+*	gentoo: total system build time ;-)
 
 
 FEATURES FOR 0.5:
