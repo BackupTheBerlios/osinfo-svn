@@ -155,11 +155,9 @@ lshw_xml() {
 #	(2) input file
 #	(3) node closer, defaults to 'node id'
 extr_node() {
-set -x
 	local node_id="${1}"
 	local input_file="${2}"
 	local node_closer="${3}"
-set +x
 
 	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 	TempFiles=("${TempFiles[@]}" "$input_tmp" )
@@ -174,39 +172,28 @@ set +x
 	# detect how many matching nodes were found	
 	local node_count="$(wc -l <<< "${all_nodes}")"
 
-	# put the nodes into an array
-	#local first_node="$(grep  "${node_id}" $input_tmp)" #remove 
-	local nr nodes
+	# this loop extracts the information between the node begin
+	# and end lines, based on indentation level (xml), echoing
+	# the results out 
+	local nr node
 	for nr in $(seq 1 1 $node_count); do
-		nodes[${#nodes[@]}]="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
-	done
+		this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
 
-	# loop
-
-	if [ "$first_node" ]; then
 		# this gets the line number of the wanted node from lshw 
-		local begin="$(awk -F: {'print $1'} <<< ${first_node})"
-		set -x
-		echo "$(awk -F: {'print $2'} <<< "${first_node}" )" #| grep -Eo '^[ ]*' )"
-		local node_indent="$(awk -F: {'print $2'} <<< "${first_node}" | \
+		local begin="$(awk -F: {'print $1'} <<< ${this_node})"
+		local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
 			grep -Eo '^[ ]*' | wc -m)"
-		echo $node_indent
-set +x
-exit 0
 		
 		# this loop takes care that all subnodes are included, by comparing
 		# the indentation level. not very elegant..
 		# basically it just searches for $node_closer and gets the line#
 		IFS_bak="$IFS"; IFS=$'\n' ; 
-		set -x
 		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
 				grep ${node_closer}); do
-		echo $node
 
 			# if the indentation matches...
 			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
 			wc -m)" == "$node_indent" ]; then
-		set +x
 
 				# read the line# to $nigeb (begin backwards)
 				# the line number of the closing node
@@ -216,18 +203,20 @@ exit 0
 				break; 
 
 			fi
-		
+
 		done
-		exit 0
+		
 		# if the closing node wasn't found, read to EOF
 		[ ! "$nigeb" ] && nigeb="$"
 		IFS=$IFS_bak
 
 		# then what's between the first node and the closing id 
 		# is echoed to whichever function called this
+		echo "%node $nr%"
 		sed -n "$begin,$nigeb{p;}" $input_file 
 
-	fi
+	done	
+
 }
 
 TempFiles=()
@@ -1105,79 +1094,106 @@ Module_cdrom() {
 	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
-	echo 'under developement'
-	exit 1
-
 	if CheckReq_lshw && CheckReq_root; then
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		cdrom_tmp2="$(mktemp /tmp/osinfo.XXXXXX)"
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$udev_tmp")
+		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
-		lshw_xml
-		extr_node "node id=\"cdrom" $lshw_xml_file \/node > $cdrom_tmp
+		#lshw_xml
+		#extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
+		extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
 		cat $cdrom_tmp
-		exit 0
 
-		# check whether there are cdrom drives in the system..
-		if [ -s "$cdrom_tmp"  ]; then
+		# extr_node echoes back all the cdrom drives in the system, 
+		# let's see how many
+		local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
 
-			# TODO: detect how many drives. atm it only supports one drive.
-			local ID=1
+		if [ $cdrom_count -ge 1 ]; then
 
-			# do a for loop here by ID
+			for drv_nr in $(seq 1 1 $cdrom_count); do
+
+				# collect information
+
+				if [ $drv_nr -lt $cdrom_count ]; then
+					# FIXME: this is a hack, takes too much cpu time.
+					# use regular expressions more creatively.
+					# in this case that would be 
+					# 'everything between "node 1" and "node 2"
+					# use awk or something...
+					local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
+						awk -F: {'print $1'})"
+					local next_node="$(grep -n "%node $(($drv_nr+1))%" $cdrom_tmp | \
+						awk -F: {'print $1'})"
+					sed -n "$this_node,$next_node{p;}" $cdrom_tmp > $cdrom_tmp2
+
+				else
+
+					local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
+						awk -F: {'print $1'})"
+					sed -n "$this_node,\${p;}" $cdrom_tmp > $cdrom_tmp2
+
+				fi
+
+				cdrom_model[$drv_nr]="$(grep -i product $cdrom_tmp2  | \
+									sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+				cdrom_type[$drv_nr]="$(grep -i descr ${cdrom_tmp2} | \
+								   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+				cdrom_serial[$drv_nr]="$(grep -i serial ${cdrom_tmp2} | \
+									 sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+				cdrom_node[$drv_nr]="$(grep -i 'logicalname' ${cdrom_tmp2} | \
+								   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
+								# sometimes there's a 'disc' node with a second
+								# logicalname node, which is the same as the first
+
+				cdrom_bus[$drv_nr]="$(grep -i businfo ${cdrom_tmp2} | \
+									 sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+
+				#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
+
+				#cat $cdrom_tmp
+
+				# display
+				
+				value_header  "CD/DVD drive $drv_nr"
+
+				add_attribute 'Model'	'cdrom'
+				add_values    "${cdrom_model[$drv_nr]}"
+
+				add_attribute 'Drive type'
+				add_values    "${cdrom_type[$drv_nr]}"
+
+				add_attribute 'Serial number'
+				add_values    "${cdrom_serial[$drv_nr]}"
+
+				add_attribute 'Device node'
+				add_values    "${cdrom_node[$drv_nr]}"
+
+				add_attribute 'Physical bus'
+				add_values    "${cdrom_bus[$drv_nr]}"
+
+				# TODO
+				# Configuration: first IDE channel master
+				# etc
 
 
-			# collect information
-
-			cdrom_model[$ID]="$(grep -i product ${cdrom_tmp} | \
-			                    sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
-			cdrom_type[$ID]="$(grep -i descr ${cdrom_tmp} | \
-			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
-			cdrom_serial[$ID]="$(grep -i serial ${cdrom_tmp} | \
-			                     sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-
-			cdrom_node[$ID]="$(grep -i 'logicalname' ${cdrom_tmp} | \
-			                   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
-
-			#udevinfo -q all -n "${cdrom_node[$ID]}" > ${udev_tmp}
-
-			#cat $cdrom_tmp
-
-			add_attribute 'Model'	'cdrom'
-			add_values    "${cdrom_model[$ID]}"
-
-			add_attribute 'Drive type'
-			add_values    "${cdrom_type[$ID]}"
-
-			add_attribute 'Device node'
-			add_values    "${cdrom_node[$ID]}"
-
-			add_attribute 'Serial number'
-			add_values    "${cdrom_serial[$ID]}"
-
-			# TODO
-			# Configuration: first IDE channel master
-			# etc
+				#add_attribute 'Capabilities'
+				#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
+								#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				# dvd-r, dvd+r, DL, etc...
+				# generally grep cd|dvd
+				# debug with debug/lshw-dvdwriter
 
 
-			#add_attribute 'Capabilities'
-			#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
-							#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-			# dvd-r, dvd+r, DL, etc...
-			# generally grep cd|dvd
-			# debug with debug/lshw-dvdwriter
-
-
-			#value_footer
+				#value_footer
+			done
 
 		else
-
 			add_values    'No cdrom drives detected'
-
 		fi
-
 	fi
 
 	module_footer
@@ -1471,6 +1487,9 @@ Module_kernel() {
 
 
 # INFORMATION OF THE CPU
+#
+# uses /proc/cpuinfo (Linux only)
+# and x86info (optional)
 Module_processor() {
 	local moduleName="Processor"
 	module_header "${moduleName}"
@@ -1481,7 +1500,8 @@ Module_processor() {
 	# ruxpin: perhaps on *bsd or some other system. in any case I don't like
 	#	hardcoding file paths into the code.
 	local cpuinfo="/proc/cpuinfo"
-	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | awk {'print $NF'})"
+	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | \
+		awk {'print $NF'})"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
@@ -1517,7 +1537,6 @@ Module_processor() {
 		add_attribute "Stepping"
 		add_values    "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                 awk -F': ' {'print $2'})"
-
 
 	done
 

@@ -35,9 +35,9 @@
 #
 # per module: (incomplete)
 # ----------
+# cpu:     /proc/cpuinfo, x86info (optional)
 # users:   last, file:/var/log/wtmp
 # dmi:     dmidecode
-# oem:     lshw
 # memory:  lshw
 # cdrom:   lshw
 # hdd:     fdisk, df, udev, smartmontools (optional), hdparm (optional)
@@ -55,9 +55,9 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=5
+patch_version=6
 dev_status=alpha
-release_date='2006-06-30'
+release_date='2006-07-01'
 
 # source the necessary files
 source bash.functions
