@@ -1173,18 +1173,13 @@ Module_cdrom() {
 				add_attribute 'Serial number'
 				add_values    "${cdrom_serial[$drv_nr]}"
 
-				add_attribute 'Device node'
-				add_values    "${cdrom_node[$drv_nr]}"
-
 				add_attribute 'Physical bus'
 				add_values    "${cdrom_bus[$drv_nr]}"
 
-				# TODO
-				# Configuration: first IDE channel master
-				# etc
+				add_attribute 'Device node'
+				add_values    "${cdrom_node[$drv_nr]}"
 
-
-				#add_attribute 'Capabilities'
+				add_attribute 'Capabilities'
 				#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
 								#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 				# dvd-r, dvd+r, DL, etc...

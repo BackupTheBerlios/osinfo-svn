@@ -34,28 +34,28 @@
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_start () {
-	echo "<${1}>"
+	echo "${tSTD}<${1}>"
 }
 
 # Simple end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_stop () {
-	echo "</${1}>"
+	echo "${tSTD}</${1}>"
 }
 
 # Simple start-end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_startstop () {
-	echo "<${1} />"
+	echo "${tSTD}<${1} />"
 }
 
 # Unclosed tag
 # Parameters:
 #  1  string  Name of tag
 function xml_opentag_start () {
-	echo -n "<${1}"
+	echo -n "${tSTD}<${1}"
 }
 
 # Paramter for unclosed tag
@@ -96,7 +96,7 @@ function xml_doc_start () {
 #  1  string  attribute name
 #  2  string  attribute code
 function xml_attribute_start () {
-	echo "<attribute name=\"${1}\" code=\"${2}\">"
+	echo "${tSTD}<attribute name=\"${1}\" code=\"${2}\">"
 }
 
 # attribute end tag
@@ -108,5 +108,5 @@ function xml_attribute_stop () {
 # Parameters:
 #  1  string  data
 function xml_value () {
-	echo "<value>${1}</value>"
+	echo "${tSTD}<value>${1}</value>"
 }

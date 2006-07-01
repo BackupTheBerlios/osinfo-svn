@@ -1,24 +1,21 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	daemon mode - see daemontools
-*	general --debug switch that turns on traceback calls and 'set -x'
-	and directs them to a certain logfile, this would be user so that 
-	as the user base grows, be get new beta-testers, their errors can
-	be more easily debugged.
+*	mod_hdd: fix bugs
+*	fix indentation
 	
 
 FEATURES for 0.4:
 ----------------
 
 *	detect system encoding
+*	daemon mode - see daemontools
 *	don't display what isn't detected (without the -vv flag)
 *	mod_network: wlan
 *	fix: user/root problem
 *	su_modules - run only su modules
 *	std_modules - non-su modules
 *	mod_hdd: scan_md
-*	mod_cdrom: several drives are supported
 *	gentoo: total system build time ;-)
 
 
