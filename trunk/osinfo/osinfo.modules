@@ -1100,10 +1100,12 @@ Module_cdrom() {
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
-		#lshw_xml
-		#extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
-		extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-		cat $cdrom_tmp
+		lshw_xml
+		extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
+
+		#for debugging:
+		#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
+		#cat $cdrom_tmp 
 
 		# extr_node echoes back all the cdrom drives in the system, 
 		# let's see how many
@@ -1116,22 +1118,24 @@ Module_cdrom() {
 				# collect information
 
 				if [ $drv_nr -lt $cdrom_count ]; then
-					# FIXME: this is a hack, takes too much cpu time.
-					# use regular expressions more creatively.
-					# in this case that would be 
-					# 'everything between "node 1" and "node 2"
-					# use awk or something...
-					local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
-						awk -F: {'print $1'})"
-					local next_node="$(grep -n "%node $(($drv_nr+1))%" $cdrom_tmp | \
-						awk -F: {'print $1'})"
-					sed -n "$this_node,$next_node{p;}" $cdrom_tmp > $cdrom_tmp2
+
+					sed -n "/%node $drv_nr%/,/%node $(($drv_nr+1))%/{p;}" \
+						$cdrom_tmp > $cdrom_tmp2
+
+					# KEEP THESE for testing times on ubuntu
+					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
+					#	awk -F: {'print $1'})"
+					#local next_node="$(grep -n "%node $(($drv_nr+1))%" $cdrom_tmp | \
+					#	awk -F: {'print $1'})"
+					#sed -n "$this_node,$next_node{p;}" $cdrom_tmp > $cdrom_tmp2
 
 				else
 
-					local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
-						awk -F: {'print $1'})"
-					sed -n "$this_node,\${p;}" $cdrom_tmp > $cdrom_tmp2
+					sed -n "/%node $drv_nr%/,\${p;}" $cdrom_tmp > $cdrom_tmp2
+
+					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
+					#	awk -F: {'print $1'})"
+					#sed -n "$this_node,\${p;}" $cdrom_tmp > $cdrom_tmp2
 
 				fi
 

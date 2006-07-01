@@ -1,8 +1,0 @@
-----------------------------------------------------------------------------------------------------------------------------
-[31m[1mReport from module[0;10m [34m[1mCD/DVD drives[0;10m:
-Model		BENQ DVD DD DW1640PLEXTOR CD-R PX-W2410A	82801EB (ICH5) SATA Controller	ST3200822AS	82801EB/ER (ICH5/ICH5R) SMBus Controller	
-Drive type		DVD writerIDE Channel 1	IDE interface	SCSI Disk	Linux swap / Solaris partition	HPFS/NTFS partition	Extended partition	Linux filesystem partition	SMBus	
-Device node		/dev/hda
-Serial number		9JB5U150F351907675PP4LJ2YC8E	      <node id="serial" class="bus" handle="PCI:00:1f.3">	
-
-----------------------------------------------------------------------------------------------------------------------------
