@@ -1100,11 +1100,11 @@ Module_cdrom() {
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
-		lshw_xml
-		extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
+		#lshw_xml
+		#extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
 
 		#for debugging:
-		#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
+		extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
 		#cat $cdrom_tmp 
 
 		# extr_node echoes back all the cdrom drives in the system, 
@@ -1161,33 +1161,42 @@ Module_cdrom() {
 				#cat $cdrom_tmp
 
 				# display
+
+				if [ $lanforce -eq 1 ]; then
+
+					# print attribute only once
+					[ $drv_nr -eq 1 ] && add_attribute 'Model'	'cdrom'
+					add_values    "${cdrom_model[$drv_nr]}"
+
+				else
 				
-				value_header  "CD/DVD drive $drv_nr"
+					value_header  "CD/DVD drive $drv_nr"
 
-				add_attribute 'Model'	'cdrom'
-				add_values    "${cdrom_model[$drv_nr]}"
+					add_attribute 'Model'	'cdrom'
+					add_values    "${cdrom_model[$drv_nr]}"
 
-				add_attribute 'Drive type'
-				add_values    "${cdrom_type[$drv_nr]}"
+					add_attribute 'Drive type'
+					add_values    "${cdrom_type[$drv_nr]}"
 
-				add_attribute 'Serial number'
-				add_values    "${cdrom_serial[$drv_nr]}"
+					add_attribute 'Serial number'
+					add_values    "${cdrom_serial[$drv_nr]}"
 
-				add_attribute 'Physical bus'
-				add_values    "${cdrom_bus[$drv_nr]}"
+					add_attribute 'Physical bus'
+					add_values    "${cdrom_bus[$drv_nr]}"
 
-				add_attribute 'Device node'
-				add_values    "${cdrom_node[$drv_nr]}"
+					add_attribute 'Device node'
+					add_values    "${cdrom_node[$drv_nr]}"
 
-				add_attribute 'Capabilities'
-				#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
-								#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-				# dvd-r, dvd+r, DL, etc...
-				# generally grep cd|dvd
-				# debug with debug/lshw-dvdwriter
+					add_attribute 'Capabilities'
+					#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
+									#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+					# dvd-r, dvd+r, DL, etc...
+					# generally grep cd|dvd
+					# debug with debug/lshw-dvdwriter
 
+					value_footer
 
-				#value_footer
+				fi
 			done
 
 		else
