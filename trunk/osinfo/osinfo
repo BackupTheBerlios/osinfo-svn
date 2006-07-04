@@ -300,7 +300,7 @@ function print_xml_footer () {
 # use by print_* functions to interpret how to parse the string.
 function value_header() {
 
-	infostring[${#infostring[@]}]="%header%\n${tcGREEN}${1}${tSTD}"
+	infostring[${#infostring[@]}]="%header%\n${1}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -726,7 +726,7 @@ function print_stdout {
 			# prints header
 			if [ "$(grep '^%header%' <<< "${item}")" ]; then
 				local item="$(sed s/%header%// <<< "${item}")"
-				local value_string="${value_string}${tBOLD}${item}${tSTD}\n";
+				local value_string="${value_string}${tcGREEN}${item}${tSTD}\n";
 				value_nr=0
 
 
