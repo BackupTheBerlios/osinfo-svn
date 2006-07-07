@@ -1834,9 +1834,8 @@ Module_network() {
 	module_header	"${moduleName}"
 
 	local specials="UP|BROADCAST|LOOPBACK|NOARP|NOTRAILERS|RUNNING|MULTICAST"
-	# what are these needed for?
 
-	# allocate the temp file
+	# allocate a temp file
 	local nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
 	TempFiles=("${TempFiles[@]}" "$nw_info")
 
@@ -1885,14 +1884,15 @@ Module_network() {
 		add_values    "$(hostname -y 2> /dev/null)"
 		# hostname produces stderr if no network is available
 
-		add_attribute  'DNS domain'	'domain'
+		add_attribute 'DNS domain'	'domain'
 		add_values    "$(hostname -d 2> /dev/null)"
 
 		add_attribute 'FQDN'		"fully_qualified_domain_name"
 		add_values    "$(hostname -f 2> /dev/null)"
 
 		add_attribute 'Gateway'	"default_gateway"
-		add_values    "$(route -n | awk '/^0.0.0.0/{print $2}')"
+		add_values    "$(route -n | grep $interface_name | \
+		              awk '/^0.0.0.0/{print $2}')"
 
 		add_attribute 'Broadcast'
 		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
@@ -1913,7 +1913,7 @@ Module_network() {
 		                 grep -i 'TX bytes' | awk -F: {'print $2'})"
 
 		value_footer
-
+		
 	done
 
 	module_footer
