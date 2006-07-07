@@ -149,11 +149,14 @@ lshw_xml() {
 
 ##################################
 # extracts a node from input file
+# based on indentation, and the begin and end keywords
+#
+# operation is case-insensitive
 #
 #	parameters:
-#	(1) node id
+#	(1) node id, the begin keyword
 #	(2) input file
-#	(3) node closer, defaults to 'node id'
+#	(3) node closer, the end keyword, defaults to 'node id'
 extr_node() {
 	local node_id="${1}"
 	local input_file="${2}"
@@ -167,10 +170,9 @@ extr_node() {
 
 	[ ! "$node_closer" ] && node_closer="${node_id}"
 
-	local all_nodes="$(grep  "${node_id}" $input_tmp)"
-
-	# detect how many matching nodes were found	
-	local node_count="$(wc -l <<< "${all_nodes}")"
+	# get all matching nodes and node count
+	local all_nodes="$(grep  -i "${node_id}" $input_tmp)"
+	local node_count="$(wc -l <<< ${all_nodes})"
 
 	# this loop extracts the information between the node begin
 	# and end lines, based on indentation level (xml), echoing
@@ -208,7 +210,7 @@ extr_node() {
 		
 		# if the closing node wasn't found, read to EOF
 		[ ! "$nigeb" ] && nigeb="$"
-		IFS=$IFS_bak
+		IFS="$IFS_bak"
 
 		# then what's between the first node and the closing id 
 		# is echoed to whichever function called this
@@ -1242,13 +1244,9 @@ Module_dmi() {
 		# 0x0004 or 0x0005 = 'Processor Information'
 		# .... and more
 
-		# since the first handle is not always static, deduce it
-		
-		#local HANDLES="0x0001 0x0001 0x0002 0x0003"
-
 		local HANDLES="BIOS information,System information,Base Board information,Chassis information"
 
-		# following loop extracts the data under the nodes variable.
+		# the following loop extracts the data under the nodes variable.
 
 		# (1) get the line number where the description occurs
 		# (2) get the line number of the next 'node id'
@@ -1267,7 +1265,7 @@ Module_dmi() {
 			# -B 5 is defined because sometimes there's some extra
 			# information between the Handle_nr and the description.
 			handle_nr="$(grep -in ${handle_desc} ${dmi_info} -B 5 | \
-			        grep -Eo '0x[0-9]{4}')"
+			             grep -Eo '0x[0-9]{4}')"
 			this="$(grep -in "Handle ${handle_nr}" ${dmi_info}  | \
 			        awk -F: {'print $1'})"
 			next="$(grep -n 'Handle' ${dmi_info} | grep -A 1 ${handle_nr} | \
@@ -1276,20 +1274,26 @@ Module_dmi() {
 			((next--)) # this prevents the 'handle' lines from printing
 
 			# use a temp file to store handle information
+			
 			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
+			#cat $dmi_tmp
 
+			# remove 18 lines above and use this instead,
+			# although for some unknown reason doesn't work! (FIXME)
+			#extr_node ${handle_desc} ${dmi_info} Handle > ${dmi_tmp}
+			#cat $dmi_tmp
+			
 			# because sometimes there's some extra info, head -n 5
 			# TODO: combine grep and sed
 			local handleID="$(head -n 5 ${dmi_tmp} | grep -i ${handle_desc} | \
 				sed 's/^[^a-zA-Z]//')"
-
 
 			# here the data is processed
 			case $handleID in
 
 				"System Information")
 
-					value_header	"System info"
+					value_header  "System info"
 
 
 					add_attribute 'Manufacturer' \
@@ -1298,12 +1302,12 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					add_attribute 'Product name'	'system_model'
+					add_attribute 'Model'	'system_model'
 					add_values    "$(grep -i product ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
 
 
-					add_attribute 'System version'
+					add_attribute 'Version number'
 					add_values    "$(grep -i version ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
 
@@ -1355,7 +1359,7 @@ Module_dmi() {
 					;;
 
 				"BIOS Information")	 
-
+				
 					value_header	"BIOS"
 
 					add_attribute 'Vendor'
@@ -1429,6 +1433,7 @@ Module_dmi() {
 	fi
 
 	module_footer
+#	set -x
 	flush_values
 }
 
@@ -1843,9 +1848,8 @@ Module_network() {
 	# DETECT (WIRED) NETWORK DEVICES
 	# using ifconfig
 	#
-	# detect the type of OS (and ifconfig available); there may other
-	# versions, but these two OSes were tested. all ifconfigs in Linux operate
-	# more of less similarity, but the one on FreeBSD is different.
+	# detect the type of OS. all ifconfigs in tested Linuxes operate
+	# more of less similarity, but the one on FreeBSD 6.0 is different.
 	if [ "$(type -p ifconfig)" ]; then
 		nw_src="ifconfig"
 
