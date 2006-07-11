@@ -40,7 +40,7 @@ dist-all-in-one: dist
 	@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
 
 	cd dist/$(appname) && \
-	for sources in "osinfo $(helpers)"; do cat $$sources >> osinfo-all-in-one; done
+	for sources in "$(helpers) osinfo"; do cat $$sources >> osinfo-all-in-one; done
 #	for sources in "osinfo $$(awk /^source/{'print $$2'} osinfo)"; do cat "$$sources" >> osinfo-all-in-one ; done
 	#cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
 	chmod +x dist/$(appname)/osinfo-all-in-one

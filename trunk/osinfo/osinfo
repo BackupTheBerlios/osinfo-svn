@@ -18,12 +18,13 @@
 #  Suse 10.0
 #  SlackWare
 #
+# FreeBSD 6.0 has been tested as well.
+#
+# x86 and amd64 architectures (desktop and laptop) with various hardware
+# configurations were used. see the comments on specific modules for more
+# information.
+#
 # oldest tested bash is version 2.05.0
-#
-# and on FreeBSD 6.0
-# on x86 and amd64 architectures (desktop and laptop) with various hardware
-# configurations, ...
-#
 #
 #################################################################################
 # list of (known) dependencies:
