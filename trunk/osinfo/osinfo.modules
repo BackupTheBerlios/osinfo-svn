@@ -1767,17 +1767,17 @@ Module_services() {
 		# these functions handle scanning, they'll echo output
 		if [ "$(type -p rc-status)" ]; then
 			# Gentoo
-			value_header	'rc-status'
+			value_header	'rc-status\n'
 			local services="$(scan_services_rc-status)"
 
 		elif [ "$(type -p sysv-rc-conf)" ]; then
 			# Debian and Ubuntu, if they've got the package
-			value_header	'sysv-rc-conf'
+			value_header	'sysv-rc-conf\n'
 			local services="$(scan_services_sysv)"
 
 		elif [ "$(type -p chkconfig)" ]; then
 			# Red Hat, Fedora Core, SuSE
-			value_header	'chkconfig'
+			value_header	'chkconfig\n'
 			local services="$(scan_services_chkconfig)"
 		fi
 
@@ -1789,8 +1789,16 @@ Module_services() {
 
 
 		# then report what scan found
+		local count=0 columns=5
 		for srv in $services; do
-			add_values  "$srv\n"
+			if [ $count -eq $columns ]; then
+				add_values "$srv\n"
+				count=0
+			else
+				add_values  "$srv"
+			fi
+			
+			((count++))
 		done
 
 

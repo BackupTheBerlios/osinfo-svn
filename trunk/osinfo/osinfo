@@ -611,12 +611,11 @@ function print_stdout {
 	# it won't accept a string. the character _has_ to be ascii-standard.
 	# the column delimiter can be %value% or %col%
 
-	#value_string="$(sed 's/%value%\|%col%/§/g' <<< ${value_string} | file -)"
+	#value_string="$(sed 's/%value%\|%col%/\$/g' <<< ${value_string} )"
 	#echo -e ${value_string} #| iconv -t utf-8 #| column -t -s§
 	#echo a | file -
 	#echo "FIXME: there's a problem with the first entry indentation."
-	#echo -e ${value_string} | column -t -s§
-
+	#echo -e ${value_string} | column -t -s$
 	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$
 }
 
