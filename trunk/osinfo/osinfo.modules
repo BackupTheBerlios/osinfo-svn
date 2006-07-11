@@ -1456,7 +1456,7 @@ Module_system() {
 	add_values    "$(uname -m)"
 
 	add_attribute "System encoding"
-	add_values    "?"
+	add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
 
 	add_attribute "System uptime"			"uptime"
 	add_values    "$(uptime | awk -F, {'print $1'} | \
@@ -1635,21 +1635,28 @@ Module_users() {
 	local moduleName="Users"
 	module_header "${moduleName}"
 
+	local last_login count f_user user
+
+	### CURRENT USER (ACTIVE UID)
 	value_header   "Current user"
-	add_attribute  "Unix name"				'active_user'
-	add_values     "$(whoami)"
-
-
 	add_attribute  'Real name'				"real_name"
-	add_values     "$(grep $(whoami) /etc/passwd | awk -F: {'print $5'})"
+	add_values     "$(awk -F: /$(whoami)/{'print $5'} /etc/passwd)"
 
+	add_attribute  "Unix name / UID"				'active_user'
+	add_values     "$(whoami) ($(id -u))"
+
+	add_attribute  'Groups'
+	local group
+	for group in $(groups); do 
+		add_values "$group\n " # << note that for indentation, the
+		                       # space at the end of string is important!
+	done
 
 	add_attribute  "User's X11 session"	"users_window_manager"
 	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 	# AnMaster: KDE doesn't set that for me (in konsole at least)
 	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
 	# any ideas where else to look?
-
 	local session_id="$DESKTOP_SESSION"
 	if [ "$session_id" == "default" ]; then
 		if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
@@ -1660,38 +1667,42 @@ Module_users() {
 	fi
 	add_values     "$session_id"
 
-
 	add_attribute  "User's shell"
 	add_values     "$SHELL"
 
-
 	add_attribute  "User's locale"
 	add_values     "$LC_ALL"
-
 	value_footer
 
 
-	value_header   "Last logged in user"
-	[ $usexml = 1 ] &&	add_attribute 'Last login' "last_logged_user"
-	add_values     "$(last -1 | head -n 1 | awk {'print $1'})\n"
+	### LAST LOGGED IN USER
+	add_header     "\nLast logged in user"   
+	last_login="$(last -1 | head -n 1 | awk {'print $1'})"
+
+	add_attribute  "Unix name"    'last_logged_user'
+	add_values     "$last_login"
+
+	add_attribute  'Real name'    'last_logged_real_name'
+	add_values     "$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
+
+	add_attribute  'Login date'
+	add_values     "$(date -d "$(last -1 | head -n 1  | \
+	                  awk {'print $3" "$4" "$5" "$6'})" +"%Y-%m-%d %T")"
 	value_footer
 
 
-	value_header   "All users\t\tlast login\t\tlogin count"
-	[ $usexml = 1 ] &&	add_attribute 'All users' "users"
+	### ALL USERS
+	value_header   "\n%col%All users%col%last login%col%login count\n"
+	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
 	               grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
 	               # removes fake users 'reboot' and 'wtmp'
 	local wtmp_file="/var/log/wtmp"
-	local last_login
-	local count
-	local f_user
-	local user
 
 	for user in $users; do
 
-		# get the full username
+		# get the full username (f_user)
 		#
 		# because 'last' command, part of the sysvinit core package,
 		# interprets the binary file /var/log/wtmp, but chomps off
@@ -1715,8 +1726,8 @@ Module_users() {
 
 		# get the login count
 		count="$(last | grep $user | wc -l)"
-		add_values      "$count"
-		add_values		'\n'
+		add_values      "$count\n"
+		#add_values		'\n'
 
 	done
 

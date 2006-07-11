@@ -499,3 +499,194 @@ flush_name_value_pair() {
 	linecount=0
 }
 ################################################################################
+
+
+
+# This function formulates $infostring for stdout
+# header tags are printed; attribute names are printed;
+# values for each attribute are printed on the same line
+# separated with a tab.
+#
+# $value_string is formulated in the following steps:
+#  1 Test if item does not begin with '%' => add value + tab to string; next
+#  2 If there is an attribute tag open => add newline to string
+#  3 If the item begins with %attribute% => add attribute + tab to string
+#    If there is a need to add more tabs for indentation, add tabs ; next
+#  4 If the item begins with %header% => add header + newline to string; next
+#
+#  Finally $value_string is printed at once.
+function print_stdout {
+	# Get tabsize dynamically
+	local TABSIZE=$(tput it)
+
+	# this routine gets the longest header string in $infostring
+	local longest_attrib=0 value_nr=0
+	local item name
+
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1))); do
+		item="${infostring[$itemnr]}"
+		#echo $item
+		if [ "$(grep '^%attribute%' <<< "${item}")" ]; then
+
+			# prune out the attribute id and the xml code tag
+			item="$(sed s/%attribute%// <<< "${item}")"
+			name=$(awk -F\; {'print $1'} <<< "${item}")
+
+			if [ ${#name} -gt $longest_attrib ]; then
+				longest_attrib=${#name}
+			fi
+			
+		fi
+	done
+
+
+	# this routine formulates $value_string
+	# mechanism: sequentially parse the $infostring from start to end
+	# and copy the contents to $item. if $item does not contain formulating
+	# info (begin with %), then it is copied to $value_string.
+
+	INDEX=0 ; value_string="" ; attribute="closed"
+	for itemnr in $(seq 0 1 $((${#infostring[@]}-1)) ); do
+		item="${infostring[$itemnr]}"
+
+		# print the value item and deduce proper indentation.
+		if [ ! "$(grep '^%' <<< "${item}")" ]; then
+
+			#set -x
+			# this checks whether the value is at a start of string
+			#if [ "${value_string}" = *$'\n' ]; then
+			# FIXME: -1:2 is a dirty hack. newline is not properly detected
+			if [ "${value_string: -1:2}" == "\n" ]; then
+				value_nr=0
+			fi
+			#set +x
+
+			#[ $value_nr -gt 1 ] && exit 0
+
+			# increase the horizontal slot id of the value
+			((value_nr++))
+
+			# this array holds the value string lengths for each
+			# horizontal position (value_nr)
+			[ ! ${longest_value[$value_nr]} ] && longest_value[$value_nr]=0
+			if [ ${#item} -gt ${longest_value[$value_nr]} ]; then
+				longest_value[$value_nr]=${#item}
+			fi
+
+			# if the value is not first, check indentation
+			# FIXME: this is broken
+			if [ ${value_nr} -gt 1 ]; then
+			#if [ 1=0 ]; then
+			#echo "item: "${#item}
+			#echo "max: "${longest_value[$value_nr]}
+			#echo "value_nr: "$value_nr
+
+				unset tab_string
+
+				#set -x
+				# max_indent is the indentation (in tabs) of the longest
+				# value string. diff_indent is the difference between 
+				# the length of the current item and the max_indent
+
+				# also:
+				# awk 'END { printf("%1d\n",15/8+.5); }' </dev/null 
+
+				local max_indent="$(bc -l <<< " \
+						"${longest_value[$value_nr]}/$TABSIZE)"
+				local tabs_to_add="$(bc -l <<< $max_indent-${#item}/$TABSIZE)"
+				# round up
+				if [ "${tabs_to_add}:0:1" != "." ] && \
+					[ "${tabs_to_add:2:3}" != "000" ]; then
+						tabs_to_add="$(bc -s <<< $tabs_to_add+1)"
+				fi
+
+				tabs_to_add="${tabs_to_add:0:1}"
+
+				#tabs_to_add="$(bc -l <<< $tabs_to_add/$TABSIZE)"
+				# same applies here..
+				#((tabs_to_add++))
+
+				#set +x
+				if [ $tabs_to_add -ge 1 ]; then
+					for i in $(seq 1 1 $tabs_to_add); do
+						local tab_string="${tab_string}\t"
+					done
+				fi
+
+				local value_string="${value_string}${item}${tab_string}"
+
+
+			else # the first value for the attribute
+			#set +x
+
+				# max_indent is the indentation (in tabs) of the longest
+				# attribute string. tabs_to_add is the difference between 
+				# the length of the current item and the max_indent
+				local max_indent=$(($longest_attrib/$TABSIZE))
+				local tabs_to_add=$(($max_indent-${#name}/$TABSIZE))
+
+				#echo "diff : $diff"
+				#if [ ${#name} -ne $TABSIZE ]; then
+				# bc might not be available everywhere. not sure about that.
+				#set -x
+				#foo=$(echo ${#name}/$TABSIZE | bc -l | awk -F. {'print $NF'})
+				#echo $foo
+				#exit 0
+				#if [ ${#name} -ne $TABSIZE ]; then
+				#if [ $diff -ne 0 ]; then
+					#tabs_to_add=$(($diff/$TABSIZE+1))
+					#local tabs_to_add=$diff_indent
+					#echo "tabs to add : " $tabs_to_add
+					if [ $tabs_to_add -ge 1 ]; then
+						unset tab_string
+						for i in $(seq 1 1 $tabs_to_add); do
+							local tab_string="${tab_string}\t"
+						done
+					fi
+				#fi
+				
+				local value_string="${value_string}${tab_string}${item}";
+				#local value_string="${value_string}${item}";
+
+			fi
+
+
+		else # print attributes and headers
+
+			# if an attribute is open, print a newline
+			if [ "$attribute" == "open" ]; then
+				local value_string="${value_string}\n"
+				attribute="closed"
+				unset longest_value
+				value_nr=0
+			fi
+
+
+			# prints header
+			if [ "$(grep '^%header%' <<< "${item}")" ]; then
+				local item="$(sed s/%header%// <<< "${item}")"
+				local value_string="${value_string}${tcGREEN}${item}${tSTD}\n";
+				value_nr=0
+
+
+			# prints attribute
+			elif [ "$(grep '^%attribute%' <<< "${item}")" ]; then
+
+				local item="$(sed s/%attribute%// <<< "${item}")"
+				local name=$(awk -F\; {'print $1'} <<< "${item}")
+				local value_string="${value_string}${name}\t";
+				attribute="open"
+				value_nr=0
+
+
+			fi
+		fi
+	done
+
+	#local value_string=$(column -t <<< ${value_string})
+
+	echo -e "${value_string}\n" 
+	# this sed makes the first item bold
+	#| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
+}
+
