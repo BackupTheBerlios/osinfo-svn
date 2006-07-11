@@ -2464,7 +2464,7 @@ Module_devices() {
 	if [ "$eth_adapter" ]; then
 		add_attribute 'Ethernet controller(s)'	"network_adapter"
 		for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
-			add_values    "${eth_adapter[$i]}\n"
+			add_values    "${eth_adapter[$i]}\n "
 		done
 	fi
 
@@ -2472,7 +2472,7 @@ Module_devices() {
 	if [ "$video_adapter" ]; then
 		add_attribute 'Display adapter(s)'		"display_adapter"
 		for i in $(seq 0 1 $((${#video_adapter[@]}-1)) ); do
-			add_values    "${video_adapter[$i]}\n"
+			add_values    "${video_adapter[$i]}\n "
 		done
 	fi
 
