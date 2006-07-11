@@ -564,20 +564,9 @@ function print_lanforce_xml {
 
 # This function formulates $infostring for stdout
 # header tags are printed; attribute names are printed;
-# values for each attribute are printed on the same line
-# separated with a tab.
-#
-# $value_string is formulated in the following steps:
-#  1 Test if item does not begin with '%' => add value + tab to string; next
-#  2 If there is an attribute tag open => add newline to string
-#  3 If the item begins with %attribute% => add attribute + tab to string
-#    If there is a need to add more tabs for indentation, add tabs ; next
-#  4 If the item begins with %header% => add header + newline to string; next
-#
-#  Finally $value_string is printed at once.
+# values for each attribute are printed on the same line,
+# and indentation is formed with the 'column' tool.
 function print_stdout {
-	# Get tabsize dynamically
-	#local TABSIZE=$(tput it)
 	local header_color="${tcGREEN}"
 	local longest_attrib=0 value_nr=0 item value_string=""
 

@@ -71,7 +71,7 @@
 #         of modules is useful, we may not fully realise it yet. 
 # TODO: make meta modules run the dependencies silent.
 
-Meta_all='distro system kernel processor applications network terminal devices hdd dmi cdrom memory users services'
+Meta_all='distro system kernel processor applications network terminal devices dmi cdrom memory users services'
 Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
@@ -81,9 +81,9 @@ MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices hdd dmi cdrom memory users services wlan'
+MODULES_LINUX='distro system kernel processor network applications terminal devices dmi cdrom memory users services wlan'
 MODULES_BSD='distro system applications terminal network'
-MODULES_BROKEN='printers wlan'
+MODULES_BROKEN='printers wlan hdd'
 MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
@@ -1456,7 +1456,9 @@ Module_system() {
 	add_values    "$(uname -m)"
 
 	add_attribute "System encoding"
-	add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
+	# this is probably incorrect. determines the default output encoding
+	# of the echo command. 
+	#add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
 
 	add_attribute "System uptime"			"uptime"
 	add_values    "$(uptime | awk -F, {'print $1'} | \
@@ -1955,7 +1957,7 @@ Module_wlan() {
 	#TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
 	TempFiles=("${TempFiles[@]}" "$cell_tmp")
 
-	if [ "$fake" == 1 ]; then
+	if [ "$dev_code" == 1 ]; then
 
 		iw_src="debug/wlan-iwconfig-on"
 		wlan_devices="eth1"

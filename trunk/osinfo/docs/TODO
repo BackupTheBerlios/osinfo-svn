@@ -9,7 +9,7 @@ FEATURES for 0.4:
 ----------------
 
 *	detect system encoding
-*	daemon mode - see daemontools
+*	daemon mode - write init scripts
 *	don't display what isn't detected (without the -vv flag)
 *	mod_network: wlan
 *	fix: user/root problem
@@ -24,7 +24,7 @@ FEATURES FOR 0.5:
 
 *	mod_hdd: scan_LVM
 *	integrate udev ruleset more tightly
-*	osinfo as a frontend for custom udev rules
+*	osinfo as a frontend for custom udev rules?
 
 
 LATER FEATURES:
@@ -72,3 +72,4 @@ PROGRAMMING TIPS:
 *	instead of awk, read can sometimes be used:
 	fdisk -l | read a b c d e partition; echo "$partition"
 
+*	Get tabsize dynamically: "tput it"
