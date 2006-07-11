@@ -12,6 +12,7 @@ depend() {
 start() {
 	ebegin "Running osinfo"
 	start-stop-daemon --start --exec /usr/local/bin/osinfo -- "${osinfo_options}" "${osinfo_modules}" > "${osinfo_output_file}"
-	eend $?
+
+	eend $? "Output written to $osinfo_output_file"
 }
 
