@@ -1,7 +1,7 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	mod_hdd: fix bugs
+*	mod_hdd: fix bugs and indentation
 *	fix indentation
 	
 
@@ -44,6 +44,11 @@ BUGS:
 	multiple items are affected
 *	mod_hdd doesn't work on fedora!
 *	module_footer doesn't produce </moduleName> tag
+*	mod_users on ubuntu: 
+	Report from module Users:
+	date: invalid date `192.168.0.194 Tue Jul 11'
+	date: invalid date `192.168.0.194 Tue Jul 11'
+	Current user
 
 
 
