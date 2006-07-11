@@ -55,13 +55,13 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=6
+patch_version=7
 dev_status=alpha
 release_date='2006-07-01'
 
 # source the necessary files
-source bash.functions
 source osinfo.modules
+source bash.functions
 source xml.functions
 source lanforce.functions
 
@@ -220,7 +220,7 @@ if [ "$#" -gt 0 ]; then
 			'--dev')
 				# for faking input from files to debug stuff, for example
 				# LVM drives when no such drives are available
-				export fake=1
+				export dev_code=1
 				shift 1
 				;;
 			'-V'|'--version')

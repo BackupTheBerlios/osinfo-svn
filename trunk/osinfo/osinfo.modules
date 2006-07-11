@@ -1102,11 +1102,11 @@ Module_cdrom() {
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
-		#lshw_xml
-		#extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
+		lshw_xml
+		extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
 
 		#for debugging:
-		extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
+		#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
 		#cat $cdrom_tmp 
 
 		# extr_node echoes back all the cdrom drives in the system, 

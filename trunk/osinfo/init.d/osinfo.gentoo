@@ -1,0 +1,17 @@
+#!/sbin/runscript
+# osinfo Gentoo init script
+# Copyright 2006 Mikael Lammentausta
+# Distributed under the terms of the BSD License
+
+source /etc/osinfo.conf
+
+depend() {
+	before local
+}
+
+start() {
+	ebegin "Running osinfo"
+	start-stop-daemon --start --exec /usr/local/bin/osinfo -- "${osinfo_options}" "${osinfo_modules}" > "${osinfo_output_file}"
+	eend $?
+}
+
