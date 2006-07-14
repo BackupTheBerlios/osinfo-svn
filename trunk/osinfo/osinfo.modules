@@ -1792,10 +1792,10 @@ Module_services() {
 		local count=0 columns=5
 		for srv in $services; do
 			if [ $count -eq $columns ]; then
-				add_values "$srv\n"
+				add_values "$srv\n "
 				count=0
 			else
-				add_values  "$srv"
+				add_values  " $srv"
 			fi
 			
 			((count++))
