@@ -380,6 +380,11 @@ function add_values {
 }
 
 
+function info {
+	infostring[${#infostring[@]}]="%info%${@}"
+}
+
+
 function flush_values {
 	if [ "$usexml" == "0" ]; then
 		print_stdout
@@ -570,6 +575,7 @@ function print_lanforce_xml {
 # and indentation is formed with the 'column' tool.
 function print_stdout {
 	local header_color="${tcGREEN}"
+	local info_color="${tcORANGE}"
 	local longest_attrib=0 value_nr=0 item value_string=""
 
 
@@ -602,6 +608,15 @@ function print_stdout {
 				# each header starts with a newline, 
 				# and is printed in special color
 				value_string="${value_string}\n${header_color}${item}${tSTD}";
+			;;
+
+			'info')
+				# strip tag
+				item="$(sed s/%info%// <<< "${item}")"
+				# add item to the value string,
+				# each info note starts with a newline, 
+				# and is printed in special color
+				value_string="${value_string}\n${info_color}${item}${tSTD}";
 			;;
 
 		esac
