@@ -2340,7 +2340,7 @@ Module_applications() {
 					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
 				'java')
-					add_values "Java $(java-config -f)"
+					add_values "Java $(java-config -f)\n"
 					;;
 				*)
 					add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
