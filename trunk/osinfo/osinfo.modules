@@ -71,7 +71,7 @@
 #         of modules is useful, we may not fully realise it yet. 
 # TODO: make meta modules run the dependencies silent.
 
-Meta_all='distro system kernel processor applications network terminal devices dmi cdrom memory users services'
+Meta_all='distro system kernel processor applications network wlan terminal devices dmi cdrom memory users services'
 Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
@@ -81,10 +81,10 @@ MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor network applications terminal devices dmi cdrom memory users services wlan'
+MODULES_LINUX='distro system kernel processor network wlan applications terminal devices dmi cdrom memory users services'
 MODULES_BSD='distro system applications terminal network'
-MODULES_BROKEN='printers wlan hdd'
-MODULES_REAL_ROOT_ONLY='system terminal applications network devices services hdd printers dmi services'
+MODULES_BROKEN='printers hdd'
+MODULES_REAL_ROOT_ONLY='system terminal applications network wlan devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
 MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan'
@@ -2307,7 +2307,7 @@ Module_applications() {
 			case "$app" in
 				'perl')
 					add_values 	"Perl $($app --version 2>&1 | grep 'perl, v' | \
-								grep -Eo 'v[ A-Za-z0-9.-]*')\n"
+					                        grep -Eo 'v[ A-Za-z0-9.-]*')\n"
 					;;
 				'python')
 					add_values  "$($app -V 2>&1 | head -n 1 )\n"
@@ -2340,23 +2340,23 @@ Module_applications() {
 					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
 				*)
-						add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
+					add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
 										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
 			esac
 		else
 			case "$app" in
 				'lspci')
-					info "please install pciutils ${missing_ERRMSG}\n"
+					info "please install pciutils ${missing_ERRMSG}"
 					;;
 				'lshw')
-					info "please install lshw ${missing_ERRMSG}\n"
+					info "please install lshw ${missing_ERRMSG}"
 					;;
 				'smartctl')
-					info "please install smartmontools ${missing_ERRMSG}\n"
+					info "please install smartmontools ${missing_ERRMSG}"
 					;;
 				'dmidecode')
-					info "please install dmidecode ${missing_ERRMSG}\n"
+					info "please install dmidecode ${missing_ERRMSG}"
 					;;
 			esac
 		fi
