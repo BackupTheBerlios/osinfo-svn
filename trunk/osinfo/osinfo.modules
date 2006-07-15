@@ -1698,7 +1698,7 @@ Module_users() {
 	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
-	               grep -v 'reboot\|wtmp' | grep '^[a-zA-Z]')"
+	               grep -v 'reboot\|wtmp\|ftp' | grep '^[a-zA-Z]')"
 	               # removes fake users 'reboot' and 'wtmp'
 	local wtmp_file="/var/log/wtmp"
 
