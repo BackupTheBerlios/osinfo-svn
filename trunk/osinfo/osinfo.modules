@@ -1965,14 +1965,7 @@ Module_wlan() {
 	TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
 	#TempFiles=("${TempFiles[@]}" "$cell_tmp")
 
-	if [ "$dev_code" == 1 ]; then
-
-		iw_src="debug/wlan-iwconfig-on"
-		wlan_devices="eth1"
-		ap_src="debug/wlan-stations"
-
-
-	elif [ ! "$(type -p iwconfig)" ]; then
+	if [ ! "$(type -p iwconfig)" ]; then
 
 		info "No wireless extensions found"
 
@@ -1983,18 +1976,22 @@ Module_wlan() {
 		iwconfig 2>/dev/null > $iw_src
 		local wlan_devices="$(grep 'IEEE 802' ${iw_src} | awk  {'print $1'})"
 		iwlist $wlan_devices scan > $ap_src
-		local ap_count="$(grep -i cell $ap_src | wc -l)"
 
+
+		# for debugging purposes
+		if [ "$fake" == 1 ]; then
+			iw_src="debug/wlan-iwconfig-on"
+			wlan_devices="eth1"
+			ap_src="debug/wlan-stations"
+		fi
+
+		local ap_count="$(grep -i cell $ap_src | wc -l)"
 
 		# print status		
 		if [ "$ap_count" -ge 1 ]; then
-
 			info "$ap_count access points found"
-
 		else
-
 			info "No access points found"
-
 		fi
 
 		# process all access points
@@ -2350,16 +2347,16 @@ Module_applications() {
 		else
 			case "$app" in
 				'lspci')
-					add_values 'lspci'      "please install pciutils ${missing_ERRMSG}\n"
+					info "please install pciutils ${missing_ERRMSG}\n"
 					;;
 				'lshw')
-					add_values 'lshw'       "please install lshw ${missing_ERRMSG}\n"
+					info "please install lshw ${missing_ERRMSG}\n"
 					;;
 				'smartctl')
-					add_values 'smartctl'   "please install smartmontools ${missing_ERRMSG}\n"
+					info "please install smartmontools ${missing_ERRMSG}\n"
 					;;
 				'dmidecode')
-					add_values 'demidecode' "please install dmidecode ${missing_ERRMSG}\n"
+					info "please install dmidecode ${missing_ERRMSG}\n"
 					;;
 			esac
 		fi

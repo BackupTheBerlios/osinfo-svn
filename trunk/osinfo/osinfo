@@ -56,7 +56,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=7
+patch_version=8
 dev_status=alpha
 release_date='2006-07-xx'
 
@@ -93,6 +93,7 @@ usekdialog=0
 lanforce=0
 usexml=0
 fake=0
+dev_code=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
@@ -219,9 +220,14 @@ if [ "$#" -gt 0 ]; then
 				shift 1
 				;;
 			'--dev')
+				# for using the developement option to debug stuff
+				export dev_code=1
+				shift 1
+				;;
+			'--fake')
 				# for faking input from files to debug stuff, for example
 				# LVM drives when no such drives are available
-				export dev_code=1
+				export fake=1
 				shift 1
 				;;
 			'-V'|'--version')
@@ -575,7 +581,7 @@ function print_lanforce_xml {
 # and indentation is formed with the 'column' tool.
 function print_stdout {
 	local header_color="${tcGREEN}"
-	local info_color="${tcORANGE}"
+	local info_color="${tcYELLOW}"
 	local longest_attrib=0 value_nr=0 item value_string=""
 
 
