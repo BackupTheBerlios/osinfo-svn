@@ -2276,10 +2276,10 @@ Module_applications() {
 	if [ "$SYSTEM" == "linux" ] ; then
 
 		APPLICATIONS="X kde-config gnome-about x11vnc \
-			bash csh ls \
+			bash csh ksh \
 			gcc make \
-			awk sed grep gzip \
-			perl python \
+			ls awk sed grep gzip \
+			perl python java \
 			apache2 php mysql smbd cups-config \
 			udevinfo lspci lshw dmidecode smartctl hdparm"
 
@@ -2306,8 +2306,8 @@ Module_applications() {
 		if [ "$(type -p $app)" ]; then # it is installed
 			case "$app" in
 				'perl')
-					add_values 	"Perl $($app --version 2>&1 | grep 'perl, v' | \
-					                        grep -Eo 'v[ A-Za-z0-9.-]*')\n"
+					add_values  "Perl $($app --version 2>&1 | grep 'perl, v' | \
+					                    grep -Eo 'v[ A-Za-z0-9.-]*')\n"
 					;;
 				'python')
 					add_values  "$($app -V 2>&1 | head -n 1 )\n"
@@ -2339,13 +2339,13 @@ Module_applications() {
 				'dmidecode')
 					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
+				'java')
+					add_values "Java $(java-config -f)"
+					;;
 				*)
 					add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
-										#grep  -P '[0-9]+\.[0-9]+' | sed 's/^tune2fs //')"
-			esac
-		else
-			case "$app" in
+					
 				'lspci')
 					info "please install pciutils ${missing_ERRMSG}"
 					;;
