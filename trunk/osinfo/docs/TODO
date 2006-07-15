@@ -44,11 +44,6 @@ BUGS:
 	multiple items are affected
 *	mod_hdd doesn't work on fedora!
 *	module_footer doesn't produce </moduleName> tag
-*	mod_users on ubuntu: 
-	Report from module Users:
-	date: invalid date `192.168.0.194 Tue Jul 11'
-	date: invalid date `192.168.0.194 Tue Jul 11'
-	Current user
 
 
 

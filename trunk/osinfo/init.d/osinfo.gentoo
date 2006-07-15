@@ -1,12 +1,12 @@
 #!/sbin/runscript
-# osinfo Gentoo init script
+# osinfo init script for Gentoo Linux
 # Copyright 2006 Mikael Lammentausta
 # Distributed under the terms of the BSD License
 
 source /etc/osinfo.conf
 
 depend() {
-	before local
+	after *
 }
 
 start() {

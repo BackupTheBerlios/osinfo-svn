@@ -1676,7 +1676,6 @@ Module_users() {
 	add_values     "$LC_ALL"
 	value_footer
 
-
 	### LAST LOGGED IN USER
 	add_header     "\nLast logged in user"   
 	last_login="$(last -1 | head -n 1 | awk {'print $1'})"
@@ -1689,9 +1688,9 @@ Module_users() {
 
 	add_attribute  'Login date'
 	add_values     "$(date -d "$(last -1 | head -n 1  | \
-	                  awk {'print $3" "$4" "$5" "$6'})" +"%Y-%m-%d %T")"
+	                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+					  +"%Y-%m-%d %T")"
 	value_footer
-
 
 	### ALL USERS
 	value_header   "\n%col%All users%col%last login%col%login count\n"
@@ -1722,7 +1721,8 @@ Module_users() {
 
 		# get the last login date & time
 		last_login="$(date -d "$(last | grep -m 1 $user | \
-			awk {'print $3" "$4" "$5" "$6'})" +"%Y-%m-%d %T")"
+	                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+					  +"%Y-%m-%d %T")"
 		add_values      "$last_login"
 
 
