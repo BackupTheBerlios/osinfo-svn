@@ -1989,9 +1989,9 @@ Module_wlan() {
 
 		# print status		
 		if [ "$ap_count" -ge 1 ]; then
-			info "$ap_count access points found"
+			info "$ap_count access points found by device $wlan_devices"
 		else
-			info "No access points found"
+			info "No access points found by device $wlan_devices"
 		fi
 
 		# process all access points
@@ -2022,12 +2022,18 @@ Module_wlan() {
 				#add_values     "some_device_from_mod_devices"
 			fi
 
+			add_attribute   'link quality'
+			add_values      "$(grep -Eo 'Quality[\=:][a-Z0-9\/]+' $cell_tmp | \
+							awk -F"=|:" '{print $2}')"
 			add_attribute   'address'
 			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp | sed 's/^\ *//')"
 
 			add_attribute   'channel'
 			add_values      "$(grep -Eo 'Channel[\=:][a-Z0-9]+' $cell_tmp | \
 							awk -F"=|:" '{print $2}')"
+
+			add_attribute   'frequency'
+			add_attribute   'bit rate'
 
 			add_attribute   'mode'
 			add_values     "$(grep -Eo 'Mode[\=:][a-Z]+' $cell_tmp | \
@@ -2036,10 +2042,9 @@ Module_wlan() {
 			add_attribute   'encryption key'
 			add_values     "$(grep -Eo 'Encryption key[\=:][a-Z]+' $cell_tmp | \
 							awk -F"=|:" '{print $2}')"
+			add_attribute   'encryption type'
 
-			add_attribute   'link quality'
-			add_values      "$(grep -Eo 'Quality[\=:][a-Z0-9\/]+' $cell_tmp | \
-							awk -F"=|:" '{print $2}')"
+			add_attribute   'security mode'
 
 			add_attribute   'signal level'
 			add_values      "$(grep -Eo 'Signal level[\=:][-a-Z0-9\/ ]+' $cell_tmp | \
