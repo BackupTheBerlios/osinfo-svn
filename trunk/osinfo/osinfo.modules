@@ -101,8 +101,7 @@ MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network
 # Returns 0 if lshw eixsts and 1 if it is missing.
 CheckReq_lshw() {
 	if [ ! "$(type -p lshw)" ]; then
-		add_attribute "$appname notification"
-		add_values    "Please install lshw to collect this information"
+		info    "Please install lshw to collect this information"
 		return 1
 	else
 		return 0
@@ -114,8 +113,7 @@ CheckReq_lshw() {
 # Returns 0 if dmidecode eixsts and 1 if it is missing.
 CheckReq_dmidecode() {
 	if [ ! "$(type -p dmidecode)" ]; then
-		add_attribute "$appname notification"
-		add_values    "Please install dmidecode to collect this information"
+		info    "Please install dmidecode to collect this information"
 		return 1
 	else
 		return 0
@@ -127,8 +125,7 @@ CheckReq_dmidecode() {
 # Returns 0 if we are root and 1 if we are not.
 CheckReq_root() {
 	if [ "$EUID" != 0 ]; then
-		add_attribute "$appname notification"
-		add_values    "Please run $appname as super-user to collect this information"
+		info    "Please run $appname as super-user to collect this information"
 		return 1
 	else
 		return 0
@@ -1041,8 +1038,20 @@ Module_hdd() {
 	#  (3) the node number in the bus
 	#
 	scan_hdd_raid() {
-		value_header	"todo"
+		info	"todo"
 
+	}
+
+
+	#######################
+	# LVM PARTITIONS
+	# Parameters:
+	#  (1) drive device
+	#  (2) drive node in the /dev/ tree
+	#  (3) the node number in the bus
+	#
+	scan_hdd_lvm() {
+		info "todo"
 	}
 
 ###### END OF HDD SUBFUNCTIONS #############
