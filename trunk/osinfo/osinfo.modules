@@ -71,7 +71,7 @@
 #         of modules is useful, we may not fully realise it yet. 
 # TODO: make meta modules run the dependencies silent.
 
-Meta_all='distro system kernel processor applications network wlan terminal devices dmi cdrom memory users services'
+Meta_all='distro system kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'
 Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
 Meta_system='distro system kernel processor'
 Meta_cpu='processor'
@@ -81,9 +81,9 @@ MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor network wlan applications terminal devices dmi cdrom memory users services'
+MODULES_LINUX='distro system kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
 MODULES_BSD='distro system applications terminal network'
-MODULES_BROKEN='printers hdd'
+MODULES_BROKEN='printers'
 MODULES_REAL_ROOT_ONLY='system terminal applications network wlan devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
@@ -383,7 +383,9 @@ Module_hdd() {
 
 				flush_values
 
-				add_values	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem"
+				add_values	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
+				add_values	" ---------%col%--------%col%------%col%----%col%----------"
+				
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# print the device node
