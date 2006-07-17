@@ -1884,6 +1884,18 @@ Module_network() {
 		fi
 	fi
 
+	### generic information
+	value_header  "$(hostname 2> /dev/null)"
+	add_attribute 'NIS domain'
+	add_values    "$(hostname -y 2> /dev/null)"
+	# hostname produces stderr if no network is available
+
+	add_attribute 'DNS domain'	'domain'
+	add_values    "$(hostname -d 2> /dev/null)"
+
+	add_attribute 'FQDN'		"fully_qualified_domain_name"
+	add_values    "$(hostname -f 2> /dev/null)"
+
 
 	# collect the information from detected network devices
 	for interface_name in $ETH_DEVICES; do
@@ -1904,16 +1916,6 @@ Module_network() {
 		add_attribute 'IPv6'
 		add_values    "$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
 		                 grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
-
-		add_attribute 'NIS domain'
-		add_values    "$(hostname -y 2> /dev/null)"
-		# hostname produces stderr if no network is available
-
-		add_attribute 'DNS domain'	'domain'
-		add_values    "$(hostname -d 2> /dev/null)"
-
-		add_attribute 'FQDN'		"fully_qualified_domain_name"
-		add_values    "$(hostname -f 2> /dev/null)"
 
 		add_attribute 'Gateway'	"default_gateway"
 		add_values    "$(route -n | grep $interface_name | \
