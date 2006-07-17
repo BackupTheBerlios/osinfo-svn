@@ -308,11 +308,15 @@ function print_xml_footer () {
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
 function value_header() {
-
 	infostring[${#infostring[@]}]="%header%${1}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
+# same as above, but without color
+function add_nc_header() {
+	infostring[${#infostring[@]}]="%nc_header%${1}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
 
 # this function searches the $infostring array backwards,
 # looking for open headers.
@@ -614,7 +618,7 @@ function print_stdout {
 				# add item to the value string,
 				# each header starts with a newline, 
 				# and is printed in special color
-				value_string="${value_string}\n${item}";
+				value_string="${value_string}\n${header_color}${item}${tSTD}";
 			;;
 
 			'info')
@@ -637,12 +641,8 @@ function print_stdout {
 
 	# the bad thing is that column interprets color codes as characters,
 	# and using colours on $value_string messes up column.
-
-	# for debugging
-#set -x
-#set +x
 	
-	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$
+	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$ 
 }
 
 

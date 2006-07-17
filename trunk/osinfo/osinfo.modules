@@ -353,7 +353,7 @@ Module_hdd() {
 
 			# TODO: use array for these values, no need to unset then
 
-				value_header	 ${drvdev}
+				value_header  "\n${drvdev}"
 
 				add_attribute "$hdd_type"
 					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
@@ -383,7 +383,7 @@ Module_hdd() {
 
 				flush_values
 
-				value_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem"
+				add_values	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem"
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# print the device node
@@ -409,14 +409,14 @@ Module_hdd() {
 					else
 
 						# mount point
-						add_values    "-"
+						add_values    "?"
 
 						# blocks
 						add_values    "$(hdd_human_readable \
 						               ${hdd_pt_blocks[$hdd_pt]})"
 
 						# free would come here
-						add_values    ''
+						add_values    '?'
 
 						# fs type
 						add_values    "${hdd_pt_fs[$hdd_pt]}"
@@ -494,7 +494,6 @@ Module_hdd() {
 	#  hdd_mnt_capacity[]   # total capacity in mounted partitions
 	#
 	calculate_hdd_usage() {
-
 		local ID=$hdd_ID
 		hdd_used[$ID]=0           # total used space in kB
 		hdd_free[$ID]=0           # total free   - " -
@@ -541,7 +540,6 @@ Module_hdd() {
 				"${hdd_free[$ID]}*100/${hdd_capacity})%"
 
 		fi
-
 	}
 
 
@@ -900,7 +898,6 @@ Module_hdd() {
 	#  (3) the node number in the bus
 	#
 	scan_hdd_sata() {
-
 		local dev_scan="${1}" dev_scannode="${2}" dev_nodenr="${3}"
 
 		# detect the available data sources
@@ -1029,7 +1026,6 @@ Module_hdd() {
 				scan_hdd_smart ${dev_scan} ata
 			fi
 		fi
-
 	}
 
 
@@ -1042,7 +1038,6 @@ Module_hdd() {
 	#
 	scan_hdd_raid() {
 		info	"todo"
-
 	}
 
 
@@ -1705,7 +1700,9 @@ Module_users() {
 	value_footer
 
 	### ALL USERS
-	value_header   "\n%col%All users%col%last login%col%login count\n"
+	#value_header   "\n%col%All users%col%last login%col%login count\n"
+	value_header	''
+	add_values   "\n%col%All users%col%last login%col%login count\n"
 	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
@@ -2298,7 +2295,7 @@ Module_applications() {
 			bash csh ksh \
 			gcc make \
 			ls awk sed grep gzip \
-			perl python java \
+			perl python java-config \
 			apache2 php mysql smbd cups-config \
 			udevinfo lspci lshw dmidecode smartctl hdparm"
 
@@ -2358,7 +2355,7 @@ Module_applications() {
 				'dmidecode')
 					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
 					;;
-				'java')
+				'java-config')
 					add_values "Java $(java-config -f)\n"
 					;;
 				*)
