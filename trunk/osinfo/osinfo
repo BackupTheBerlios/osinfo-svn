@@ -382,6 +382,7 @@ function add_values {
 	IFS=$'\n'
 	for value in $@; do
 		infostring[${#infostring[@]}]="%value%${value}"
+		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	done
 	IFS="$IFS_bak"
 }
@@ -389,6 +390,7 @@ function add_values {
 
 function info {
 	infostring[${#infostring[@]}]="%info%${@}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -437,7 +439,7 @@ function print_xml {
 			# the following sed removes all formatting tags
 			# from the value string. it's a tad slow, though.
 			item="$(sed 's/\\[a-z]//g;s/^ *//' <<< "${item}")"
-			xml_value "${tSTD}${item}" | tee -a "${XMLFILE}"
+			xml_value "${item}" | tee -a "${XMLFILE}"
 
 		else
 
@@ -466,7 +468,7 @@ function print_xml {
 
 				code=$(awk -F\; {'print $2'} <<< "${item}")
 
-				xml_attribute_start "${tSTD}${name}" "${code}" | tee -a ${XMLFILE}
+				xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
 				((XML_INDENT++))
 				attribute="open"
 
@@ -490,7 +492,7 @@ function print_xml {
 				name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s|/|_|g' | tr ' A-Z' '_a-z')"
 
-				xml_tag_start "${tSTD}${name}" | tee -a "${XMLFILE}"
+				xml_tag_start "${name}" | tee -a "${XMLFILE}"
 				((XML_INDENT++))
 				header="open"
 
@@ -507,7 +509,7 @@ function print_xml {
 				name="$(awk -F\; {'print $1'} <<< "${item}" | \
 					sed 's/\\[a-z]//g;s|/|_|g' | tr ' A-Z' '_a-z')"
 
-				xml_tag_stop "${tSTD}${name}" | tee -a "${XMLFILE}"
+				xml_tag_stop "${name}" | tee -a "${XMLFILE}"
 				header="closed"
 
 			fi
