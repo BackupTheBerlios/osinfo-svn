@@ -258,7 +258,7 @@ Module_hdd() {
 	# -------------------
 	# IDE/PATA is tested
 	# SATA is tested
-	# USBhdd is tested
+	# USB (flash sticks and hard drives) is tested
 	# SCSI is untested, although works probably as SATA
 	# Software RAID is planned (mdadm only), untested
 	# Logical Volume Management support is planned, untested
@@ -381,12 +381,15 @@ Module_hdd() {
 						add_values  "$hdd_health"
 				fi
 
-				value_header	"  Partition\t\tmntpoint\tblocks\t\tfree\t\tfilesystem"
+				flush_values
+
+				value_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem"
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					# dev node
+					# print the device node
 					add_attribute "  ${hdd_pt_node[$hdd_pt]}"
 
+					# print info of mounted drives
 					if [ "${hdd_pt_mp[$hdd_pt]}" ]; then #mount point exists
 
 						# mount point
@@ -405,8 +408,10 @@ Module_hdd() {
 
 					else
 
-						# blocks
+						# mount point
 						add_values    "-"
+
+						# blocks
 						add_values    "$(hdd_human_readable \
 						               ${hdd_pt_blocks[$hdd_pt]})"
 
@@ -420,6 +425,8 @@ Module_hdd() {
 					fi
 
 				done
+
+				flush_values
 
 			### XML OUTPUT
 			else
@@ -629,7 +636,6 @@ Module_hdd() {
 	#  (1) drive device
 	#
 	scan_hdd_partitions() {
-
 		local dev_scan="${1}" part_free=0
 		partitions_on_drive="$(fdisk -l ${dev_scan} | grep ^${dev_scan} | wc -l)"
 		local ID=$hdd_pt_ID
@@ -680,7 +686,6 @@ Module_hdd() {
 				hdd_pt_mp[$ID]="$(df -PT ${hdd_pt_node[$ID]} | \
 					grep ^${hdd_pt_node[$ID]} | awk {'print $NF'})"
 
-
 				# get the partition capacity, used and free space in 1 kB blocks
 				local df_output="$(df -Plk | grep ${hdd_pt_node[$ID]})"
 				hdd_pt_capacity[$ID]="$(awk {'print $2'} <<< "$df_output")"
@@ -700,7 +705,6 @@ Module_hdd() {
 			fi
 
 		done
-
 	}
 
 
@@ -712,7 +716,6 @@ Module_hdd() {
 	#  (2) significant digits _after_ decimal, default 1
 	#
 	hdd_human_readable() {
-
 		local value="${1}"
 
 		if [ ! "$2" ]; then
@@ -753,7 +756,6 @@ Module_hdd() {
 		fi
 
 		echo "${hdd_val}"
-
 	}
 
 
@@ -849,7 +851,8 @@ Module_hdd() {
 		############
 		# DMA STATUS
 		if [ "$(type -p hdparm)" ]; then
-			hdd_dma="$(hdparm ${dev_scan} | grep dma | grep -Eo '\([onf]+\)')"
+			hdd_dma="$(hdparm ${dev_scan} | grep dma | grep -Eo '\([onf]+\)' | \
+			           sed 's/(\|)//g')"
 		fi
 
 
