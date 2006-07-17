@@ -1705,6 +1705,7 @@ Module_users() {
 	#value_header   "\n%col%All users%col%last login%col%login count\n"
 	value_header	''
 	add_values   "\n%col%All users%col%last login%col%login count\n"
+	add_values   "---------%col%----------%col%-----------\n"
 	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
