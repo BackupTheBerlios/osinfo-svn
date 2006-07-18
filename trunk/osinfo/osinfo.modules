@@ -2001,13 +2001,12 @@ Module_wlan() {
 
 		info "No wireless extensions found"
 
-
 	elif [ "$SYSTEM" == "linux" ] ; then
 
 		# get the basic info
 		iwconfig 2>/dev/null > $iw_src
 		local wlan_devices="$(grep 'IEEE 802' ${iw_src} | awk  {'print $1'})"
-		iwlist $wlan_devices scan > $ap_src
+		iwlist $wlan_devices scan 2> /dev/null > $ap_src
 
 
 		# for debugging purposes
