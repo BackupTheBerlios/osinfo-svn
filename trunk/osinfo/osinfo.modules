@@ -383,8 +383,8 @@ Module_hdd() {
 
 				flush_values
 
-				add_values	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
-				add_values	" ---------%col%--------%col%------%col%----%col%----------"
+				add_nc_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
+				add_nc_header	" ---------%col%--------%col%------%col%----%col%----------"
 				
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
@@ -1486,10 +1486,10 @@ Module_kernel() {
 
 	local kernel_makefile
 
-	add_attribute "Operating system"
+	add_attribute "Operating system"	'os' # don't change the code tag
 	add_values    "$(uname -o)"
 
-	add_attribute "Kernel release"
+	add_attribute "Kernel release"		'os_build' #FIXME
 	add_values    "$(uname -r)"
 
 	# Unique kernel name
@@ -1703,8 +1703,8 @@ Module_users() {
 
 	### ALL USERS
 	#value_header   "\n%col%All users%col%last login%col%login count\n"
-	value_header	''
-	add_values   "\n%col%All users%col%last login%col%login count\n"
+	#value_header	''
+	add_nc_header   "All users%col%last login%col%login count\n"
 	add_values   "---------%col%----------%col%-----------\n"
 	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
 
@@ -1731,7 +1731,9 @@ Module_users() {
 			add_values  "$user"
 		fi
 
+
 		# get the last login date & time
+		# FIXME: works on the command line, NOT IN THE SCRIPT!??
 		last_login="$(date -d "$(last | grep -m 1 $user | \
 	                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
 					  +"%Y-%m-%d %T")"
