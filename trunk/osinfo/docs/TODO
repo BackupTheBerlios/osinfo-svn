@@ -1,8 +1,9 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	mod_hdd: fix bugs and indentation
-*	fix indentation
+*	mod_hdd: fix bugs 
+*	mod_network: fix xml (footer function)
+
 	
 
 FEATURES for 0.4:

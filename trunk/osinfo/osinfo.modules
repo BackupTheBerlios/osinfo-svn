@@ -1701,12 +1701,18 @@ Module_users() {
 					  +"%Y-%m-%d %T")"
 	value_footer
 
+
 	### ALL USERS
-	#value_header   "\n%col%All users%col%last login%col%login count\n"
-	#value_header	''
-	add_nc_header   "All users%col%last login%col%login count\n"
-	add_values   "---------%col%----------%col%-----------\n"
-	[ $usexml = 1 ] &&	add_attribute 'All logged in users' "users"
+	if [ $lanforce = 1 ]; then 
+		add_attribute 'All logged in users' "users"
+	elif [ $usexml = 1 ]; then
+		add_header    'All users'
+	else
+		#value_header   "\n%col%All users%col%last login%col%login count\n"
+		#value_header	''
+		add_nc_header   "All users%col%last login%col%login count\n"
+		add_nc_header   "---------%col%----------%col%-----------\n"
+	fi
 
 	local users="$(last | awk {'print $1'} | sort | uniq | \
 	               grep -v 'reboot\|wtmp\|ftp' | grep '^[a-zA-Z]')"
@@ -1747,6 +1753,10 @@ Module_users() {
 
 	done
 
+	if [ $usexml = 1 ]; then
+		value_footer
+	fi
+
 	module_footer
 	flush_values
 }
@@ -1778,27 +1788,31 @@ Module_services() {
 	local moduleName="Services"
 	module_header "${moduleName}"
 
+	local method
+
 		# these functions handle scanning, they'll echo output
 		if [ "$(type -p rc-status)" ]; then
 			# Gentoo
-			value_header	'rc-status\n'
+			method='rc-status'
 			local services="$(scan_services_rc-status)"
 
 		elif [ "$(type -p sysv-rc-conf)" ]; then
 			# Debian and Ubuntu, if they've got the package
-			value_header	'sysv-rc-conf\n'
+			method='sysv-rc-conf'
 			local services="$(scan_services_sysv)"
 
 		elif [ "$(type -p chkconfig)" ]; then
 			# Red Hat, Fedora Core, SuSE
-			value_header	'chkconfig\n'
+			method='chkconfig'
 			local services="$(scan_services_chkconfig)"
 		fi
 
 
-		# attribute only for xml
-		if [ $usexml = 1 ]; then
+		# attribute only for lanfroce xml, nothing for std xml
+		if [ $lanforce = 1 ]; then 
 			add_attribute 'Services'	'service'
+		elif [ $usexml = 0 ]; then
+			value_header  "$method"
 		fi
 
 
@@ -1806,14 +1820,16 @@ Module_services() {
 		local count=0 columns=5
 		for srv in $services; do
 			if [ $count -eq $columns ]; then
-				add_values "$srv\n "
+				add_values    "$srv\n "
 				count=0
 			else
-				add_values  " $srv"
+				add_values    "$srv"
 			fi
 			
 			((count++))
 		done
+
+		value_footer
 
 
 	module_footer
@@ -1867,8 +1883,6 @@ Module_services() {
 #
 # some changes have been made after testing with FreeBSD, so compitibility
 # may not be 100% anymore.
-#
-# WIRELESS SUPPORT IS EXPERIMENTAL
 Module_network() {
 	local moduleName="Network information"
 	module_header	"${moduleName}"
@@ -1900,62 +1914,64 @@ Module_network() {
 
 	### generic information
 	value_header  "$(hostname 2> /dev/null)"
-	add_attribute 'NIS domain'
-	add_values    "$(hostname -y 2> /dev/null)"
-	# hostname produces stderr if no network is available
 
-	add_attribute 'DNS domain'	'domain'
-	add_values    "$(hostname -d 2> /dev/null)"
-
-	add_attribute 'FQDN'		"fully_qualified_domain_name"
-	add_values    "$(hostname -f 2> /dev/null)"
-
-
-	# collect the information from detected network devices
-	for interface_name in $ETH_DEVICES; do
-		ifconfig $interface_name > ${nw_info}
-
-		value_header	$interface_name
-
-		add_attribute 'MAC'		"mac_address"
-		add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
-
-		# TODO: IP type (static or dynamic)
-		#add_attribute 'IP type'	"ip_type"
-
-		add_attribute 'IPv4'		"ip_address"
-		add_values    "$(grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${nw_info} | \
-		                 grep -Eo '[0-9\.]+' )"
-
-		add_attribute 'IPv6'
-		add_values    "$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
-		                 grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
-
-		add_attribute 'Gateway'	"default_gateway"
-		add_values    "$(route -n | grep $interface_name | \
-		              awk '/^0.0.0.0/{print $2}')"
-
-		add_attribute 'Broadcast'
-		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-		                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-		                 grep -Eo '[0-9\.]+' )"
-
-		add_attribute 'Netmask'	"subnet_mask"
-		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-		                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
-		                 grep -Eo '[0-9\.fx]+' )"
-
-		add_attribute 'RX bytes'
-		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-		                 grep -i 'RX bytes' | awk -F: {'print $2'})"
-
-		add_attribute 'TX bytes'
-		add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-		                 grep -i 'TX bytes' | awk -F: {'print $2'})"
-
-		value_footer
-		
-	done
+		add_attribute 'NIS domain'
+		add_values    "$(hostname -y 2> /dev/null)"
+		# hostname produces stderr if no network is available
+	
+		add_attribute 'DNS domain'	'domain'
+		add_values    "$(hostname -d 2> /dev/null)"
+	
+		add_attribute 'FQDN'		"fully_qualified_domain_name"
+		add_values    "$(hostname -f 2> /dev/null)"
+	
+	
+		# collect the information from detected network devices
+		for interface_name in $ETH_DEVICES; do
+			ifconfig $interface_name > ${nw_info}
+	
+			value_header	$interface_name
+	
+			add_attribute 'MAC'		"mac_address"
+			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
+	
+			# TODO: IP type (static or dynamic)
+			#add_attribute 'IP type'	"ip_type"
+	
+			add_attribute 'IPv4'		"ip_address"
+			add_values    "$(grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${nw_info} | \
+			                 grep -Eo '[0-9\.]+' )"
+	
+			add_attribute 'IPv6'
+			add_values    "$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
+			                 grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
+	
+			add_attribute 'Gateway'	"default_gateway"
+			add_values    "$(route -n | grep $interface_name | \
+			              awk '/^0.0.0.0/{print $2}')"
+	
+			add_attribute 'Broadcast'
+			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+			                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+			                 grep -Eo '[0-9\.]+' )"
+	
+			add_attribute 'Netmask'	"subnet_mask"
+			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+			                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
+			                 grep -Eo '[0-9\.fx]+' )"
+	
+			add_attribute 'RX bytes'
+			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+			                 grep -i 'RX bytes' | awk -F: {'print $2'})"
+	
+			add_attribute 'TX bytes'
+			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+			                 grep -i 'TX bytes' | awk -F: {'print $2'})"
+	
+			value_footer
+		done
+	
+	value_footer
 
 	module_footer
 	flush_values	

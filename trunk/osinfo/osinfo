@@ -31,8 +31,8 @@
 # list of (known) dependencies:
 #
 # bash 2.02 or later
-# GNU grep with support for extended regular expressions
-# awk, sed, seq, tr, bc, uniq, sort
+# awk, sed, seq, tr, bc, uniq, sort, GNU grep with support for extended regexps
+# util-linux (fdisk, column)
 # netcat (for sending the xml output over tcp)
 #
 # per module: (incomplete)
@@ -42,7 +42,7 @@
 # dmi:     dmidecode
 # memory:  lshw
 # cdrom:   lshw
-# hdd:     fdisk, df, udev, smartmontools (optional), hdparm (optional)
+# hdd:     util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
 # devices: lspci
 # network: net-tools (hostname, ifconfig, route)
 #          wireless-tools (iwconfig, iwlist) - optional
@@ -312,7 +312,8 @@ function value_header() {
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
-# same as above, but without color
+# same as above, but without color. some modules use this because of
+# a bug in the 'column' program
 function add_nc_header() {
 	infostring[${#infostring[@]}]="%nc_header%${1}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
@@ -398,6 +399,7 @@ function info {
 }
 
 
+# calls the print functions and clears the $infostring 
 function flush_values {
 	if [ "$usexml" == "0" ]; then
 		print_stdout
@@ -427,10 +429,13 @@ function print_xml {
 	attrib_status="closed"
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
+
 		((itemnr--)) # correct offset to start at zero
+
 		item="${infostring[$itemnr]}"
-		# case by the "%identifier%" tag
 		idtag="$(awk -F% {'print $2'} <<< ${item})"
+
+		# case by the "%identifier%" tag
 		case $idtag in
 
 			'value')
@@ -445,19 +450,48 @@ function print_xml {
 				xml_value "${item}" | tee -a "${XMLFILE}"
 			;;
 
-
-			'attribute')
-
+			*)
+	
 				if [ "$attrib_status" == "open" ]; then
 					close_attribute_tag
 				fi
-				open_attribute_tag "$item"
 
+				case $idtag in
+
+					'attribute')		
+						item="$(validate_xml_item "${item}")"
+						open_attribute_tag "$item"
+					;;
+		
+					'header')
+						## add indentation
+						for indent in $(seq 1 1 $XML_INDENT); do
+							echo -ne "\t" | tee -a "${XMLFILE}"
+						done
+		
+						# strip tag
+						item="$(sed s/%header%// <<< "${item}")"
+						item="$(validate_xml_item "${item}")"
+						xml_tag_start "${item}" | tee -a "${XMLFILE}"
+						((XML_INDENT++))
+					;;
+		
+					'footer')
+						((XML_INDENT--))
+						## add indentation
+						for indent in $(seq 1 1 $XML_INDENT); do
+							echo -ne "\t" | tee -a "${XMLFILE}"
+						done
+		
+						# strip tag
+						item="$(sed s/%footer%// <<< "${item}")"
+						item="$(validate_xml_item "${item}")"
+						xml_tag_stop "${item}" | tee -a "${XMLFILE}"
+					;;
+				esac
 			;;
 		esac
-	done
-		
-	close_attribute_tag
+	done		
 }
 
 #############################
@@ -479,18 +513,20 @@ function print_xml {
 		for indent in $(seq 1 1 $XML_INDENT); do
 				echo -ne "\t" | tee -a "${XMLFILE}"
 		done
+
 		# parse item
 		item="$(sed s/%attribute%// <<< "${item}")"
-
-		# validate xml
-		name="$(awk -F\; {'print $1'} <<< "${item}" | \
-				sed 's/\\[a-z]//g' | tr 'A-Z' 'a-z')"
-
+		name="$(validate_xml_item "${item}")"
 		code=$(awk -F\; {'print $2'} <<< "${item}")
 
 		xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
 		((XML_INDENT++))
 		attrib_status="open"
+	}
+
+	function validate_xml_item(){
+		awk -F\; {'print $1'} <<< "${1}" | \
+			sed 's/\\[a-z]//g; s/\ \|\//_/g' | tr 'A-Z' 'a-z'
 	}
 #######
 
@@ -504,10 +540,13 @@ function print_lanforce_xml {
 	attrib_status="closed"
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
+
 		((itemnr--)) # correct offset to start at zero
+
 		item="${infostring[$itemnr]}"
-		# case by the "%identifier%" tag
 		idtag="$(awk -F% {'print $2'} <<< ${item})"
+
+		# case by the "%identifier%" tag
 		case $idtag in
 
 			'value')
@@ -523,14 +562,23 @@ function print_lanforce_xml {
 			;;
 
 			'attribute')
+				# parse item
+				item="$(sed s/%attribute%// <<< "${item}")"
+				code=$(awk -F\; {'print $2'} <<< "${item}")
 
 				if [ "$attrib_status" == "open" ]; then
 					close_lf_attribute_tag
 				fi
-				open_lf_attribute_tag "$item"
 
+				if [ "$code" != "" ]; then
+					name=$(awk -F\; {'print $1'} <<< "${item}")
+
+					echo -ne "  " | tee -a "${XMLFILE}"
+					xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
+
+					attrib_status="open"
+				fi
 			;;
-
 		esac
 	done
 
@@ -545,16 +593,6 @@ function print_lanforce_xml {
 		echo -ne "  " | tee -a "${XMLFILE}"
 		xml_attribute_stop | tee -a "${XMLFILE}"
 		attrib_status="closed"
-	}
-
-	function open_lf_attribute_tag() {
-		# parse item
-		item="$(sed s/%attribute%// <<< "${item}")"
-		code=$(awk -F\; {'print $2'} <<< "${item}")
-
-		echo -ne "  " | tee -a "${XMLFILE}"
-		xml_attribute_start "${name}" "${code}" | tee -a ${XMLFILE}
-		attrib_status="open"
 	}
 #######
 
