@@ -110,7 +110,7 @@ function PRINT_Help {
 	echo
 	if [ "$SYSTEM" == "linux" ] ; then
 		for MODULE in ${MODULES_LINUX}; do
-			echo -e "\t\t$MODULE"
+			echo -e "\t$MODULE"
 		done
 	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
 		for MODULE in ${MODULES_BSD}; do
@@ -118,25 +118,26 @@ function PRINT_Help {
 		done
 	fi
 	echo
-	echo 'If arguments is "all" then list information from all modules.'
+	echo 'If arguments is "all" then list information from all modules'
 	echo
 	echo "${tBOLD}Syntax:${tSTD}"
 	echo "  $(basename $0) [Options] arguments"
 	echo "  $(basename $0) [--usage|--help]"
 	echo "${tBOLD}Options:${tSTD}"
-	echo "      --xml               Printout in xml format to osinfo.xml"
-	echo "      --lanforce          Makes the output to osinfo.xml according to a special DTD."
-	echo "  -v, --verbose           Show more information"
-	echo "  -o, --output [file]     Use this file for xml output."
-	echo "      --debug             For testing"
-	echo "  -D, --fulldebug         Print full debugging info, clutters output!"
-	echo "      --kdialog           Show the information using KDialog"
-	echo "                            from KDE. Experimental feature!"
-	echo "                            Not usable yet!"
-	echo "  -P, --prefix [dir]      Use this dir as root"
-	echo "                            This disables some modules."
-	echo "  -V, --version           Shows the version of ${tBOLD}${appname}${tSTD}"
-	echo "                            and exits."
+	echo "       --xml               Printout in xml format to osinfo.xml"
+	echo "       --lanforce          Makes the output to osinfo.xml according to a special DTD"
+	echo "  -v   --verbose           Show more information"
+	echo "  -vv  --veryverbose       Show even more information"
+	echo "  -o   --output [file]     Use this file for xml output"
+	echo "       --debug             For testing"
+	echo "  -D   --fulldebug         Print full debugging info, clutters output!"
+#	echo "       --kdialog           Show the information using KDialog"
+#	echo "                           from KDE. Experimental feature!"
+#	echo "                           Not usable yet!"
+	echo "  -P   --prefix [dir]      Use this dir as root"
+	echo "                           This disables some modules"
+	echo "  -V   --version           Shows the version of ${tBOLD}${appname}${tSTD}"
+	echo "                           and exits"
 	echo
 	print_line
 	if [ "$1" ]; then
@@ -292,11 +293,43 @@ function print_xml_footer () {
 
 
 
+################################################################################
+# Print module header
+# Parameters:
+#   1 string	Module name
+module_header() {
+	if [ "$usekdialog" == "1" ]; then
+		k_title="$1"
+	elif [ $usexml -eq 1 ]; then
+
+		# make valid xml tag
+		xml_tag="$(validate_xml_item "${1}")"
+		add_header "${xml_tag}"
+
+	else
+		print_line
+		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
+	fi
+}
+################################################################################
+
 
 
 ################################################################################
-# value_header(), value_footer(), add_attribute(), add_values(), flush_values()
-# -------------------------------------------------------------------
+# Print module footer (for xml)
+# Parameters:
+#   1 string   Module name
+module_footer() {
+	value_footer
+}
+################################################################################
+
+
+
+
+###########################################################################
+# add_header(), add_footer(), add_attribute(), add_values(), flush_values()
+# -------------------------------------------------------------------------
 # these are a group of functions that are used by the modules to formulate the output.
 #
 # flush_values calls either print_xml, print_lanforce_xml or print_stdout
@@ -311,6 +344,7 @@ function print_xml_footer () {
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
+#
 # DEPRECATED: use add_header instead (or invent some other use for this function ;-)
 function value_header() {
 	infostring[${#infostring[@]}]="%header%${1}"
@@ -319,7 +353,8 @@ function value_header() {
 
 # this function searches the $infostring array backwards,
 # looking for open headers.
-# NEEDS DEBUGGING!
+#
+# DEPRECATED: use add_footer instead 
 function value_footer() {
 	local IFS_bak="$IFS"
 	IFS=$' \t\n'
@@ -366,6 +401,7 @@ function value_footer() {
 #   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
 function add_header() {
 	infostring[${#infostring[@]}]="%header%${1};${2}"
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -378,6 +414,7 @@ function add_header() {
 #   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
 function add_nc_header() {
 	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -385,6 +422,7 @@ function add_nc_header() {
 # adds a footer tag to infostring
 function add_footer() {
 	infostring[${#infostring[@]}]="%footer%${@}"
+	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -422,6 +460,15 @@ function info {
 
 # calls the print functions and clears the $infostring 
 function flush_values {
+
+	# close all open headers
+	local hdr
+	for hdr in $(seq ${#OpenHeaders[@]} -1 1); do
+		((hdr--)) # correct offset
+		add_footer "${OpenHeaders[$hdr]}"
+	done
+
+
 	if [ "$usexml" == "0" ]; then
 		print_stdout
 	elif [ "$usexml" == "1" ] && [ "$lanforce" == "0" ]; then
@@ -709,38 +756,6 @@ function print_stdout {
 function wrong_module() {
 	do_abort "${1} is not a valid module!" 1
 }
-
-
-################################################################################
-# Print module header
-# Parameters:
-#   1 string	Module name
-module_header() {
-	if [ "$usekdialog" == "1" ]; then
-		k_title="$1"
-	elif [ $usexml -eq 1 ]; then
-
-		# make valid xml tag
-		xml_tag="$(tr ' A-Z' '_a-z' <<< "${1}")"
-		value_header "${xml_tag}"
-
-	else
-		print_line
-		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$1${tSTD}:"
-	fi
-}
-################################################################################
-
-
-
-################################################################################
-# Print module footer (for xml)
-# Parameters:
-#   1 string   Module name
-module_footer() {
-	value_footer
-}
-################################################################################
 
 
 

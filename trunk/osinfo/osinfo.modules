@@ -10,17 +10,18 @@
 # and here they are presented in the order in which they should appear in
 # the modules.
 #
-# module_header	"Module name"
+# module_header	"Module name <string>"
 #  each module should begin with this line.
 #  it will be printed in colour at stdout and as a tag to xml.
 #  it may contain spaces; in the xml tag they will be replaced by '_'
 #
-# value_header	"Header"
+# add_header	"Header <string>" "Xml modifier <string> (optional)"
 #  the argument is printed on a single line in bold to stdout,
-#  and as a <header> tag to the xml.
-#  each module may contain several calls of this type
+#  and as a <header> tag to the xml, unless the modifier
+#  is present. see add_header() for more information.
+#  each module may contain several calls of this type.
 #
-# add_attribute "Common Name"	"xml_code"
+# add_attribute "Common Name <string>"	"xml_code <string>"
 #  the first argument is printed at the first field to stdout,
 #  and the xml output is formulated as:
 #  <xml_code>
@@ -30,7 +31,7 @@
 #  the previous attribute tag is automatically closed when a new
 #  one is introduced.
 #
-# add_values "value 1" "value 2" "value n"
+# add_values "value 1 <any type>" "value 2" "value n"
 #  several values can be given;
 #  all of them will be separated with tab at stdout,
 #  and they will each get their own <value>foo</value> line at xml output.
@@ -38,13 +39,9 @@
 #  they will not affect the xml output.
 #  each module may contain several calls of this type.
 #
-# value_footer
-#  this call should follow a block of values, if the value_header
+# add_footer "Footer <string>"
+#  this call may follow a block of values, if the value_header
 #  function is called before them. this closes open header tags.
-#
-# module_footer
-#  this call should immediately precede the flush_values call.
-#  this takes care of closing an open attribute tag.
 #
 # flush_values
 #  prints the values to xml file or to stdout.
@@ -248,6 +245,13 @@ cleanup_temp_files() {
 		rm -f "$fil"
 	done
 }
+
+##
+# Keeps track of open headers, and closes them in the correct
+# order upon flush_values.
+OpenHeaders=()
+
+
 
 ################################################################################
 ################################################################################
@@ -1111,7 +1115,6 @@ Module_memory() {
 
 	fi
 
-	module_footer
 	flush_values
 }
 
@@ -1198,7 +1201,7 @@ Module_cdrom() {
 
 				else
 				
-					value_header  "CD/DVD drive $drv_nr"
+					add_header  "CD/DVD drive $drv_nr"
 
 					add_attribute 'Model'	'cdrom'
 					add_values    "${cdrom_model[$drv_nr]}"
@@ -1222,7 +1225,7 @@ Module_cdrom() {
 					# generally grep cd|dvd
 					# debug with debug/lshw-dvdwriter
 
-					value_footer
+					#value_footer
 
 				fi
 			done
@@ -1962,8 +1965,9 @@ Module_network() {
 		fi
 	fi
 
+
 	### generic information
-	value_header  "$(hostname 2> /dev/null)"
+	add_header  "$(hostname 2> /dev/null)"
 
 		add_attribute 'NIS domain'
 		add_values    "$(hostname -y 2> /dev/null)"
@@ -2025,9 +2029,6 @@ Module_network() {
 			add_footer    "iface"
 		done
 	
-	value_footer
-
-	module_footer
 	flush_values	
 }
 
