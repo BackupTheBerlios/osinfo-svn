@@ -1140,23 +1140,27 @@ Module_lvm () {
 Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"
+	local ram_size 
 
 	if CheckReq_lshw && CheckReq_root; then
 
 		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
-		lshw_xml
-		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
-
 		# meminfo or free don't give a proper value, so we use lshw
 		# meminfo="/proc/meminfo"
 
-		totalram="$(grep bank\:0 -B 10 ${mem_tmp} | grep size | grep -Eo '[0-9]+')"
-		totalram="$(bc -l <<< scale=1\;$totalram/1024/1024)"
+		lshw_xml
+		if [ $fake -eq 1 ]; then
+			lshw_xml_file="debug/lshw-failing"
+		fi
+		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
 
-		add_attribute 'RAM total'	'ram'
-		add_values    "$totalram MB"
+		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
+		ram_size="$(bc -l <<< scale=1\;$ram_size/1024/1024)"
+
+		add_attribute 'Total size'	'ram'
+		add_values    "$ram_size MB"	
 
 	fi
 
@@ -1308,10 +1312,6 @@ Module_dmi() {
 		dmi_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		dmidecode > "$dmi_info"
 		TempFiles=("${TempFiles[@]}" "$dmi_info" "$dmi_tmp")
-
-		if [ $fake -eq 1 ]; then
-			dmi_info="debug/dmidecode-failing"
-		fi
 
 		# the interesting handles:
 		# 0x0000 or 0x0001 = 'BIOS Information'
