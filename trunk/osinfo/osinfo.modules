@@ -120,6 +120,23 @@ CheckReq_dmidecode() {
 	fi
 }
 
+
+##
+# Check if the system has working sensors
+CheckReq_sensors() {
+	if [ "$(type -p sensors)" ]; then
+		# FIXME: make better sensor-detecting scheme
+		if [ "$(sensors | grep -i vcore)" ]; then
+			return 0
+		else
+			return 1
+		fi
+	else 
+		return 1
+	fi
+}
+
+
 ##
 # Checks if we are run as root and print a message if we are not.
 # Returns 0 if we are root and 1 if we are not.
@@ -1521,8 +1538,8 @@ Module_processor() {
 	local cpunr
 
 	# AnMaster: Why this line? Would it ever be anything else?
-	# ruxpin: perhaps on *bsd or some other system. in any case I don't like
-	#	hardcoding file paths into the code.
+	# ruxpin: perhaps.. in any case I don't like
+	#         hardcoding file paths into the code.
 	local cpuinfo="/proc/cpuinfo"
 	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | \
 		awk {'print $NF'})"
@@ -1553,6 +1570,16 @@ Module_processor() {
 		add_attribute "Frequency"		"processor_speed"
 		add_values    "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                 awk -F': ' {'print $2" MHz"'})"
+
+		if CheckReq_sensors; then
+			add_attribute   "Temperature"
+			add_values      "$(sensors | grep -i 'cpu temp' | \
+			                   awk {'print $3'})"
+
+			add_attribute   "Voltage"
+			add_values      "$(sensors | grep -i 'vcore' | \
+			                   awk {'print $2'}) V"			
+		fi
 
 		add_attribute "Cache"
 		add_values    "$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
