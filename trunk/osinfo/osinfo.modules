@@ -1324,7 +1324,6 @@ Module_dmi() {
 
 					add_header  "System info"
 
-
 					add_attribute 'Manufacturer' \
 					              'system_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
@@ -1351,14 +1350,12 @@ Module_dmi() {
 					add_values    "$(grep -i uuid ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
 
-
 					add_footer 
 					;;
 
 				"Base Board Information")	 
 
 					add_header	"Motherboard"
-
 
 					add_attribute 'Manufacturer' \
 					              'mother_board_manufacturer'
@@ -1382,7 +1379,6 @@ Module_dmi() {
 					              'mother_board_serial_number'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
-
 
 					add_footer
 					;;
@@ -1409,7 +1405,6 @@ Module_dmi() {
 					add_attribute 'Serial number'	'bios_serial_number'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
-
 
 					add_footer
 					;;
@@ -1448,7 +1443,6 @@ Module_dmi() {
 					add_attribute 'Asset tag' 'chassis_asset_tag'
 					add_values    "$(grep -i asset ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
-
 
 					add_footer
 					;;

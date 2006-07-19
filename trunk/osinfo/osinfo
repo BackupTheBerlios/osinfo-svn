@@ -344,17 +344,6 @@ module_footer() {
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
-#
-# DEPRECATED: use add_header instead (or invent some other use for this function ;-)
-function value_header() {
-	infostring[${#infostring[@]}]="%header%${1}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-# this function inserts the input string as the last available item
-# in the $infostring array. it also adds a %header% tag which will be
-# use by print_* functions to interpret how to parse the string.
 # this function differs from value_header in that it adds an xml attribute.
 # 
 # Parameters: (example eth0)
@@ -365,8 +354,6 @@ function add_header() {
 	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
-
-
 # same as above, but without color. some modules use this because of
 # a bug in the 'column' program
 # 
@@ -423,7 +410,7 @@ function add_values {
 
 
 # this function searches the $infostring array backwards,
-# looking for open headers.
+# looking for open headers. this is called from add_footer.
 function close_last_header() {
 	local IFS_bak="$IFS"
 	IFS=$' \t\n'

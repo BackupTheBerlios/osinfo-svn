@@ -690,3 +690,15 @@ function print_stdout {
 	#| sed "s/^\([-_.A-Za-z0-9()]*\)/${tBOLD}\1${tSTD}/"
 }
 
+
+# this function inserts the input string as the last available item
+# in the $infostring array. it also adds a %header% tag which will be
+# use by print_* functions to interpret how to parse the string.
+#
+# DEPRECATED: use add_header instead (or invent some other use for this function ;-)
+function value_header() {
+	infostring[${#infostring[@]}]="%header%${1}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
