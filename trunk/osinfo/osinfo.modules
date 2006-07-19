@@ -123,7 +123,7 @@ CheckReq_dmidecode() {
 CheckReq_sensors() {
 	if [ "$(type -p sensors)" ]; then
 		# FIXME: make better sensor-detecting scheme
-		if [ "$(sensors | grep -i vcore)" ]; then
+		if [ "$(sensors 2>/dev/null | grep -i vcore)" ]; then
 			return 0
 		else
 			return 1
