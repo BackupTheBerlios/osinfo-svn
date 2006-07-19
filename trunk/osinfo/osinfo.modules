@@ -40,7 +40,7 @@
 #  each module may contain several calls of this type.
 #
 # add_footer "Footer <string>"
-#  this call may follow a block of values, if the value_header
+#  this call may follow a block of values, if the add_header
 #  function is called before them. this closes open header tags.
 #
 # flush_values
@@ -374,7 +374,7 @@ Module_hdd() {
 
 			# TODO: use array for these values, no need to unset then
 
-				value_header  "\n${drvdev}"
+				add_header  "\n${drvdev}"
 
 				add_attribute "$hdd_type"
 					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
@@ -492,7 +492,7 @@ Module_hdd() {
 	fi
 
 	# finalize
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -1201,7 +1201,7 @@ Module_cdrom() {
 
 				else
 				
-					add_header  "CD/DVD drive $drv_nr"
+					add_header  "CD/DVD drive $drv_nr" "cd_drive"
 
 					add_attribute 'Model'	'cdrom'
 					add_values    "${cdrom_model[$drv_nr]}"
@@ -1225,7 +1225,7 @@ Module_cdrom() {
 					# generally grep cd|dvd
 					# debug with debug/lshw-dvdwriter
 
-					#value_footer
+					##value_footer
 
 				fi
 			done
@@ -1235,7 +1235,7 @@ Module_cdrom() {
 		fi
 	fi
 
-	module_footer
+	##module_footer
 	flush_values
 }
 
@@ -1322,7 +1322,7 @@ Module_dmi() {
 
 				"System Information")
 
-					value_header  "System info"
+					add_header  "System info"
 
 
 					add_attribute 'Manufacturer' \
@@ -1352,12 +1352,12 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					value_footer
+					add_footer 
 					;;
 
 				"Base Board Information")	 
 
-					value_header	"Motherboard"
+					add_header	"Motherboard"
 
 
 					add_attribute 'Manufacturer' \
@@ -1384,12 +1384,12 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					value_footer
+					add_footer
 					;;
 
 				"BIOS Information")	 
 				
-					value_header	"BIOS"
+					add_header	"BIOS"
 
 					add_attribute 'Vendor'
 					add_values    "$(grep -i vendor ${dmi_tmp} | \
@@ -1411,13 +1411,13 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					value_footer
+					add_footer
 					;;
 
 
 				"Chassis Information")	# Chassis Information
 
-					value_header	'Chassis'
+					add_header	'Chassis'
 
 					add_attribute 'Manufacturer' 	'chassis_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
@@ -1450,7 +1450,7 @@ Module_dmi() {
 					                 awk -F: {'print $2'})"
 
 
-					value_footer
+					add_footer
 					;;
 
 			esac
@@ -1461,7 +1461,7 @@ Module_dmi() {
 
 	fi
 
-	module_footer
+	#module_footer
 #	set -x
 	flush_values
 }
@@ -1505,7 +1505,7 @@ Module_system() {
 			
 	fi
 
-	module_footer
+	#module_footer
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
@@ -1536,7 +1536,7 @@ Module_kernel() {
 		                 head -n 1 | awk -F= {'print $2'})"
 	fi
 
-	module_footer
+	#module_footer
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
@@ -1571,7 +1571,7 @@ Module_processor() {
 	for cpunr in $(seq 1 1 $cpu_count); do
 
 		if [ $cpu_count -gt 1 ]; then
-			value_header	"Processor $cpunr"
+			add_header	"Processor $cpunr"
 		fi
 
 		add_attribute "Vendor"		"processor_vendor"
@@ -1616,7 +1616,7 @@ Module_processor() {
 
 	done
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -1642,7 +1642,7 @@ Module_terminal() {
 	add_attribute "Columns"
 	add_values    "$(stty size | awk '{print $2}')"
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -1683,7 +1683,7 @@ Module_printers() {
 
 	fi
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -1701,57 +1701,61 @@ Module_users() {
 	local last_login count f_user user
 
 	### CURRENT USER (ACTIVE UID)
-	value_header   "Current user"
-	add_attribute  'Real name'				"real_name"
-	add_values     "$(awk -F: /$(whoami)/{'print $5'} /etc/passwd)"
+	add_header   "Current user"
 
-	add_attribute  "Unix name / UID"				'active_user'
-	add_values     "$(whoami) ($(id -u))"
-
-	add_attribute  'Groups'
-	local group
-	for group in $(groups); do 
-		add_values "$group\n " # << note that for indentation, the
-		                       # space at the end of string is important!
-	done
-
-	add_attribute  "User's X11 session"	"users_window_manager"
-	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
-	# AnMaster: KDE doesn't set that for me (in konsole at least)
-	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
-	# any ideas where else to look?
-	local session_id="$DESKTOP_SESSION"
-	if [ "$session_id" == "default" ]; then
-		if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
-			# try to get Gnome version
-			local gnome_version="$(gnome-about --version | awk {'print $NF'})"
-			session_id="Gnome $gnome_version"
+		add_attribute  'Real name'				"real_name"
+		add_values     "$(awk -F: /$(whoami)/{'print $5'} /etc/passwd)"
+	
+		add_attribute  "Unix name / UID"				'active_user'
+		add_values     "$(whoami) ($(id -u))"
+	
+		add_attribute  'Groups'
+		local group
+		for group in $(groups); do 
+			add_values "$group\n " # << note that for indentation, the
+			                       # space at the end of string is important!
+		done
+	
+		add_attribute  "User's X11 session"	"users_window_manager"
+		# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
+		# AnMaster: KDE doesn't set that for me (in konsole at least)
+		# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
+		# any ideas where else to look?
+		local session_id="$DESKTOP_SESSION"
+		if [ "$session_id" == "default" ]; then
+			if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
+				# try to get Gnome version
+				local gnome_version="$(gnome-about --version | awk {'print $NF'})"
+				session_id="Gnome $gnome_version"
+			fi
 		fi
-	fi
-	add_values     "$session_id"
+		add_values     "$session_id"
+	
+		add_attribute  "User's shell"
+		add_values     "$SHELL"
+	
+		add_attribute  "User's locale"
+		add_values     "$LC_ALL"
 
-	add_attribute  "User's shell"
-	add_values     "$SHELL"
-
-	add_attribute  "User's locale"
-	add_values     "$LC_ALL"
-	value_footer
+	add_footer
 
 	### LAST LOGGED IN USER
 	add_header     "\nLast logged in user"   
-	last_login="$(last -1 | head -n 1 | awk {'print $1'})"
 
-	add_attribute  "Unix name"    'last_logged_user'
-	add_values     "$last_login"
+		last_login="$(last -1 | head -n 1 | awk {'print $1'})"
 
-	add_attribute  'Real name'    'last_logged_real_name'
-	add_values     "$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
+		add_attribute  "Unix name"    'last_logged_user'
+		add_values     "$last_login"
 
-	add_attribute  'Login date'
-	add_values     "$(date -d "$(last -1 | head -n 1  | \
-	                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-					  +"%Y-%m-%d %T")"
-	value_footer
+		add_attribute  'Real name'    'last_logged_real_name'
+		add_values     "$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
+
+		add_attribute  'Login date'
+		add_values     "$(date -d "$(last -1 | head -n 1  | \
+						  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+						  +"%Y-%m-%d %T")"
+
+	add_footer
 
 
 	### ALL USERS
@@ -1760,56 +1764,51 @@ Module_users() {
 	elif [ $usexml = 1 ]; then
 		add_header    'All users'
 	else
-		#value_header   "\n%col%All users%col%last login%col%login count\n"
-		#value_header	''
+		#add_header   "\n%col%All users%col%last login%col%login count\n"
+		#add_header	''
 		add_nc_header   "All users%col%last login%col%login count\n"
 		add_nc_header   "---------%col%----------%col%-----------\n"
 	fi
 
-	local users="$(last | awk {'print $1'} | sort | uniq | \
-	               grep -v 'reboot\|wtmp\|ftp' | grep '^[a-zA-Z]')"
-	               # removes fake users 'reboot' and 'wtmp'
-	local wtmp_file="/var/log/wtmp"
+		local users="$(last | awk {'print $1'} | sort | uniq | \
+					   grep -v 'reboot\|wtmp\|ftp' | grep '^[a-zA-Z]')"
+					   # removes fake users 'reboot' and 'wtmp'
+		local wtmp_file="/var/log/wtmp"
 
-	for user in $users; do
+		for user in $users; do
 
-		# get the full username (f_user)
-		#
-		# because 'last' command, part of the sysvinit core package,
-		# interprets the binary file /var/log/wtmp, but chomps off
-		# the loginname at 8 characters, we need to find the full names
-		# from the source file. a dirty hack but may well be the only way...
-		if [ ${#user} -ge 8 ]; then
-			# parse special chars to meta-chars
-			f_user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-			f_user="$(grep -Eoa "$f_user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)"
-			add_values  "$f_user"
+			# get the full username (f_user)
+			#
+			# because 'last' command, part of the sysvinit core package,
+			# interprets the binary file /var/log/wtmp, but chomps off
+			# the loginname at 8 characters, we need to find the full names
+			# from the source file. a dirty hack but may well be the only way...
+			if [ ${#user} -ge 8 ]; then
+				# parse special chars to meta-chars
+				f_user="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
+				f_user="$(grep -Eoa "$f_user[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)"
+				add_values  "$f_user"
 
-		else
-			add_values  "$user"
-		fi
-
-
-		# get the last login date & time
-		# FIXME: works on the command line, NOT IN THE SCRIPT!??
-		last_login="$(date -d "$(last | grep -m 1 $user | \
-	                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-					  +"%Y-%m-%d %T")"
-		add_values      "$last_login"
+			else
+				add_values  "$user"
+			fi
 
 
-		# get the login count
-		count="$(last | grep $user | wc -l)"
-		add_values      "$count\n"
-		#add_values		'\n'
+			# get the last login date & time
+			# FIXME: works on the command line, NOT IN THE SCRIPT!??
+			last_login="$(date -d "$(last | grep -m 1 $user | \
+						  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+						  +"%Y-%m-%d %T")"
+			add_values      "$last_login"
 
-	done
 
-	if [ $usexml = 1 ]; then
-		value_footer
-	fi
+			# get the login count
+			count="$(last | grep $user | wc -l)"
+			add_values      "$count\n"
+			#add_values		'\n'
 
-	module_footer
+		done
+
 	flush_values
 }
 
@@ -1864,7 +1863,7 @@ Module_services() {
 		if [ $lanforce = 1 ]; then 
 			add_attribute 'Services'	'service'
 		elif [ $usexml = 0 ]; then
-			value_header  "$method"
+			add_header  "$method"
 		fi
 
 
@@ -1881,10 +1880,10 @@ Module_services() {
 			((count++))
 		done
 
-		value_footer
+		#value_footer
 
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -2116,7 +2115,7 @@ Module_wlan() {
 			# this functions extracts each cell into a temp file
 			extr_node $access_point $ap_src Cell > $cell_tmp
 
-			value_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | sed 's/\"//g')"
+			add_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | sed 's/\"//g')"
 
 			if [ $accociated ]; then
 				#access_points[${access_points[@]}]="$(grep -A 1 -i ${access_point}" \
@@ -2124,7 +2123,7 @@ Module_wlan() {
 
 
 				#add_attribute   'associated ESSID'
-				#value_header    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
+				#add_header    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
 				#                awk -F: {'print $2'})" 
 
 				add_attribute   'device node'
@@ -2168,7 +2167,7 @@ Module_wlan() {
 							awk -F"=|:" '{print $2}')"
 
 
-			value_footer
+			#value_footer
 		
 		done
 		
@@ -2176,7 +2175,7 @@ Module_wlan() {
 
 	fi
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -2371,7 +2370,7 @@ Module_distro() {
 		            "$SlackwareBase"
 
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -2483,7 +2482,7 @@ Module_applications() {
 			esac
 		fi
 	done
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -2601,7 +2600,7 @@ Module_devices() {
 	#12:04 < Kevin`> lspci -vv
 	#12:06 < LinuxNIT> IRegion 0: Memory at e8000000 (32-bit, prefetchable) [size=128M]
 
-	module_footer
+	#module_footer
 	flush_values
 }
 
@@ -2624,7 +2623,7 @@ Module_env() {
 
 	done
 
-	module_footer
+	#module_footer
 	flush_values
 }
 

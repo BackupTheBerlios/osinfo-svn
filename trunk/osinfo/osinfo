@@ -351,11 +351,80 @@ function value_header() {
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
+
+# this function inserts the input string as the last available item
+# in the $infostring array. it also adds a %header% tag which will be
+# use by print_* functions to interpret how to parse the string.
+# this function differs from value_header in that it adds an xml attribute.
+# 
+# Parameters: (example eth0)
+#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
+#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
+function add_header() {
+	infostring[${#infostring[@]}]="%header%${1};${2}"
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# same as above, but without color. some modules use this because of
+# a bug in the 'column' program
+# 
+# Parameters: (example eth0)
+#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
+#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
+function add_nc_header() {
+	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# adds a footer tag to infostring.
+# Parameters:
+#  1 xml closing tag <string> (optional)
+# if no parameter is given, close last open header.
+function add_footer() {
+	if [ "$1" ]; then
+		infostring[${#infostring[@]}]="%footer%${@}"
+	else
+		close_last_header
+	fi
+
+	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# This function inserts the input string(s) as the last available item
+# in the $infostring array, with a field delimiter of ";".
+# it also adds an %attribute% tag which will be use by print_* functions
+# to interpret how to parse the string.
+# Parameters:
+#  1 free-form name    (eg. Operating system)   (required)
+#  2 code tag for xml  (eg. os)                 (optional)
+function add_attribute() {
+	infostring[${#infostring[@]}]="%attribute%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# This function inserts the input string or strings into the $infostring[] array.
+function add_values {
+	# IFS need to be changed because the values are separated by newline
+	local IFS_bak="$IFS" value
+	IFS=$'\n'
+	for value in $1; do
+		infostring[${#infostring[@]}]="%value%${value}"
+		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+	done
+	IFS="$IFS_bak"
+}
+
+
 # this function searches the $infostring array backwards,
 # looking for open headers.
-#
-# DEPRECATED: use add_footer instead 
-function value_footer() {
+function close_last_header() {
 	local IFS_bak="$IFS"
 	IFS=$' \t\n'
 
@@ -387,68 +456,6 @@ function value_footer() {
 	#for VL in $(seq 0 ${#infostring[@]}); do
 	#	echo ${infostring[$VL]}
 	#done
-
-}
-
-
-# this function inserts the input string as the last available item
-# in the $infostring array. it also adds a %header% tag which will be
-# use by print_* functions to interpret how to parse the string.
-# this function differs from value_header in that it adds an xml attribute.
-# 
-# Parameters: (example eth0)
-#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
-#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
-function add_header() {
-	infostring[${#infostring[@]}]="%header%${1};${2}"
-	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-# same as above, but without color. some modules use this because of
-# a bug in the 'column' program
-# 
-# Parameters: (example eth0)
-#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
-#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
-function add_nc_header() {
-	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
-	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-# adds a footer tag to infostring
-function add_footer() {
-	infostring[${#infostring[@]}]="%footer%${@}"
-	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-# This function inserts the input string(s) as the last available item
-# in the $infostring array, with a field delimiter of ";".
-# it also adds an %attribute% tag which will be use by print_* functions
-# to interpret how to parse the string.
-# Parameters:
-#  1 free-form name    (eg. Operating system)   (required)
-#  2 code tag for xml  (eg. os)                 (optional)
-function add_attribute() {
-	infostring[${#infostring[@]}]="%attribute%${1};${2}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-# This function inserts the input string or strings into the $infostring[] array.
-function add_values {
-	# IFS need to be changed because the values are separated by newline
-	local IFS_bak="$IFS" value
-	IFS=$'\n'
-	for value in $1; do
-		infostring[${#infostring[@]}]="%value%${value}"
-		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	done
-	IFS="$IFS_bak"
 }
 
 
@@ -467,7 +474,6 @@ function flush_values {
 		((hdr--)) # correct offset
 		add_footer "${OpenHeaders[$hdr]}"
 	done
-
 
 	if [ "$usexml" == "0" ]; then
 		print_stdout
