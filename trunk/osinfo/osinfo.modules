@@ -128,7 +128,7 @@ CheckReq_sensors() {
 		else
 			return 1
 		fi
-	else 
+	else
 		return 1
 	fi
 }
@@ -195,25 +195,25 @@ extr_node() {
 		# this gets the line number of the wanted node from lshw 
 		local begin="$(awk -F: {'print $1'} <<< ${this_node})"
 		local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
-			grep -Eo '^[ ]*' | wc -m)"
+		                     grep -Eo '^[ ]*' | wc -m)"
 		
 		# this loop takes care that all subnodes are included, by comparing
 		# the indentation level. not very elegant..
 		# basically it just searches for $node_closer and gets the line#
 		IFS_bak="$IFS"; IFS=$'\n' ; 
 		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
-				grep ${node_closer}); do
+		              grep ${node_closer}); do
 
 			# if the indentation matches...
 			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
-			wc -m)" == "$node_indent" ]; then
+			        wc -m)" == "$node_indent" ]; then
 
 				# read the line# to $nigeb (begin backwards)
 				# the line number of the closing node
 				local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
 				((nigeb--)) # this prevents the closing node to displaying
-							# as sometimes this may not be wanted
-				break; 
+				            # as sometimes this may not be wanted
+				break;
 
 			fi
 
@@ -240,9 +240,9 @@ cleanup_temp_files() {
 	if [ "$lshw_xml_file" ]; then
 		rm -f "$lshw_xml_file"
 	fi
-	local fil
-	for fil in "${TempFiles[@]}"; do
-		rm -f "$fil"
+	local File
+	for File in "${TempFiles[@]}"; do
+		rm -f "$File"
 	done
 }
 
@@ -1151,7 +1151,7 @@ Module_cdrom() {
 				if [ $drv_nr -lt $cdrom_count ]; then
 
 					sed -n "/%node $drv_nr%/,/%node $(($drv_nr+1))%/{p;}" \
-						$cdrom_tmp > $cdrom_tmp2
+					    $cdrom_tmp > $cdrom_tmp2
 
 					# KEEP THESE for testing times on ubuntu
 					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
@@ -1171,21 +1171,21 @@ Module_cdrom() {
 				fi
 
 				cdrom_model[$drv_nr]="$(grep -i product $cdrom_tmp2  | \
-									sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				                        sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 				cdrom_type[$drv_nr]="$(grep -i descr ${cdrom_tmp2} | \
-								   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				                       sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 				cdrom_serial[$drv_nr]="$(grep -i serial ${cdrom_tmp2} | \
-									 sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				                         sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 				cdrom_node[$drv_nr]="$(grep -i 'logicalname' ${cdrom_tmp2} | \
-								   sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
-								# sometimes there's a 'disc' node with a second
-								# logicalname node, which is the same as the first
+				                       sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
+				                       # sometimes there's a 'disc' node with a second
+				                       # logicalname node, which is the same as the first
 
 				cdrom_bus[$drv_nr]="$(grep -i businfo ${cdrom_tmp2} | \
-									 sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				                      sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
 				#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
 
@@ -1350,7 +1350,7 @@ Module_dmi() {
 					add_values    "$(grep -i uuid ${dmi_tmp} | \
 					                 awk -F: {'print $2'})"
 
-					add_footer 
+					add_footer
 					;;
 
 				"Base Board Information")	 
@@ -1494,8 +1494,8 @@ Module_system() {
 		add_values      "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
 			if [ $isverbose -ge 1 ]; then
 				add_values      "min=$(awk -F'+' {'print $3'} <<< $mobo_temp) \
-								 max=$(awk -F'+' {'print $4'} <<< $mobo_temp)"
-			fi	
+				                 max=$(awk -F'+' {'print $4'} <<< $mobo_temp)"
+			fi
 			
 	fi
 
