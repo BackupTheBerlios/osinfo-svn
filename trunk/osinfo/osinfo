@@ -57,7 +57,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=10
+patch_version=11
 dev_status=alpha
 release_date='2006-07-xx'
 
@@ -307,15 +307,9 @@ function print_xml_footer () {
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
+# DEPRECATED: use add_header instead (or invent some other use for this function ;-)
 function value_header() {
 	infostring[${#infostring[@]}]="%header%${1}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-# same as above, but without color. some modules use this because of
-# a bug in the 'column' program
-function add_nc_header() {
-	infostring[${#infostring[@]}]="%nc_header%${1}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -361,9 +355,32 @@ function value_footer() {
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
-# this function differs from value_header in that it adds an xml attribute
+# this function differs from value_header in that it adds an xml attribute.
+# 
+# Parameters: (example eth0)
+#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
+#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
 function add_header() {
-	infostring[${#infostring[@]}]="%header%${1}"
+	infostring[${#infostring[@]}]="%header%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# same as above, but without color. some modules use this because of
+# a bug in the 'column' program
+# 
+# Parameters: (example eth0)
+#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
+#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
+function add_nc_header() {
+	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+}
+
+
+# adds a footer tag to infostring
+function add_footer() {
+	infostring[${#infostring[@]}]="%footer%${@}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
@@ -385,7 +402,7 @@ function add_values {
 	# IFS need to be changed because the values are separated by newline
 	local IFS_bak="$IFS" value
 	IFS=$'\n'
-	for value in $@; do
+	for value in $1; do
 		infostring[${#infostring[@]}]="%value%${value}"
 		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	done
@@ -468,11 +485,21 @@ function print_xml {
 						for indent in $(seq 1 1 $XML_INDENT); do
 							echo -ne "\t" | tee -a "${XMLFILE}"
 						done
-		
+
 						# strip tag
 						item="$(sed s/%header%// <<< "${item}")"
+						code="$(awk -F\; {'print $2'} <<< "${item}" )"
+						item="$(awk -F\; {'print $1'} <<< "${item}" )"
 						item="$(validate_xml_item "${item}")"
-						xml_tag_start "${item}" | tee -a "${XMLFILE}"
+
+						# modify xml output due to contents of $item
+						if [ "$code" != "" ]; then
+							xml_param_tag "${code}" "${item}" | tee -a "${XMLFILE}"
+						else
+							xml_tag_start "${item}" | tee -a "${XMLFILE}"
+						fi
+
+						unset code
 						((XML_INDENT++))
 					;;
 		
@@ -621,15 +648,16 @@ function print_stdout {
 			'attribute')
 				# strip tag and discard the xml code tag
 				item="$(sed s/%attribute%// <<< "${item}" | \
-					awk -F\; {'print $1'})"
+				        awk -F\; {'print $1'})"
 				# add item to the value string,
 				# each attribute starts with a newline
 				value_string="${value_string}\n${item}";
 			;;
 
 			'header')
-				# strip tag
-				item="$(sed s/%header%// <<< "${item}")"
+				# strip tag, do not care of the xml modifier
+				item="$(sed 's/%header%//' <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
 				# add item to the value string,
 				# each header starts with a newline, 
 				# and is printed in special color
@@ -638,7 +666,8 @@ function print_stdout {
 
 			'nc_header')
 				# strip tag
-				item="$(sed s/%nc_header%// <<< "${item}")"
+				item="$(sed s/%nc_header%// <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
 				# add item to the value string,
 				# each header starts with a newline, 
 				# and is printed in special color

@@ -58,9 +58,17 @@ function xml_opentag_start () {
 	echo -n "<${1}"
 }
 
+# Tag with a parameter
+#  1  string  name of parameter  
+#  2  *       Value
+function xml_param_tag () {
+	echo "<${1}=\"${2}\">"
+}
+
+
 # Paramter for unclosed tag
 # Parameters:
-#  1  string  Name of parametre
+#  1  string  Name of parameter
 #  2  *       Value
 function xml_opentag_param () {
 	echo -n " ${1}=\"${2}\""
@@ -86,10 +94,9 @@ function xml_opentag_stop () {
 #               Can be SYSTEM or PUBLIC
 #  3  string  DTD URL
 function xml_doc_start () {
-	echo '<?xml version="1.0" encoding="ISO8859-1" ?>'
+	echo '<?xml version="1.0" encoding="" ?>'
 	echo "<!DOCTYPE ${1} ${2} \"${3}\">"
 }
-
 
 # attribute start tag
 # Parameters:

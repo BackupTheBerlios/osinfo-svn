@@ -1957,7 +1957,7 @@ Module_network() {
 		for interface_name in $ETH_DEVICES; do
 			ifconfig $interface_name > ${nw_info}
 	
-			value_header	$interface_name
+			add_header    $interface_name   'iface'
 	
 			add_attribute 'MAC'		"mac_address"
 			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
@@ -1995,7 +1995,7 @@ Module_network() {
 			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 			                 grep -i 'TX bytes' | awk -F: {'print $2'})"
 	
-			value_footer
+			add_footer "iface"
 		done
 	
 	value_footer
