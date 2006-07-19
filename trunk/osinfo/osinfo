@@ -57,7 +57,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=11
+patch_version=12
 dev_status=alpha
 release_date='2006-07-xx'
 
@@ -260,6 +260,7 @@ fi
 
 ############################################
 # XML HEADER & FOOTER FUNCTIONS
+# -----------------------------
 
 function print_xml_header () {
 	if [ "$lanforce" == 1 ]; then
@@ -288,12 +289,13 @@ function print_xml_footer () {
 		xml_tag_stop "${appname}" | tee -a "${XMLFILE}"
 	fi
 }
-
 ############################################
 
 
-
-################################################################################
+###########################################################################
+# module_header(), module_footer()
+# --------------------------------
+#
 # Print module header
 # Parameters:
 #   1 string	Module name
@@ -311,11 +313,7 @@ module_header() {
 		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
 	fi
 }
-################################################################################
 
-
-
-################################################################################
 # Print module footer (for xml)
 # Parameters:
 #   1 string   Module name
@@ -341,10 +339,12 @@ module_footer() {
 # detailed information is given in each function.
 
 
+############################
+# add_header, add_nc_header
+#
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
-# this function differs from value_header in that it adds an xml attribute.
 # 
 # Parameters: (example eth0)
 #   1 the header. will be printed to stdout and without $2 to xml as <eth0>
@@ -367,6 +367,9 @@ function add_nc_header() {
 }
 
 
+##############
+# add_footer
+#
 # adds a footer tag to infostring.
 # Parameters:
 #  1 xml closing tag <string> (optional)
@@ -383,6 +386,9 @@ function add_footer() {
 }
 
 
+################
+# add_attribute
+#
 # This function inserts the input string(s) as the last available item
 # in the $infostring array, with a field delimiter of ";".
 # it also adds an %attribute% tag which will be use by print_* functions
@@ -396,6 +402,9 @@ function add_attribute() {
 }
 
 
+#############
+# add_values
+#
 # This function inserts the input string or strings into the $infostring[] array.
 function add_values {
 	# IFS need to be changed because the values are separated by newline
@@ -408,6 +417,39 @@ function add_values {
 	IFS="$IFS_bak"
 }
 
+################
+# flush_values
+#
+# calls the print functions and clears the $infostring 
+function flush_values {
+
+	# close all open headers
+	local hdr
+	for hdr in $(seq ${#OpenHeaders[@]} -1 1); do
+		((hdr--)) # correct offset
+		add_footer "${OpenHeaders[$hdr]}"
+	done
+
+	if [ "$usexml" == "0" ]; then
+		print_stdout
+	elif [ "$usexml" == "1" ] && [ "$lanforce" == "0" ]; then
+		print_xml
+	else
+		print_lanforce_xml
+	fi
+
+	# infostring is set at functions add_*
+	# and needs to be reset here so that the informaton
+	# from this module will not be reprinted later
+	unset infostring
+}
+###########################################################################
+
+
+
+###########################################################################
+# helper functions
+# ----------------
 
 # this function searches the $infostring array backwards,
 # looking for open headers. this is called from add_footer.
@@ -445,43 +487,94 @@ function close_last_header() {
 	#done
 }
 
-
+# this is used for informational sentences in case of errors, warnings, notes etc.
 function info {
 	infostring[${#infostring[@]}]="%info%${@}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
-
-
-# calls the print functions and clears the $infostring 
-function flush_values {
-
-	# close all open headers
-	local hdr
-	for hdr in $(seq ${#OpenHeaders[@]} -1 1); do
-		((hdr--)) # correct offset
-		add_footer "${OpenHeaders[$hdr]}"
-	done
-
-	if [ "$usexml" == "0" ]; then
-		print_stdout
-	elif [ "$usexml" == "1" ] && [ "$lanforce" == "0" ]; then
-		print_xml
-	else
-		print_lanforce_xml
-	fi
-
-	# infostring is set at functions add_*
-	# and needs to be reset here so that the informaton
-	# from this module will not be reprinted later
-	unset infostring
-}
+#################################################################
 
 
 ################################################################################
 # print_xml(), print_lanforce_xml(), print_stdout()
-# -------------------------------------------------------------------
+# -------------------------------------------------
 # this set of functions formulates the items in $infostring for output.
 # detailed information is given in each function.
+
+
+# This function formulates $infostring for stdout
+# header tags are printed; attribute names are printed;
+# values for each attribute are printed on the same line,
+# and indentation is formed with the 'column' tool.
+function print_stdout {
+	local header_color="${tcGREEN}"
+	local info_color="${tcYELLOW}"
+	local item itemnr value_string=""
+
+	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
+		((itemnr--)) # correct offset to start at zero
+		item="${infostring[$itemnr]}"
+		# case by the "%identifier%" tag
+		case $(awk -F% {'print $2'} <<< ${item}) in
+
+			'value')
+				# add item to the value string,
+				# leaving the value identifier in
+				value_string="${value_string}${item}";
+			;;
+
+			'attribute')
+				# strip tag and discard the xml code tag
+				item="$(sed s/%attribute%// <<< "${item}" | \
+				        awk -F\; {'print $1'})"
+				# add item to the value string,
+				# each attribute starts with a newline
+				value_string="${value_string}\n${item}";
+			;;
+
+			'header')
+				# strip tag, do not care of the xml modifier
+				item="$(sed 's/%header%//' <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
+				# add item to the value string,
+				# each header starts with a newline, 
+				# and is printed in special color
+				value_string="${value_string}\n${header_color}${item}${tSTD}";
+			;;
+
+			'nc_header')
+				# strip tag
+				item="$(sed s/%nc_header%// <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
+				# add item to the value string,
+				# each header starts with a newline, 
+				# and is printed in special color
+				value_string="${value_string}\n${item}";
+			;;
+
+			'info')
+				# strip tag
+				item="$(sed s/%info%// <<< "${item}")"
+				# add item to the value string,
+				# each info note starts with a newline, 
+				# and is printed in special color
+				value_string="${value_string}\n${info_color}${item}${tSTD}";
+			;;
+
+		esac
+	done
+
+	# EXPLANATION OF THE INDENTATION SOLUTION
+	# this is a trick to overcome the limitation in column;
+	# use the special character '$' as the column delimiter, since
+	# it won't accept a string. the character _has_ to be ascii-standard.
+	# the column delimiter can be %value% or %col%
+
+	# the bad thing is that column interprets color codes as characters,
+	# and using colours on $value_string messes up column.
+	
+	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$ 
+}
 
 
 # This function loops the $infostring and does a case on each item
@@ -666,81 +759,8 @@ function print_lanforce_xml {
 		attrib_status="closed"
 	}
 #######
+################################################################################
 
-
-# This function formulates $infostring for stdout
-# header tags are printed; attribute names are printed;
-# values for each attribute are printed on the same line,
-# and indentation is formed with the 'column' tool.
-function print_stdout {
-	local header_color="${tcGREEN}"
-	local info_color="${tcYELLOW}"
-	local item itemnr value_string=""
-
-	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
-		((itemnr--)) # correct offset to start at zero
-		item="${infostring[$itemnr]}"
-		# case by the "%identifier%" tag
-		case $(awk -F% {'print $2'} <<< ${item}) in
-
-			'value')
-				# add item to the value string,
-				# leaving the value identifier in
-				value_string="${value_string}${item}";
-			;;
-
-			'attribute')
-				# strip tag and discard the xml code tag
-				item="$(sed s/%attribute%// <<< "${item}" | \
-				        awk -F\; {'print $1'})"
-				# add item to the value string,
-				# each attribute starts with a newline
-				value_string="${value_string}\n${item}";
-			;;
-
-			'header')
-				# strip tag, do not care of the xml modifier
-				item="$(sed 's/%header%//' <<< "${item}" | \
-				        awk -F\; {'print $1'} )"
-				# add item to the value string,
-				# each header starts with a newline, 
-				# and is printed in special color
-				value_string="${value_string}\n${header_color}${item}${tSTD}";
-			;;
-
-			'nc_header')
-				# strip tag
-				item="$(sed s/%nc_header%// <<< "${item}" | \
-				        awk -F\; {'print $1'} )"
-				# add item to the value string,
-				# each header starts with a newline, 
-				# and is printed in special color
-				value_string="${value_string}\n${item}";
-			;;
-
-			'info')
-				# strip tag
-				item="$(sed s/%info%// <<< "${item}")"
-				# add item to the value string,
-				# each info note starts with a newline, 
-				# and is printed in special color
-				value_string="${value_string}\n${info_color}${item}${tSTD}";
-			;;
-
-		esac
-	done
-
-	# EXPLANATION OF THE INDENTATION SOLUTION
-	# this is a trick to overcome the limitation in column;
-	# use the special character '$' as the column delimiter, since
-	# it won't accept a string. the character _has_ to be ascii-standard.
-	# the column delimiter can be %value% or %col%
-
-	# the bad thing is that column interprets color codes as characters,
-	# and using colours on $value_string messes up column.
-	
-	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$ 
-}
 
 
 ################################################################################
