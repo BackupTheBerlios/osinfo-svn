@@ -211,6 +211,10 @@ if [ "$#" -gt 0 ]; then
 				isverbose=1
 				shift 1
 				;;
+			'-vv'|'--very-verbose')
+				isverbose=2
+				shift 1
+				;;
 			'-D'|'--fulldebug')
 				export isdebug=1
 				set -x

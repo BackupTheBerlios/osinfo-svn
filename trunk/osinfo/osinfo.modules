@@ -1490,6 +1490,18 @@ Module_system() {
 	add_values    "$(uptime | awk -F, {'print $1'} | \
 	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
+	if CheckReq_sensors; then
+		add_attribute "M/B temperature"
+		local mobo_temp="$(sensors | grep -i 'cpu temp' | \
+		                   grep -Eo '\+[0-9]*[[:punct:]]C')"
+		add_values      "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
+			if [ $isverbose -ge 1 ]; then
+				add_values      "min=$(awk -F'+' {'print $3'} <<< $mobo_temp) \
+								 max=$(awk -F'+' {'print $4'} <<< $mobo_temp)"
+			fi	
+			
+	fi
+
 	module_footer
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
@@ -1573,12 +1585,22 @@ Module_processor() {
 
 		if CheckReq_sensors; then
 			add_attribute   "Temperature"
-			add_values      "$(sensors | grep -i 'cpu temp' | \
-			                   awk {'print $3'})"
+			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
+			                  grep -Eo '\+[0-9]*[[:punct:]]C')"
+			add_values      "$(awk -F'+' {'print $2'} <<< $cpu_temp)\n "
+			if [ $isverbose -ge 1 ]; then
+				add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
+								 max=$(awk -F'+' {'print $4'} <<< $cpu_temp)"
+			fi
 
 			add_attribute   "Voltage"
-			add_values      "$(sensors | grep -i 'vcore' | \
-			                   awk {'print $2'}) V"			
+			local voltage="$(sensors | grep -i 'vcore' | \
+			                 grep -Eo '\+[0-9. V]*')"
+			add_values      "$(awk -F'+' {'print $2'} <<< $voltage)\n " 
+			if [ $isverbose -ge 1 ]; then
+				add_values      "min=$(awk -F'+' {'print $3'} <<< $voltage) \
+				                 max=$(awk -F'+' {'print $4'} <<< $voltage)"
+			fi
 		fi
 
 		add_attribute "Cache"
@@ -2010,6 +2032,9 @@ Module_network() {
 }
 
 ### network helper functions
+
+	# detects the ip type (static or dynamic) based on some common
+	# configuration files. works on Debian, Ubuntu and Gentoo.
 	function detect_ip_type () {
 			local nw_conf_files="/etc/network/interfaces
 			                     /etc/conf.d/net"
