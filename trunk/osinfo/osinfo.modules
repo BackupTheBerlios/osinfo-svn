@@ -1304,7 +1304,7 @@ Module_dmi() {
 		# allocate the temp files
 		dmi_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		dmi_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		dmidecode > $dmi_info
+		dmidecode > "$dmi_info"
 		TempFiles=("${TempFiles[@]}" "$dmi_info" "$dmi_tmp")
 
 		# the interesting handles:
@@ -1341,7 +1341,7 @@ Module_dmi() {
 			        awk -F: {'print $1'})"
 			next="$(grep -n 'Handle' ${dmi_info} | grep -A 1 ${handle_nr} | \
 			        awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((this++)) 
+			((this++))
 			((next--)) # this prevents the 'handle' lines from printing
 
 			# use a temp file to store handle information
@@ -1395,7 +1395,7 @@ Module_dmi() {
 					add_footer
 					;;
 
-				"Base Board Information")	 
+				"Base Board Information")
 
 					add_header	"Motherboard"
 
@@ -1425,7 +1425,7 @@ Module_dmi() {
 					add_footer
 					;;
 
-				"BIOS Information")	 
+				"BIOS Information")
 				
 					add_header	"BIOS"
 
