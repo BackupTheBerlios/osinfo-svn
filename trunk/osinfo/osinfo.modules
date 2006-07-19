@@ -80,11 +80,11 @@ MODULES_META='all lanforce system cpu apps net'
 
 MODULES_LINUX='distro system kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
 MODULES_BSD='distro system applications terminal network'
-MODULES_BROKEN='printers'
-MODULES_REAL_ROOT_ONLY='system terminal applications network wlan devices services hdd printers dmi services'
+MODULES_BROKEN='printers lvm'
+MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm'
 
 
 ################################################################################
@@ -793,7 +793,6 @@ Module_hdd() {
 	#  (3) the node number in the bus
 	#
 	scan_hdd_ide() {
-
 		hdd_type='IDE drive'
 		local dev_scan="${1}" dev_scannode="${2}"
 
@@ -1067,15 +1066,59 @@ Module_hdd() {
 	#######################
 	# LVM PARTITIONS
 	# Parameters:
-	#  (1) drive device
-	#  (2) drive node in the /dev/ tree
-	#  (3) the node number in the bus
 	#
 	scan_hdd_lvm() {
-		info "todo"
+
+		local volgroups volgroup
+
+		# get lvm groups with vgscan
+		volgroups="$(vgscan | grep -i found | \
+		             grep -Eo '\"[a-zA-Z0-9]+\"' | sed 's/\"//g')"
+
+		if [ "$volgroups" != "" ]; then
+
+			lvm_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+			lvm_group_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$lvm_full_tmp" "$lvm_group_tmp" )
+
+			vgdisplay -v 2>/dev/null > $lvm_full_tmp
+
+			#add_attribute	"Volume groups" "volume_groups"
+
+			for volgroup in $volgroups; do
+
+				extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
+
+				add_header	$volgroup  "logical volume"
+
+				add_attribute    'Format' "format"
+				add_values       "$(grep -i format $lvm_group_tmp | awk {'print $2'})"
+
+				add_attribute    'Physical volume'
+				add_values       "$(grep -i 'PV name' $lvm_group_tmp | awk {'print $3'})"
+
+				add_attribute    'VG size'
+				add_attribute    'PE size'
+
+
+			done
+
+		fi
 	}
 
 ###### END OF HDD SUBFUNCTIONS #############
+
+
+Module_lvm () {
+	local moduleName="Logical Volumes"
+	module_header "${moduleName}"
+
+	if CheckReq_root; then
+		scan_hdd_lvm
+	fi
+
+	flush_values
+}
 
 
 #######################
@@ -1132,17 +1175,16 @@ Module_cdrom() {
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
 		lshw_xml
-		extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
+		if [ "$(grep -i cdrom $lshw_xml_file)" ]; then
+			extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
 
-		#for debugging:
-		#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-		#cat $cdrom_tmp 
+			#for debugging:
+			#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
+			#cat $cdrom_tmp 
 
-		# extr_node echoes back all the cdrom drives in the system, 
-		# let's see how many
-		local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
-
-		if [ $cdrom_count -ge 1 ]; then
+			# extr_node echoes back all the cdrom drives in the system, 
+			# let's see how many
+			local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
 
 			for drv_nr in $(seq 1 1 $cdrom_count); do
 
@@ -1225,13 +1267,13 @@ Module_cdrom() {
 					# generally grep cd|dvd
 					# debug with debug/lshw-dvdwriter
 
-					##value_footer
+					add_footer "cd_drive"
 
 				fi
 			done
 
 		else
-			add_values    'No cdrom drives detected'
+			info    'No cdrom drives detected'
 		fi
 	fi
 
