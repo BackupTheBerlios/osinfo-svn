@@ -1,8 +1,11 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	mod_hdd: fix bugs 
-*	mod_network: fix xml (footer function)
+*	do not print (to stdout) attributes without values
+	( easy to do, add a tag for values_since_last_attrib=false )
+*	reorder some given information
+*	fix meta modules?
+*	"vv next line is header" dirty tag to workaround the column bug?
 
 	
 
