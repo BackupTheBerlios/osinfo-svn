@@ -172,6 +172,9 @@ extr_node() {
 	local node_id="${1}"
 	local input_file="${2}"
 	local node_closer="${3}"
+	local nr node
+	local all_nodes=""
+	local node_count=0
 
 	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 	TempFiles=("${TempFiles[@]}" "$input_tmp" )
@@ -179,57 +182,61 @@ extr_node() {
 	# add line numbers
 	grep -n . ${input_file} > $input_tmp
 
+	# if a special node closer is not defined, use the node_id
 	[ ! "$node_closer" ] && node_closer="${node_id}"
 
 	# get all matching nodes and node count
-	local all_nodes="$(grep  -i "${node_id}" $input_tmp)"
-	local node_count="$(wc -l <<< ${all_nodes})"
+	all_nodes="$(grep  -i "${node_id}" $input_tmp)"
+	# NOTE: this uses an extra grep, because '<<<' adds a '\n' and
+	# wc counts an empty variable line length as '1'
+	node_count="$(grep -i "${node_id}" <<< ${all_nodes} | wc -l)"
 
-	# this loop extracts the information between the node begin
-	# and end lines, based on indentation level (xml), echoing
-	# the results out 
-	local nr node
-	for nr in $(seq 1 1 $node_count); do
-		this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
+	if [ $node_count -ge 1 ]; then
 
-		# this gets the line number of the wanted node from lshw 
-		local begin="$(awk -F: {'print $1'} <<< ${this_node})"
-		local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
-		                     grep -Eo '^[ ]*' | wc -m)"
-		
-		# this loop takes care that all subnodes are included, by comparing
-		# the indentation level. not very elegant..
-		# basically it just searches for $node_closer and gets the line#
-		IFS_bak="$IFS"; IFS=$'\n' ; 
-		for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
-		              grep ${node_closer}); do
+		# this loop extracts the information between the node begin
+		# and end lines, based on indentation level (xml), echoing
+		# the results out 
+		for nr in $(seq 1 1 $node_count); do
+			this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
 
-			# if the indentation matches...
-			if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
-			        wc -m)" == "$node_indent" ]; then
+			# this gets the line number of the wanted node from lshw 
+			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
+			local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
+					     grep -Eo '^[ ]*' | wc -m)"
+			
+			# this loop takes care that all subnodes are included, by comparing
+			# the indentation level. not very elegant..
+			# basically it just searches for $node_closer and gets the line#
+			IFS_bak="$IFS"; IFS=$'\n' ; 
+			for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
+				      grep ${node_closer}); do
 
-				# read the line# to $nigeb (begin backwards)
-				# the line number of the closing node
-				local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
-				((nigeb--)) # this prevents the closing node to displaying
-				            # as sometimes this may not be wanted
-				break;
+				# if the indentation matches...
+				if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
+					wc -m)" == "$node_indent" ]; then
 
-			fi
+					# read the line# to $nigeb (begin backwards)
+					# the line number of the closing node
+					local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
+					((nigeb--)) # this prevents the closing node to displaying
+						    # as sometimes this may not be wanted
+					break;
+
+				fi
+
+			done
+			
+			# if the closing node wasn't found, read to EOF
+			[ ! "$nigeb" ] && nigeb="$"
+			IFS="$IFS_bak"
+
+			# then what's between the first node and the closing id 
+			# is echoed to whichever function called this
+			echo "%node $nr%"
+			sed -n "$begin,$nigeb{p;}" $input_file 
 
 		done
-		
-		# if the closing node wasn't found, read to EOF
-		[ ! "$nigeb" ] && nigeb="$"
-		IFS="$IFS_bak"
-
-		# then what's between the first node and the closing id 
-		# is echoed to whichever function called this
-		echo "%node $nr%"
-		sed -n "$begin,$nigeb{p;}" $input_file 
-
-	done	
-
+	fi
 }
 
 TempFiles=()
@@ -1053,10 +1060,6 @@ Module_hdd() {
 
 	#######################
 	# SOFTWARE RAID ARRAYS
-	# Parameters:
-	#  (1) drive device
-	#  (2) drive node in the /dev/ tree
-	#  (3) the node number in the bus
 	#
 	scan_hdd_raid() {
 		info	"todo"
@@ -1065,7 +1068,6 @@ Module_hdd() {
 
 	#######################
 	# LVM PARTITIONS
-	# Parameters:
 	#
 	scan_hdd_lvm() {
 
@@ -1108,7 +1110,7 @@ Module_hdd() {
 
 ###### END OF HDD SUBFUNCTIONS #############
 
-
+# fake module that calls the hdd subfunction
 Module_lvm () {
 	local moduleName="Logical Volumes"
 	module_header "${moduleName}"
@@ -1307,6 +1309,10 @@ Module_dmi() {
 		dmidecode > "$dmi_info"
 		TempFiles=("${TempFiles[@]}" "$dmi_info" "$dmi_tmp")
 
+		if [ $fake -eq 1 ]; then
+			dmi_info="debug/dmidecode-failing"
+		fi
+
 		# the interesting handles:
 		# 0x0000 or 0x0001 = 'BIOS Information'
 		# 0x0001 or 0x0002 = 'System Information'
@@ -1335,24 +1341,24 @@ Module_dmi() {
 			# get the handle number (0x000#) 
 			# -B 5 is defined because sometimes there's some extra
 			# information between the Handle_nr and the description.
-			handle_nr="$(grep -in ${handle_desc} ${dmi_info} -B 5 | \
-			             grep -Eo '0x[0-9]{4}')"
-			this="$(grep -in "Handle ${handle_nr}" ${dmi_info}  | \
-			        awk -F: {'print $1'})"
-			next="$(grep -n 'Handle' ${dmi_info} | grep -A 1 ${handle_nr} | \
-			        awk -F: {'print $1'} | sed -n "2{p;q}")"
-			((this++))
-			((next--)) # this prevents the 'handle' lines from printing
+#			handle_nr="$(grep -in ${handle_desc} ${dmi_info} -B 5 | \
+#			             grep -Eo '0x[0-9]{4}')"
+#			this="$(grep -in "Handle ${handle_nr}" ${dmi_info}  | \
+#			        awk -F: {'print $1'})"
+#			next="$(grep -n 'Handle' ${dmi_info} | grep -A 1 ${handle_nr} | \
+#			        awk -F: {'print $1'} | sed -n "2{p;q}")"
+#			((this++))
+#			((next--)) # this prevents the 'handle' lines from printing
+#
+#			# use a temp file to store handle information
+#			
+#			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
+#			#cat $dmi_tmp
 
-			# use a temp file to store handle information
-			
-			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
-			#cat $dmi_tmp
-
-			# remove 18 lines above and use this instead,
-			# although for some unknown reason doesn't work! (FIXME)
-			#extr_node ${handle_desc} ${dmi_info} Handle > ${dmi_tmp}
-			#cat $dmi_tmp
+			# extract the handle and string the first line 
+			# (%node% identifier that is useless here)
+			extr_node ${handle_desc} ${dmi_info} Handle | \
+				sed -n "2,\${p}" > ${dmi_tmp}
 			
 			# because sometimes there's some extra info, head -n 5
 			# TODO: combine grep and sed
@@ -1361,7 +1367,6 @@ Module_dmi() {
 
 			# here the data is processed
 			case $handleID in
-
 				"System Information")
 
 					add_header  "System info"
@@ -1397,7 +1402,7 @@ Module_dmi() {
 
 				"Base Board Information")
 
-					add_header	"Motherboard"
+					add_header    "Motherboard"
 
 					add_attribute 'Manufacturer' \
 					              'mother_board_manufacturer'
@@ -1427,7 +1432,7 @@ Module_dmi() {
 
 				"BIOS Information")
 				
-					add_header	"BIOS"
+					add_header    "BIOS"
 
 					add_attribute 'Vendor'
 					add_values    "$(grep -i vendor ${dmi_tmp} | \
@@ -1454,7 +1459,7 @@ Module_dmi() {
 
 				"Chassis Information")	# Chassis Information
 
-					add_header	'Chassis'
+					add_header    'Chassis'
 
 					add_attribute 'Manufacturer' 	'chassis_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
@@ -1497,8 +1502,6 @@ Module_dmi() {
 
 	fi
 
-	#module_footer
-#	set -x
 	flush_values
 }
 
