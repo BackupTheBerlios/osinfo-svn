@@ -1559,7 +1559,7 @@ Module_processor() {
 		cpu_count=1
 	fi
 
-	add_attribute "Count"			"processor_count"
+	add_attribute "Count"      "processor_count"
 	add_values    $cpu_count
 
 	for cpunr in $(seq 1 1 $cpu_count); do
@@ -1746,8 +1746,8 @@ Module_users() {
 
 		add_attribute  'Login date'
 		add_values     "$(date -d "$(last -1 | head -n 1  | \
-						  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-						  +"%Y-%m-%d %T")"
+		                             grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+		                       +"%Y-%m-%d %T")"
 
 	add_footer
 
@@ -2130,13 +2130,13 @@ Module_wlan() {
 
 			add_attribute   'link quality'
 			add_values      "$(grep -Eo 'Quality[\=:][a-zA-Z0-9\/]+' $cell_tmp | \
-							awk -F"=|:" '{print $2}')"
+			                   awk -F"=|:" '{print $2}')"
 			add_attribute   'address'
 			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp | sed 's/^\ *//')"
 
 			add_attribute   'channel'
 			add_values      "$(grep -Eo 'Channel[\=:][a-zA-Z0-9]+' $cell_tmp | \
-							awk -F"=|:" '{print $2}')"
+			                   awk -F"=|:" '{print $2}')"
 
 			add_attribute   'frequency'
 			add_attribute   'bit rate'
@@ -2151,14 +2151,14 @@ Module_wlan() {
 
 			add_attribute   'encryption key'
 			add_values      "$(grep -Eo 'Encryption key[\=:][a-zA-Z]+' $cell_tmp | \
-							awk -F"=|:" '{print $2}')"
+			                   awk -F"=|:" '{print $2}')"
 			add_attribute   'encryption type'
 
 			add_attribute   'security mode'
 
 			add_attribute   'signal level'
 			add_values      "$(grep -Eo 'Signal level[\=:][-a-zA-Z0-9\/ ]+' $cell_tmp | \
-							awk -F"=|:" '{print $2}')"
+			                   awk -F"=|:" '{print $2}')"
 
 
 			#value_footer
