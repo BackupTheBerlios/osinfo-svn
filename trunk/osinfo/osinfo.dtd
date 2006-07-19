@@ -17,12 +17,11 @@
 
 
 
-<!ELEMENT network_information (interface*)>
-
-<!ELEMENT interface (attribute+)>
-<!ATTLIST interface name CDATA #REQUIRED>
-
-
+<!ELEMENT network_information (computer*)>
+<!ELEMENT computer (attribute|iface)*>
+<!ATTLIST computer name CDATA #REQUIRED>
+<!ELEMENT iface (attribute+)>
+<!ATTLIST iface name CDATA #REQUIRED>
 
 
 <!ELEMENT dmi_information (bios,system_info,motherboard,chassis)>

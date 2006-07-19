@@ -62,10 +62,10 @@
 
 # AnMaster: I think this isn't very useful at all... 
 #           Also you need to get rid of eval if you plan to use it...
-# ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to 
-#         combine the two modules because the latter depends on the former. 
-#         this may well repeat later with other modules too. and besides a subset 
-#         of modules is useful, we may not fully realise it yet. 
+# ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to
+#         combine the two modules because the latter depends on the former.
+#         this may well repeat later with other modules too. and besides a subset
+#         of modules is useful, we may not fully realise it yet.
 # TODO: make meta modules run the dependencies silent.
 
 Meta_all='distro system kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'

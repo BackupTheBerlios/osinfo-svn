@@ -810,8 +810,8 @@ for modul in $cmdsnames; do
 	#           are *realy* stupid. So don't comment that out.
 	#           Instead update the variable MODULES_ALL in osinfo.modules
 	#           We MUST validate the user input if we are going to use eval
-	#           otherwise someone could use that to run something evil 
-	#			(as root), like rm -rf /.
+	#           otherwise someone could use that to run something evil
+	#           (as root), like rm -rf /.
 
 done
 
