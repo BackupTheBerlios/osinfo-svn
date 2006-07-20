@@ -1794,7 +1794,7 @@ Module_users() {
 		add_attribute  'Real name'    'last_logged_real_name'
 		add_values     "$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
 
-		#add_attribute  'Login date'
+		add_attribute  'Login date'
 		add_values     "$(date -d "$(last -1 | head -n 1  | \
                                   grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
 		                  +"%Y-%m-%d %T")"
