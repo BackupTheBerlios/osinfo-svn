@@ -2227,12 +2227,6 @@ Module_wlan() {
 # DISTRIBUTION
 #
 # this module will try to guess which Linux distrobution is installed.
-# the default tool to use is the lsb-release (Linux Standard Base
-# version reporting utility)
-#
-# a secondary id source are the unique files in /etc/, and as a last
-# resort the /etc/issue file. this makes it possible to identify
-# a distro which resides in a chroot environment, or from a livecd.
 Module_distro() {
 	local moduleName="Distribution"
 	module_header "${moduleName}"
@@ -2279,7 +2273,11 @@ Module_distro() {
 	flush_values
 }
 
-## DISTRIBUTION SUBFUNCTIONS
+## DISTRIBUTION SUBFUNCTIONS ##################################
+
+##
+# distro_lsb_release
+#
 # Gets data from lsb_release
 # Parameters:
 #  1  string   what value to get.
@@ -2287,8 +2285,18 @@ distro_lsb_release() {
 	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
 }
 
+###
+# identify_Linux_distro
+#
+# the default tool to use is the lsb-release (Linux Standard Base
+# version reporting utility)
+#
+# a secondary id source are the unique files in /etc/, and as a last
+# resort the /etc/issue file. this makes it possible to identify
+# a distro which resides in a chroot environment, or from a livecd.
 identify_Linux_distro() {
 	# look for lsb-release if real root is used.
+	set -x
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 
 		distro_id="$(distro_lsb_release 'distributor')"
@@ -2427,6 +2435,8 @@ identify_Linux_distro() {
 
 	fi
 }
+#############################################################
+
 
 
 #######################
