@@ -8,7 +8,7 @@ PATH=$PATH:/usr/local/bin
 
 case "$1" in
 start)
-	log_action_begin_msg "Running osinfo"
+	log_action_begin_msg "Running osinfo ; ${osinfo_modules}"
 	#/usr/local/bin/osinfo  "${osinfo_options}" "${osinfo_modules}" > "${osinfo_output_file}" 
         if ! /usr/local/bin/osinfo  "${osinfo_options}" "${osinfo_modules}" -o "${osinfo_output_file}"; then
         	log_end_msg 1
