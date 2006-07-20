@@ -10,7 +10,7 @@ case "$1" in
 start)
 	log_action_begin_msg "Running osinfo"
 	#/usr/local/bin/osinfo  "${osinfo_options}" "${osinfo_modules}" > "${osinfo_output_file}" 
-        if ! /usr/local/bin/osinfo  "${osinfo_options}" "${osinfo_modules}" > "${osinfo_output_file}"; then
+        if ! /usr/local/bin/osinfo  "${osinfo_options}" "${osinfo_modules}" -o "${osinfo_output_file}"; then
         	log_end_msg 1
                 exit 1
         fi

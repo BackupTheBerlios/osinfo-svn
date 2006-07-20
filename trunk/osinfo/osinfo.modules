@@ -2296,7 +2296,7 @@ distro_lsb_release() {
 # a distro which resides in a chroot environment, or from a livecd.
 identify_Linux_distro() {
 	# look for lsb-release if real root is used.
-	set -x
+	#set -x
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 
 		distro_id="$(distro_lsb_release 'distributor')"
