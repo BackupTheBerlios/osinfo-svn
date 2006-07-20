@@ -68,9 +68,9 @@
 #         of modules is useful, we may not fully realise it yet.
 # TODO: make meta modules run the dependencies silent.
 
-Meta_all='distro system kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'
-Meta_lanforce='distro system processor memory network wlan dmi hdd devices cdrom users applications services env'
-Meta_system='distro system kernel processor'
+Meta_all='system distro kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'
+Meta_lanforce='system processor memory network wlan dmi hdd devices cdrom users applications services env'
+Meta_system='system kernel processor'
 Meta_cpu='processor'
 Meta_apps='applications'
 Meta_net='network wlan'
@@ -78,8 +78,8 @@ MODULES_META='all lanforce system cpu apps net'
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='distro system kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
-MODULES_BSD='distro system applications terminal network'
+MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
+MODULES_BSD='system applications terminal network'
 MODULES_BROKEN='printers lvm'
 MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
@@ -1151,9 +1151,6 @@ Module_memory() {
 		# meminfo="/proc/meminfo"
 
 		lshw_xml
-		if [ $fake -eq 1 ]; then
-			lshw_xml_file="debug/lshw-failing"
-		fi
 		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
 
 		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
@@ -1512,18 +1509,21 @@ Module_system() {
 	module_header "${moduleName}"
 
 	add_attribute "Operating system"		"os"
-	add_values    "$distro_id $(uname -s) $distro_release"
+	case $SYSTEM in
+		'Linux'|'linux')
+			[ ! "$distro_id" ] && identify_Linux_distro
+			add_values      "$distro_id $(uname -s) $distro_release"
+		;;
+
+		'FreeBSD'|'freebsd')
+			add_values      "$SYSTEM"
+		;;
+	esac
 
 	add_attribute "Operating system kernel"	"os_build"
 	add_values    "$(uname -sr)"
 
-	add_attribute "Network node hostname"	"host_name"
-	add_values    "$(hostname)"
-
-	add_attribute "Machine hardware name"	"system_type"
-	add_values    "$(uname -m)"
-
-	add_attribute "System encoding"
+	#add_attribute "System encoding"
 	# this is probably incorrect. determines the default output encoding
 	# of the echo command. 
 	#add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
@@ -1544,7 +1544,6 @@ Module_system() {
 			
 	fi
 
-	#module_footer
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
@@ -1557,11 +1556,14 @@ Module_kernel() {
 
 	local kernel_makefile
 
-	add_attribute "Operating system"	'os' # don't change the code tag
+	add_attribute "Kernel name"
 	add_values    "$(uname -o)"
 
 	add_attribute "Kernel release"		'os_build' #FIXME
 	add_values    "$(uname -r)"
+
+	add_attribute "Kernel version"
+	add_values    "$(uname -v)"
 
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
@@ -1575,7 +1577,6 @@ Module_kernel() {
 		                 head -n 1 | awk -F= {'print $2'})"
 	fi
 
-	#module_footer
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
@@ -1595,8 +1596,7 @@ Module_processor() {
 	# ruxpin: perhaps.. in any case I don't like
 	#         hardcoding file paths into the code.
 	local cpuinfo="/proc/cpuinfo"
-	local cpu_count="$(grep 'cpu cores' ${cpuinfo} | head -n 1 | \
-		awk {'print $NF'})"
+	local cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
@@ -1604,8 +1604,10 @@ Module_processor() {
 		cpu_count=1
 	fi
 
-	add_attribute "Count"      "processor_count"
-	add_values    $cpu_count
+	if [ "$usexml" == 1 ]; then
+		add_attribute "Count"      "processor_count"
+		add_values    $cpu_count
+	fi
 
 	for cpunr in $(seq 1 1 $cpu_count); do
 
@@ -1624,6 +1626,9 @@ Module_processor() {
 		add_attribute "Frequency"		"processor_speed"
 		add_values    "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                 awk -F': ' {'print $2" MHz"'})"
+
+		add_attribute "Architecture"	"system_type"
+		add_values    "$(uname -m)"
 
 		if CheckReq_sensors; then
 			add_attribute   "Temperature"
@@ -1655,7 +1660,6 @@ Module_processor() {
 
 	done
 
-	#module_footer
 	flush_values
 }
 
@@ -2246,6 +2250,44 @@ Module_distro() {
 	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
 
+	# then call the subfunction
+	identify_Linux_distro
+
+
+	# then output what the was found..
+	[ "${distro_id}" ] && \
+		add_attribute 'Distro ID'
+		add_values    "${distro_id}"
+
+	[ "${distro_release}" ] && \
+		add_attribute 'Release'
+		add_values    "$distro_release"
+
+	[ "${distro_codename}" ] && \
+		add_attribute 'Codename'
+		add_values    "$distro_codename"
+
+	[ "${distro_description}" ] && \
+		add_attribute 'Description'
+		add_values    "$distro_description"
+
+	[ "$SlackwareBase" ] && \
+		add_values  'Based on Slackware version' \
+		            "$SlackwareBase"
+
+
+	flush_values
+}
+
+## DISTRIBUTION SUBFUNCTIONS
+# Gets data from lsb_release
+# Parameters:
+#  1  string   what value to get.
+distro_lsb_release() {
+	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
+}
+
+identify_Linux_distro() {
 	# look for lsb-release if real root is used.
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
 
@@ -2384,41 +2426,6 @@ Module_distro() {
 		esac
 
 	fi
-
-
-	# then output what we found..
-
-	[ "${distro_id}" ] && \
-		add_attribute 'Distro ID'
-		add_values    "${distro_id}"
-
-	[ "${distro_release}" ] && \
-		add_attribute 'Release'
-		add_values    "$distro_release"
-
-	[ "${distro_codename}" ] && \
-		add_attribute 'Codename'
-		add_values    "$distro_codename"
-
-	[ "${distro_description}" ] && \
-		add_attribute 'Description'
-		add_values    "$distro_description"
-
-	[ "$SlackwareBase" ] && \
-		add_values  'Based on Slackware version' \
-		            "$SlackwareBase"
-
-
-	#module_footer
-	flush_values
-}
-
-## DISTRIBUTION SUBFUNCTIONS
-# Gets data from lsb_release
-# Parameters:
-#  1  string   what value to get.
-distro_lsb_release() {
-	lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
 }
 
 
