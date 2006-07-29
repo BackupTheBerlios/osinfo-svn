@@ -747,7 +747,7 @@ print_lanforce_xml() {
 		esac
 	done
 
-	close_lf_attribute_tag
+	[ "$attrib_status" == "open" ] && close_lf_attribute_tag
 }
 #############################
 ## print_lanforce_xml helper functions

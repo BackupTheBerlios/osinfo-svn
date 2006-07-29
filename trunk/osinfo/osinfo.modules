@@ -2242,14 +2242,6 @@ Module_distro() {
 	# NOTE: do not make distro_* variables local, as they might be used
 	# in other modules
 
-	# locate and echo the root directory.
-	# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
-	[ "$prefix" != '/' ] && \
-		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
-		local root_dir="$prefix"
-	add_attribute 'Root dir'
-	add_values    "$root_dir"
-	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
 
 	# then call the subfunction
@@ -2257,6 +2249,10 @@ Module_distro() {
 
 
 	# then output what the was found..
+
+	add_attribute 'Root dir'
+	add_values    "$root_dir"
+	
 	[ "${distro_id}" ] && \
 		add_attribute 'Distro ID'
 		add_values    "${distro_id}"
@@ -2276,7 +2272,6 @@ Module_distro() {
 	[ "$SlackwareBase" ] && \
 		add_values  'Based on Slackware version' \
 		            "$SlackwareBase"
-
 
 	flush_values
 }
@@ -2303,6 +2298,16 @@ distro_lsb_release() {
 # resort the /etc/issue file. this makes it possible to identify
 # a distro which resides in a chroot environment, or from a livecd.
 identify_Linux_distro() {
+
+	# locate and echo the root directory.
+	# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
+	[ "$prefix" != '/' ] && \
+		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
+		local root_dir="$prefix"
+	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
+
+
+
 	# look for lsb-release if real root is used.
 	#set -x
 	if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
