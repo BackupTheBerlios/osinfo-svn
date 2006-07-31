@@ -6,7 +6,9 @@ FEATURES and FIXES for 0.3:
 *	reorder some given information
 *	fix meta modules?
 *	"vv next line is header" dirty tag to workaround the column bug?
-
+*	if /var/log/wtmp is not found, osinfo produces errors
+*	if a user belongs to the same group twice, both memberships are
+	printed. use uniq
 	
 
 FEATURES for 0.4:
