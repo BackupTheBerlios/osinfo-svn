@@ -68,9 +68,9 @@ EOF
 
 
 function lf_entity_start () {
-	hostname="$1"
-	ip="$2"
-	timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
+	local hostname="$1"
+	local ip="$2"
+	local timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
 
 
 	echo "<entityset>"
@@ -86,22 +86,19 @@ function lf_entity_stop () {
 }
 
 function lf_attribute_value () {
-	code="$1"
-	value="$2"
+	local code="$1"
+	local value="$2"
 
 	echo "  <attribute code=\"$code\">"
 	echo "   <value>$value</value>"
 	echo "  </attribute>"
 }
 
-function lf_note () {
-	creator="osinfo alpha"
-	timestamp="$(date +%Y%m%d\ %H:%M)"
-	ref="no"
+function lf_value_footer () {
+# the value of <footer> indicates a dimension, eg. <footer>kB/s</footer>
 
-	echo "<!ELEMENT note (name, text)>"
-	echo "<!ATTLIST note   creator               $creator #REQUIRED"
-	echo "                 timestamp             $timestamp #IMPLIED"
-	echo "                 follow-references     $ref #REQUIRED>"
-#	echo "<!ELEMENT name #PCDATA>"
+	#local value="$1"
+
+	echo "   <footer>$1</footer>"
 }
+

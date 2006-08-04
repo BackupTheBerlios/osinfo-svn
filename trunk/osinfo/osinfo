@@ -57,9 +57,9 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=14
+patch_version=15
 dev_status=alpha
-release_date='2006-07-xx'
+release_date='2006-08-xx'
 
 # source the necessary files
 source osinfo.modules
@@ -399,7 +399,6 @@ function add_footer() {
 #  2 code tag for xml  (eg. os)                 (optional)
 function add_attribute() {
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -408,15 +407,17 @@ function add_attribute() {
 #
 # This function inserts the input string or strings into the $infostring[] array.
 function add_values {
-	# IFS need to be changed because the values are separated by newline
-	local IFS_bak="$IFS" value
-	IFS=$'\n'
-	for value in $1; do
-		infostring[${#infostring[@]}]="%value%${value}"
-		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	done
-	IFS="$IFS_bak"
+	infostring[${#infostring[@]}]="%value%${@}"
 }
+
+###################
+# add_value_footer
+#
+# This function inserts a value_footer, which indicates a dimension, eg. <footer>kB/s</footer>.
+function add_value_footer {
+	infostring[${#infostring[@]}]="%value_footer%${@}"
+}
+
 
 ################
 # flush_values
