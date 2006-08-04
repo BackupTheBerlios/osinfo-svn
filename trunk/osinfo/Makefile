@@ -56,4 +56,4 @@ clean:
 checkxml:
 	xmllint --valid osinfo.xml
 
-.PHONY : all clean distclean checkxml
+.PHONY : all clean dist distclean checkxml
