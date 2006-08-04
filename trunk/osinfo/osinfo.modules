@@ -1664,7 +1664,9 @@ Module_processor() {
 		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                     awk -F': ' {'print $2'})"
 
-		add_footer
+		if [ $cpu_count -gt 1 ]; then
+			add_footer
+		fi
 
 	done
 

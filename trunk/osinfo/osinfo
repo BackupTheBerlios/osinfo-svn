@@ -383,6 +383,8 @@ function add_footer() {
 		close_last_header
 	fi
 
+	echo ${OpenHeaders[@]}
+
 	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
 }
 
