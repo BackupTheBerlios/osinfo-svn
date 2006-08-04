@@ -57,7 +57,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=15
+patch_version=16
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -382,8 +382,6 @@ function add_footer() {
 	else
 		close_last_header
 	fi
-
-	echo ${OpenHeaders[@]}
 
 	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
 }

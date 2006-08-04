@@ -39,7 +39,6 @@ dist-all-in-one: dist
 	@echo "WARNING: this is quite untested"
 	@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
 
-	make dist
 	cd dist/$(appname) && \
 	for sources in "$(helpers)"; do cat $$sources >> osinfo-all-in-one; done
 	cd dist/$(appname) && sed 's/source[a-zA-Z. ]*//' $(mainapp) >> osinfo-all-in-one
