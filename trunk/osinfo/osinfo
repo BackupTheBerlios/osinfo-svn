@@ -525,6 +525,14 @@ function print_stdout {
 				value_string="${value_string}${item}";
 			;;
 
+			'value_footer')
+				# strip tag and discard the xml code tag
+				item="$(sed s/%value_footer%// <<< "${item}" )"
+				# add item to the value string,
+				# the preceding space is intentional.
+				value_string="${value_string} ${item}";
+			;;
+
 			'attribute')
 				# strip tag and discard the xml code tag
 				item="$(sed s/%attribute%// <<< "${item}" | \
@@ -602,8 +610,17 @@ function print_xml {
 
 				# the following sed removes all formatting tags
 				# from the value string. it's a tad slow, though.
-				item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"
+				item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"				
 				xml_value "${item}" >> "${XMLFILE}"
+			;;
+
+			'value_footer')
+				## FIXME: doesn't work
+				# strip tag and discard the xml code tag
+				item="$(sed s/%value_footer%// <<< "${item}" )"
+				# add item to the value string,
+				# the preceding space is intentional.
+				#xml_value "${item}" >> "${XMLFILE}"
 			;;
 
 			*)
@@ -615,7 +632,6 @@ function print_xml {
 				case $idtag in
 
 					'attribute')
-						item="$(validate_xml_item "${item}")"
 						open_attribute_tag "$item"
 					;;
 		
@@ -682,10 +698,10 @@ function print_xml {
 
 		# parse item
 		item="$(sed s/%attribute%// <<< "${item}")"
-		name="$(validate_xml_item "${item}")"
 		code=$(awk -F\; {'print $2'} <<< "${item}")
-
-		xml_attribute_start "${name}" "${code}" >> ${XMLFILE}
+		# item validation strips away the code
+		item="$(validate_xml_item "${item}")"	
+		xml_attribute_start "${item}" "${code}" >> ${XMLFILE}
 		((XML_INDENT++))
 		attrib_status="open"
 	}
@@ -725,6 +741,14 @@ print_lanforce_xml() {
 					echo -ne "   " >> "${XMLFILE}"
 					xml_value "${item}" >> "${XMLFILE}"
 				fi
+			;;
+
+			'value_footer')
+				# strip tag and discard the xml code tag
+				item="$(sed s/%value_footer%// <<< "${item}" )"
+				# add item to the value string,
+				# the preceding space is intentional.
+				lf_value_footer "${item}" >> "${XMLFILE}"
 			;;
 
 			'attribute')

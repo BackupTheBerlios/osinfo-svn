@@ -1156,8 +1156,9 @@ Module_memory() {
 		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
 		ram_size="$(bc -l <<< scale=1\;$ram_size/1024/1024)"
 
-		add_attribute 'Total size'	'ram'
-		add_values    "$ram_size MB"	
+		add_attribute     'Total size'	'ram'
+		add_values        "$ram_size"
+		add_value_footer  "MB"
 
 	fi
 
@@ -1535,8 +1536,9 @@ Module_system() {
 	if CheckReq_sensors; then
 		add_attribute "M/B temperature"
 		local mobo_temp="$(sensors | grep -i 'cpu temp' | \
-		                   grep -Eo '\+[0-9]*[[:punct:]]C')"
-		add_values      "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
+		                   grep -Eo '\+[0-9]*[[:punct:]]')"
+		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
+		add_value_footer "C"
 			if [ $isverbose -ge 1 ]; then
 				add_values      "min=$(awk -F'+' {'print $3'} <<< $mobo_temp) \
 				                 max=$(awk -F'+' {'print $4'} <<< $mobo_temp)"
@@ -1612,29 +1614,32 @@ Module_processor() {
 	for cpunr in $(seq 1 1 $cpu_count); do
 
 		if [ $cpu_count -gt 1 ]; then
-			add_header	"Processor $cpunr"
+			add_header	"CPU $cpunr"
 		fi
 
-		add_attribute "Vendor"		"processor_vendor"
-		add_values    "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                 awk -F': ' {'print $2'})"
+		add_attribute     "Vendor"		"processor_vendor"
+		add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                     awk -F': ' {'print $2'})"
 
-		add_attribute "Model"			"processor_model"
-		add_values    "$(grep 'model name' ${cpuinfo} | \
-		                 sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
+		add_attribute     "Model"			"processor_model"
+		add_values        "$(grep 'model name' ${cpuinfo} | \
+		                     sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
 
-		add_attribute "Frequency"		"processor_speed"
-		add_values    "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                 awk -F': ' {'print $2" MHz"'})"
+		add_attribute     "Frequency"		"processor_speed"
+		add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                     awk -F': ' {'print $2'})"
+		add_value_footer  "MHz"
 
-		add_attribute "Architecture"	"system_type"
-		add_values    "$(uname -m)"
+		add_attribute     "Architecture"	"system_type"
+		add_values        "$(uname -m)"
 
+		# temperature and voltage info
 		if CheckReq_sensors; then
 			add_attribute   "Temperature"
 			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
-			                  grep -Eo '\+[0-9]*[[:punct:]]C')"
-			add_values      "$(awk -F'+' {'print $2'} <<< $cpu_temp)\n "
+			                  grep -Eo '\+[0-9]*[[:punct:]]')"
+			add_values       "$(awk -F'+' {'print $2'} <<< $cpu_temp)\n "
+			add_value_footer "C"
 			if [ $isverbose -ge 1 ]; then
 				add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
 								 max=$(awk -F'+' {'print $4'} <<< $cpu_temp)"
@@ -1642,21 +1647,24 @@ Module_processor() {
 
 			add_attribute   "Voltage"
 			local voltage="$(sensors | grep -i 'vcore' | \
-			                 grep -Eo '\+[0-9. V]*')"
-			add_values      "$(awk -F'+' {'print $2'} <<< $voltage)\n " 
+			                 grep -Eo '\+[0-9. ]*')"
+			add_values       "$(awk -F'+' {'print $2'} <<< $voltage)\n "
+			add_value_footer "V"
 			if [ $isverbose -ge 1 ]; then
 				add_values      "min=$(awk -F'+' {'print $3'} <<< $voltage) \
 				                 max=$(awk -F'+' {'print $4'} <<< $voltage)"
 			fi
 		fi
 
-		add_attribute "Cache"
-		add_values    "$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                 awk -F': ' {'print $2'})"
+		add_attribute     "Cache"
+		add_values        "$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                     awk -F': ' {'print $2'})"
 
-		add_attribute "Stepping"
-		add_values    "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                 awk -F': ' {'print $2'})"
+		add_attribute     "Stepping"
+		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
+		                     awk -F': ' {'print $2'})"
+
+		add_footer
 
 	done
 
