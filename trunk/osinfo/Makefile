@@ -16,13 +16,13 @@ help:
 	@echo "  clean           - remove *~"
 	@echo "  dist-all-in-one - makes a huge all in one script. (replaces source foo with foo)"
 
-dist:
+dist: distclean
 	mkdir -p dist/$(appname)
 	cp $(helpers) dist/$(appname)
 	cp $(mainapp) dist/$(appname)
 	cp $(our_dtd) dist/$(appname)
 	for dir in $(subdirs); do \
-		mkdir dist/$(appname)/$$dir ; \
+		mkdir -p dist/$(appname)/$$dir ; \
 		cp $$dir/* dist/$(appname)/$$dir ; \
 	done
 
