@@ -589,7 +589,7 @@ function print_stdout {
 
 # This function loops the $infostring and does a case on each item
 function print_xml {
-	local item itemnr code idtag
+	local item itemnr code idtag value_item
 	attrib_status="closed"
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
@@ -602,74 +602,83 @@ function print_xml {
 		# case by the "%identifier%" tag
 		case $idtag in
 
-			'value')
-				## add indentation
-				for indent in $(seq 1 1 $XML_INDENT); do
-					echo -ne "\t" >> "${XMLFILE}"
-				done
-
-				# the following sed removes all formatting tags
-				# from the value string. it's a tad slow, though.
-				item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"				
-				xml_value "${item}" >> "${XMLFILE}"
-			;;
-
 			'value_footer')
-				## FIXME: doesn't work
 				# strip tag and discard the xml code tag
 				item="$(sed s/%value_footer%// <<< "${item}" )"
-				# add item to the value string,
-				# the preceding space is intentional.
-				#xml_value "${item}" >> "${XMLFILE}"
+				# send the preceding value and the footer to xmlfile.
+				xml_value "$value_item ${item}" >> "${XMLFILE}"
+				unset value_item
 			;;
 
 			*)
-	
-				if [ "$attrib_status" == "open" ]; then
-					close_attribute_tag
-				fi
 
+				# if the value item is set (no footer), then print
+				[ "$value_item" ] && xml_value "$value_item" >> "${XMLFILE}" && unset value_item
+				
 				case $idtag in
 
-					'attribute')
-						open_attribute_tag "$item"
-					;;
-		
-					'header')
-						## add indentation
-						for indent in $(seq 1 1 $XML_INDENT); do
-							echo -ne "\t" >> "${XMLFILE}"
-						done
+				'value')
+					## add indentation
+					for indent in $(seq 1 1 $XML_INDENT); do
+						echo -ne "\t" >> "${XMLFILE}"
+					done
 
-						# strip tag
-						item="$(sed s/%header%// <<< "${item}")"
-						code="$(awk -F\; {'print $2'} <<< "${item}" )"
-						item="$(awk -F\; {'print $1'} <<< "${item}" )"
-						item="$(validate_xml_item "${item}")"
+					# the following sed removes all formatting tags
+					# from the value string. it's a tad slow, though.
+					# put value_item on hold for value_footer
+					value_item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"
+					
+					#xml_value "${item}" >> "${XMLFILE}"
+				;;
 
-						# modify xml output due to contents of $item
-						if [ "$code" != "" ]; then
-							xml_param_tag "${code}" "${item}" >> "${XMLFILE}"
-						else
-							xml_tag_start "${item}" >> "${XMLFILE}"
-						fi
+				*)
+		
+					if [ "$attrib_status" == "open" ]; then
+						close_attribute_tag
+					fi
 
-						unset code
-						((XML_INDENT++))
-					;;
-		
-					'footer')
-						((XML_INDENT--))
-						## add indentation
-						for indent in $(seq 1 1 $XML_INDENT); do
-							echo -ne "\t" >> "${XMLFILE}"
-						done
-		
-						# strip tag
-						item="$(sed s/%footer%// <<< "${item}")"
-						item="$(validate_xml_item "${item}")"
-						xml_tag_stop "${item}" >> "${XMLFILE}"
-					;;
+					case $idtag in
+
+						'attribute')
+							open_attribute_tag "$item"
+						;;
+			
+						'header')
+							## add indentation
+							for indent in $(seq 1 1 $XML_INDENT); do
+								echo -ne "\t" >> "${XMLFILE}"
+							done
+
+							# strip tag
+							item="$(sed s/%header%// <<< "${item}")"
+							code="$(awk -F\; {'print $2'} <<< "${item}" )"
+							item="$(awk -F\; {'print $1'} <<< "${item}" )"
+							item="$(validate_xml_item "${item}")"
+
+							# modify xml output due to contents of $item
+							if [ "$code" != "" ]; then
+								xml_param_tag "${code}" "${item}" >> "${XMLFILE}"
+							else
+								xml_tag_start "${item}" >> "${XMLFILE}"
+							fi
+
+							unset code
+							((XML_INDENT++))
+						;;
+			
+						'footer')
+							((XML_INDENT--))
+							## add indentation
+							for indent in $(seq 1 1 $XML_INDENT); do
+								echo -ne "\t" >> "${XMLFILE}"
+							done
+			
+							# strip tag
+							item="$(sed s/%footer%// <<< "${item}")"
+							item="$(validate_xml_item "${item}")"
+							xml_tag_stop "${item}" >> "${XMLFILE}"
+						;;
+					esac
 				esac
 			;;
 		esac
