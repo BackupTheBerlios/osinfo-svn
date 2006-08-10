@@ -10,9 +10,10 @@ FEATURES and FIXES for 0.3:
 *	if /var/log/wtmp is not found, osinfo produces errors
 *	if a user belongs to the same group twice, both memberships are
 	printed. use uniq
-* emptry attribs broken in xml
-* login time not properly detected
-* all users info is incorrect if wtmp is deleted
+*	emptry attribs broken in xml
+*	login time not properly detected
+*	all users info is incorrect if wtmp is deleted
+*	lanforce_xml: FIXME: if the value isn't displayed, but value_footer is defined, it is printed.
 	
 
 FEATURES for 0.4:

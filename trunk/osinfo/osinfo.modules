@@ -1612,10 +1612,7 @@ Module_processor() {
 	fi
 
 	for cpunr in $(seq 1 1 $cpu_count); do
-
-		if [ $cpu_count -gt 1 ]; then
-			add_header	"CPU $cpunr"
-		fi
+		[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
 
 		add_attribute     "Vendor"		"processor_vendor"
 		add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
@@ -1636,24 +1633,26 @@ Module_processor() {
 		# temperature and voltage info
 		if CheckReq_sensors; then
 			add_attribute   "Temperature"
-			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
-			                  grep -Eo '\+[0-9]*[[:punct:]]')"
-			add_values       "$(awk -F'+' {'print $2'} <<< $cpu_temp)\n "
-			add_value_footer "C"
-			if [ $isverbose -ge 1 ]; then
-				add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
-								 max=$(awk -F'+' {'print $4'} <<< $cpu_temp)"
-			fi
+			local cpu_temp="$(sensors | grep -i 'cpu temp' )"
+			#                  grep -Eo '\+[0-9]*[[:punct:]]')"
+			add_values       "$(awk  {'print $3'} <<< $cpu_temp)\n "
+			#add_value_footer "C"
+			# FIXME: verbose values are incorrect
+			#if [ $isverbose -ge 1 ]; then
+				#add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
+				#				 max=$(awk -F'+' {'print $4'} <<< $cpu_temp)"
+			#fi
 
 			add_attribute   "Voltage"
 			local voltage="$(sensors | grep -i 'vcore' | \
 			                 grep -Eo '\+[0-9. ]*')"
-			add_values       "$(awk -F'+' {'print $2'} <<< $voltage)\n "
+			add_values       "$(awk  {'print $2'} <<< $voltage)"
 			add_value_footer "V"
-			if [ $isverbose -ge 1 ]; then
-				add_values      "min=$(awk -F'+' {'print $3'} <<< $voltage) \
-				                 max=$(awk -F'+' {'print $4'} <<< $voltage)"
-			fi
+			# FIXME: verbose values are incorrect
+			#if [ $isverbose -ge 1 ]; then
+			#	add_values      "min=$(awk -F'+' {'print $3'} <<< $voltage) \
+			#	                 max=$(awk -F'+' {'print $4'} <<< $voltage)"
+			#fi
 		fi
 
 		add_attribute     "Cache"
@@ -1664,10 +1663,7 @@ Module_processor() {
 		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                     awk -F': ' {'print $2'})"
 
-		if [ $cpu_count -gt 1 ]; then
-			add_footer
-		fi
-
+		[ $cpu_count -gt 1 ] &&	add_footer
 	done
 
 	flush_values
