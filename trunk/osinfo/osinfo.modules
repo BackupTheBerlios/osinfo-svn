@@ -1761,12 +1761,12 @@ Module_users() {
 	
 		add_attribute  'Groups'
 		local group
-		for group in $(groups); do 
+		for group in $(groups | sed 's/ /\n/g' | uniq); do 
 			add_values "$group\n " # << note that for indentation, the
 			                       # space at the end of string is important!
 		done
 	
-		add_attribute  "User's X11 session"	"users_window_manager"
+		#add_attribute  "User's X11 session"	"users_window_manager"
 		# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 		# AnMaster: KDE doesn't set that for me (in konsole at least)
 		# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
@@ -1814,7 +1814,6 @@ Module_users() {
 	elif [ $usexml = 1 ]; then
 		add_header    'All users'
 	else
-		#add_header   "\n%col%All users%col%last login%col%login count\n"
 		add_header	'' # NOTE: this header is for printing a newline
 		                   # before the next header, due to the column bug
 		add_nc_header   "All users%col%last login%col%login count\n"
@@ -1822,9 +1821,10 @@ Module_users() {
 		
 	fi
 
+		fake_users="reboot\|wtmp\|ftp"
 		local users="$(last | awk {'print $1'} | sort | uniq | \
-		               grep -v 'reboot\|wtmp\|ftp' | grep '^[a-zA-Z]')"
-		               # ^^ removes fake users 'reboot' and 'wtmp'
+		               grep -v "$fake_users" | grep '^[a-zA-Z]')"
+		               # ^^ removes fake users 
 
 		for user in $users; do
 
@@ -1837,7 +1837,8 @@ Module_users() {
 			if [ ${#user} -ge 8 ]; then
 				# parse special chars to meta-chars
 				user_fullname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-				user_fullname="$(grep -Eoa "$user_fullname[a-zA-Z0-9\\\+]*" ${wtmp_file} | uniq)"
+				user_fullname="$(grep -Eoa "$user_fullname[a-zA-Z0-9\\\+]*" \
+				                 ${wtmp_file} | uniq)"
 			else
 				user_fullname="$user"
 			fi
@@ -1846,8 +1847,9 @@ Module_users() {
 			# get the last login date & time
 			# FIXME: works always on the command line, 
 			# but NOT ALWAYS IN THE SCRIPT!??
+			unset last_login
 			last_login="$(date -d "$(last | grep -m 1 $user | \
-			              grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+			              grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 			              +"%Y-%m-%d %T")"
 
 

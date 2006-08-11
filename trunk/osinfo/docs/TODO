@@ -8,8 +8,6 @@ FEATURES and FIXES for 0.3:
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kerner src location
 *	if /var/log/wtmp is not found, osinfo produces errors
-*	if a user belongs to the same group twice, both memberships are
-	printed. use uniq
 *	emptry attribs broken in xml
 *	login time not properly detected
 *	all users info is incorrect if wtmp is deleted
