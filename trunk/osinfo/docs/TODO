@@ -7,19 +7,14 @@ FEATURES and FIXES for 0.3:
 *	fix meta modules?
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kerner src location
-*	if /var/log/wtmp is not found, osinfo produces errors
-*	emptry attribs broken in xml
-*	all users info is incorrect if wtmp is deleted
-*	lanforce_xml: FIXME: if the value isn't displayed, but value_footer is defined, it is printed.
+*	empty attribs broken in xml
 	
 
 FEATURES for 0.4:
 ----------------
 
 *	detect system encoding
-*	daemon mode - write init scripts
 *	don't display what isn't detected (without the -vv flag)
-*	mod_network: wlan
 *	fix: user/root problem
 *	su_modules - run only su modules
 *	std_modules - non-su modules
@@ -30,7 +25,6 @@ FEATURES for 0.4:
 FEATURES FOR 0.5:
 ----------------
 
-*	mod_hdd: scan_LVM
 *	integrate udev ruleset more tightly
 *	osinfo as a frontend for custom udev rules?
 

@@ -1655,9 +1655,10 @@ Module_processor() {
 			#fi
 		fi
 
-		add_attribute     "Cache"
-		add_values        "$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                     awk -F': ' {'print $2'})"
+		add_attribute      "Cache"
+				local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" )"
+				add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
+				add_value_footer "$(awk {'print $NF'} <<< $cache_size)" 
 
 		add_attribute     "Stepping"
 		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \

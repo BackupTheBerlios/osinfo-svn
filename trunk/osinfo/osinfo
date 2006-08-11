@@ -424,7 +424,6 @@ function add_value_footer {
 #
 # calls the print functions and clears the $infostring 
 function flush_values {
-
 	# close all open headers
 	local hdr
 	for hdr in $(seq ${#OpenHeaders[@]} -1 1); do
@@ -753,11 +752,14 @@ print_lanforce_xml() {
 			;;
 
 			'value_footer')
-				# strip tag and discard the xml code tag
-				item="$(sed s/%value_footer%// <<< "${item}" )"
-				# add item to the value string,
-				# the preceding space is intentional.
-				lf_value_footer "${item}" >> "${XMLFILE}"
+
+				if [ "$attrib_status" == "open" ]; then
+					# strip tag and discard the xml code tag
+					item="$(sed s/%value_footer%// <<< "${item}" )"
+					# add item to the value string,
+					# the preceding space is intentional.
+					lf_value_footer "${item}" >> "${XMLFILE}"
+				fi
 			;;
 
 			'attribute')
@@ -916,6 +918,8 @@ cleanup_temp_files
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
 if [ "$netcat" == "1" ]; then
 	cat "${XMLFILE}" | nc "$HOST" "$PORT"
+elif [ $usexml -eq 1 ]; then
+	cat "${XMLFILE}"
 fi
 ############################################
 
