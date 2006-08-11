@@ -1821,6 +1821,10 @@ Module_users() {
 		
 	fi
 
+	if [ ! -e ${wtmp_file} ]; then
+		info	"${wtmp_file} does not exist. Cannot parse data."
+	else
+
 		fake_users="reboot\|wtmp\|ftp"
 		local users="$(last | awk {'print $1'} | sort | uniq | \
 		               grep -v "$fake_users" | grep '^[a-zA-Z]')"
@@ -1867,6 +1871,7 @@ Module_users() {
 			fi
 
 		done
+	fi
 
 	flush_values
 }

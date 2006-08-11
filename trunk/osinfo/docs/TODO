@@ -9,7 +9,6 @@ FEATURES and FIXES for 0.3:
 *	kerner src location
 *	if /var/log/wtmp is not found, osinfo produces errors
 *	emptry attribs broken in xml
-*	login time not properly detected
 *	all users info is incorrect if wtmp is deleted
 *	lanforce_xml: FIXME: if the value isn't displayed, but value_footer is defined, it is printed.
 	
