@@ -59,7 +59,7 @@ function xml_opentag_start () {
 }
 
 # Tag with a parameter
-#  1  string  name of parameter  
+#  1  string  name of parameter
 #  2  *       Value
 function xml_param_tag () {
 	echo "<${1}=\"${2}\">"

@@ -60,7 +60,7 @@
 # can be also used as aliases on the command line,
 # but not inside another meta-module
 
-# AnMaster: I think this isn't very useful at all... 
+# AnMaster: I think this isn't very useful at all...
 #           Also you need to get rid of eval if you plan to use it...
 # ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to
 #         combine the two modules because the latter depends on the former.
@@ -195,19 +195,19 @@ extr_node() {
 
 		# this loop extracts the information between the node begin
 		# and end lines, based on indentation level (xml), echoing
-		# the results out 
+		# the results out
 		for nr in $(seq 1 1 $node_count); do
 			this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
 
-			# this gets the line number of the wanted node from lshw 
+			# this gets the line number of the wanted node from lshw
 			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
 			local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
 					     grep -Eo '^[ ]*' | wc -m)"
-			
+
 			# this loop takes care that all subnodes are included, by comparing
 			# the indentation level. not very elegant..
 			# basically it just searches for $node_closer and gets the line#
-			IFS_bak="$IFS"; IFS=$'\n' ; 
+			IFS_bak="$IFS"; IFS=$'\n' ;
 			for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
 				      grep ${node_closer}); do
 
@@ -225,15 +225,15 @@ extr_node() {
 				fi
 
 			done
-			
+
 			# if the closing node wasn't found, read to EOF
 			[ ! "$nigeb" ] && nigeb="$"
 			IFS="$IFS_bak"
 
-			# then what's between the first node and the closing id 
+			# then what's between the first node and the closing id
 			# is echoed to whichever function called this
 			echo "%node $nr%"
-			sed -n "$begin,$nigeb{p;}" $input_file 
+			sed -n "$begin,$nigeb{p;}" $input_file
 
 		done
 	fi
@@ -415,7 +415,7 @@ Module_hdd() {
 
 				add_nc_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
 				add_nc_header	" ---------%col%--------%col%------%col%----%col%----------"
-				
+
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# print the device node
@@ -1043,7 +1043,7 @@ Module_hdd() {
 
 
 		#############################
-		# check the smartctl version >5.36		 
+		# check the smartctl version >5.36
 		if [ "$(type -p smartctl)" ]; then
 			local smartctl_version="$(smartctl --version | \
 				grep -Eo 'version [0-9.]+' | grep -Eo '[0-9]\.[0-9]+')";
@@ -1140,7 +1140,7 @@ Module_lvm () {
 Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"
-	local ram_size 
+	local ram_size
 
 	if CheckReq_lshw && CheckReq_root; then
 
@@ -1184,9 +1184,9 @@ Module_cdrom() {
 
 			#for debugging:
 			#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-			#cat $cdrom_tmp 
+			#cat $cdrom_tmp
 
-			# extr_node echoes back all the cdrom drives in the system, 
+			# extr_node echoes back all the cdrom drives in the system,
 			# let's see how many
 			local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
 
@@ -1246,7 +1246,7 @@ Module_cdrom() {
 					add_values    "${cdrom_model[$drv_nr]}"
 
 				else
-				
+
 					add_header  "CD/DVD drive $drv_nr" "cd_drive"
 
 					add_attribute 'Model'	'cdrom'
@@ -1336,7 +1336,7 @@ Module_dmi() {
 
 			#handle_desc="$(sed s/^[^a-zA-Z]*// <<< $handle_desc)"
 
-			# get the handle number (0x000#) 
+			# get the handle number (0x000#)
 			# -B 5 is defined because sometimes there's some extra
 			# information between the Handle_nr and the description.
 #			handle_nr="$(grep -in ${handle_desc} ${dmi_info} -B 5 | \
@@ -1349,15 +1349,15 @@ Module_dmi() {
 #			((next--)) # this prevents the 'handle' lines from printing
 #
 #			# use a temp file to store handle information
-#			
+#
 #			sed -n "$this,$next{p;}" ${dmi_info} > ${dmi_tmp}
 #			#cat $dmi_tmp
 
-			# extract the handle and string the first line 
+			# extract the handle and string the first line
 			# (%node% identifier that is useless here)
 			extr_node ${handle_desc} ${dmi_info} Handle | \
 				sed -n "2,\${p}" > ${dmi_tmp}
-			
+
 			# because sometimes there's some extra info, head -n 5
 			# TODO: combine grep and sed
 			local handleID="$(head -n 5 ${dmi_tmp} | grep -i ${handle_desc} | \
@@ -1429,7 +1429,7 @@ Module_dmi() {
 					;;
 
 				"BIOS Information")
-				
+
 					add_header    "BIOS"
 
 					add_attribute 'Vendor'
@@ -1526,7 +1526,7 @@ Module_system() {
 
 	#add_attribute "System encoding"
 	# this is probably incorrect. determines the default output encoding
-	# of the echo command. 
+	# of the echo command.
 	#add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
 
 	add_attribute "System uptime"			"uptime"
@@ -1538,7 +1538,7 @@ Module_system() {
 		local mobo_temp="$(sensors | grep -i 'cpu temp' | \
 		                   grep -Eo '\+[0-9]*[[:punct:]]?[CF]+')"
 		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
-		#add_value_footer "C"			
+		#add_value_footer "C"
 	fi
 
 	flush_values
@@ -1628,12 +1628,12 @@ Module_processor() {
 			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
 			                  grep -Eo '[0-9\.]+[[:punct:]]?[CF]+')"
 			add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
-			
+
 			add_attribute   "Fan"
 			local cpu_fan="$(sensors | grep -i 'cpu fan' | \
 			                  grep -Eo '[0-9]+ RPM')"
 			add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
-			add_value_footer "RPM"			
+			add_value_footer "RPM"
 
 			add_attribute   "Voltage"
 			local voltage="$(sensors | grep -i 'vcore' | \
@@ -1645,7 +1645,7 @@ Module_processor() {
 		add_attribute      "Cache"
 				local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" )"
 				add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
-				add_value_footer "$(awk {'print $NF'} <<< $cache_size)" 
+				add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
 
 		add_attribute     "Stepping"
 		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
@@ -1743,17 +1743,17 @@ Module_users() {
 
 		add_attribute  'Real name'				"real_name"
 		add_values     "$(awk -F: /$(whoami)/{'print $5'} /etc/passwd)"
-	
+
 		add_attribute  "Unix name / UID"				'active_user'
 		add_values     "$(whoami) ($(id -u))"
-	
+
 		add_attribute  'Groups'
 		local group
-		for group in $(groups | sed 's/ /\n/g' | uniq); do 
+		for group in $(groups | sed 's/ /\n/g' | uniq); do
 			add_values "$group\n " # << note that for indentation, the
 			                       # space at the end of string is important!
 		done
-	
+
 		#add_attribute  "User's X11 session"	"users_window_manager"
 		# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
 		# AnMaster: KDE doesn't set that for me (in konsole at least)
@@ -1768,17 +1768,17 @@ Module_users() {
 		#	fi
 		#fi
 		#add_values     "$session_id"
-	
+
 		add_attribute  "User's shell"
 		add_values     "$SHELL"
-	
+
 		add_attribute  "User's locale"
 		add_values     "$LC_ALL"
 
 	add_footer
 
 	### LAST LOGGED IN USER
-	add_header     "\nLast logged in user"   
+	add_header     "\nLast logged in user"
 
 		last_login="$(last -1 | head -n 1 | awk {'print $1'})"
 
@@ -1797,7 +1797,7 @@ Module_users() {
 
 
 	### ALL USERS
-	if [ $lanforce = 1 ]; then 
+	if [ $lanforce = 1 ]; then
 		add_attribute 'All logged in users' "users"
 	elif [ $usexml = 1 ]; then
 		add_header    'All users'
@@ -1806,7 +1806,7 @@ Module_users() {
 		                   # before the next header, due to the column bug
 		add_nc_header   "All users%col%last login%col%login count\n"
 		add_nc_header   "---------%col%----------%col%-----------\n"
-		
+
 	fi
 
 	if [ ! -e ${wtmp_file} ]; then
@@ -1816,7 +1816,7 @@ Module_users() {
 		fake_users="reboot\|wtmp\|ftp"
 		local users="$(last | awk {'print $1'} | sort | uniq | \
 		               grep -v "$fake_users" | grep '^[a-zA-Z]')"
-		               # ^^ removes fake users 
+		               # ^^ removes fake users
 
 		for user in $users; do
 
@@ -1837,7 +1837,7 @@ Module_users() {
 
 
 			# get the last login date & time
-			# FIXME: works always on the command line, 
+			# FIXME: works always on the command line,
 			# but NOT ALWAYS IN THE SCRIPT!??
 			unset last_login
 			last_login="$(date -d "$(last | grep -m 1 $user | \
@@ -1912,7 +1912,7 @@ Module_services() {
 
 
 		# attribute only for lanfroce xml, nothing for std xml
-		if [ $lanforce = 1 ]; then 
+		if [ $lanforce = 1 ]; then
 			add_attribute 'Services'	'service'
 		elif [ $usexml = 0 ]; then
 			add_header  "$method"
@@ -1928,7 +1928,7 @@ Module_services() {
 			else
 				add_values    "$srv"
 			fi
-			
+
 			((count++))
 		done
 
@@ -2023,30 +2023,30 @@ Module_network() {
 		add_attribute 'NIS domain'
 		add_values    "$(hostname -y 2> /dev/null)"
 		# hostname produces stderr if no network is available
-	
+
 		add_attribute 'DNS domain'	'domain'
 		add_values    "$(hostname -d 2> /dev/null)"
-	
+
 		add_attribute 'FQDN'		"fully_qualified_domain_name"
 		add_values    "$(hostname -f 2> /dev/null)"
-	
+
 		local ipv4 ipv6
-	
+
 		# collect the information from detected network devices
 		for interface_name in $ETH_DEVICES; do
 			ifconfig $interface_name > ${nw_info}
-	
+
 			add_header    $interface_name   'iface'
-	
+
 			add_attribute 'MAC'		"mac_address"
 			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
-	
+
 
 			add_attribute 'IPv4'		"ip_address"
 			ipv4="$(grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${nw_info} | \
 			        grep -Eo '[0-9\.]+' )"
 			add_values    "$ipv4"
-	
+
 			add_attribute 'IPv6'
 			ipv6="$(sed "s/  /\n/g" ${nw_info} | grep -i inet6 | \
 			        grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' )"
@@ -2054,33 +2054,33 @@ Module_network() {
 
 			add_attribute 'IP type'	"ip_type"
 			add_values    "$(detect_ip_type)"
-	
+
 			add_attribute 'Gateway'	"default_gateway"
 			add_values    "$(route -n | grep $interface_name | \
 			              awk '/^0.0.0.0/{print $2}')"
-	
+
 			add_attribute 'Broadcast'
 			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 			                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
 			                 grep -Eo '[0-9\.]+' )"
-	
+
 			add_attribute 'Netmask'	"subnet_mask"
 			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 			                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
 			                 grep -Eo '[0-9\.fx]+' )"
-	
+
 			add_attribute 'RX bytes'
 			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 			                 grep -i 'RX bytes' | awk -F: {'print $2'})"
-	
+
 			add_attribute 'TX bytes'
 			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 			                 grep -i 'TX bytes' | awk -F: {'print $2'})"
-	
+
 			add_footer    "iface"
 		done
-	
-	flush_values	
+
+	flush_values
 }
 
 ### network helper functions
@@ -2093,18 +2093,18 @@ Module_network() {
 			for nwfile in $nw_conf_files; do
 				if [ -e $nwfile ]; then
 
-					# grep for the word 'dhcp' and the iface name in the config file 
+					# grep for the word 'dhcp' and the iface name in the config file
 					if [ "$(grep -v ^# $nwfile | grep $interface_name | grep -i dhcp)" ]; then
 						echo    'DHCP'
 
-					# grep for the word 'static' or the ip address and the iface 
+					# grep for the word 'static' or the ip address and the iface
 					elif [ "$(grep -v ^# $nwfile | grep $interface_name | \
-					          grep -i "static\|$ipv4\|$ipv6")" ]; then 
+					          grep -i "static\|$ipv4\|$ipv6")" ]; then
 						echo    'static'
 
 					else # give up
 						echo    'undetermined'
-					fi	
+					fi
 				fi
 			done
 	}
@@ -2151,7 +2151,7 @@ Module_wlan() {
 
 		local ap_count="$(grep -i cell $ap_src | wc -l)"
 
-		# print status		
+		# print status
 		if [ "$ap_count" -ge 1 ]; then
 			info "$ap_count access points found by device $wlan_devices"
 		else
@@ -2176,7 +2176,7 @@ Module_wlan() {
 
 				#add_attribute   'associated ESSID'
 				#add_header    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
-				#                awk -F: {'print $2'})" 
+				#                awk -F: {'print $2'})"
 
 				add_attribute   'device node'
 				add_values      "$(grep -Eo '^[a-z0-9]'+ ${iw_src})"
@@ -2202,7 +2202,7 @@ Module_wlan() {
 			add_attribute   'protocol'
 			add_values      "$(grep -Eo 'Protocol[\=:][a-zA-Z0-9. ]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
-			
+
 			add_attribute   'mode'
 			add_values      "$(grep -Eo 'Mode[\=:][a-zA-Z]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
@@ -2220,9 +2220,9 @@ Module_wlan() {
 
 
 			#value_footer
-		
+
 		done
-		
+
 		IFS="$IFS_bak"
 
 	fi
@@ -2253,7 +2253,7 @@ Module_distro() {
 
 	add_attribute 'Root dir'
 	add_values    "$root_dir"
-	
+
 	[ "${distro_id}" ] && \
 		add_attribute 'Distro ID'
 		add_values    "${distro_id}"
@@ -2536,7 +2536,7 @@ Module_applications() {
 				*)
 					add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
 					;;
-					
+
 				'lspci')
 					info "please install pciutils ${missing_ERRMSG}"
 					;;

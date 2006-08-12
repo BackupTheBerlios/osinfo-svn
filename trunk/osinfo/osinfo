@@ -304,7 +304,7 @@ module_footer() {
 # this function inserts the input string as the last available item
 # in the $infostring array. it also adds a %header% tag which will be
 # use by print_* functions to interpret how to parse the string.
-# 
+#
 # Parameters: (example eth0)
 #   1 the header. will be printed to stdout and without $2 to xml as <eth0>
 #   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
@@ -315,7 +315,7 @@ function add_header() {
 }
 # same as above, but without color. some modules use this because of
 # a bug in the 'column' program
-# 
+#
 # Parameters: (example eth0)
 #   1 the header. will be printed to stdout and without $2 to xml as <eth0>
 #   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
@@ -357,6 +357,7 @@ function add_footer() {
 #  2 code tag for xml  (eg. os)                 (optional)
 function add_attribute() {
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -366,6 +367,7 @@ function add_attribute() {
 # This function inserts the input string or strings into the $infostring[] array.
 function add_values {
 	infostring[${#infostring[@]}]="%value%${@}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 ###################
@@ -374,13 +376,14 @@ function add_values {
 # This function inserts a value_footer, which indicates a dimension, eg. <footer>kB/s</footer>.
 function add_value_footer {
 	infostring[${#infostring[@]}]="%value_footer%${@}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
 ################
 # flush_values
 #
-# calls the print functions and clears the $infostring 
+# calls the print functions and clears the $infostring
 function flush_values {
 	# close all open headers
 	local hdr
@@ -504,7 +507,7 @@ function print_stdout {
 				item="$(sed 's/%header%//' <<< "${item}" | \
 				        awk -F\; {'print $1'} )"
 				# add item to the value string,
-				# each header starts with a newline, 
+				# each header starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${header_color}${item}${tSTD}";
 			;;
@@ -514,7 +517,7 @@ function print_stdout {
 				item="$(sed s/%nc_header%// <<< "${item}" | \
 				        awk -F\; {'print $1'} )"
 				# add item to the value string,
-				# each header starts with a newline, 
+				# each header starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${item}";
 			;;
@@ -523,7 +526,7 @@ function print_stdout {
 				# strip tag
 				item="$(sed s/%info%// <<< "${item}")"
 				# add item to the value string,
-				# each info note starts with a newline, 
+				# each info note starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${info_color}${item}${tSTD}";
 			;;
@@ -539,7 +542,7 @@ function print_stdout {
 
 	# the bad thing is that column interprets color codes as characters,
 	# and using colours on $value_string messes up column.
-	
+
 	echo -e $(sed 's/%value%\|%col%/\$/g' <<< ${value_string}) | column -t -s$ 
 }
 
@@ -571,7 +574,7 @@ function print_xml {
 
 				# if the value item is set (no footer), then print
 				[ "$value_item" ] && xml_value "$value_item" >> "${XMLFILE}" && unset value_item
-				
+
 				case $idtag in
 
 				'value')
@@ -584,12 +587,12 @@ function print_xml {
 					# from the value string. it's a tad slow, though.
 					# put value_item on hold for value_footer
 					value_item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"
-					
+
 					#xml_value "${item}" >> "${XMLFILE}"
 				;;
 
 				*)
-		
+
 					if [ "$attrib_status" == "open" ]; then
 						close_attribute_tag
 					fi
@@ -599,7 +602,7 @@ function print_xml {
 						'attribute')
 							open_attribute_tag "$item"
 						;;
-			
+
 						'header')
 							## add indentation
 							for indent in $(seq 1 1 $XML_INDENT); do
@@ -622,14 +625,14 @@ function print_xml {
 							unset code
 							((XML_INDENT++))
 						;;
-			
+
 						'footer')
 							((XML_INDENT--))
 							## add indentation
 							for indent in $(seq 1 1 $XML_INDENT); do
 								echo -ne "\t" >> "${XMLFILE}"
 							done
-			
+
 							# strip tag
 							item="$(sed s/%footer%// <<< "${item}")"
 							item="$(validate_xml_item "${item}")"
@@ -666,7 +669,7 @@ function print_xml {
 		item="$(sed s/%attribute%// <<< "${item}")"
 		code=$(awk -F\; {'print $2'} <<< "${item}")
 		# item validation strips away the code
-		item="$(validate_xml_item "${item}")"	
+		item="$(validate_xml_item "${item}")"
 		xml_attribute_start "${item}" "${code}" >> ${XMLFILE}
 		((XML_INDENT++))
 		attrib_status="open"
@@ -684,7 +687,7 @@ function print_xml {
 # and that dev continued on an existing script.
 # works pretty much the same as print_xml()
 print_lanforce_xml() {
-	local item itemnr code 
+	local item itemnr code
 	attrib_status="closed"
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
@@ -826,7 +829,7 @@ if [ "$usexml" == 1 ]; then
 	print_xml_header
 fi
 
-if [ -z "$cmdsnames" ]; then 
+if [ -z "$cmdsnames" ]; then
 	PRINT_Help
 fi
 
