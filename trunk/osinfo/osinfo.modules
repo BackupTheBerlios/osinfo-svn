@@ -1536,14 +1536,9 @@ Module_system() {
 	if CheckReq_sensors; then
 		add_attribute "M/B temperature"
 		local mobo_temp="$(sensors | grep -i 'cpu temp' | \
-		                   grep -Eo '\+[0-9]*[[:punct:]]')"
+		                   grep -Eo '\+[0-9]*[[:punct:]]?[CF]+')"
 		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
-		add_value_footer "C"
-			if [ $isverbose -ge 1 ]; then
-				add_values      "min=$(awk -F'+' {'print $3'} <<< $mobo_temp) \
-				                 max=$(awk -F'+' {'print $4'} <<< $mobo_temp)"
-			fi
-			
+		#add_value_footer "C"			
 	fi
 
 	flush_values
@@ -1594,9 +1589,6 @@ Module_processor() {
 
 	local cpunr
 
-	# AnMaster: Why this line? Would it ever be anything else?
-	# ruxpin: perhaps.. in any case I don't like
-	#         hardcoding file paths into the code.
 	local cpuinfo="/proc/cpuinfo"
 	local cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
 
@@ -1633,10 +1625,10 @@ Module_processor() {
 		# temperature and voltage info
 		if CheckReq_sensors; then
 			add_attribute   "Temperature"
-			local cpu_temp="$(sensors | grep -i 'cpu temp' )"
-			#                  grep -Eo '\+[0-9]*[[:punct:]]')"
-			add_values       "$(awk  {'print $3'} <<< $cpu_temp)\n "
-			#add_value_footer "C"
+			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
+			                  grep -Eo '[0-9\.]+[[:punct:]]?[CF]+')"
+			add_values       "$(awk {'print $1'} <<< $cpu_temp )"
+			#add_value_footer "°C"
 			# FIXME: verbose values are incorrect
 			#if [ $isverbose -ge 1 ]; then
 				#add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
