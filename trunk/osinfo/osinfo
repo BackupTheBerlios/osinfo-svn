@@ -3,49 +3,7 @@
 # OSINFO
 #
 # osinfo lists system information available to the OS.
-#
-# everything is collected honoring maximum portability and 
-# minimum dependency requirements; ie. using standard *nix tools. 
-# some information is unavailable
-# without special (but quite common) packages, but the availability
-# of these is tested, and no error messaged are produced if these rarer
-# tools are missing. see info below for a list of dependencies.
-#
-# the script has been currently tested on the following Linux distros:
-#  Gentoo 2005.1 and 2006.0
-#  Ubuntu 5.10 and 6.06
-#  Fedora Core 4 and 5
-#  Red Hat 9
-#  Suse 10.0
-#  SlackWare
-#
-# FreeBSD 6.0 has been tested as well.
-#
-# x86 and amd64 architectures (desktop and laptop) with various hardware
-# configurations were used. see the comments on specific modules for more
-# information.
-#
-# oldest tested bash is version 2.05.0
-#
-#################################################################################
-# list of (known) dependencies:
-#
-# bash 2.02 or later
-# awk, sed, seq, tr, bc, uniq, sort, GNU grep with support for extended regexps
-# util-linux (fdisk, column)
-# netcat (for sending the xml output over tcp)
-#
-# per module: (incomplete)
-# ----------
-# cpu:     /proc/cpuinfo, x86info (optional)
-# users:   last, file:/var/log/wtmp
-# dmi:     dmidecode
-# memory:  lshw
-# cdrom:   lshw
-# hdd:     util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
-# devices: lspci
-# network: net-tools (hostname, ifconfig, route)
-#          wireless-tools (iwconfig, iwlist) - optional
+# see `man osinfo` for details.
 #
 #################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                            #
