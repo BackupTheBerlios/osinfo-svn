@@ -1,20 +1,78 @@
 NAME  
-  osinfo
+	osinfo
   
 SYNOPSIS
-  synopsis
+	osinfo lists system information available to the OS.
 
 DESCRIPTION
-  description
+	description
+
+MODULES
+	list of modules and a description
+
+COMPATIBILITY
+	everything is collected honoring maximum portability and minimum dependency requirements; ie. using standard *nix tools. 
+
+	x86 and amd64 architectures (desktop and laptop) with various hardware configurations were used. see the comments on specific modules for more information.
+
+	the script has been currently tested on the following Linux distributions:
+	o Gentoo 2005.1 and 2006.0
+	o Ubuntu 5.10 and 6.06
+	o Fedora Core 4 and 5
+	o Red Hat 9
+	o Suse 10.0
+	o SlackWare
+
+	o FreeBSD 6.0 has been tested as well.
+
 
 OPTIONS
   options
 
+
 DEPENDENCIES
-  deps
+	Some information is unavailable	without special (but quite common) packages, but the availability of these is tested, and no error messages are produced if these rarer tools are missing. See info below for a list of dependencies.
+	
+	COMMON DEPENDENCIES:
+	o bash 2.02 or later (oldest tested bash is version 2.05.0)
+	o awk, sed, seq, tr, bc, uniq, sort, GNU grep with support for extended regexps
+	o util-linux (fdisk, column)
+	o netcat (for sending the xml output over tcp)
+
+	MODULE DEPENDENCIES:
+	
+	cpu:
+	o /proc/cpuinfo, x86info (optional)
+	
+	users:
+	o last, file:/var/log/wtmp
+	
+	dmi:
+	o dmidecode
+	
+	memory:
+	o lshw
+	
+	cdrom:   
+	o lshw
+	
+	hdd:
+	o util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
+	
+	devices: 
+	o lspci
+	
+	network: 
+	o net-tools (hostname, ifconfig, route)
+	
+	wlan:
+	o wireless-tools (iwconfig, iwlist)
 
 BUGS
-  bugs
+	See docs/TODO in the source code.
+	Hopefully most bugs are fixed in 0.3.
 
 AUTHORS
-  authors
+	Written by Arvid Norlander and Mikael Lammentausta
+	
+	Some parts are taken from Advanced Bash Scripting Guide (ABS)   
