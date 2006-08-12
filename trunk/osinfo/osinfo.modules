@@ -411,6 +411,8 @@ Module_hdd() {
 
 				flush_values
 
+				add_header	''
+
 				add_nc_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
 				add_nc_header	" ---------%col%--------%col%------%col%----%col%----------"
 				
@@ -498,8 +500,6 @@ Module_hdd() {
 
 	fi
 
-	# finalize
-	#module_footer
 	flush_values
 }
 
@@ -1627,24 +1627,19 @@ Module_processor() {
 			add_attribute   "Temperature"
 			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
 			                  grep -Eo '[0-9\.]+[[:punct:]]?[CF]+')"
-			add_values       "$(awk {'print $1'} <<< $cpu_temp )"
-			#add_value_footer "°C"
-			# FIXME: verbose values are incorrect
-			#if [ $isverbose -ge 1 ]; then
-				#add_values      "min=$(awk -F'+' {'print $3'} <<< $cpu_temp) \
-				#				 max=$(awk -F'+' {'print $4'} <<< $cpu_temp)"
-			#fi
+			add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
+			
+			add_attribute   "Fan"
+			local cpu_fan="$(sensors | grep -i 'cpu fan' | \
+			                  grep -Eo '[0-9]+ RPM')"
+			add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
+			add_value_footer "RPM"			
 
 			add_attribute   "Voltage"
 			local voltage="$(sensors | grep -i 'vcore' | \
 			                 grep -Eo '\+[0-9. ]*')"
 			add_values       "$(awk  {'print $2'} <<< $voltage)"
 			add_value_footer "V"
-			# FIXME: verbose values are incorrect
-			#if [ $isverbose -ge 1 ]; then
-			#	add_values      "min=$(awk -F'+' {'print $3'} <<< $voltage) \
-			#	                 max=$(awk -F'+' {'print $4'} <<< $voltage)"
-			#fi
 		fi
 
 		add_attribute      "Cache"
