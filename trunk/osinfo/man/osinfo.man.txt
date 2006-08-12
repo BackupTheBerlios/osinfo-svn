@@ -41,32 +41,32 @@ DEPENDENCIES
 
 	MODULE DEPENDENCIES:
 	
-	cpu:
-	o /proc/cpuinfo, x86info (optional)
+	 cpu:
+	 o /proc/cpuinfo, x86info (optional)
+		
+	 users:
+	 o last, file:/var/log/wtmp
 	
-	users:
-	o last, file:/var/log/wtmp
+	 dmi:
+	 o dmidecode
 	
-	dmi:
-	o dmidecode
+	 memory:
+	 o lshw
 	
-	memory:
-	o lshw
+	 cdrom:   
+	 o lshw
 	
-	cdrom:   
-	o lshw
+	 hdd:
+	 o util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
 	
-	hdd:
-	o util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
+	 devices: 
+	 o lspci
 	
-	devices: 
-	o lspci
+	 network: 
+	 o net-tools (hostname, ifconfig, route)
 	
-	network: 
-	o net-tools (hostname, ifconfig, route)
-	
-	wlan:
-	o wireless-tools (iwconfig, iwlist)
+	 wlan:
+	 o wireless-tools (iwconfig, iwlist)
 
 BUGS
 	See docs/TODO in the source code.
