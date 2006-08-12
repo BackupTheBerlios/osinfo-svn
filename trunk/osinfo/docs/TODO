@@ -6,11 +6,13 @@ FEATURES and FIXES for 0.3:
 *	reorder some given information
 *	fix meta modules?
 *	"vv next line is header" dirty tag to workaround the column bug?
-*	kerner src location
+*	kernel src location
 *	empty attribs broken in xml
+*	mod_hdd doesn't work on fedora!
+*	root dir detection is broken
 	
 
-FEATURES for 0.4:
+FEATURES and FIXES for 0.4:
 ----------------
 
 *	detect system encoding
@@ -20,6 +22,8 @@ FEATURES for 0.4:
 *	std_modules - non-su modules
 *	mod_hdd: scan_md
 *	gentoo: total system build time ;-)
+*	mod_cpu: stepping
+*	--no-color option
 
 
 FEATURES FOR 0.5:
@@ -42,10 +46,6 @@ BUGS:
 -----
 
 *	mod_applications: /dev/mem: Permission denied on RH9
-*	fix indentation in print_stdout, modules where same value has
-	multiple items are affected
-*	mod_hdd doesn't work on fedora!
-*	module_footer doesn't produce </moduleName> tag
 
 
 
