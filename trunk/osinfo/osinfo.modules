@@ -1128,19 +1128,15 @@ Module_lvm () {
 #
 Module_ide () {
 	module_header "IDE bus"
+	local sysfs_prepath="/sys/devices/ide"
+	local ide_devices="0/0.0 0/0.1 1/0.0 1/0.1"
 
-		if [ "$(grep ide0 /proc/devices)" ]; then
-			add_attribute "IDE 0:0"
-			add_values    "$(cat /sys/devices/ide0/0.0/media)"
-			add_attribute "IDE 0:1"
-			add_values    "$(cat /sys/devices/ide0/0.1/media)"
+	for ide_path in $ide_devices; do
+		if [ -e "$sysfs_prepath$ide_path" ]; then
+			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)" 
+			add_values    "$(cat $sysfs_prepath$ide_path/media)"
 		fi
-		if [ "$(grep ide1 /proc/devices)" ]; then
-			add_attribute "IDE 1:0"
-			add_values    "$(cat /sys/devices/ide1/0.0/media)"
-			add_attribute "IDE 0:0"
-			add_values    "$(cat /sys/devices/ide1/0.1/media)"
-		fi
+	done
 
 	flush_values
 }
