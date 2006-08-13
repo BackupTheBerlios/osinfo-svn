@@ -403,18 +403,18 @@ Module_hdd() {
 						add_values  "$hdd_smart"
 					add_attribute 'Lifetime'
 						add_values  "$hdd_lifetime"
-					add_attribute 'Temperature (C)'
+					add_attribute 'Temperature'
 						add_values  "$hdd_tempC"
+						add_value_footer "C"
 					add_attribute 'Health Status'
 						add_values  "$hdd_health"
 				fi
 
 				flush_values
 
-				add_header	''
-
-				add_nc_header	" Partition%col%mntpoint%col%blocks%col%free%col%filesystem\n"
-				add_nc_header	" ---------%col%--------%col%------%col%----%col%----------"
+				add_header	'' # adds a space into stdout, does not affect xml
+				add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
+				add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
 
 
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
@@ -441,18 +441,17 @@ Module_hdd() {
 					else
 
 						# mount point
-						add_values    "?"
+						add_values    " "
 
 						# blocks
 						add_values    "$(hdd_human_readable \
 						               ${hdd_pt_blocks[$hdd_pt]})"
 
 						# free would come here
-						add_values    '?'
+						add_values    ' '
 
 						# fs type
 						add_values    "${hdd_pt_fs[$hdd_pt]}"
-
 
 					fi
 
@@ -479,7 +478,8 @@ Module_hdd() {
 			unset hdd_vendor hdd_model hdd_serial \
 					hdd_geometry hdd_dma hdd_driver \
 					hdd_capacity_label hdd_capacity partitions_on_drive \
-					hdd_smart hdd_lifetime hdd_tempC hdd_health
+					hdd_smart hdd_lifetime hdd_tempC hdd_health \
+					hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs
 
 		done
 
