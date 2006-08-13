@@ -6,12 +6,12 @@
 source /etc/osinfo.conf
 
 depend() {
-	after *
+	before local
 }
 
 start() {
 	ebegin "Running osinfo"
-	start-stop-daemon --start --exec /usr/local/bin/osinfo -- "${osinfo_options}" "${osinfo_modules}" -o "${osinfo_output_file}"
+	start-stop-daemon --start --exec /usr/local/bin/osinfo -- "${osinfo_modules}" $osinfo_options -o "${osinfo_output_file}"
 	eend $? 
 }
 

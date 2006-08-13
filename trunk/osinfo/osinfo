@@ -53,6 +53,7 @@ lanforce=0
 usexml=0
 fake=0
 dev_code=0
+quiet=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
@@ -193,6 +194,10 @@ if [ "$#" -gt 0 ]; then
 				# for faking input from files to debug stuff, for example
 				# LVM drives when no such drives are available
 				export fake=1
+				shift 1
+				;;
+			'--quiet'|'-q')
+				quiet=1
 				shift 1
 				;;
 			'-V'|'--version')
@@ -879,7 +884,7 @@ cleanup_temp_files
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
 if [ "$netcat" == "1" ]; then
 	cat "${XMLFILE}" | nc "$HOST" "$PORT"
-elif [ $usexml -eq 1 ]; then
+elif [ $usexml -eq 1 ] && [ $quiet -ne 1 ]; then
 	cat "${XMLFILE}"
 fi
 ############################################
