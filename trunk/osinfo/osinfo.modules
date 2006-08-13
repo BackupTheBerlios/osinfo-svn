@@ -80,11 +80,11 @@ MODULES_META='all lanforce system cpu apps net'
 
 MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lvm ide'
-MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services ide'
+MODULES_BROKEN='printers lvm bus'
+MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm ide'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus'
 
 
 ################################################################################
@@ -1124,19 +1124,24 @@ Module_lvm () {
 
 
 ######################
-# IDE bus
+# buses
 #
-Module_ide () {
-	module_header "IDE bus"
+Module_bus () {
+	module_header "Data buses"
 	local sysfs_prepath="/sys/devices/ide"
 	local ide_devices="0/0.0 0/0.1 1/0.0 1/0.1"
 
+
+	# IDE bus
+	add_header "IDE bus"
 	for ide_path in $ide_devices; do
 		if [ -e "$sysfs_prepath$ide_path" ]; then
 			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)" 
 			add_values    "$(cat $sysfs_prepath$ide_path/media)"
 		fi
 	done
+	add_footer
+
 
 	flush_values
 }
