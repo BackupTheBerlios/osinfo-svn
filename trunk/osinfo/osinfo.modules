@@ -1894,8 +1894,8 @@ Module_users() {
 		add_header    "\nAll users"
 
 		if [ $usexml -eq 0 ]; then
-			add_nc_header   "Unix name%col%real name%col%last login%col%from%col%login count\n"
-			add_nc_header   "---------%col%---------%col%----------%col%----%col%-----------\n"
+			add_nc_header   "Unix name%col%uid%col%real name%col%last login%col%from%col%login count\n"
+			add_nc_header   "---------%col%---%col%---------%col%----------%col%----%col%-----------\n"
 		fi
 
 	fi
@@ -1927,8 +1927,11 @@ Module_users() {
 			fi
 
 
-			# get the real name from 'getent passwd'
-			[ -e "$passwd_tmp" ] && user_realname="$(awk -F: /$user/{'print $5'} "$passwd_tmp")"
+			# get the real name and uid from 'getent passwd'
+			if [ -e "$passwd_tmp" ]; then
+				user_realname="$(awk -F: /$user/{'print $5'} "$passwd_tmp")"
+				user_uid="$(awk -F: /$user/{'print $3'} "$passwd_tmp")"
+			fi
 
 
 			# get the last login date & time
@@ -1955,6 +1958,8 @@ Module_users() {
 				add_header  "$user_unixname" 'user'
 				[ "$user_realname" ] && \
 				add_values       "real name: $user_realname"
+				[ "$user_uid" ] && 
+				add_values       "uid: $user_uid"
 				add_values       "last login: $last_login"
 				add_values       "last login from: $login_from"
 				add_values       "login count: $login_count"
@@ -1963,6 +1968,8 @@ Module_users() {
 			else
 				add_values "$user_unixname"
 				[ ! "$user_realname" ] && user_realname=" "
+				[ ! "$user_uid" ] && user_uid=" "
+				add_values "$user_uid"
 				add_values "$user_realname"
 				add_values "$last_login"
 				add_values "$login_from"
