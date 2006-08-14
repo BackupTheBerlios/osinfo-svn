@@ -146,6 +146,25 @@ CheckReq_root() {
 	fi
 }
 
+#############################
+# check the smartctl version >5.36, for SATA drives.
+# It seems that some data can be acquired with older smartctl's too.
+CheckReq_smartctl() {
+	if [ "$(type -p smartctl)" ]; then
+		#local smartctl_version="$(smartctl --version | \
+		#	grep -Eo 'version [0-9.]+' | grep -Eo '[0-9]\.[0-9]+')";
+		#diff="$(bc -s <<< $smartctl_version-5.36 )"
+		# check if the difference is (not) negative
+		#if [ ! "${diff:0:1}" = "-" ]; then
+		# this is a newer version which supports SATA
+			return 0
+		else
+			info	"Please install Smartmontools v5.36 or later."
+			return 1
+		#fi
+	fi
+}
+
 
 ##
 # Checks if lshw was already run.
@@ -385,32 +404,36 @@ Module_hdd() {
 
 				add_attribute "$hdd_type"
 					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
-				add_attribute 'Serial number'
-					add_values  "$hdd_serial"
-				add_attribute 'Driver'
-					add_values  "$hdd_driver"
-				add_attribute 'DMA'
-					add_values  "$hdd_dma"
-				add_attribute 'Geometry'
-					add_values  "$hdd_geometry"
 				add_attribute 'Capacity (reported)'
 					add_values  "$hdd_capacity_label"
 				add_attribute 'Capacity (actual)'
 					add_values  "$(hdd_human_readable $hdd_capacity)"
+				add_attribute 'DMA'
+					add_values  "$hdd_dma"
 
 				if [ "$(type -p smartctl)" ]; then
-					add_attribute 'S.M.A.R.T.'
-						add_values  "$hdd_smart"
-					add_attribute 'Lifetime'
+					add_attribute   'Lifetime'
 						add_values  "$hdd_lifetime"
-					add_attribute 'Temperature'
+					add_attribute   'Temperature'
 						add_values  "$hdd_tempC"
 						add_value_footer "C"
-					add_attribute 'Health Status'
+					add_attribute   'S.M.A.R.T.'
+						add_values  "$hdd_smart"
+					add_attribute   'Health Status'
 						add_values  "$hdd_health"
+					add_attribute   'ATA Standard'
+						add_values  "$hdd_ata_standard"
 				fi
 
+				add_attribute 'Serial number'
+					add_values  "$hdd_serial"
+				add_attribute 'Driver'
+					add_values  "$hdd_driver"
+				add_attribute 'Geometry'
+					add_values  "$hdd_geometry"
+
 				flush_values
+
 
 				add_header	'' # adds a space into stdout, does not affect xml
 				add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
@@ -431,9 +454,13 @@ Module_hdd() {
 						add_values    "$(hdd_human_readable \
 						               ${hdd_pt_blocks[$hdd_pt]})"
 						# free
+						if [ "${hdd_pt_free[$hdd_pt]}" != "" ]; then
 						add_values    "$(hdd_human_readable \
 						               ${hdd_pt_free[$hdd_pt]})"
 						#add_values    "${hdd_pt_free_pc[$hdd_pt]})"
+						else
+							add_values ' '
+						fi
 
 						# fs type
 						add_values    "${hdd_pt_fs[$hdd_pt]}"
@@ -459,6 +486,7 @@ Module_hdd() {
 
 				flush_values
 
+			######################
 			### XML OUTPUT
 			else
 
@@ -468,7 +496,7 @@ Module_hdd() {
 
 				add_attribute "partitions"		'drive'
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]}"
+					add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
 				done
 
 			fi
@@ -476,10 +504,11 @@ Module_hdd() {
 			##################
 			# clear varibles
 			unset hdd_vendor hdd_model hdd_serial \
-					hdd_geometry hdd_dma hdd_driver \
-					hdd_capacity_label hdd_capacity partitions_on_drive \
-					hdd_smart hdd_lifetime hdd_tempC hdd_health \
-					hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs
+			      hdd_geometry hdd_dma hdd_driver \
+			      hdd_capacity_label hdd_capacity partitions_on_drive \
+			      hdd_smart hdd_lifetime hdd_tempC hdd_health \
+			      hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs \
+			      hdd_ata_standard
 
 		done
 
@@ -622,7 +651,8 @@ Module_hdd() {
 			dev_type=ata
 		fi
 
-		# allocate a temp file
+		CheckReq_smartctl # allocates temp file $smart_info
+		# allocate a temp file		
 		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$smart_info")
 
@@ -729,6 +759,14 @@ Module_hdd() {
 				hdd_pt_free_pc[$ID]="$(bc -s <<< scale=1\;" \
 					"${hdd_pt_free[$ID]}/${hdd_pt_capacity[$ID]}*100)%"
 
+			elif [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
+				# mark 'swap' as mountpoint for swap partitions, if they're in use
+				hdd_pt_mp[$ID]="swap"
+				hdd_pt_used[$ID]="$(swapon -s | grep ^${hdd_pt_node[$ID]} | \
+				                    awk {'print $4'})"
+
+			else # unmounted
+				hdd_pt_mp[$ID]="-"
 
 			fi
 
@@ -936,6 +974,14 @@ Module_hdd() {
 			TempFiles=("${TempFiles[@]}" "$udev_info")
 			udevinfo -q all -n ${dev_scan} > ${udev_info}
 		fi
+
+		if CheckReq_smartctl; then 
+			# allocate a temp file		
+			smart_sata="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$smart_sata")
+			smartctl -a -d ata ${dev_scan} > $smart_sata
+		fi
+
 		if [ -e "/proc/scsi/" ]; then
 			local proc_info="/proc/scsi/scsi"
 			local scsi_devices="/proc/scsi/sg/devices"
@@ -976,7 +1022,7 @@ Module_hdd() {
 
 		########
 		# Vendor
-		if [ "$smart" = "sata-ok" ]; then
+		if [ $smart_sata ]; then
 
 			# because smartctl uses its own database to report the HDD vendor,
 			# it is preferred over udev.
@@ -984,7 +1030,7 @@ Module_hdd() {
 			# this smart scan is not included into the scan_hdd_smart()
 			# because it would break the correct order of the report.
 
-			hdd_vendor="$(smartctl -i -d ata ${dev_scan} | grep '^Model' | \
+			hdd_vendor="$(grep '^Model' "$smart_sata" | \
 			              awk -F: {'print $2'} | sed 's/^ *//') "
 
 		elif [ "${udev_info}" ]; then
@@ -1021,7 +1067,14 @@ Module_hdd() {
 
 		###############
 		# Serial number
-		if  [ "${udev_info}" ]; then
+		
+		# prefer smartmontools
+		if [ $smart_sata ]; then
+
+			hdd_serial="$(grep '^Serial' ${smart_sata} | \
+			              awk -F: {'print $2'} | sed 's/^ *//') "
+
+		elif  [ "${udev_info}" ]; then
 
 			hdd_serial="$(grep SERIAL ${udev_info} | awk -F= {'print $NF'})"
 
@@ -1042,19 +1095,18 @@ Module_hdd() {
 		#TODO: dma status
 
 
-		#############################
-		# check the smartctl version >5.36
-		if [ "$(type -p smartctl)" ]; then
-			local smartctl_version="$(smartctl --version | \
-				grep -Eo 'version [0-9.]+' | grep -Eo '[0-9]\.[0-9]+')";
-			diff="$(bc -s <<< $smartctl_version-5.36 )"
-			# check if the difference is (not) negative
-			if [ ! "${diff:0:1}" = "-" ]; then
-			# this is a newer version which supports SATA
-			# scan for SMART attributes
-				scan_hdd_smart ${dev_scan} ata
-			fi
-		fi
+		################
+		# ATA Standard
+		if [ $smart_sata ]; then 
+			hdd_ata_standard="$(grep -i '^ATA Standard' ${smart_sata} | \
+			              awk -F: {'print $2'} | sed 's/^ *//') "
+		fi	
+
+
+		###########
+		# scan for SMART attributes
+		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi
+		
 	}
 
 
