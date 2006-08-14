@@ -1610,15 +1610,18 @@ Module_processor() {
 	local moduleName="Processor"
 	module_header "${moduleName}"
 
-	local cpunr
+	local cpunr cpuinfo cpu_count
 
-	local cpuinfo="/proc/cpuinfo"
-	local cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
+	cpuinfo="/proc/cpuinfo"
 
 	# test if /proc/cpuinfo gives a number for cpu cores.
 	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
-	if [ ! "$cpu_count" ]; then
+	# this is a problem with Pentium 4 Hyperthreading cpus, which kernel
+	# treats like two processors
+	if [ ! "$(grep core $cpuinfo)" ]; then
 		cpu_count=1
+	else
+		cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
 	fi
 
 	if [ "$usexml" == 1 ]; then
@@ -1629,15 +1632,15 @@ Module_processor() {
 	for cpunr in $(seq 1 1 $cpu_count); do
 		[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
 
-		add_attribute     "Vendor"		"processor_vendor"
+		add_attribute     "Vendor"      "processor_vendor"
 		add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                     awk -F': ' {'print $2'})"
 
-		add_attribute     "Model"			"processor_model"
+		add_attribute     "Model"       "processor_model"
 		add_values        "$(grep 'model name' ${cpuinfo} | \
 		                     sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
 
-		add_attribute     "Frequency"		"processor_speed"
+		add_attribute     "Frequency"   "processor_speed"
 		add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                     awk -F': ' {'print $2'})"
 		add_value_footer  "MHz"
