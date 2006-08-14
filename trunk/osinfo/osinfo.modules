@@ -1758,77 +1758,145 @@ Module_users() {
 	local moduleName="Users"
 	module_header "${moduleName}"
 
-	local last_login login_count user user_fullname
+	local last_login login_date login_count user users login_from \
+	      user_fullname user_unixname groups user_uid user_gid
 	local wtmp_file="/var/log/wtmp"
 
+	passwd_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	getent passwd > "$passwd_tmp"
+	TempFiles=("${TempFiles[@]}" "$passwd_tmp")
+
 	### CURRENT USER (ACTIVE UID)
-	add_header   "Current user"
+	user="$(whoami)"
+	user_uid="$(id -u)"
+	user_gid="$(id -g)"
+	user_realname="$(awk -F: /$user/{'print $5'} /etc/passwd)"
+	login_date="$(date -d "$(last | grep -m 1 $user | head -n 1  | \
+	              grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+	              +"%Y-%m-%d %T")"
+	groups=$(groups | sed 's/ /\n/g' | uniq | tr -s '\n' ' ')
 
-		add_attribute  'Real name'				"real_name"
-		add_values     "$(awk -F: /$(whoami)/{'print $5'} /etc/passwd)"
+	#groups=$(groups)
 
-		add_attribute  "Unix name / UID"				'active_user'
-		add_values     "$(whoami) ($(id -u))"
+	# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
+	# AnMaster: KDE doesn't set that for me (in konsole at least)
+	# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
+	# any ideas where else to look?
+	#local session_id="$DESKTOP_SESSION"
+	#if [ "$session_id" == "default" ]; then
+	#	if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
+	#		# try to get Gnome version
+	#		local gnome_version="$(gnome-about --version | awk {'print $NF'})"
+	#		session_id="Gnome $gnome_version"
+	#	fi
+	#fi
+
+
+	if [ $usexml -eq 1 ]; then
+		add_header  "$user" 'current_user'
+		# lanforce gets special treatment
+		[ $lanforce -eq 1 ] && add_attribute    'Active user' "active_user"
+
+		# the process the data ...
+		[ "$user_realname" ] && \
+		add_values       "real name: $user_realname"
+		add_values       "login date: $login_date"
+		add_values       "uid: $user_uid"
+		add_values       "gid: $user_gid"
+		add_values       "groups: $groups"
+		#add_values       "X Session: $session_id"
+		add_values       "shell: $SHELL"
+		add_values       "home: $HOME"
+		add_values       "locale: $LC_ALL"
+		add_footer 'current_user'
+	
+	else 
+		add_header   "Current user"
+
+		add_attribute  'Real name'          "real_name"
+		add_values     "$user_realname"
+
+		add_attribute  "Unix name"    'active_user'
+		add_values     "$user"
+
+		add_attribute  "uid / gid"    'uid_+_gid'
+		add_values     "$user_uid / $user_gid"
 
 		add_attribute  'Groups'
-		local group
-		for group in $(groups | sed 's/ /\n/g' | uniq); do
-			add_values "$group\n " # << note that for indentation, the
-			                       # space at the end of string is important!
-		done
+		add_values     "$groups\n " # << note that for indentation, the
+		                          # space at the end of string is important!
 
 		#add_attribute  "User's X11 session"	"users_window_manager"
-		# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
-		# AnMaster: KDE doesn't set that for me (in konsole at least)
-		# ruxpin: I get this in konsole: DESKTOP_SESSION="kde-7.0"
-		# any ideas where else to look?
-		#local session_id="$DESKTOP_SESSION"
-		#if [ "$session_id" == "default" ]; then
-		#	if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
-		#		# try to get Gnome version
-		#		local gnome_version="$(gnome-about --version | awk {'print $NF'})"
-		#		session_id="Gnome $gnome_version"
-		#	fi
-		#fi
 		#add_values     "$session_id"
 
 		add_attribute  "User's shell"
 		add_values     "$SHELL"
 
+		add_attribute  "Home directory"     'home'
+		add_values     "$HOME"
+
 		add_attribute  "User's locale"
 		add_values     "$LC_ALL"
 
-	add_footer
+		add_footer
+	fi
+	unset user user_realname login_date groups session_id user_uid user_gid
+
 
 	### LAST LOGGED IN USER
-	add_header     "\nLast logged in user"
+	last_login="$(last -1 | head -n 1 | awk {'print $1'})"
+	login_from="$(last -1 | head -n 1 )"
+		login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
+	user_realname="$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
+	login_date="$(date -d "$(last -1 | head -n 1  | \
+	              grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+	              +"%Y-%m-%d %T")"
 
-		last_login="$(last -1 | head -n 1 | awk {'print $1'})"
+	if [ $usexml -eq 1 ]; then
+		add_header  "$last_login" 'last_login'
+		# lanforce gets special treatment
+		[ $lanforce -eq 1 ] && add_attribute "Last logged in user" 'last_logged_user'
 
-		add_attribute  "Unix name"    'last_logged_user'
-		add_values     "$last_login"
+		[ "$user_realname" ] && \
+		add_values       "real name: $user_realname"
+		add_values       "login date: $login_date"
+		add_values       "login from: $login_from"
+		add_footer 'last_login'
 
-		add_attribute  'Real name'    'last_logged_real_name'
-		add_values     "$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
+	else
 
-		add_attribute  'Login date'
-		add_values     "$(date -d "$(last -1 | head -n 1  | \
-                                  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-		                  +"%Y-%m-%d %T")"
+		add_header     "\nLast logged in user"
 
-	add_footer
+			add_attribute  "Unix name"    'last_logged_user'
+			add_values     "$last_login"
+
+			add_attribute  'Real name'    'last_logged_real_name'
+			add_values     "$user_realname"
+
+			add_attribute  'Login date'   'login date'
+			add_values     "$login_date"
+
+			add_attribute  'Login from'   'login from'
+			add_values     "$login_from"
+
+		add_footer
+	fi
+
+	unset last_login user_realname login_date login_from
+	# flush values here so that previous values do not affect future indentation
+	[ $usexml -eq 0 ] && flush_values
 
 
 	### ALL USERS
 	if [ $lanforce = 1 ]; then
 		add_attribute 'All logged in users' "users"
-	elif [ $usexml = 1 ]; then
-		add_header    'All users'
 	else
-		add_header	'' # NOTE: this header is for printing a newline
-		                   # before the next header, due to the column bug
-		add_nc_header   "All users%col%last login%col%login count\n"
-		add_nc_header   "---------%col%----------%col%-----------\n"
+		add_header    "\nAll users"
+
+		if [ $usexml -eq 0 ]; then
+			add_nc_header   "Unix name%col%real name%col%last login%col%from%col%login count\n"
+			add_nc_header   "---------%col%---------%col%----------%col%----%col%-----------\n"
+		fi
 
 	fi
 
@@ -1837,9 +1905,9 @@ Module_users() {
 	else
 
 		fake_users="reboot\|wtmp\|ftp"
-		local users="$(last | awk {'print $1'} | sort | uniq | \
-		               grep -v "$fake_users" | grep '^[a-zA-Z]')"
-		               # ^^ removes fake users
+		users="$(last | awk {'print $1'} | sort | uniq | \
+		          grep -v "$fake_users" | grep '^[a-zA-Z]')"
+		          # ^^ removes fake users
 
 		for user in $users; do
 
@@ -1851,21 +1919,28 @@ Module_users() {
 			# from the source file. for node ina dirty hack but may well be the only way...
 			if [ ${#user} -ge 8 ]; then
 				# parse special chars to meta-chars
-				user_fullname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-				user_fullname="$(grep -Eoa "$user_fullname[a-zA-Z0-9\\\+]*" \
+				user_unixname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
+				user_unixname="$(grep -m 1 -Eoa "$user_fullname[a-zA-Z0-9\\\+]*" \
 				                 ${wtmp_file} | uniq)"
 			else
-				user_fullname="$user"
+				user_unixname="$user"
 			fi
 
 
+			# get the real name from 'getent passwd'
+			[ -e "$passwd_tmp" ] && user_realname="$(awk -F: /$user/{'print $5'} "$passwd_tmp")"
+
+
 			# get the last login date & time
-			# FIXME: works always on the command line,
-			# but NOT ALWAYS IN THE SCRIPT!??
 			unset last_login
 			last_login="$(date -d "$(last | grep -m 1 $user | \
-			              grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			              grep -m 1 -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 			              +"%Y-%m-%d %T")"
+
+			# get from where the user last logged in
+			unset login_from
+			login_from="$(last | grep -m 1 $user )"
+			login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
 
 
 			# get the login count
@@ -1873,11 +1948,24 @@ Module_users() {
 
 
 			# finally, output
-			if [ $usexml -eq 1 ]; then
-				add_values "$user_fullname  $last_login  $login_count"
+			if [ $lanforce -eq 1 ]; then
+				add_values   "$user_unixname: $user_realname"
+
+			elif [ $usexml -eq 1 ]; then
+				add_header  "$user_unixname" 'user'
+				[ "$user_realname" ] && \
+				add_values       "real name: $user_realname"
+				add_values       "last login: $last_login"
+				add_values       "last login from: $login_from"
+				add_values       "login count: $login_count"
+				add_footer 'user'
+
 			else
-				add_values "$user_fullname"
+				add_values "$user_unixname"
+				[ ! "$user_realname" ] && user_realname=" "
+				add_values "$user_realname"
 				add_values "$last_login"
+				add_values "$login_from"
 				add_values "$login_count\n"
 			fi
 

@@ -1,13 +1,10 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	do not print (to stdout) attributes without values
-	( easy to do, add a tag for values_since_last_attrib=false )
 *	reorder some given information
 *	fix meta modules?
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kernel src location
-*	empty attribs broken in xml
 *	mod_hdd doesn't work on fedora!
 *	root dir detection is broken
 	

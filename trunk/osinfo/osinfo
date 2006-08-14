@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=17
+patch_version=18
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -578,16 +578,20 @@ function print_xml {
 			*)
 
 				# if the value item is set (no footer), then print
-				[ "$value_item" ] && xml_value "$value_item" >> "${XMLFILE}" && unset value_item
-
-				case $idtag in
-
-				'value')
+				if [ "$value_item" ]; then
 					## add indentation
 					for indent in $(seq 1 1 $XML_INDENT); do
 						echo -ne "\t" >> "${XMLFILE}"
 					done
 
+					xml_value "$value_item" >> "${XMLFILE}"
+					unset value_item
+				fi
+
+
+				case $idtag in
+
+				'value')
 					# the following sed removes all formatting tags
 					# from the value string. it's a tad slow, though.
 					# put value_item on hold for value_footer
