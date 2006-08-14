@@ -2476,8 +2476,8 @@ identify_Linux_distro() {
 	# locate and echo the root directory.
 	# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
 	[ "$prefix" != '/' ] && \
-		local root_dir="$(echo $prefix | sed 's/\/*$//')" || \
-		local root_dir="$prefix"
+		root_dir="$(echo $prefix | sed 's/\/*$//')" || \
+		root_dir="$prefix"
 	[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
 
 

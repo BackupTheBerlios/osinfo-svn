@@ -6,7 +6,6 @@ FEATURES and FIXES for 0.3:
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kernel src location
 *	mod_hdd doesn't work on fedora!
-*	root dir detection is broken
 	
 
 FEATURES and FIXES for 0.4:
