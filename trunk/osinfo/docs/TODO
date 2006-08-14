@@ -6,6 +6,7 @@ FEATURES and FIXES for 0.3:
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kernel src location
 *	mod_hdd doesn't work on fedora!
+*	mod_hdd: partition free data is not unset after first drive.
 	
 
 FEATURES and FIXES for 0.4:
