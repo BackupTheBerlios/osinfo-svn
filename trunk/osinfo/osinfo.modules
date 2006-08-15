@@ -981,18 +981,34 @@ Module_hdd() {
 			smartctl -a -d ata ${dev_scan} > $smart_sata
 		fi
 
-		if [ -e "/proc/scsi/" ]; then
-			local proc_info="/proc/scsi/scsi"
-			local scsi_devices="/proc/scsi/sg/devices"
-			local scsi_devstrings="/proc/scsi/sg/device_strs"
-			local usb_devstrings="/proc/scsi/usb-storage/"
-			local sg_version="/proc/scsi/sg/version"
-			local scsi_nr="$(sed -n "$dev_nodenr{p;q;}" ${scsi_devices} | \
-			                 awk {'print $1'})"
-		fi
+		# NOTE:
 		# hdparm output is not read into a temp file, as
 		# it is unlikely to be used, and that would unnecessarily
 		# slow down this function.
+
+		# scan the (deprecated) /proc/scsi bus for information
+		if [ -e "/proc/scsi/" ]; then
+			local procfile scsi_info scsi_devices scsi_nr \
+			      scsi_devstrings usb_devstrings sg_version
+
+			procfile="/proc/scsi/scsi"
+			[ -e $procfile ] && proc_info=$procfile
+
+			procfile="/proc/scsi/sg/devices"
+			[ -e $procfile ] && scsi_devices=$procfile && \
+			                    scsi_nr="$(sed -n "$dev_nodenr{p;q;}" \
+			                    ${scsi_devices} | awk {'print $1'})"
+
+			procfile="/proc/scsi/sg/device_strs"
+			[ -e $procfile ] && scsi_devstrings=$procfile
+
+			procfile="/proc/scsi/usb-storage/"
+			[ -e $procfile ] && usb_devstrings=$procfile
+
+			procfile="/proc/scsi/sg/version"
+			[ -e $procfile ] && sg_version=$procfile
+		fi
+
 
 		if [ "${udev_info}" ]; then
 
@@ -1104,8 +1120,7 @@ Module_hdd() {
 
 		###########
 		# scan for SMART attributes
-		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi
-		
+		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi	
 	}
 
 
