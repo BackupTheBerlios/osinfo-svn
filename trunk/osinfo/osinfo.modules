@@ -1830,7 +1830,7 @@ Module_users() {
 	module_header "${moduleName}"
 
 	local last_logged_user last_login_date login_count user users login_from \
-	      user_fullname user_unixname groups user_uid user_gid \
+	      user_fullname user_unixname groups user_uid user_gid user_home user_shell \
 	      wtmp_begin first_login_dat
 	local wtmp_file="/var/log/wtmp"
 
@@ -1847,6 +1847,8 @@ Module_users() {
 	user_uid="$(id -u)"
 	user_gid="$(id -g)"
 	user_realname="$(awk -F: /$user/{'print $5'} /etc/passwd)"
+	user_home="$(awk -F: /$user/{'print $6'} /etc/passwd)"
+	user_shell="$(awk -F: /$user/{'print $7'} /etc/passwd)"
 	login_date="$(date -d "$(last | grep -m 1 $user | \
 			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 			       +"%Y-%m-%d %T")"
@@ -1881,9 +1883,9 @@ Module_users() {
 		add_values       "gid: $user_gid"
 		add_values       "groups: $groups"
 		#add_values       "X Session: $session_id"
-		add_values       "shell: $SHELL"
-		add_values       "home: $HOME"
-		add_values       "locale: $LC_ALL"
+		add_values       "shell: $user_shell"
+		add_values       "home: $user_home"
+		add_values       "locales: $LC_ALL"
 		add_footer 'user'
 	
 	else 
@@ -1906,21 +1908,25 @@ Module_users() {
 		#add_values     "$session_id"
 
 		add_attribute  "User's shell"
-		add_values     "$SHELL"
+		add_values     "$user_shell"
 
 		add_attribute  "Home directory"     'home'
-		add_values     "$HOME"
+		add_values     "$user_home"
 
-		add_attribute  "User's locale"
+		add_attribute  "User's locales"
 		add_values     "$LC_ALL"
 
 		add_footer
 	fi
-	unset user user_realname login_date groups session_id user_uid user_gid
+	unset user user_realname login_date groups session_id \
+	      user_uid user_gid user_home user_shell
 
-	# past data, parsed from wtmp
-	if [ ! -e ${wtmp_file} ]; then
-		info	"${wtmp_file} does not exist. Cannot parse user data."
+
+	###############################
+	### wtmp data
+	###
+	if [ ! -s ${wtmp_file} ]; then 
+		info	"${wtmp_file} does not exist or is empty. Cannot parse user data."
 		info	"Please submit a bug report, and provide the location of your wtmp file."
 	else
 
@@ -1941,6 +1947,8 @@ Module_users() {
 		login_from="$(last -1 | head -n 1 )"
 			login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
 		user_realname="$(awk -F: /^$last_logged_user\:/{'print $5'} /etc/passwd)"
+		user_uid="$(awk -F: /^$user\:/{'print $3'} "$passwd_tmp")"
+		user_gid="$(awk -F: /^$user\:/{'print $4'} "$passwd_tmp")"
 		last_login_date="$(date -d "$(last -1 | head -n 1  | \
 		                   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 		                   +"%Y-%m-%d %T")"
@@ -1957,6 +1965,8 @@ Module_users() {
 
 			[ "$user_realname" ] && \
 			add_values       "real name: $user_realname"
+			add_values       "uid: $user_uid"
+			add_values       "gid: $user_gid"
 			add_values       "first login date: $first_login_date"
 			add_values       "last login date: $last_login_date"
 			add_values       "latest entry: $login_from"
@@ -2006,7 +2016,8 @@ Module_users() {
 					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%--%col%-----\n"
 				else
 					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%count\n"
-					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%-----\n"
+					add_nc_header   "---------%col%---%cocp /share/osinfo-all-in-one /usr/local/bin/osinfo
+l%---------%col%-----------%col%----------%col%-----\n"
 				fi
 			fi
 		fi
@@ -2021,7 +2032,7 @@ Module_users() {
 
 			unset last_logged_user user_realname user_uid user_unixname \
 			      last_login_date login_from user_gid \
-			      first_login_date login_count
+			      first_login_date login_count user_home user_shell
 
 			# get the full username (user_fullname)
 			#
