@@ -1336,7 +1336,7 @@ Module_cdrom() {
 
 				else
 
-					add_header  "CD/DVD drive $drv_nr" "cd_drive"
+					add_header  "CD/DVD drive $drv_nr" "cd_drive name"
 
 					add_attribute 'Model'	'cdrom'
 					add_values    "${cdrom_model[$drv_nr]}"
@@ -1366,7 +1366,9 @@ Module_cdrom() {
 			done
 
 		else
-			info    'No cdrom drives detected'
+			local status_msg='No cdrom drives detected'
+			info          "$status_msg"
+			add_values    "$status_msg"
 		fi
 	fi
 
