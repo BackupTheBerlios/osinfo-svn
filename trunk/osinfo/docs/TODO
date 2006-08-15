@@ -6,9 +6,6 @@ FEATURES and FIXES for 0.3:
 *	"vv next line is header" dirty tag to workaround the column bug?
 *	kernel src location
 *	mod_hdd doesn't work on fedora!
-*	mod_hdd: partition free data is not unset after first drive.
-*	mod_users: last login date in last_logged_user uses old regexp
-*             
 *	mod_users: last login date in last_logged_user uses old regexp
 *              root       0 11  root operator  2006-08-13 18:01:00  tty1   40
 	           what's '0 11' in the uid field?

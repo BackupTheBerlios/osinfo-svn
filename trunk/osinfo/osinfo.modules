@@ -504,11 +504,11 @@ Module_hdd() {
 			##################
 			# clear varibles
 			unset hdd_vendor hdd_model hdd_serial \
-			      hdd_geometry hdd_dma hdd_driver \
+			      hdd_geometry hdd_dma hdd_driver hdd_type \
 			      hdd_capacity_label hdd_capacity partitions_on_drive \
 			      hdd_smart hdd_lifetime hdd_tempC hdd_health \
 			      hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs \
-			      hdd_ata_standard
+			      hdd_ata_standard hdd_pt_free
 
 		done
 
@@ -697,7 +697,6 @@ Module_hdd() {
 		local dev_scan="${1}" part_free=0
 		partitions_on_drive="$(fdisk -l ${dev_scan} | grep ^${dev_scan} | wc -l)"
 		local ID=$hdd_pt_ID
-
 
 		#TODO for version 0.5 or so
 		#hdd_fs_ID=[83] [7] [82] ... #which tells the FS type
