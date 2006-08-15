@@ -1849,7 +1849,7 @@ Module_users() {
 	user_realname="$(awk -F: /$user/{'print $5'} /etc/passwd)"
 	user_home="$(awk -F: /$user/{'print $6'} /etc/passwd)"
 	user_shell="$(awk -F: /$user/{'print $7'} /etc/passwd)"
-	login_date="$(date -d "$(last | grep -m 1 $user | \
+	login_date="$(date -d "$(last 2> /dev/null | grep -m 1 $user | \
 			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 			       +"%Y-%m-%d %T")"
 	groups=$(groups | sed 's/ /\n/g' | uniq | tr -s '\n' ' ')
@@ -1907,6 +1907,9 @@ Module_users() {
 		#add_attribute  "User's X11 session"	"users_window_manager"
 		#add_values     "$session_id"
 
+		add_attribute  "Logged in since"
+		add_values     "$login_date"
+
 		add_attribute  "User's shell"
 		add_values     "$user_shell"
 
@@ -1926,7 +1929,8 @@ Module_users() {
 	### wtmp data
 	###
 	if [ ! -s ${wtmp_file} ]; then 
-		info	"${wtmp_file} does not exist or is empty. Cannot parse user data."
+		flush_values
+		info	"\n${wtmp_file} does not exist or is empty. Cannot parse user data."
 		info	"Please submit a bug report, and provide the location of your wtmp file."
 	else
 
@@ -2016,8 +2020,7 @@ Module_users() {
 					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%--%col%-----\n"
 				else
 					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%count\n"
-					add_nc_header   "---------%col%---%cocp /share/osinfo-all-in-one /usr/local/bin/osinfo
-l%---------%col%-----------%col%----------%col%-----\n"
+					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%-----\n"
 				fi
 			fi
 		fi
