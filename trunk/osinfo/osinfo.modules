@@ -1863,7 +1863,7 @@ Module_users() {
 
 
 	if [ $usexml -eq 1 ]; then
-		add_header  "$user" 'current_user'
+		add_header  "$user" 'user unixname'
 		# lanforce gets special treatment
 		[ $lanforce -eq 1 ] && add_attribute    'Active user' "active_user"
 
@@ -1878,7 +1878,7 @@ Module_users() {
 		add_values       "shell: $SHELL"
 		add_values       "home: $HOME"
 		add_values       "locale: $LC_ALL"
-		add_footer 'current_user'
+		add_footer 'user'
 	
 	else 
 		add_header   "Current user"
@@ -1945,7 +1945,7 @@ Module_users() {
 
 
 		if [ $usexml -eq 1 ]; then
-			add_header  "$last_logged_user" 'last_login'
+			add_header  "$last_logged_user" 'last_login unixname'
 			# lanforce gets special treatment
 			[ $lanforce -eq 1 ] && add_attribute "Last logged in user" 'last_logged_user'
 
@@ -2074,7 +2074,7 @@ Module_users() {
 				add_values   "$user_unixname: $user_realname"
 
 			elif [ $usexml -eq 1 ]; then
-				add_header  "$user_unixname" 'user'
+				add_header  "$user_unixname" 'user unixname'
 				[ "$user_realname" ] && \
 				add_values       "real name: $user_realname"
 				[ "$user_uid" ] && 
@@ -2259,7 +2259,7 @@ Module_network() {
 
 
 	### generic information
-	add_header  "$(hostname 2> /dev/null)"
+	add_header  "$(hostname 2> /dev/null)" 'computer name'
 
 		add_attribute 'NIS domain'
 		add_values    "$(hostname -y 2> /dev/null)"
@@ -2277,7 +2277,7 @@ Module_network() {
 		for interface_name in $ETH_DEVICES; do
 			ifconfig $interface_name > ${nw_info}
 
-			add_header    $interface_name   'iface'
+			add_header    $interface_name   'iface name'
 
 			add_attribute 'MAC'		"mac_address"
 			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
@@ -2320,6 +2320,7 @@ Module_network() {
 
 			add_footer    "iface"
 		done
+	add_footer    'computer'
 
 	flush_values
 }

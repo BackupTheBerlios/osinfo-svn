@@ -252,9 +252,9 @@ function print_xml_header () {
 	else
 
 		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
-		xml_tag_start "${appname}" >> "${XMLFILE}"
+		#xml_tag_start "${appname}" >> "${XMLFILE}"
+		xml_param_tag "${appname} version" "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
 		XML_INDENT=1
-		xml_param_tag 'version' "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
 
 	fi
 }

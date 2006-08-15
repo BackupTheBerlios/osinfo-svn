@@ -11,10 +11,11 @@ FEATURES and FIXES for 0.3:
 	           what's '0 11' in the uid field?
                         <user="root">
                                 <value>real name: root
-operator</value>
+	operator</value>
                                 <value>uid: 0
-11</value>
+	11</value>
 	          also the xml is b0rked.
+*	custom <value> xml tags, <value name="foo">bar</value>
 	
 
 FEATURES and FIXES for 0.4:
