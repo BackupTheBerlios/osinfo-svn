@@ -1675,12 +1675,6 @@ Module_kernel() {
 # uses /proc/cpuinfo (Linux only)
 # and x86info (optional)
 Module_processor() {
-
-###### BEGIN HDD SUBFUNCTIONS #############
-#
-# these functions are called from mod_hdd and they generate no output,
-# all data is stored into global variables.
-
 	local moduleName="Processor"
 	module_header "${moduleName}"
 
