@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=8
-patch_version=18
+patch_version=19
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -58,6 +58,7 @@ quiet=0
 # To put this in a variable allows info on non-running systems
 prefix="/"
 XMLFILE="osinfo.xml"
+error_log="/var/log/osinfo.log"
 
 
 function PRINT_Help {
@@ -103,6 +104,19 @@ function PRINT_Help {
 		exit $1
 	else
 		exit 0
+	fi
+}
+
+
+function Check_logfile {
+	if [ ! -e "$error_log" ]; then
+		if [ ! $(touch "$error_log") ]; then
+			info	"Could not create log file $error_log."
+		fi
+	fi
+
+	if [ ! -w "$error_log" ]; then
+		info	"Log file is not writable by you."
 	fi
 }
 
@@ -783,6 +797,7 @@ wrong_module() {
 # THE "MAIN" FUNCTION
 #
 # this is the place to put all env variables to be set for some module
+Check_logfile
 for modul in $cmdsnames; do
 
 	# TODO: check that the module being called is supported on the running OS

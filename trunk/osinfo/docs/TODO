@@ -83,3 +83,6 @@ PROGRAMMING TIPS:
 	fdisk -l | read a b c d e partition; echo "$partition"
 
 *	Get tabsize dynamically: "tput it"
+
+*	sort a file reversely by: 
+	<stdin> | grep -n . | sort -rn | cut -d':' -f 2 | <stdout> 

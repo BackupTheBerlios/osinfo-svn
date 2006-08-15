@@ -1808,17 +1808,18 @@ Module_printers() {
 #
 # reports the current user, the user's X11 session manager + shell
 # the last logged user, and other users that have logged in
-# (that last can see).
+# (that wtmp has registered).
 Module_users() {
 	local moduleName="Users"
 	module_header "${moduleName}"
 
-	local last_login login_date login_count user users login_from \
-	      user_fullname user_unixname groups user_uid user_gid
+	local last_logged_user last_login_date login_count user users login_from \
+	      user_fullname user_unixname groups user_uid user_gid \
+	      wtmp_begin first_login_dat
 	local wtmp_file="/var/log/wtmp"
 
 	passwd_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-	getent passwd > "$passwd_tmp"
+	getent passwd > "$passwd_tmp" 2>> "$error_log"
 	TempFiles=("${TempFiles[@]}" "$passwd_tmp")
 
 	### CURRENT USER (ACTIVE UID)
@@ -1855,7 +1856,7 @@ Module_users() {
 		# the process the data ...
 		[ "$user_realname" ] && \
 		add_values       "real name: $user_realname"
-		add_values       "login date: $login_date"
+		add_values       "login date: $last_login_date"
 		add_values       "uid: $user_uid"
 		add_values       "gid: $user_gid"
 		add_values       "groups: $groups"
@@ -1897,67 +1898,101 @@ Module_users() {
 	fi
 	unset user user_realname login_date groups session_id user_uid user_gid
 
-
-	### LAST LOGGED IN USER
-	last_login="$(last -1 | head -n 1 | awk {'print $1'})"
-	login_from="$(last -1 | head -n 1 )"
-		login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
-	user_realname="$(awk -F: /$last_login/{'print $5'} /etc/passwd)"
-	login_date="$(date -d "$(last -1 | head -n 1  | \
-	              grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-	              +"%Y-%m-%d %T")"
-
-	if [ $usexml -eq 1 ]; then
-		add_header  "$last_login" 'last_login'
-		# lanforce gets special treatment
-		[ $lanforce -eq 1 ] && add_attribute "Last logged in user" 'last_logged_user'
-
-		[ "$user_realname" ] && \
-		add_values       "real name: $user_realname"
-		add_values       "login date: $login_date"
-		add_values       "login from: $login_from"
-		add_footer 'last_login'
-
+	# past data, parsed from wtmp
+	if [ ! -e ${wtmp_file} ]; then
+		info	"${wtmp_file} does not exist. Cannot parse user data."
+		info	"Please submit a bug report, and provide the location of your wtmp file."
 	else
 
-		add_header     "\nLast logged in user"
+		# get the wtmp log starting point
+		local wtmp_begin="$(last -1 | tail -n 1)"
 
-			add_attribute  "Unix name"    'last_logged_user'
-			add_values     "$last_login"
-
-			add_attribute  'Real name'    'last_logged_real_name'
-			add_values     "$user_realname"
-
-			add_attribute  'Login date'   'login date'
-			add_values     "$login_date"
-
-			add_attribute  'Login from'   'login from'
-			add_values     "$login_from"
-
-		add_footer
-	fi
-
-	unset last_login user_realname login_date login_from
-	# flush values here so that previous values do not affect future indentation
-	[ $usexml -eq 0 ] && flush_values
-
-
-	### ALL USERS
-	if [ $lanforce = 1 ]; then
-		add_attribute 'All logged in users' "users"
-	else
-		add_header    "\nAll users"
-
-		if [ $usexml -eq 0 ]; then
-			add_nc_header   "Unix name%col%uid%col%real name%col%last login%col%from%col%login count\n"
-			add_nc_header   "---------%col%---%col%---------%col%----------%col%----%col%-----------\n"
+		if [ $usexml -eq 1 ]; then
+			add_header      "wtmp statistics"
+			add_values      "$wtmp_begin"
+			add_footer
 		fi
 
-	fi
 
-	if [ ! -e ${wtmp_file} ]; then
-		info	"${wtmp_file} does not exist. Cannot parse data."
-	else
+		############################
+		### LAST LOGGED IN USER
+		###
+		last_logged_user="$(last -1 | head -n 1 | awk {'print $1'})"
+		login_from="$(last -1 | head -n 1 )"
+			login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
+		user_realname="$(awk -F: /$last_logged_user/{'print $5'} /etc/passwd)"
+		last_login_date="$(date -d "$(last -1 | head -n 1  | \
+					  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
+					  +"%Y-%m-%d %T")"
+		first_login_date="$(date -d "$(last | grep $last_logged_user | tail -n 1 | \
+		              grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+		              +"%Y-%m-%d %T")"
+		login_count="$(last | grep $last_logged_user | wc -l)"
+
+
+		if [ $usexml -eq 1 ]; then
+			add_header  "$last_logged_user" 'last_login'
+			# lanforce gets special treatment
+			[ $lanforce -eq 1 ] && add_attribute "Last logged in user" 'last_logged_user'
+
+			[ "$user_realname" ] && \
+			add_values       "real name: $user_realname"
+			add_values       "first login date: $first_login_date"
+			add_values       "last login date: $last_login_date"
+			add_values       "latest entry: $login_from"
+			add_values       "login count: $login_count"
+			add_footer  'last_login'
+
+		else
+
+			add_header     "\nLast logged in user"
+
+				add_attribute  "Unix name"         'last_logged_user'
+				add_values     "$last_logged_user"
+
+				add_attribute  'Real name'         'last_logged_real_name'
+				add_values     "$user_realname"
+
+				add_attribute  'First login date'   'first_login_date'
+				add_values     "$first_login_date"
+
+				add_attribute  'Last login date'   'last_login_date'
+				add_values     "$last_login_date"
+
+				add_attribute  'Login from'        'login_from'
+				add_values     "$login_from"
+
+				add_attribute  'Login count'        'login_count'
+				add_values     "$login_count"
+
+			add_footer
+		fi
+
+		# flush values here so that previous values do not affect future indentation
+		[ $usexml -eq 0 ] && flush_values
+
+
+		#################################
+		### ALL USERS
+		###
+		if [ $lanforce = 1 ]; then
+			add_attribute 'All logged in users' "users"
+		else
+			add_header    "\nAll users"
+
+			if [ $usexml -eq 0 ]; then
+				if [ $isverbose -ge 1 ]; then # print only if verbose
+					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%at%col%count\n"
+					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%--%col%-----\n"
+				else
+					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%count\n"
+					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%-----\n"
+
+
+				fi
+			fi
+		fi
+
 
 		fake_users="reboot\|wtmp\|ftp"
 		users="$(last | awk {'print $1'} | sort | uniq | \
@@ -1966,12 +2001,16 @@ Module_users() {
 
 		for user in $users; do
 
+			unset last_logged_user user_realname user_uid user_unixname \
+			      last_login_date login_from \
+			      first_login_date login_count
+
 			# get the full username (user_fullname)
 			#
 			# because 'last' command, part of the sysvinit core package,
 			# interprets the binary file /var/log/wtmp, but chomps off
 			# the loginname at 8 characters, we need to find the full names
-			# from the source file. for node ina dirty hack but may well be the only way...
+			# from the source file. a dirty hack but may well be the only way...
 			if [ ${#user} -ge 8 ]; then
 				# parse special chars to meta-chars
 				user_unixname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
@@ -1989,14 +2028,25 @@ Module_users() {
 			fi
 
 
-			# get the last login date & time
-			unset last_login
-			last_login="$(date -d "$(last | grep -m 1 $user | \
-			              grep -m 1 -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
-			              +"%Y-%m-%d %T")"
+			# get the first and last login date & time
+			# print the times if verbosity is set
+			if [ $isverbose -ge 1 ]; then
+				last_login_date="$(date -d "$(last | grep -m 1 $user | \
+			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			       +"%Y-%m-%d %T")"
+				first_login_date="$(date -d "$(last | grep $user | tail -n 1 | \
+			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			       +"%Y-%m-%d %T")"
+			else
+				last_login_date="$(date -d "$(last | grep -m 1 $user | \
+			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			       +"%Y-%m-%d")"
+				first_login_date="$(date -d "$(last | grep $user | tail -n 1 | \
+			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			       +"%Y-%m-%d")"
+			fi
 
 			# get from where the user last logged in
-			unset login_from
 			login_from="$(last | grep -m 1 $user )"
 			login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
 
@@ -2015,8 +2065,8 @@ Module_users() {
 				add_values       "real name: $user_realname"
 				[ "$user_uid" ] && 
 				add_values       "uid: $user_uid"
-				add_values       "last login: $last_login"
-				add_values       "last login from: $login_from"
+				add_values       "first login date: $first_login_date"
+				add_values       "last login date: $last_login_date"
 				add_values       "login count: $login_count"
 				add_footer 'user'
 
@@ -2026,8 +2076,12 @@ Module_users() {
 				[ ! "$user_uid" ] && user_uid=" "
 				add_values "$user_uid"
 				add_values "$user_realname"
-				add_values "$last_login"
+				add_values "$first_login_date"
+				add_values "$last_login_date"
+
+				[ $isverbose -ge 1 ] && \
 				add_values "$login_from"
+
 				add_values "$login_count\n"
 			fi
 
