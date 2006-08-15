@@ -1835,7 +1835,11 @@ Module_users() {
 	local wtmp_file="/var/log/wtmp"
 
 	passwd_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-	getent passwd > "$passwd_tmp" 2>> "$error_log"
+	if [ -w $error_log ]; then
+		getent passwd > "$passwd_tmp" 2>> "$error_log"
+	else
+		getent passwd > "$passwd_tmp" 2> /dev/null
+	fi
 	TempFiles=("${TempFiles[@]}" "$passwd_tmp")
 
 	### CURRENT USER (ACTIVE UID)
@@ -1843,9 +1847,9 @@ Module_users() {
 	user_uid="$(id -u)"
 	user_gid="$(id -g)"
 	user_realname="$(awk -F: /$user/{'print $5'} /etc/passwd)"
-	login_date="$(date -d "$(last | grep -m 1 $user | head -n 1  | \
-	              grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-	              +"%Y-%m-%d %T")"
+	login_date="$(date -d "$(last | grep -m 1 $user | \
+			       grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			       +"%Y-%m-%d %T")"
 	groups=$(groups | sed 's/ /\n/g' | uniq | tr -s '\n' ' ')
 
 	#groups=$(groups)
@@ -1872,7 +1876,7 @@ Module_users() {
 		# the process the data ...
 		[ "$user_realname" ] && \
 		add_values       "real name: $user_realname"
-		add_values       "login date: $last_login_date"
+		add_values       "login date: $login_date"
 		add_values       "uid: $user_uid"
 		add_values       "gid: $user_gid"
 		add_values       "groups: $groups"
@@ -1936,13 +1940,13 @@ Module_users() {
 		last_logged_user="$(last -1 | head -n 1 | awk {'print $1'})"
 		login_from="$(last -1 | head -n 1 )"
 			login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
-		user_realname="$(awk -F: /$last_logged_user/{'print $5'} /etc/passwd)"
+		user_realname="$(awk -F: /^$last_logged_user\:/{'print $5'} /etc/passwd)"
 		last_login_date="$(date -d "$(last -1 | head -n 1  | \
-					  grep -Eo '[a-Z]{3} [a-Z]{3} [0-9]{2} [0-9:]*')" \
-					  +"%Y-%m-%d %T")"
+		                   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+		                   +"%Y-%m-%d %T")"
 		first_login_date="$(date -d "$(last | grep $last_logged_user | tail -n 1 | \
-		              grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
-		              +"%Y-%m-%d %T")"
+		                   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+		                   +"%Y-%m-%d %T")"
 		login_count="$(last | grep $last_logged_user | wc -l)"
 
 
@@ -2003,8 +2007,6 @@ Module_users() {
 				else
 					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%count\n"
 					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%-----\n"
-
-
 				fi
 			fi
 		fi
@@ -2018,7 +2020,7 @@ Module_users() {
 		for user in $users; do
 
 			unset last_logged_user user_realname user_uid user_unixname \
-			      last_login_date login_from \
+			      last_login_date login_from user_gid \
 			      first_login_date login_count
 
 			# get the full username (user_fullname)
@@ -2030,7 +2032,7 @@ Module_users() {
 			if [ ${#user} -ge 8 ]; then
 				# parse special chars to meta-chars
 				user_unixname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
-				user_unixname="$(grep -m 1 -Eoa "$user_fullname[a-zA-Z0-9\\\+]*" \
+				user_unixname="$(grep -m 1 -Eoa "$user_unixname[a-zA-Z0-9\\\+]*" \
 				                 ${wtmp_file} | uniq)"
 			else
 				user_unixname="$user"
@@ -2039,8 +2041,9 @@ Module_users() {
 
 			# get the real name and uid from 'getent passwd'
 			if [ -e "$passwd_tmp" ]; then
-				user_realname="$(awk -F: /$user/{'print $5'} "$passwd_tmp")"
-				user_uid="$(awk -F: /$user/{'print $3'} "$passwd_tmp")"
+				user_realname="$(awk -F: /^$user\:/{'print $5'} "$passwd_tmp")"
+				user_uid="$(awk -F: /^$user\:/{'print $3'} "$passwd_tmp")"
+				user_gid="$(awk -F: /^$user\:/{'print $4'} "$passwd_tmp")"
 			fi
 
 
@@ -2081,6 +2084,8 @@ Module_users() {
 				add_values       "real name: $user_realname"
 				[ "$user_uid" ] && 
 				add_values       "uid: $user_uid"
+				[ "$user_gid" ] && 
+				add_values       "gid: $user_gid"
 				add_values       "first login date: $first_login_date"
 				add_values       "last login date: $last_login_date"
 				add_values       "login count: $login_count"
@@ -2090,6 +2095,7 @@ Module_users() {
 				add_values "$user_unixname"
 				[ ! "$user_realname" ] && user_realname=" "
 				[ ! "$user_uid" ] && user_uid=" "
+				[ ! "$user_gid" ] && user_gid=" "
 				add_values "$user_uid"
 				add_values "$user_realname"
 				add_values "$first_login_date"
