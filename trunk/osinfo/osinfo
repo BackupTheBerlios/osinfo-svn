@@ -169,10 +169,9 @@ if [ "$#" -gt 0 ]; then
 				lanforce=1
 				shift 1
 				;;
-			# TODO: This seems to need --xml too. After all cmd args are passed check for
-			# TODO: "[ $netcat -eq 1 ] && [ $usexml -eq 0 ]; then errormessage" (or something like that).
 			'--nc'|'--netcat')
 				if [ "$2" ] && [ "$3" ]; then
+					usexml=1
 					netcat=1
 					HOST="$2"
 					PORT="$3"
@@ -255,6 +254,7 @@ function print_xml_header () {
 		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
 		xml_tag_start "${appname}" >> "${XMLFILE}"
 		XML_INDENT=1
+		xml_param_tag 'version' "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
 
 	fi
 }
@@ -582,6 +582,11 @@ function print_xml {
 		case $idtag in
 
 			'value_footer')
+				## add indentation
+				for indent in $(seq 1 1 $XML_INDENT); do
+					echo -ne "\t" >> "${XMLFILE}"
+				done
+
 				# strip tag and discard the xml code tag
 				item="$(sed s/%value_footer%// <<< "${item}" )"
 				# send the preceding value and the footer to xmlfile.
