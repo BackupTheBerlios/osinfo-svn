@@ -1761,8 +1761,8 @@ Module_terminal() {
 	add_values    "$TERM"
 
 	# TODO
-	add_attribute "Terminal encoding"
-	add_values    "?"
+	#add_attribute "Terminal encoding"
+	#add_values    "?"
 
 	add_attribute "Terminal speed"
 	add_values    "$(stty speed)"
@@ -1833,6 +1833,14 @@ Module_users() {
 	      user_fullname user_unixname groups user_home user_shell wtmp_begin session_id
 	local wtmp_file="/var/log/wtmp"
 
+	if [ ! "$(last 2>/dev/null)" ] || \
+	   [ ! -s ${wtmp_file} ]; then # last gives nothing but an error, or
+		                           # the wtmp file doesn't exist or is empty
+		info	"\n${wtmp_file} does not exist or is empty. Cannot parse past user data. " \
+		        "If this is unintentional, submit a bug and provide the location of your wtmp file."
+		unset wtmp_file
+	fi
+
 	passwd_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 	if [ -w $error_log ]; then
 		getent passwd > "$passwd_tmp" 2>> "$error_log"
@@ -1846,12 +1854,11 @@ Module_users() {
 	get_user_data "$(whoami)"
 	user_uid="$(id -u)"
 	user_gid="$(id -g)"
-	last_login_date="$(date -d "$(last | grep -m 1 $(whoami) | \
+	last_login_date="$(date -d "$(last 2>/dev/null | grep -m 1 $(whoami) | \
 		   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
 		   +"%Y-%m-%d %T")"
 
 	print_current_user_data
-	unset_user_data
 
 
 	###############################
@@ -1859,8 +1866,6 @@ Module_users() {
 	###
 	if [ ! -s ${wtmp_file} ]; then 
 		flush_values
-		info	"\n${wtmp_file} does not exist or is empty. Cannot parse user data."
-		info	"Please submit a bug report, and provide the location of your wtmp file."
 	else
 
 		# get the wtmp log starting point
@@ -1882,30 +1887,34 @@ Module_users() {
 
 			((total_users++))
 
-			# call subfunction to collect the data			
-			get_user_data "$user"
+			# call subfunction to collect the data
+			# if the current user is the same as last user,
+			# do not unset the buffer. speeds up things
+			# when there are a lot of non-local users
+			if [ "$user" != $(whoami) ]; then 
+				unset_user_data				
+				get_user_data "$user"
+			fi
 
 			if [ $total_users -eq 1 ]; then
 			####################################
 			### LAST LOGGED IN USER
 			###
 				print_last_user_data
-				unset_user_data
+			fi
 
-			else
 			#################################
 			### ALL USERS
 			###
 
-				## before printing any user data, print out the header
-				if [ $total_users -eq 2 ]; then
-					print_all_users_header
-				fi
-
-				# output user data
-				print_user_data
-				unset_user_data
+			## before printing any user data, print out the header
+			if [ $total_users -eq 1 ]; then
+				print_all_users_header
 			fi
+
+			# output user data
+			print_user_data
+			unset_user_data
 		done
 	fi
 
@@ -1936,11 +1945,11 @@ get_user_data () {
 
 	# get data from $passwd_tmp
 	if [ -e "$passwd_tmp" ]; then
-		user_uid="$(awk -F: /^$user\:/{'print $3'} "$passwd_tmp")"
-		user_gid="$(awk -F: /^$user\:/{'print $4'} "$passwd_tmp")"
-		user_realname="$(awk -F: /^$user\:/{'print $5'} "$passwd_tmp")"
-		user_home="$(awk -F: /$user/{'print $6'} /etc/passwd)"
-		user_shell="$(awk -F: /$user/{'print $7'} /etc/passwd)"
+		user_uid="$(awk -F: /^$user_unixname\:/{'print $3'} "$passwd_tmp")"
+		user_gid="$(awk -F: /^$user_unixname\:/{'print $4'} "$passwd_tmp")"
+		user_realname="$(awk -F: /^$user_unixname\:/{'print $5'} "$passwd_tmp")"
+		user_home="$(awk -F: /$user_unixname/{'print $6'} "$passwd_tmp")"
+		user_shell="$(awk -F: /$user_unixname/{'print $7'} "$passwd_tmp")"
 	fi
 
 	# get the first and last login date & time
@@ -1962,14 +1971,15 @@ get_user_data () {
 	fi
 
 	# get from where the user last logged in
-	login_from="$(last | grep -m 1 $user )"
+	login_from="$(last 2> /dev/null | grep -m 1 $user )"
 	login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
 
 	# get the login count
-	login_count="$(last | grep $user | wc -l)"
+	login_count="$(last 2> /dev/null | grep $user | wc -l)"
 
-	# get groups, only works for local users
-	groups="$(groups $user 2> /dev/null | awk -F':' {'print $2'} | \
+	# get groups, may only work for local users
+	# and takes a lot of time for remote (ldap) users
+	groups="$(groups $user_unixname 2> /dev/null | awk -F':' {'print $2'} | \
 	          sed 's/^\ // ; s/ /\n/g ' | uniq | tr -s '\n' ' ')"
 
 	# get the default X session
@@ -2096,7 +2106,7 @@ unset_user_data () {
 
 print_current_user_data () {
 	if [ $usexml -eq 1 ]; then
-		add_header  "$user" 'user unixname'
+		add_header  "$user" 'active_user unixname'
 		# lanforce gets special treatment
 		[ $lanforce -eq 1 ] && add_attribute    'Active user' "active_user"
 
@@ -2111,7 +2121,7 @@ print_current_user_data () {
 		add_values       "shell: $user_shell"
 		add_values       "home: $user_home"
 		add_values       "locales: $LC_ALL"
-		add_footer 'user'
+		add_footer 'active_user'
 	
 	else 
 		add_header   "Current user"
