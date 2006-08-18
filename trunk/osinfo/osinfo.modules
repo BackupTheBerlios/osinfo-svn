@@ -1626,7 +1626,7 @@ Module_system() {
 
 	if CheckReq_sensors; then
 		add_attribute "M/B temperature"
-		local mobo_temp="$(sensors | grep -i 'cpu temp' | \
+		local mobo_temp="$(sensors | grep -i 'M/B temp' | \
 		                   grep -Eo '\+[0-9]*[[:punct:]]?[CF]+')"
 		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
 		#add_value_footer "C"
