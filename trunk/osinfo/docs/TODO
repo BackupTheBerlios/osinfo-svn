@@ -7,6 +7,7 @@ FEATURES and FIXES for 0.3:
 *	kernel src location
 *	mod_hdd doesn't work on fedora!
 *	custom <value> xml tags, <value name="foo">bar</value>
+*	sensors output depends on LC_*, remove [:punct:] dependency
 	
 
 FEATURES and FIXES for 0.4:
