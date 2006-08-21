@@ -1140,13 +1140,16 @@ Module_hdd() {
 	# LVM PARTITIONS
 	#	
 	scan_hdd_lvm() {
-
-		# check the device-mapper
+		# check that lvm extensions are in the system
 		if [ ! "$(cat /proc/misc | grep device-mapper)" ]; then
+			# the device-mapper
 			info "Module device-mapper is not installed"
 
-		else
+		elif [ ! "$(type -p vgscan)" ]; then
+			# lvm tools
+			info "Lvm2 tools are not found!"
 
+		else
 			local volgroups volgroup
 
 			# get lvm groups with vgscan
@@ -1334,6 +1337,8 @@ Module_hdd() {
 	###### END OF HDD SUBFUNCTIONS #############
 
 
+########
+# LVM
 # fake module that calls the hdd subfunction
 Module_lvm () {
 	local moduleName="Logical Volumes"
