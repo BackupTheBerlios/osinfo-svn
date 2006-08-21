@@ -199,16 +199,16 @@ extr_node() {
 	TempFiles=("${TempFiles[@]}" "$input_tmp" )
 
 	# add line numbers
-	grep -n . ${input_file} > $input_tmp
+	grep -n . "${input_file}" > "$input_tmp"
 
 	# if a special node closer is not defined, use the node_id
 	[ ! "$node_closer" ] && node_closer="${node_id}"
 
 	# get all matching nodes and node count
-	all_nodes="$(grep  -i "${node_id}" $input_tmp)"
+	all_nodes="$(grep  -i "${node_id}" "$input_tmp")"
 	# NOTE: this uses an extra grep, because '<<<' adds a '\n' and
 	# wc counts an empty variable line length as '1'
-	node_count="$(grep -i "${node_id}" <<< ${all_nodes} | wc -l)"
+	node_count="$(grep -i "${node_id}" <<< "${all_nodes}" | wc -l)"
 
 	if [ $node_count -ge 1 ]; then
 
@@ -1166,9 +1166,9 @@ Module_hdd() {
 
 				# acquire data
 				for volgroup in $volgroups; do
-
+set -x
 					extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
-
+set +x
 					# the format of the lvm (most likely lvm2)
 					format[$volgroup_nr]="$(awk /Format/{'print $2'} $lvm_group_tmp)"
 
@@ -1230,19 +1230,24 @@ Module_hdd() {
 					# do not let previos data affect the column output
 					flush_values
 
-					for lv in $(ls "/dev/$volgroup/"); do
+					scan_lvm_lv "$volgroup"
 
-						scan_lvm_lv "$lv"
+					# print header					
+					if [ $lv_Nr -ge 1 ]; then
 
 						add_header	'' # adds a space into stdout, does not affect xml
 						add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
 						add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
+					fi
 
-						add_attribute   " ${lv}"
-						add_values      "${lv_mntpt}"
-						add_values      "${lv_blocks}"
-						add_values      "$(hdd_human_readable ${lv_free})"
-						add_values      "${lv_fs}"
+					# print data
+					for lv_nr in $(seq 0 1 $(($lv_Nr-1))); do
+
+						add_attribute   " ${lv_name[lv_nr]}"
+						add_values      "${lv_mntpt[lv_nr]}"
+						add_values      "${lv_blocks[lv_nr]}"
+						add_values      "$(hdd_human_readable ${lv_free[lv_nr]})"
+						add_values      "${lv_fs[lv_nr]}"
 
 						unset lv_mntpt lv_blocks lv_free lv_fs
 
@@ -1256,37 +1261,67 @@ Module_hdd() {
 		fi
 	}
 
+	# scan LVM logical volume data
 	scan_lvm_lv() {
-		local lv="$1"
+		lvm_lv_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		lvm_lv_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$lvm_lv_tmp" "$lvm_lv_full_tmp" )
+		lvdisplay -v 2>/dev/null > $lvm_lv_full_tmp
+
+		local volgroup="$1"
+
 		lv_free=" "
+		lv_Nr="$(grep -i 'VG Name'  $lvm_lv_full_tmp | grep "$volgroup" | wc -l)"
 
-		# use df for the data source
-		if [ "$(df -Plk | grep ${lv})" ]; then
-			local df_output="$(df -Plk | grep -A 1 ${lv})"
 
-			# locate the mountpoint
-			lv_mntpt="$(awk {'print $NF'} <<< $df_output)"
+		for lv_nr in $(seq 0 1 $(($lv_Nr-1))); do
 
-			# free space
-			lv_free="$(awk {'print $4'} <<< "$df_output")"
+			# get the l.volume names
+			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_full_tmp | \
+			                   dog -l $(($lv_nr+1)))"
+							# FIXME: replace dog with sed!
 
-		elif [ "$(swapon -s | grep ${lv})" ]; then
-			# mark 'swap' as mountpoint for swap partitions, if they're in use
-			lv_mntpt="swap"
+			# get the node name for extr_node()
+			node_name="$(grep 'LV Name' $lvm_lv_full_tmp | \
+			             grep ${lv_name[$lv_nr]})"
 
-		else # unmounted
-			lv_mntpt="-"
-		fi
+			# extract the logvol info
+			extr_node "$node_name" $lvm_lv_full_tmp 'LV Name' >  $lvm_lv_tmp
+			unset node_name
 
-		#TODO: blocks
-		lv_blocks=" "
+			# physical device node
+			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_tmp )"
 
-		#TODO: filesystem
-		lv_fs=" "
+			# use df for the data source
+			if [ "$(df -Plk | grep ${lv_name[$lv_nr]})" ]; then
+				local df_output="$(df -Plk | grep -A 1 ${lv_name[$lv_nr]})"
 
+				# locate the mountpoint
+				lv_mntpt[$lv_nr]="$(awk {'print $NF'} <<< $df_output)"
+
+				# free space
+				lv_free[$lv_nr]="$(awk {'print $4'} <<< "$df_output")"
+
+				unset df_output
+
+			elif [ "$(swapon -s | grep ${lv_name[$lv_nr]})" ]; then
+				# mark 'swap' as mountpoint for swap partitions, if they're in use
+				lv_mntpt[$lv_nr]="swap"
+
+			else # unmounted
+				lv_mntpt[$lv_nr]="-"
+			fi
+
+			#TODO: blocks
+			lv_blocks[$lv_nr]=" "
+
+			#TODO: filesystem
+			lv_fs[$lv_nr]=" "
+
+		done
 	}
+	###### END OF HDD SUBFUNCTIONS #############
 
-###### END OF HDD SUBFUNCTIONS #############
 
 # fake module that calls the hdd subfunction
 Module_lvm () {
