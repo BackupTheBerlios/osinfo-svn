@@ -75,6 +75,8 @@ BUGS
 	See docs/TODO in the source code.
 	Hopefully most bugs are fixed in 0.3.
 
+	o Module LVM contains some known bugs.
+
 AUTHORS
 	Written by Arvid Norlander and Mikael Lammentausta
 	

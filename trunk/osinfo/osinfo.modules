@@ -1245,7 +1245,7 @@ Module_hdd() {
 
 						add_attribute   " ${lv_name[lv_nr]}"
 						add_values      "${lv_mntpt[lv_nr]}"
-						add_values      "${lv_blocks[lv_nr]}"
+						add_values      "$(hdd_human_readable ${lv_blocks[lv_nr]})"
 						add_values      "$(hdd_human_readable ${lv_free[lv_nr]})"
 						add_values      "${lv_fs[lv_nr]}"
 
@@ -1272,7 +1272,6 @@ Module_hdd() {
 		local kernel_mtab="/proc/mounts"
 		local system_mtab="/etc/mtab"
 
-		lv_free=" "
 		lv_Nr="$(grep -i 'VG Name'  $lvm_lv_full_tmp | grep "$volgroup" | wc -l)"
 
 
@@ -1294,7 +1293,7 @@ Module_hdd() {
 			# physical device node
 			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_tmp )"
 
-			# use df for the data source
+			# use kernel mtab for the data source
 			if [ "$(grep ${lv_name[$lv_nr]} "$kernel_mtab")" ]; then
 
 				# locate the mountpoint
@@ -1306,19 +1305,29 @@ Module_hdd() {
 				lv_free[$lv_nr]="$(df -Plk | grep ${lv_mntpt[$lv_nr]} | \
 				                   awk {'print $4'} )"
 
-			elif [ "$(swapon -s | grep ${lv_name[$lv_nr]})" ]; then
-				# mark 'swap' as mountpoint for swap partitions, if they're in use
-				lv_mntpt[$lv_nr]="swap"
+				# filesystem
+				lv_fs[$lv_nr]="$(grep -i ${lv_name[$lv_nr]} "$kernel_mtab" | \
+				                 awk {'print $3'})"
+
+				#TODO: blocks
+				lv_blocks[$lv_nr]="$(df -Plk | grep  ${lv_mntpt[$lv_nr]} | \
+				                      awk {'print $2'} )"
 
 			else # unmounted
+
 				lv_mntpt[$lv_nr]="-"
+				lv_blocks[$lv_nr]=" "
+				lv_free[$lv_nr]=" "
+				lv_fs[$lv_nr]=" "
+
+				if [ "$(swapon -s | grep ${lv_name[$lv_nr]})" ]; then
+					# mark 'swap' as mountpoint for swap partitions,
+					# if they're in use.
+					# FIXME: since swapon uses the devmapper name,
+					# the grep above is wrong.
+					lv_mntpt[$lv_nr]="swap"
+				fi
 			fi
-
-			#TODO: blocks
-			lv_blocks[$lv_nr]=" "
-
-			#TODO: filesystem
-			lv_fs[$lv_nr]=" "
 
 		done
 	}
