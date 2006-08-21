@@ -783,44 +783,48 @@ Module_hdd() {
 	hdd_human_readable() {
 		local value="${1}"
 
-		if [ ! "$2" ]; then
-			local digits=1
-		else
-			local digits="${2}"
+		# check if the input if proper
+		if [ "$(grep [0-9] <<< $value)" ]; then
+
+			if [ ! "$2" ]; then
+				local digits=1
+			else
+				local digits="${2}"
+			fi
+
+			# dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
+			case $(bc -s <<< ${value}/1024 | wc -m ) in
+				'1'|'2'|'3'|'4')
+					local dim='MB'
+					local denominator="1024"
+					;;
+				'5'|'6'|'7')
+					local dim='GB'
+					local denominator='1024^2'
+					;;
+				'8'|'9'|'10')
+					local dim='TB'
+					local denominator="1024^3"
+					;;
+				'11'|'12'|'13')
+					local dim='PB'
+					local denominator="1024^4"
+					;;
+				*)
+					local dim='kB'
+					local denominator="1"
+					;;
+			esac
+
+			local hdd_val="$(bc -s <<< scale=$digits\;${value}/${denominator}) $dim"
+
+			# check if val<1
+			if [ "${hdd_val:0:1}" == "." ]; then
+				hdd_val="0${hdd_val}"
+			fi
+
+			echo "${hdd_val}"
 		fi
-
-		# dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
-		case $(bc -s <<< ${value}/1024 | wc -m ) in
-			'1'|'2'|'3'|'4')
-				local dim='MB'
-				local denominator="1024"
-				;;
-			'5'|'6'|'7')
-				local dim='GB'
-				local denominator='1024^2'
-				;;
-			'8'|'9'|'10')
-				local dim='TB'
-				local denominator="1024^3"
-				;;
-			'11'|'12'|'13')
-				local dim='PB'
-				local denominator="1024^4"
-				;;
-			*)
-				local dim='kB'
-				local denominator="1"
-				;;
-		esac
-
-		local hdd_val="$(bc -s <<< scale=$digits\;${value}/${denominator}) $dim"
-
-		# check if val<1
-		if [ "${hdd_val:0:1}" == "." ]; then
-			hdd_val="0${hdd_val}"
-		fi
-
-		echo "${hdd_val}"
 	}
 
 
@@ -1156,7 +1160,8 @@ Module_hdd() {
 				vgdisplay -v 2>/dev/null > $lvm_full_tmp
 
 				# information is stored into arrays
-				local format pv vg_size pe_size vg_size_dimension pe_size_dimension
+				local format pv vg_size pe_size vg_size_dimension pe_size_dimension \
+				      vg_uuid
 				local volgroup_nr=0
 
 				# acquire data
@@ -1165,12 +1170,10 @@ Module_hdd() {
 					extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
 
 					# the format of the lvm (most likely lvm2)
-					format[$volgroup_nr]="$(grep -i format $lvm_group_tmp | \
-					                         awk {'print $2'})"
+					format[$volgroup_nr]="$(awk /Format/{'print $2'} $lvm_group_tmp)"
 
 					# physical volume
-					pv[$volgroup_nr]="$(grep -i 'PV name' $lvm_group_tmp | \
-					                 awk {'print $3'})"
+					pv[$volgroup_nr]="$(awk /PV\ Name/{'print $3'} $lvm_group_tmp)"
 
 					# VG size
 					vg_size[$volgroup_nr]="$(awk /VG\ Size/{'print $3'} \
@@ -1183,6 +1186,14 @@ Module_hdd() {
 					                         $lvm_group_tmp)"
 					pe_size_dimension[$volgroup_nr]="$(awk /PE\ Size/{'print $4'} \
 					                                   $lvm_group_tmp)"
+
+					# UUID
+					vg_uuid[$volgroup_nr]="$(awk /VG\ UUID/{'print $3'} \
+					                         $lvm_group_tmp)"
+
+					# Logical Volumes
+					lv_nr[$volgroup_nr]="$(awk /Cur\ LV/{'print $3'} \
+					                       $lvm_group_tmp)"					
 
 					((volgroup_nr++))
 
@@ -1206,9 +1217,36 @@ Module_hdd() {
 					add_values       "${vg_size[$volgroup_nr]}"
 					add_value_footer "${vg_size_dimension[$volgroup_nr]}"
 
-					add_attribute    'PE size'
-					add_values       "${pe_size[$volgroup_nr]}"
-					add_value_footer "${pe_size_dimension[$volgroup_nr]}"
+					add_attribute    'VG UUID'
+					add_values       "${vg_uuid[$volgroup_nr]}"
+
+					#add_attribute    'PE size'
+					#add_values       "${pe_size[$volgroup_nr]}"
+					#add_value_footer "${pe_size_dimension[$volgroup_nr]}"
+
+					add_attribute    'Logical Volumes'
+					add_values       "${lv_nr[$volgroup_nr]}"
+
+					# do not let previos data affect the column output
+					flush_values
+
+					for lv in $(ls "/dev/$volgroup/"); do
+
+						scan_lvm_lv "$lv"
+
+						add_header	'' # adds a space into stdout, does not affect xml
+						add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
+						add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
+
+						add_attribute   " ${lv}"
+						add_values      "${lv_mntpt}"
+						add_values      "${lv_blocks}"
+						add_values      "$(hdd_human_readable ${lv_free})"
+						add_values      "${lv_fs}"
+
+						unset lv_mntpt lv_blocks lv_free lv_fs
+
+					done
 
 					((volgroup_nr++))
 
@@ -1216,6 +1254,36 @@ Module_hdd() {
 
 			fi
 		fi
+	}
+
+	scan_lvm_lv() {
+		local lv="$1"
+		lv_free=" "
+
+		# use df for the data source
+		if [ "$(df -Plk | grep ${lv})" ]; then
+			local df_output="$(df -Plk | grep -A 1 ${lv})"
+
+			# locate the mountpoint
+			lv_mntpt="$(awk {'print $NF'} <<< $df_output)"
+
+			# free space
+			lv_free="$(awk {'print $4'} <<< "$df_output")"
+
+		elif [ "$(swapon -s | grep ${lv})" ]; then
+			# mark 'swap' as mountpoint for swap partitions, if they're in use
+			lv_mntpt="swap"
+
+		else # unmounted
+			lv_mntpt="-"
+		fi
+
+		#TODO: blocks
+		lv_blocks=" "
+
+		#TODO: filesystem
+		lv_fs=" "
+
 	}
 
 ###### END OF HDD SUBFUNCTIONS #############
