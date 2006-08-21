@@ -58,6 +58,9 @@ DEPENDENCIES
 	
 	 hdd:
 	 o util-linux (fdisk), df, udev, smartmontools (optional), hdparm (optional)
+
+	 lvm:
+	 o device-mapper lvm2 
 	
 	 devices: 
 	 o lspci

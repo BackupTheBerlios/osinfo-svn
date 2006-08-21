@@ -1134,43 +1134,87 @@ Module_hdd() {
 
 	#######################
 	# LVM PARTITIONS
-	#
+	#	
 	scan_hdd_lvm() {
 
-		local volgroups volgroup
+		# check the device-mapper
+		if [ ! "$(cat /proc/misc | grep device-mapper)" ]; then
+			info "Module device-mapper is not installed"
 
-		# get lvm groups with vgscan
-		volgroups="$(vgscan | grep -i found | \
-		             grep -Eo '\"[a-zA-Z0-9]+\"' | sed 's/\"//g')"
+		else
 
-		if [ "$volgroups" != "" ]; then
+			local volgroups volgroup
 
-			lvm_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-			lvm_group_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-			TempFiles=("${TempFiles[@]}" "$lvm_full_tmp" "$lvm_group_tmp" )
+			# get lvm groups with vgscan
+			volgroups="$(vgscan | grep -i found | \
+						 grep -Eo '\"[a-zA-Z0-9]+\"' | sed 's/\"//g')"
 
-			vgdisplay -v 2>/dev/null > $lvm_full_tmp
+			if [ "$volgroups" != "" ]; then
+				lvm_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+				lvm_group_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+				TempFiles=("${TempFiles[@]}" "$lvm_full_tmp" "$lvm_group_tmp" )
+				vgdisplay -v 2>/dev/null > $lvm_full_tmp
 
-			#add_attribute	"Volume groups" "volume_groups"
+				# information is stored into arrays
+				local format pv vg_size pe_size vg_size_dimension pe_size_dimension
+				local volgroup_nr=0
 
-			for volgroup in $volgroups; do
+				# acquire data
+				for volgroup in $volgroups; do
 
-				extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
+					extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
 
-				add_header	$volgroup  "logical volume"
+					# the format of the lvm (most likely lvm2)
+					format[$volgroup_nr]="$(grep -i format $lvm_group_tmp | \
+					                         awk {'print $2'})"
 
-				add_attribute    'Format' "format"
-				add_values       "$(grep -i format $lvm_group_tmp | awk {'print $2'})"
+					# physical volume
+					pv[$volgroup_nr]="$(grep -i 'PV name' $lvm_group_tmp | \
+					                 awk {'print $3'})"
 
-				add_attribute    'Physical volume'
-				add_values       "$(grep -i 'PV name' $lvm_group_tmp | awk {'print $3'})"
+					# VG size
+					vg_size[$volgroup_nr]="$(awk /VG\ Size/{'print $3'} \
+					                         $lvm_group_tmp)"
+					vg_size_dimension[$volgroup_nr]="$(awk /VG\ Size/{'print $4'} \
+					                                   $lvm_group_tmp)"
+					
+					# PE size
+					pe_size[$volgroup_nr]="$(awk /PE\ Size/{'print $3'} \
+					                         $lvm_group_tmp)"
+					pe_size_dimension[$volgroup_nr]="$(awk /PE\ Size/{'print $4'} \
+					                                   $lvm_group_tmp)"
 
-				add_attribute    'VG size'
-				add_attribute    'PE size'
+					((volgroup_nr++))
 
+				done
 
-			done
+				# print data
+				#add_attribute	"Volume groups" "volume_groups"
+				volgroup_nr=0
+				
+				for volgroup in $volgroups; do
 
+					add_header	$volgroup  "logical volume"
+
+					add_attribute    'Format' "format"
+					add_values       "${format[$volgroup_nr]}"
+					
+					add_attribute    'Physical volume'
+					add_values       "${pv[$volgroup_nr]}"
+
+					add_attribute    'VG size'
+					add_values       "${vg_size[$volgroup_nr]}"
+					add_value_footer "${vg_size_dimension[$volgroup_nr]}"
+
+					add_attribute    'PE size'
+					add_values       "${pe_size[$volgroup_nr]}"
+					add_value_footer "${pe_size_dimension[$volgroup_nr]}"
+
+					((volgroup_nr++))
+
+				done
+
+			fi
 		fi
 	}
 
