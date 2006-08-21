@@ -1909,6 +1909,26 @@ Module_processor() {
 		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
 		                     awk -F': ' {'print $2'})"
 
+		if CheckReq_lshw && CheckReq_root; then
+
+			local cpu_width
+
+			lshw_xml
+			cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
+
+			extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
+
+			#set -x
+			# TODO: place the proper 'sed' here vv
+			#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
+			#cpu_width_dimension ; grep units....
+			#set +x
+
+			#clock
+
+		fi
+
 		[ $cpu_count -gt 1 ] &&	add_footer
 	done
 
