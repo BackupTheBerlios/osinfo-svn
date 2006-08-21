@@ -1166,9 +1166,9 @@ Module_hdd() {
 
 				# acquire data
 				for volgroup in $volgroups; do
-set -x
+
 					extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
-set +x
+
 					# the format of the lvm (most likely lvm2)
 					format[$volgroup_nr]="$(awk /Format/{'print $2'} $lvm_group_tmp)"
 
@@ -1269,6 +1269,8 @@ set +x
 		lvdisplay -v 2>/dev/null > $lvm_lv_full_tmp
 
 		local volgroup="$1"
+		local kernel_mtab="/proc/mounts"
+		local system_mtab="/etc/mtab"
 
 		lv_free=" "
 		lv_Nr="$(grep -i 'VG Name'  $lvm_lv_full_tmp | grep "$volgroup" | wc -l)"
@@ -1293,16 +1295,16 @@ set +x
 			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_tmp )"
 
 			# use df for the data source
-			if [ "$(df -Plk | grep ${lv_name[$lv_nr]})" ]; then
-				local df_output="$(df -Plk | grep -A 1 ${lv_name[$lv_nr]})"
+			if [ "$(grep ${lv_name[$lv_nr]} "$kernel_mtab")" ]; then
 
 				# locate the mountpoint
-				lv_mntpt[$lv_nr]="$(awk {'print $NF'} <<< $df_output)"
+				lv_mntpt[$lv_nr]="$(grep -i ${lv_name[$lv_nr]} "$kernel_mtab" | \
+				                    awk {'print $2'})"
 
-				# free space
-				lv_free[$lv_nr]="$(awk {'print $4'} <<< "$df_output")"
-
-				unset df_output
+				# free space, since system mtab and kernel mtab use different
+				# device names, we need to check that they match via mntpt
+				lv_free[$lv_nr]="$(df -Plk | grep ${lv_mntpt[$lv_nr]} | \
+				                   awk {'print $4'} )"
 
 			elif [ "$(swapon -s | grep ${lv_name[$lv_nr]})" ]; then
 				# mark 'swap' as mountpoint for swap partitions, if they're in use
