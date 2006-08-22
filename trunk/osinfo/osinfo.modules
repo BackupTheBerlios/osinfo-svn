@@ -2939,17 +2939,20 @@ Module_applications() {
 	local moduleName="Applications"
 	module_header "${moduleName}"
 
-	local APPLICATIONS app
+	local APPLICATIONS app 
+	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
+
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
 
-		APPLICATIONS="X kde-config gnome-about x11vnc \
-			bash csh ksh \
-			gcc make \
-			ls awk sed grep gzip \
-			perl python java-config \
-			apache2 php mysql smbd cups-config \
-			udevinfo lspci lshw dmidecode smartctl hdparm"
+		APPLICATIONS="Graphical_interface: X kde-config gnome-about \
+			Shells: bash csh ksh \
+			Gnu: gcc \
+			System: make unsermake ls udevinfo \
+			Tools: awk sed grep gzip lspci lshw dmidecode smartctl hdparm \
+			Languages: perl python java-config ruby php \
+			Servers: apache2 mysql smbd cups-config \
+			Miscellaneous: x11vnc"
 
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
@@ -2962,76 +2965,87 @@ Module_applications() {
 
 	fi
 
+
 	## Write the header for output
 	if [ $usexml = 1 ]; then
 		add_attribute "Applications" 'software'
 	fi
 
-	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
+
 	## Process all applications
-	for app in ${APPLICATIONS}; do
+	for app in $APPLICATIONS; do
+		if [ $(grep \: <<< $app) ]; then
+		      add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)\n"
 
-		if [ "$(type -p $app)" ]; then # it is installed
-			case "$app" in
-				'perl')
-					add_values  "Perl $($app --version 2>&1 | grep 'perl, v' | \
-					                    grep -Eo 'v[ A-Za-z0-9.-]*')\n"
-					;;
-				'python')
-					add_values  "$($app -V 2>&1 | head -n 1 )\n"
-					;;
-				'X')
-					add_values  "$($app -version 2>&1 | grep Revision)\n"
-					;;
-				'kde-config')
-					add_values  "$($app -version 2>&1 | grep KDE)\n"
-					;;
-				'gnome-about')
-					add_values  "$($app --version 2>&1 )\n"
-					;;
-				'apache2'|'apache')
-					add_values  "$($app -V | head -n 1 | awk -F': ' {'print $2'})\n"
-					;;
-				'cups-config')
-					add_values  "Cups $($app --version 2>&1 )\n"
-					;;
-				'smbd')
-					add_values  "Samba $($app -V 2>&1 )\n"
-					;;
-				'udevinfo')
-					add_values  "$($app -V 2>&1 )\n"
-					;;
-				'awk')
-					add_values  "$($app -W version 2>&1 | head -n 1 )\n"
-					;;
-				'dmidecode')
-					add_values  "dmidecode $(dmidecode -V 2> /dev/null )\n"
-					;;
-				'java-config')
-					add_values "Java $(java-config -f)\n"
-					;;
-				*)
-					add_values  "$($app --version 2>&1 | grep '\w' | head -n 1)\n"
-					;;
-
-				'lspci')
-					info "please install pciutils ${missing_ERRMSG}"
-					;;
-				'lshw')
-					info "please install lshw ${missing_ERRMSG}"
-					;;
-				'smartctl')
-					info "please install smartmontools ${missing_ERRMSG}"
-					;;
-				'dmidecode')
-					info "please install dmidecode ${missing_ERRMSG}"
-					;;
-			esac
+		elif [ "$(type -p $app)" ]; then # it is installed
+			add_values       "\t$(get_version $app)"
+			flush_values
+#		      add_footer
 		fi
 	done
-	#module_footer
-	flush_values
 }
+
+	###########################################
+	# helper functions for applications module
+	get_version() {
+		local app="${1}"
+		case "$app" in
+			'perl')
+				echo  "Perl" $($app --version 2>&1 | grep 'perl, v' | \
+							   grep -Eo 'v[ A-Za-z0-9.-]*')
+				;;
+			'python')
+				echo  "$($app -V 2>&1 | head -n 1 )"
+				;;
+			'X')
+				echo $($app -version 2>&1 | grep Revision)
+				;;
+			'kde-config')
+				echo  $($app -version 2>&1 | grep KDE)
+				;;
+			'gnome-about')
+				echo  $($app --version 2>&1 )
+				;;
+			'apache2'|'apache')
+				echo  "$($app -V | head -n 1 | awk -F': ' {'print $2'})"
+				;;
+			'cups-config')
+				echo  "Cups $($app --version 2>&1 )"
+				;;
+			'smbd')
+				echo  "Samba $($app -V 2>&1 )"
+				;;
+			'udevinfo')
+				echo  "$($app -V 2>&1 )"
+				;;
+			'awk')
+				echo  "$($app -W version 2>&1 | head -n 1 )"
+				;;
+			'dmidecode')
+				echo  "dmidecode $(dmidecode -V 2> /dev/null )"
+				;;
+			'java-config')
+				echo "Java $(java-config -f)"
+				;;
+			*)
+				echo  "$($app --version 2>&1 | grep '\w' | head -n 1)"
+				;;
+
+			'lspci')
+				info "please install pciutils ${missing_ERRMSG}"
+				;;
+			'lshw')
+				info "please install lshw ${missing_ERRMSG}"
+				;;
+			'smartctl')
+				info "please install smartmontools ${missing_ERRMSG}"
+				;;
+			'dmidecode')
+				info "please install dmidecode ${missing_ERRMSG}"
+				;;
+		esac
+	}
+	#########################
 
 
 #######################
