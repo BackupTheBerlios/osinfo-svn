@@ -2947,12 +2947,16 @@ Module_applications() {
 
 		APPLICATIONS="Graphical_interface: X kde-config gnome-about \
 			Shells: bash csh ksh \
-			Gnu: gcc \
+			Compilers: gcc gcj icc \
 			System: make unsermake ls udevinfo \
 			Tools: awk sed grep gzip lspci lshw dmidecode smartctl hdparm \
 			Languages: perl python java-config ruby php \
-			Servers: apache2 mysql smbd cups-config \
+			Servers: apache2 mysql ssh smbd cups-config \
 			Miscellaneous: x11vnc"
+
+		UNTESTED="Compilers: ccc cxx cfal erlang fpc gforth ghc gnat gnat-gcc gnat-gpl \
+			gpc icc ifc open-cobol \
+			Tools: mono"
 
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
@@ -3026,6 +3030,12 @@ Module_applications() {
 				;;
 			'java-config')
 				echo "Java $(java-config -f)"
+				;;
+			'ssh')
+				echo "$(ssh -V 2>&1 /dev/null)"
+				;;
+			'icc')
+				echo "$(icc 2>&1 -V | head -n 1)"
 				;;
 			*)
 				echo  "$($app --version 2>&1 | grep '\w' | head -n 1)"
