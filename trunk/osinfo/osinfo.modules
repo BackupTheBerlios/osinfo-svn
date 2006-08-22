@@ -2974,15 +2974,15 @@ Module_applications() {
 
 	## Process all applications
 	for app in $APPLICATIONS; do
-		if [ $(grep \: <<< $app) ]; then
+		if [ $(grep \: <<< $app) ] && [ $usexml -eq 0 ]; then
 		      add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)\n"
 
 		elif [ "$(type -p $app)" ]; then # it is installed
-			add_values       "\t$(get_version $app)"
-			flush_values
+			add_values       "\t$(get_version $app)\n"
 #		      add_footer
 		fi
 	done
+	flush_values
 }
 
 	###########################################
