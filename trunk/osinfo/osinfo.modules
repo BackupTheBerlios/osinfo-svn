@@ -2939,7 +2939,7 @@ Module_applications() {
 	local moduleName="Applications"
 	module_header "${moduleName}"
 
-	local APPLICATIONS app 
+	local APPLICATIONS app versionstring
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
 
 	## Applications to look for..
@@ -2949,11 +2949,11 @@ Module_applications() {
 		              fluxbox fvwm2 enlightenment \
 			Shells: bash csh ksh \
 			Compilers: gcc gcj icc \
-			System: make unsermake ls udevinfo \
-			Tools: awk sed grep gzip lspci lshw dmidecode smartctl hdparm \
+			System: udevinfo \
+			Userspace_tools: make unsermake awk sed grep ls gzip lspci lshw dmidecode smartctl hdparm \
 			Languages: perl python java-config ruby php \
 			Servers: apache2 mysql ssh smbd cups-config \
-			Miscellaneous: x11vnc nagios"
+			Miscellaneous: x11vnc nagios firefox thunderbird mozilla"
 
 		UNTESTED="Graphical_interface: \
 			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
@@ -2983,7 +2983,6 @@ Module_applications() {
 
 	## Process all applications
 	for app in $APPLICATIONS; do
-
 		# print the category to stdout
 		if [ $(grep \: <<< $app) ] && [ $usexml -eq 0 ]; then
 			add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)"
@@ -2991,7 +2990,13 @@ Module_applications() {
 
 		# use the subfunction to get the version information
 		elif [ "$(type -p $app)" ]; then # it is installed
-			add_values       "\t$(get_version $app)\n"
+			versionstring="$(get_version $app)"
+			# if the application doesn't tell what it is, echo it
+			if [ "$(grep -i ${app} <<< ${versionstring})" ]; then
+				add_values	"\t${versionstring}\n"
+			else
+				add_values	"\t${versionstring} ($app)\n"
+			fi
 		fi
 	done
 
