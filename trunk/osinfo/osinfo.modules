@@ -2955,8 +2955,11 @@ Module_applications() {
 			Servers: apache2 mysql ssh smbd cups-config \
 			Miscellaneous: x11vnc"
 
-		UNTESTED="Compilers: ccc cxx cfal erlang fpc gforth ghc gnat gnat-gcc gnat-gpl \
-			gpc icc ifc open-cobol \
+		UNTESTED="Graphical_interface: \
+			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
+		               gnat-gcc gnat-gpl gpc icc ifc open-cobol \
+			Shells: ash ccsh dash dsh esh fish mksh pdksh pdsh posh psh rrs \
+			        rssh sandboxshell sash scsh shish smrsh tcsh zsh \
 			Tools: mono"
 
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
