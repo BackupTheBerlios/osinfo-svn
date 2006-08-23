@@ -2953,7 +2953,7 @@ Module_applications() {
 			Tools: awk sed grep gzip lspci lshw dmidecode smartctl hdparm \
 			Languages: perl python java-config ruby php \
 			Servers: apache2 mysql ssh smbd cups-config \
-			Miscellaneous: x11vnc"
+			Miscellaneous: x11vnc nagios"
 
 		UNTESTED="Graphical_interface: \
 			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
