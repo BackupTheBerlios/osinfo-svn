@@ -3057,6 +3057,9 @@ Module_applications() {
 			'icc')
 				icc 2>&1 -V | head -n 1
 				;;
+			'ls')
+				ls --version | head -n 1 | sed 's/ls// ; s#(\|)\|^\ ##g'
+				;;
 			*)
 				$app --version 2>&1 | grep '\w' | head -n 1
 				;;
