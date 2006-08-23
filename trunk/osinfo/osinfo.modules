@@ -2944,7 +2944,8 @@ Module_applications() {
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
 
-		APPLICATIONS="Graphical_interface: X kde-config gnome-about \
+		APPLICATIONS="Graphical_interface: X kde-config gnome-about xfce4-session \
+		              fluxbox fvwm2 enlightenment \
 			Shells: bash csh ksh \
 			Compilers: gcc gcj icc \
 			System: make unsermake ls udevinfo \
@@ -3013,6 +3014,12 @@ Module_applications() {
 				;;
 			'gnome-about')
 				gnome-about --version 2>&1 | sed 's/gnome-about//'
+				;;
+			'xfce4-session')
+				xfce4-session --version | head -n 1 | sed 's/xfce4-session/Xfce4/'
+				;;
+			'fluxbox')
+				fluxbox -version 2> /dev/null | head -n 1
 				;;
 			'apache2'|'apache')
 				$app -V | head -n 1 | awk -F': ' {'print $2'}
