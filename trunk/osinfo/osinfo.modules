@@ -3003,19 +3003,19 @@ Module_applications() {
 							   grep -Eo 'v[ A-Za-z0-9.-]*')
 				;;
 			'python')
-				echo  "$($app -V 2>&1 | head -n 1 )"
+				python -V 2>&1 | head -n 1 
 				;;
 			'X')
-				echo $($app -version 2>&1 | grep Revision)
+				X -version 2>&1 | grep Revision
 				;;
 			'kde-config')
-				echo  $($app -version 2>&1 | grep KDE)
+				kde-config -version 2>&1 | grep KDE
 				;;
 			'gnome-about')
-				echo  $($app --version 2>&1 | sed 's/gnome-about//')
+				gnome-about --version 2>&1 | sed 's/gnome-about//'
 				;;
 			'apache2'|'apache')
-				echo  "$($app -V | head -n 1 | awk -F': ' {'print $2'})"
+				$app -V | head -n 1 | awk -F': ' {'print $2'}
 				;;
 			'cups-config')
 				echo  "Cups $($app --version 2>&1 )"
@@ -3024,10 +3024,10 @@ Module_applications() {
 				echo  "Samba $($app -V 2>&1 )"
 				;;
 			'udevinfo')
-				echo  "$($app -V 2>&1 )"
+				$app -V 2>&1 
 				;;
 			'awk')
-				echo  "$($app -W version 2>&1 | head -n 1 )"
+				awk -W version 2>&1 | head -n 1 
 				;;
 			'dmidecode')
 				echo  "dmidecode $(dmidecode -V 2> /dev/null )"
@@ -3036,13 +3036,13 @@ Module_applications() {
 				echo "Java $(java-config -f)"
 				;;
 			'ssh')
-				echo "$(ssh -V 2>&1 /dev/null)"
+				ssh -V 2>&1 /dev/null
 				;;
 			'icc')
-				echo "$(icc 2>&1 -V | head -n 1)"
+				icc 2>&1 -V | head -n 1
 				;;
 			*)
-				echo  "$($app --version 2>&1 | grep '\w' | head -n 1)"
+				$app --version 2>&1 | grep '\w' | head -n 1
 				;;
 			'lspci')
 				info "please install pciutils ${missing_ERRMSG}"
