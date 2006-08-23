@@ -1957,7 +1957,6 @@ Module_terminal() {
 	add_attribute "Columns"
 	add_values    "$(stty size | awk '{print $2}')"
 
-	#module_footer
 	flush_values
 }
 
@@ -2960,12 +2959,13 @@ Module_applications() {
 
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
-		APPLICATIONS="X kde-config x11vnc \
-			csh bash ksh \
-			gcc grep gzip \
-			perl python \
-			apache2 php mysql smbd cups-config \
-			lspci lshw smartctl hdparm"
+		APPLICATIONS="Graphical_interface: X kde-config gnome-about \
+			Shells: bash csh ksh \
+			Compilers: gcc gcj icc \
+			Tools: awk sed grep gzip lshw dmidecode lspci lshw smartctl hdparm \
+			Languages: perl python java-config ruby php \
+			Servers: apache2 mysql ssh smbd cups-config \
+			Miscellaneous: x11vnc"
 
 	fi
 
@@ -2978,14 +2978,18 @@ Module_applications() {
 
 	## Process all applications
 	for app in $APPLICATIONS; do
-		if [ $(grep \: <<< $app) ] && [ $usexml -eq 0 ]; then
-		      add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)\n"
 
+		# print the category to stdout
+		if [ $(grep \: <<< $app) ] && [ $usexml -eq 0 ]; then
+			add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)"
+			flush_values
+
+		# use the subfunction to get the version information
 		elif [ "$(type -p $app)" ]; then # it is installed
 			add_values       "\t$(get_version $app)\n"
-#		      add_footer
 		fi
 	done
+
 	flush_values
 }
 
@@ -3008,7 +3012,7 @@ Module_applications() {
 				echo  $($app -version 2>&1 | grep KDE)
 				;;
 			'gnome-about')
-				echo  $($app --version 2>&1 )
+				echo  $($app --version 2>&1 | sed 's/gnome-about//')
 				;;
 			'apache2'|'apache')
 				echo  "$($app -V | head -n 1 | awk -F': ' {'print $2'})"
@@ -3040,7 +3044,6 @@ Module_applications() {
 			*)
 				echo  "$($app --version 2>&1 | grep '\w' | head -n 1)"
 				;;
-
 			'lspci')
 				info "please install pciutils ${missing_ERRMSG}"
 				;;
@@ -3055,7 +3058,7 @@ Module_applications() {
 				;;
 		esac
 	}
-	#########################
+	###########################################
 
 
 #######################
