@@ -619,7 +619,7 @@ Module_hdd() {
 	scan_hdd_common() {
 		local dev_scan="${1}"
 
-		hdd_geometry="$(fdisk -l | grep ${dev_scan} -A 1 | sed -n "2{p;q}")"
+		hdd_geometry="$(fdisk -l | grep ${dev_scan} -A 1 | sed -n "2{p;q;}")"
 
 		# FIXME: couldn't this be simpler?
 		hdd_capacity_label="$(fdisk -l ${dev_scan} | grep ${dev_scan} | \
@@ -1599,7 +1599,7 @@ Module_dmi() {
 #			this="$(grep -in "Handle ${handle_nr}" ${dmi_info}  | \
 #			        awk -F: {'print $1'})"
 #			next="$(grep -n 'Handle' ${dmi_info} | grep -A 1 ${handle_nr} | \
-#			        awk -F: {'print $1'} | sed -n "2{p;q}")"
+#			        awk -F: {'print $1'} | sed -n "2{p;q;}")"
 #			((this++))
 #			((next--)) # this prevents the 'handle' lines from printing
 #
@@ -1764,20 +1764,17 @@ Module_system() {
 	local moduleName="System"
 	module_header "${moduleName}"
 
+	# operating system is set in the SYSTEM variable earlier
 	add_attribute "Operating system"		"os"
-	case $SYSTEM in
-		'Linux'|'linux')
-			[ ! "$distro_id" ] && identify_Linux_distro
-			add_values      "$distro_id $(uname -s) $distro_release"
-		;;
-
-		'FreeBSD'|'freebsd')
-			add_values      "$SYSTEM"
-		;;
-	esac
+	if [ "$(grep -i linux <<< "$SYSTEM")" ]; then
+		[ ! "$distro_id" ] && identify_Linux_distro
+		add_values      "$distro_id $(uname -s) $distro_release"
+	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
+		add_values      "$SYSTEM"
+	fi
 
 	add_attribute "Operating system kernel"	"os_build"
-	add_values    "$(uname -sr)"
+	add_values    "$(uname -sr 2> /dev/null)"
 
 	#add_attribute "System encoding"
 	# this is probably incorrect. determines the default output encoding
@@ -1809,13 +1806,13 @@ Module_kernel() {
 	local kernel_makefile
 
 	add_attribute "Kernel name"
-	add_values    "$(uname -o)"
+	add_values    "$(uname -o 2> /dev/null)"
 
 	add_attribute "Kernel release"		'os_build' #FIXME
-	add_values    "$(uname -r)"
+	add_values    "$(uname -r 2> /dev/null)"
 
 	add_attribute "Kernel version"
-	add_values    "$(uname -v)"
+	add_values    "$(uname -v 2> /dev/null)"
 
 	# Unique kernel name
 	if [ -e "/usr/src/linux" ]; then
@@ -1844,93 +1841,97 @@ Module_processor() {
 
 	local cpunr cpuinfo cpu_count
 
-	cpuinfo="/proc/cpuinfo"
+	[ "$(grep -i linux <<< $SYSTEM)" ] && cpuinfo="/proc/cpuinfo"
+	if [ -e "$cpuinfo" ]; then
 
-	# test if /proc/cpuinfo gives a number for cpu cores.
-	# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
-	# this is a problem with Pentium 4 Hyperthreading cpus, which kernel
-	# treats like two processors
-	if [ ! "$(grep core $cpuinfo)" ]; then
-		cpu_count=1
+		# test if /proc/cpuinfo gives a number for cpu cores.
+		# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
+		# this is a problem with Pentium 4 Hyperthreading cpus, which kernel
+		# treats like two processors
+		if [ ! "$(grep core $cpuinfo)" ]; then
+			cpu_count=1
+		else
+			cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
+		fi
+
+		if [ "$usexml" == 1 ]; then
+			add_attribute "Count"      "processor_count"
+			add_values    $cpu_count
+		fi
+
+		for cpunr in $(seq 1 1 $cpu_count); do
+			[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
+
+			add_attribute     "Vendor"      "processor_vendor"
+			add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+								 awk -F': ' {'print $2'})"
+
+			add_attribute     "Model"       "processor_model"
+			add_values        "$(grep 'model name' ${cpuinfo} | \
+								 sed -n "$cpunr{p;q;}" | awk -F': ' {'print $2'})"
+
+			add_attribute     "Frequency"   "processor_speed"
+			add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+								 awk -F': ' {'print $2'})"
+			add_value_footer  "MHz"
+
+			add_attribute     "Architecture"	"system_type"
+			add_values        "$(uname -m)"
+
+			# temperature and voltage info
+			if CheckReq_sensors; then
+				add_attribute   "Temperature"
+				local cpu_temp="$(sensors | grep -i 'cpu temp' | \
+								  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
+				add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
+
+				add_attribute   "Fan"
+				local cpu_fan="$(sensors | grep -i 'cpu fan' | \
+								  grep -Eo '[0-9]+ RPM')"
+				add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
+				add_value_footer "RPM"
+
+				add_attribute   "Voltage"
+				local voltage="$(sensors | grep -i 'vcore' | \
+								 grep -Eo '\+[0-9. ]*')"
+				add_values       "$(awk  {'print $2'} <<< $voltage)"
+				add_value_footer "V"
+			fi
+
+			add_attribute      "Cache"
+					local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q;}" )"
+					add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
+					add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
+
+			add_attribute     "Stepping"
+			add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+								 awk -F': ' {'print $2'})"
+
+			if CheckReq_lshw && CheckReq_root; then
+
+				local cpu_width
+
+				lshw_xml
+				cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+				TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
+
+				extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
+
+				#set -x
+				# TODO: place the proper 'sed' here vv
+				#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
+				#cpu_width_dimension ; grep units....
+				#set +x
+
+				#clock
+
+			fi
+
+			[ $cpu_count -gt 1 ] &&	add_footer
+		done
 	else
-		cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
+		info "Cpu info could not be found"
 	fi
-
-	if [ "$usexml" == 1 ]; then
-		add_attribute "Count"      "processor_count"
-		add_values    $cpu_count
-	fi
-
-	for cpunr in $(seq 1 1 $cpu_count); do
-		[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
-
-		add_attribute     "Vendor"      "processor_vendor"
-		add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                     awk -F': ' {'print $2'})"
-
-		add_attribute     "Model"       "processor_model"
-		add_values        "$(grep 'model name' ${cpuinfo} | \
-		                     sed -n "$cpunr{p;q}" | awk -F': ' {'print $2'})"
-
-		add_attribute     "Frequency"   "processor_speed"
-		add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                     awk -F': ' {'print $2'})"
-		add_value_footer  "MHz"
-
-		add_attribute     "Architecture"	"system_type"
-		add_values        "$(uname -m)"
-
-		# temperature and voltage info
-		if CheckReq_sensors; then
-			add_attribute   "Temperature"
-			local cpu_temp="$(sensors | grep -i 'cpu temp' | \
-			                  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
-			add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
-
-			add_attribute   "Fan"
-			local cpu_fan="$(sensors | grep -i 'cpu fan' | \
-			                  grep -Eo '[0-9]+ RPM')"
-			add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
-			add_value_footer "RPM"
-
-			add_attribute   "Voltage"
-			local voltage="$(sensors | grep -i 'vcore' | \
-			                 grep -Eo '\+[0-9. ]*')"
-			add_values       "$(awk  {'print $2'} <<< $voltage)"
-			add_value_footer "V"
-		fi
-
-		add_attribute      "Cache"
-				local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q}" )"
-				add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
-				add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
-
-		add_attribute     "Stepping"
-		add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q}" | \
-		                     awk -F': ' {'print $2'})"
-
-		if CheckReq_lshw && CheckReq_root; then
-
-			local cpu_width
-
-			lshw_xml
-			cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-			TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
-
-			extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
-
-			#set -x
-			# TODO: place the proper 'sed' here vv
-			#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
-			#cpu_width_dimension ; grep units....
-			#set +x
-
-			#clock
-
-		fi
-
-		[ $cpu_count -gt 1 ] &&	add_footer
-	done
 
 	flush_values
 }
