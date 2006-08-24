@@ -80,11 +80,11 @@ MODULES_META='all lanforce system cpu apps net'
 
 MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
 MODULES_BSD='system applications terminal network'
-MODULES_BROKEN='printers lvm bus sensors'
+MODULES_BROKEN='printers lvm bus sensors nagios'
 MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors nagios'
 
 
 ################################################################################
@@ -1611,7 +1611,7 @@ Module_dmi() {
 			# extract the handle and string the first line
 			# (%node% identifier that is useless here)
 			extr_node ${handle_desc} ${dmi_info} Handle | \
-				sed -n "2,\${p}" > ${dmi_tmp}
+				sed -n "2,\${p;}" > ${dmi_tmp}
 
 			# because sometimes there's some extra info, head -n 5
 			# TODO: combine grep and sed
@@ -2948,7 +2948,7 @@ Module_applications() {
 
 		APPLICATIONS="Graphical_interface: X kde-config gnome-about xfce4-session \
 		              fluxbox fvwm2 enlightenment \
-			Shells: bash csh dsh fish pdsh rrs tcsh zsh
+			Shells: bash csh dsh fish pdsh rrs tcsh zsh \
 			Compilers: gcc gcj icc \
 			System: udevinfo \
 			Userspace_tools: make unsermake awk sed grep ls gzip lspci lshw dmidecode smartctl hdparm \
@@ -2968,9 +2968,9 @@ Module_applications() {
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
 		APPLICATIONS="Graphical_interface: X kde-config gnome-about \
-			Shells: bash csh ksh \
+			Shells: bash csh dsh fish pdsh rrs tcsh zsh \
 			Compilers: gcc gcj icc \
-			Tools: awk sed grep gzip lshw dmidecode lspci lshw smartctl hdparm \
+			Tools: awk grep gzip lshw dmidecode lspci lshw smartctl hdparm \
 			Languages: perl python java-config ruby php \
 			Servers: apache2 mysql ssh smbd cups-config \
 			Miscellaneous: x11vnc"
@@ -3246,6 +3246,7 @@ Module_env() {
 	flush_values
 }
 
+
 Module_sensors() {
 	module_header "Sensors"
 
@@ -3259,4 +3260,21 @@ Module_sensors() {
 		IFS="$IFS_bak"
 
 	flush_values	
+}
+
+
+Module_nagios() {
+	module_header "Nagios"
+
+	if [ "$(type -p nagiostats)" ]; then
+
+		add_attribute   "Running time"
+		add_values      "$(nagiostats | grep -i 'running time' | \
+		                   awk -F':' {'print $2'} )"
+
+	else
+		info "nagiostats was not found"
+	fi
+
+	flush_values
 }
