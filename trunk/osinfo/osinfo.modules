@@ -2940,7 +2940,7 @@ Module_applications() {
 	local moduleName="Applications"
 	module_header "${moduleName}"
 
-	local APPLICATIONS app versionstring
+	local APPLICATIONS app versionstring cat_print category
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
 
 	## Applications to look for..
@@ -2948,7 +2948,7 @@ Module_applications() {
 
 		APPLICATIONS="Graphical_interface: X kde-config gnome-about xfce4-session \
 		              fluxbox fvwm2 enlightenment \
-			Shells: bash csh ksh \
+			Shells: bash csh dsh fish pdsh rrs tcsh zsh
 			Compilers: gcc gcj icc \
 			System: udevinfo \
 			Userspace_tools: make unsermake awk sed grep ls gzip lspci lshw dmidecode smartctl hdparm \
@@ -2959,9 +2959,11 @@ Module_applications() {
 		UNTESTED="Graphical_interface: \
 			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
 		               gnat-gcc gnat-gpl gpc icc ifc open-cobol \
-			Shells: ash ccsh dash dsh esh fish mksh pdksh pdsh posh psh rrs \
-			        rssh sandboxshell sash scsh shish smrsh tcsh zsh \
 			Tools: mono"
+
+			# Shells: ash ccsh dash esh ksh mksh psh rssh sash shish
+			# don't take any version parameters
+
 
 	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
 
@@ -2982,15 +2984,27 @@ Module_applications() {
 	fi
 
 
-	## Process all applications
+	## Process all categories
 	for app in $APPLICATIONS; do
-		# print the category to stdout
+		# if the variable $app is a category definition,
 		if [ $(grep \: <<< $app) ] && [ $usexml -eq 0 ]; then
-			add_header       "$(sed 's/\:// ; s/_/\ /g' <<< $app)"
+
+			category="$(sed 's/\:// ; s/_/\ /g' <<< $app)"
+
+			# check verbosity level, do not print shells
+			# if verbosity is less than 1
+			if [ $isverbose -lt 1 ] && [ "$category" == "Shells" ]; then
+				cat_print=0
+			else 
+				# print the category to stdout
+				cat_print=1
+				add_header "$category"
+			fi
+
 			flush_values
 
 		# use the subfunction to get the version information
-		elif [ "$(type -p $app)" ]; then # it is installed
+		elif [ "$(type -p $app)" ] && [ $cat_print -eq 1 ]; then # it is installed
 			versionstring="$(get_version $app)"
 			# if the application doesn't tell what it is, echo it
 			if [ "$(grep -i ${app} <<< ${versionstring})" ]; then
@@ -3044,7 +3058,12 @@ Module_applications() {
 				$app -V 2>&1 
 				;;
 			'awk')
-				awk -W version 2>&1 | head -n 1 
+				# awk is a bit tricky.. it can go into a captive cmd interpreter mode
+				if [ ! "$(awk -V 2> /dev/null)" ]; then
+					awk -W version 2>&1 | head -n 1 
+				else
+					awk -V
+				fi
 				;;
 			'dmidecode')
 				echo  "dmidecode $(dmidecode -V 2> /dev/null )"
@@ -3060,6 +3079,12 @@ Module_applications() {
 				;;
 			'ls')
 				ls --version | head -n 1 | sed 's/ls// ; s#(\|)\|^\ ##g'
+				;;
+			'pdsh')
+				pdsh -V | head -n 1
+				;;
+			'firefox')
+				firefox --version 2>/dev/null | head -n 1
 				;;
 			*)
 				$app --version 2>&1 | grep '\w' | head -n 1
