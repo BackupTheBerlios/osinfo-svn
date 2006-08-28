@@ -1446,7 +1446,6 @@ Module_cdrom() {
 			for drv_nr in $(seq 1 1 $cdrom_count); do
 
 				# collect information
-
 				if [ $drv_nr -lt $cdrom_count ]; then
 
 					sed -n "/%node $drv_nr%/,/%node $(($drv_nr+1))%/{p;}" \
@@ -1532,11 +1531,9 @@ Module_cdrom() {
 		else
 			local status_msg='No cdrom drives detected'
 			info          "$status_msg"
-			add_values    "$status_msg"
 		fi
 	fi
 
-	##module_footer
 	flush_values
 }
 
