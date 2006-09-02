@@ -79,7 +79,7 @@ MODULES_META='all lanforce system cpu apps net'
 # these are used to control run access and validify against
 
 MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
-MODULES_BSD='system applications terminal network'
+MODULES_BSD='system kernel applications terminal network devices dmi'
 MODULES_BROKEN='printers lvm bus sensors nagios'
 MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
@@ -2105,6 +2105,7 @@ Module_users() {
 	###### BEGIN USERS SUBFUNCTIONS #############
 	#
 	# these functions are called from Module_users.
+	# FIXME: *BSD doesn't have 'getent' command
 	#
 	get_user_data () {
 		local user="$1"
@@ -3120,11 +3121,16 @@ Module_devices() {
 	module_header "${moduleName}"
 	local DEVICE
 	local DEV_ARRAY=1;
-	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 
+	# on *BSD, run this only as root
+	if [ "$(grep -i bsd <<< "$SYSTEM")" ] && ! CheckReq_root; then 
+		return 1
+	fi
+
+	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 		devices[$DEV_ARRAY]="$(
 
-			echo $DEVICE | sed -r 's/:_/:/g;s/(^_)//g' | tr ':' ' ' )"
+			echo $DEVICE | sed 's/:_/:/g;s/^_//g' | tr ':' ' ' )"
 
 			# with lspci 2.2 and later, the -m switch works fine
 			#	for DEVICE in $(lspci -m | tr ' ' '_'); do
@@ -3262,12 +3268,24 @@ Module_sensors() {
 
 Module_nagios() {
 	module_header "Nagios"
+	local version running_time
 
 	if [ "$(type -p nagiostats)" ]; then
 
+		# get data
+		version="$(nagiostats | grep -i 'Nagios Stats')"
+
+		running_time="$(nagiostats | grep -i 'running time' | \
+		                awk -F':' {'print $2'} )"
+
+
+		# print values
+		add_attribute   "Version"
+		add_values      "$version"
+		
 		add_attribute   "Running time"
-		add_values      "$(nagiostats | grep -i 'running time' | \
-		                   awk -F':' {'print $2'} )"
+		add_values      "$running_time"
+
 
 	else
 		info "nagiostats was not found"

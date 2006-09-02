@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=9
-patch_version=3
+patch_version=4
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -39,8 +39,12 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 # On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
+	MODULES_ALL="$MODULES_BSD"
 	function seq() {
 		gseq "$@"
+	}
+	function date() {
+		gdate "$@"
 	}
 fi
 
@@ -880,6 +884,7 @@ fi
 # this calls the module definitions. as there are Meta-modules
 # and the actual modules, we first check if there's a Meta-module
 # of that name. in that case, it is used.
+# NOTE: FreeBSD runs all modules
 for module in $cmdsnames; do
 
 	# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before?
