@@ -21,7 +21,7 @@ FEATURES and FIXES for 0.4:
 *	mod_hdd: scan_md
 *	gentoo: total system build time ;-)
 *	mod_cpu: stepping
-*	--no-color option
+*	automatic output filename based on modules and timestamp
 
 
 FEATURES FOR 0.5:
