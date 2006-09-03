@@ -188,9 +188,9 @@ if [ "$#" -gt 0 ]; then
 				fi
 				;;
 			'--no-color')
-				# unset color formatting
-				unset tSTD tBOLD tcBLACK tcWHITE tcRED tcGREEN \
-				      tcYELLOW tcBLUE tcMAGENTA tcCYAN
+				# set empty values
+				tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN='' 
+				tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN=''
 				shift 1
 				;;
 			'-v'|'--verbose')

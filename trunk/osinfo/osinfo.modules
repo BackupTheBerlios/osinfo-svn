@@ -319,12 +319,16 @@ Module_hdd() {
 		# declare variables
 		local hdd_total_capacity=0 hdd_total_used=0 hdd_total_free=0 hdd_ID=0
 
+		# allocate a temp file		
+		fdisk_info="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$fdisk_info")
+		fdisk -l > $fdisk_info 2>/dev/null
+
 		# detect all drives in the system
-		local drives="$(fdisk -l | grep -Eo '\/(dev)\/[a-z]+' | uniq )"
+		local drives="$(grep -Eo '\/(dev)\/[a-z]+' ${fdisk_info} | uniq )"
 
-		# collect data of all detected drives in this loop
+		# collect and print data of all detected drives in this loop
 		for drvdev in $drives; do
-
 			((hdd_ID++))
 
 			#########################
@@ -396,110 +400,8 @@ Module_hdd() {
 
 			####################
 			# OUTPUT DRIVE DATA
-			if [ $usexml -eq 0 ]; then
+			print_hdd_data
 
-			# TODO: use array for these values, no need to unset then
-
-				add_header  "\n${drvdev}"
-
-				add_attribute "$hdd_type"
-					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
-				add_attribute 'Capacity (reported)'
-					add_values  "$hdd_capacity_label"
-				add_attribute 'Capacity (actual)'
-					add_values  "$(hdd_human_readable $hdd_capacity)"
-				add_attribute 'DMA'
-					add_values  "$hdd_dma"
-
-				if [ "$(type -p smartctl)" ]; then
-					add_attribute   'Lifetime'
-						add_values  "$hdd_lifetime"
-					add_attribute   'Temperature'
-						add_values  "$hdd_tempC"
-						add_value_footer "C"
-					add_attribute   'S.M.A.R.T.'
-						add_values  "$hdd_smart"
-					add_attribute   'Health Status'
-						add_values  "$hdd_health"
-					add_attribute   'ATA Standard'
-						add_values  "$hdd_ata_standard"
-				fi
-
-				add_attribute 'Serial number'
-					add_values  "$hdd_serial"
-				add_attribute 'Driver'
-					add_values  "$hdd_driver"
-				add_attribute 'Geometry'
-					add_values  "$hdd_geometry"
-
-				flush_values
-
-
-				add_header	'' # adds a space into stdout, does not affect xml
-				add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
-				add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
-
-
-				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					# print the device node
-					add_attribute "  ${hdd_pt_node[$hdd_pt]}"
-
-					# print info of mounted drives
-					if [ "${hdd_pt_mp[$hdd_pt]}" ]; then #mount point exists
-
-						# mount point
-						add_values    "${hdd_pt_mp[$hdd_pt]}"
-
-						# blocks
-						add_values    "$(hdd_human_readable \
-						               ${hdd_pt_blocks[$hdd_pt]})"
-						# free
-						if [ "${hdd_pt_free[$hdd_pt]}" != "" ]; then
-						add_values    "$(hdd_human_readable \
-						               ${hdd_pt_free[$hdd_pt]})"
-						#add_values    "${hdd_pt_free_pc[$hdd_pt]})"
-						else
-							add_values ' '
-						fi
-
-						# fs type
-						add_values    "${hdd_pt_fs[$hdd_pt]}"
-
-					else
-
-						# mount point
-						add_values    " "
-
-						# blocks
-						add_values    "$(hdd_human_readable \
-						               ${hdd_pt_blocks[$hdd_pt]})"
-
-						# free would come here
-						add_values    ' '
-
-						# fs type
-						add_values    "${hdd_pt_fs[$hdd_pt]}"
-
-					fi
-
-				done
-
-				flush_values
-
-			######################
-			### XML OUTPUT
-			else
-
-				add_attribute "$hdd_type"			'hard_disk'
-				# TODO: how to break these into many lines?
-				add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
-
-				add_attribute "partitions"		'drive'
-				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
-				done
-
-			fi
 
 			##################
 			# clear varibles
@@ -509,13 +411,11 @@ Module_hdd() {
 			      hdd_smart hdd_lifetime hdd_tempC hdd_health \
 			      hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs \
 			      hdd_ata_standard hdd_pt_free
-
 		done
 
 
 		######################################
 		# calculate total system disk capacity
-		# report data of the whole system
 
 		#totalpercfree=0
 
@@ -525,7 +425,6 @@ Module_hdd() {
 
 
 		#DISKFREE=$(($DISKFREE+$partfree))
-
 
 	fi
 
@@ -537,6 +436,118 @@ Module_hdd() {
 #
 # these functions are called from mod_hdd and they generate no output,
 # all data is stored into global variables.
+
+
+	##############################################
+	# PRINTS DRIVE DATA
+	print_hdd_data() {
+		# standard output
+		if [ $usexml -eq 0 ]; then
+
+		# TODO: use array for these values, no need to unset then
+
+			add_header  "\n${drvdev}"
+
+			add_attribute "$hdd_type"
+				add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
+			add_attribute 'Capacity (reported)'
+				add_values  "$hdd_capacity_label"
+			add_attribute 'Capacity (actual)'
+				add_values  "$(hdd_human_readable $hdd_capacity)"
+			add_attribute 'Serial number'
+				add_values  "$hdd_serial"
+			add_attribute 'DMA'
+				add_values  "$hdd_dma"
+
+			if [ "$(type -p smartctl)" ]; then
+				add_attribute   'Lifetime'
+					add_values  "$hdd_lifetime"
+				add_attribute   'Temperature'
+					add_values  "$hdd_tempC"
+					add_value_footer "C"
+				add_attribute   'S.M.A.R.T.'
+					add_values  "$hdd_smart"
+				add_attribute   'Health Status'
+					add_values  "$hdd_health"
+				add_attribute   'ATA Standard'
+					add_values  "$hdd_ata_standard"
+			fi
+
+			add_attribute 'Driver'
+				add_values  "$hdd_driver"
+			add_attribute 'Geometry'
+				add_values  "$hdd_geometry"
+
+			flush_values
+
+
+			## PARTITION DATA
+			add_header	'' # adds a space into stdout, does not affect xml
+			add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
+			add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
+
+		
+			for hdd_pt in $(seq 1 1 $partitions_on_drive); do
+				# print the device node
+				add_attribute "  ${hdd_pt_node[$hdd_pt]}"
+
+				# print info of mounted drives
+				if [ "${hdd_pt_mp[$hdd_pt]}" ]; then #mount point exists
+
+					# mount point
+					add_values    "${hdd_pt_mp[$hdd_pt]}"
+
+					# blocks
+					add_values    "$(hdd_human_readable \
+								   ${hdd_pt_blocks[$hdd_pt]})"
+					# free
+					if [ "${hdd_pt_free[$hdd_pt]}" != "" ]; then
+					add_values    "$(hdd_human_readable \
+								   ${hdd_pt_free[$hdd_pt]})"
+					#add_values    "${hdd_pt_free_pc[$hdd_pt]})"
+					else
+						add_values ' '
+					fi
+
+					# fs type
+					add_values    "${hdd_pt_fs[$hdd_pt]}"
+
+				else
+
+					# mount point
+					add_values    " "
+
+					# blocks
+					add_values    "$(hdd_human_readable \
+								   ${hdd_pt_blocks[$hdd_pt]})"
+
+					# free would come here
+					add_values    ' '
+
+					# fs type
+					add_values    "${hdd_pt_fs[$hdd_pt]}"
+
+				fi
+
+			done
+
+			flush_values
+
+		######################
+		### XML OUTPUT
+		else
+
+			add_attribute "$hdd_type"			'hard_disk'
+			# TODO: how to break these into many lines?
+			add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
+
+			add_attribute "partitions"		'drive'
+			for hdd_pt in $(seq 1 1 $partitions_on_drive); do
+				add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
+			done
+
+		fi
+	}
 
 
 	##############################################
@@ -602,7 +613,6 @@ Module_hdd() {
 	}
 
 
-
 	#################################################
 	# SCAN COMMON ATTRIBUTES OF ALL HARD DRIVE TYPES
 	#
@@ -619,15 +629,16 @@ Module_hdd() {
 	scan_hdd_common() {
 		local dev_scan="${1}"
 
-		hdd_geometry="$(fdisk -l | grep ${dev_scan} -A 1 | sed -n "2{p;q;}")"
+		hdd_geometry="$(grep ${dev_scan} -A 1 ${fdisk_info} | sed -n "2{p;q;}")"
 
 		# FIXME: couldn't this be simpler?
-		hdd_capacity_label="$(fdisk -l ${dev_scan} | grep ${dev_scan} | \
+		hdd_capacity_label="$(grep ${dev_scan} ${fdisk_info}  | \
 			head -n 1 | grep -Eo '[1-9][0-9]+[\.0-9]* \w{2}' | head -n 1)"
 
 		# fdisk gives drive capacity in kB
 		hdd_capacity="$(fdisk -s $dev_scan)"
 	}
+
 
 	#########################
 	# S.M.A.R.T. scanning
@@ -667,6 +678,10 @@ Module_hdd() {
 		             awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
 
 		hdd_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
+
+		# ATA Standard
+		hdd_ata_standard="$(grep -i '^ATA Standard' ${smart_info} | \
+		                    awk -F: {'print $2'} | sed 's/^ *//') "
 	}
 
 
@@ -695,7 +710,7 @@ Module_hdd() {
 	#
 	scan_hdd_partitions() {
 		local dev_scan="${1}" part_free=0
-		partitions_on_drive="$(fdisk -l ${dev_scan} | grep ^${dev_scan} | wc -l)"
+		partitions_on_drive="$(grep ^${dev_scan} ${fdisk_info} | wc -l)"
 		local ID=$hdd_pt_ID
 
 		#TODO for version 0.5 or so
@@ -709,7 +724,7 @@ Module_hdd() {
 			((ID++)) # increase the array number
 
 			# get the partition node
-			hdd_pt_node[$ID]="$(fdisk -l ${dev_scan} | grep ^${dev_scan} | \
+			hdd_pt_node[$ID]="$(grep ^${dev_scan} ${fdisk_info} | \
 				awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 
 
@@ -725,7 +740,7 @@ Module_hdd() {
 			# FS type integer, it has to be included when fdisk adds a '*'
 			# character to denote bootable partitions. the numbers are removed
 			# from the beginning of string with sed.
-			hdd_pt_fs[$ID]="$(fdisk -l | grep ^${hdd_pt_node[$ID]} | \
+			hdd_pt_fs[$ID]="$(grep ^${hdd_pt_node[$ID]} ${fdisk_info} | \
 			                  awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
 			                  sed 's/^[0-9 ]*//')"
 
@@ -1112,14 +1127,6 @@ Module_hdd() {
 
 
 		#TODO: dma status
-
-
-		################
-		# ATA Standard
-		if [ $smart_sata ]; then 
-			hdd_ata_standard="$(grep -i '^ATA Standard' ${smart_sata} | \
-			              awk -F: {'print $2'} | sed 's/^ *//') "
-		fi	
 
 
 		###########
