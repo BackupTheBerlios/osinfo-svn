@@ -410,7 +410,7 @@ Module_hdd() {
 			      hdd_capacity_label hdd_capacity partitions_on_drive \
 			      hdd_smart hdd_lifetime hdd_tempC hdd_health \
 			      hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs \
-			      hdd_ata_standard hdd_pt_free
+			      hdd_ata_standard hdd_pt_free hdd_startup
 		done
 
 
@@ -438,8 +438,8 @@ Module_hdd() {
 # all data is stored into global variables.
 
 
-	##############################################
-	# PRINTS DRIVE DATA
+##############################################
+# PRINTS DRIVE DATA
 	print_hdd_data() {
 		# standard output
 		if [ $usexml -eq 0 ]; then
@@ -462,6 +462,8 @@ Module_hdd() {
 			if [ "$(type -p smartctl)" ]; then
 				add_attribute   'Lifetime'
 					add_values  "$hdd_lifetime"
+				add_attribute   'Start-up count'
+					add_values  "$hdd_startup"
 				add_attribute   'Temperature'
 					add_values  "$hdd_tempC"
 					add_value_footer "C"
@@ -536,7 +538,6 @@ Module_hdd() {
 		######################
 		### XML OUTPUT
 		else
-
 			add_attribute "$hdd_type"			'hard_disk'
 			# TODO: how to break these into many lines?
 			add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
@@ -545,13 +546,12 @@ Module_hdd() {
 			for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 				add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
 			done
-
 		fi
 	}
 
 
-	##############################################
-	# CALCULATES THE TOTAL DISK USAGE OF A DRIVE
+##############################################
+# CALCULATES THE TOTAL DISK USAGE OF A DRIVE
 	#
 	# Sets variables:
 	#  hdd_used[]           # total used space in kB
@@ -673,6 +673,8 @@ Module_hdd() {
 		             head -n 1 | awk -F': ' {'print $2'})"
 
 		hdd_lifetime="$(grep -i power_on $smart_info | awk {'print $NF'})"
+
+		hdd_startup="$(grep -i start_stop $smart_info | awk {'print $NF'})"
 
 		hdd_tempC="$(grep -i temperature_celsius $smart_info | \
 		             awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
