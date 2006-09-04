@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=9
-patch_version=4
+patch_version=5
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -39,7 +39,7 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 # On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
-	MODULES_ALL="$MODULES_BSD"
+	Meta_all="$MODULES_BSD"
 	function seq() {
 		gseq "$@"
 	}
