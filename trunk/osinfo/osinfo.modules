@@ -258,6 +258,12 @@ extr_node() {
 	fi
 }
 
+# extracts value from <xml>value</xml>
+extr_xml_value() {
+	sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' <<< "${1}"
+}
+
+
 TempFiles=()
 ##
 # Cleans up some temporary files in the TempFiles array.
@@ -1440,13 +1446,15 @@ Module_cdrom() {
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
+		local cdrom_node cdrom_model cdrom_type cdrom_serial cdrom_bus
+
 		lshw_xml
 		if [ "$(grep -i cdrom $lshw_xml_file)" ]; then
 			extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
 
 			#for debugging:
 			#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-			#cat $cdrom_tmp
+			cat $cdrom_tmp
 
 			# extr_node echoes back all the cdrom drives in the system,
 			# let's see how many
@@ -1454,12 +1462,15 @@ Module_cdrom() {
 
 			for drv_nr in $(seq 1 1 $cdrom_count); do
 
-				# collect information
+				# collect information;
+				# if more than one unprocessed drives are found...
 				if [ $drv_nr -lt $cdrom_count ]; then
 
+					# process this drive in the temp file
 					sed -n "/%node $drv_nr%/,/%node $(($drv_nr+1))%/{p;}" \
 					    $cdrom_tmp > $cdrom_tmp2
 
+					# DEBUG:
 					# KEEP THESE for testing times on ubuntu
 					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
 					#	awk -F: {'print $1'})"
@@ -1467,8 +1478,10 @@ Module_cdrom() {
 					#	awk -F: {'print $1'})"
 					#sed -n "$this_node,$next_node{p;}" $cdrom_tmp > $cdrom_tmp2
 
-				else
 
+				else # one unprocessed drive..
+
+					# process temp file to EOF (\$)
 					sed -n "/%node $drv_nr%/,\${p;}" $cdrom_tmp > $cdrom_tmp2
 
 					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
@@ -1477,8 +1490,7 @@ Module_cdrom() {
 
 				fi
 
-				cdrom_model[$drv_nr]="$(grep -i product $cdrom_tmp2  | \
-				                        sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $cdrom_tmp2)")"
 
 				cdrom_type[$drv_nr]="$(grep -i descr ${cdrom_tmp2} | \
 				                       sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
@@ -1494,19 +1506,27 @@ Module_cdrom() {
 				cdrom_bus[$drv_nr]="$(grep -i businfo ${cdrom_tmp2} | \
 				                      sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
 
+				# extract capabilities
+				IFS_bak="$IFS"
+				IFS=$'\n'
+				local cabty
+				for cabty in $(grep -i 'capability id' $cdrom_tmp2); do
+					cdrom_capabilities[$drv_nr]="${cdrom_capabilities[$drv_nr]}$(extr_xml_value "$cabty")\n"
+				done
+				IFS="$IFS_bak"
+
 				#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
 
-				#cat $cdrom_tmp
 
-				# display
 
+				# display data for LanForce
 				if [ $lanforce -eq 1 ]; then
 
 					# print attribute only once
 					[ $drv_nr -eq 1 ] && add_attribute 'Model'	'cdrom'
 					add_values    "${cdrom_model[$drv_nr]}"
 
-				else
+				else # standard xml and stdout
 
 					add_header  "CD/DVD drive $drv_nr" "cd_drive name"
 
@@ -1526,11 +1546,10 @@ Module_cdrom() {
 					add_values    "${cdrom_node[$drv_nr]}"
 
 					add_attribute 'Capabilities'
-					#add_values    "$(grep -i capabilities ${cdrom_tmp})" #| \
-									#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
-					# dvd-r, dvd+r, DL, etc...
-					# generally grep cd|dvd
-					# debug with debug/lshw-dvdwriter
+					for cabty in "${cdrom_capabilities[$drv_nr]}"; do
+						add_values    "${cabty}"
+						# debug with debug/lshw-dvdwriter
+					done
 
 					add_footer "cd_drive"
 
