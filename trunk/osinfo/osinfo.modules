@@ -1454,7 +1454,7 @@ Module_cdrom() {
 
 			#for debugging:
 			#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-			cat $cdrom_tmp
+			# cat $cdrom_tmp
 
 			# extr_node echoes back all the cdrom drives in the system,
 			# let's see how many
