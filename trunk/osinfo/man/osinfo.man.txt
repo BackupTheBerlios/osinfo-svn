@@ -5,10 +5,48 @@ SYNOPSIS
 	osinfo lists system information available to the OS.
 
 DESCRIPTION
-	description
+	Arguments are names of modules to get info from. If arguments is "all"
+	then list information from all modules.
+
+	Syntax:
+	  osinfo [Options] arguments
+      osinfo [--usage|--help]
+
+OPTIONS
+		   --xml               Printout in xml format to osinfo.xml
+		   --lanforce          Makes the output to osinfo.xml according to a special DTD
+	  -o   --output [file]     Use this file for xml output
+	  -v   --verbose           Show more information
+	  -vv  --veryverbose       Show even more information
+	  -V   --version           Shows the version of osinfo
+		   --netcat [port]     Sends the output in xml to the tcp port via netcat
+		   --no-color          Disables color output (testing)
+		   --debug             For testing
+	  -D   --fulldebug         Print full debugging info, clutters output!
+	  -P   --prefix [dir]      Use this dir as root
+							   This disables some modules
+							   and exits
 
 MODULES
-	list of modules and a description
+	SYSTEM
+	DISTRO
+    KERNEL
+	PROCESSOR
+	HDD
+	NETWORK
+	WLAN
+	APPLICATIONS
+	TERMINAL
+	DEVICES
+	DMI
+	MEMORY
+	USERS
+	SERVICES
+
+	CDROM
+	The cdrom module detects all optical (cd/dvd etc) drives in the system seen by lshw. The burning / read capabilites are reported only on the default verbosity level; increase verbosity to see all capabilities.
+	
+	This module is not 100% proof; there are known unresolved issue when lshw cannot see a drive.
 
 COMPATIBILITY
 	everything is collected honoring maximum portability and minimum dependency requirements; ie. using standard *nix tools. 
@@ -24,11 +62,6 @@ COMPATIBILITY
 	o SlackWare
 
 	o FreeBSD 6.0 has been tested as well.
-
-
-OPTIONS
-  options
-
 
 DEPENDENCIES
 	Some information is unavailable	without special (but quite common) packages, but the availability of these is tested, and no error messages are produced if these rarer tools are missing. See info below for a list of dependencies.

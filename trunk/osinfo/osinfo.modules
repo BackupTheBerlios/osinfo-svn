@@ -1509,9 +1509,11 @@ Module_cdrom() {
 				local cabty value
 				for cabty in $(grep -i 'capability id' $cdrom_tmp2); do
 
-					# verbosity level 0 only reports burning capabilities
+					# verbosity level 0 only reports burning \ read \ playback capabilities
 					value="$(extr_xml_value "$cabty")"
-					if [ $isverbose -ge 1 ] || [ "$(grep -i burning <<< $value)" ]; then								cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
+					if [ $isverbose -ge 1 ] || \
+					   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
+					   cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
 					fi
 
 				done
