@@ -1492,26 +1492,28 @@ Module_cdrom() {
 
 				cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $cdrom_tmp2)")"
 
-				cdrom_type[$drv_nr]="$(grep -i descr ${cdrom_tmp2} | \
-				                       sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				cdrom_type[$drv_nr]="$(extr_xml_value "$(grep -i descr ${cdrom_tmp2})")"
 
-				cdrom_serial[$drv_nr]="$(grep -i serial ${cdrom_tmp2} | \
-				                         sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				cdrom_serial[$drv_nr]="$(extr_xml_value "$(grep -i serial ${cdrom_tmp2})")"
 
-				cdrom_node[$drv_nr]="$(grep -i 'logicalname' ${cdrom_tmp2} | \
-				                       sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' | head -n 1)"
+				cdrom_node[$drv_nr]="$(extr_xml_value \
+				             "$(grep -i 'logicalname' ${cdrom_tmp2} | head -n 1)")"
 				                       # sometimes there's a 'disc' node with a second
 				                       # logicalname node, which is the same as the first
 
-				cdrom_bus[$drv_nr]="$(grep -i businfo ${cdrom_tmp2} | \
-				                      sed 's/[^>]*>\([^<]*\)<[^.]*/\1/')"
+				cdrom_bus[$drv_nr]="$(extr_xml_value "$(grep -i businfo ${cdrom_tmp2})")"
 
 				# extract capabilities
 				IFS_bak="$IFS"
 				IFS=$'\n'
-				local cabty
+				local cabty value
 				for cabty in $(grep -i 'capability id' $cdrom_tmp2); do
-					cdrom_capabilities[$drv_nr]="${cdrom_capabilities[$drv_nr]}$(extr_xml_value "$cabty")\n"
+
+					# verbosity level 0 only reports burning capabilities
+					value="$(extr_xml_value "$cabty")"
+					if [ $isverbose -ge 1 ] || [ "$(grep -i burning <<< $value)" ]; then								cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
+					fi
+
 				done
 				IFS="$IFS_bak"
 
@@ -1546,10 +1548,14 @@ Module_cdrom() {
 					add_values    "${cdrom_node[$drv_nr]}"
 
 					add_attribute 'Capabilities'
-					for cabty in "${cdrom_capabilities[$drv_nr]}"; do
-						add_values    "${cabty}"
+
+					IFS_bak="$IFS"
+					IFS=";"
+					for cabty in ${cdrom_capabilities[$drv_nr]}; do
+						add_values    "${cabty}\n "
 						# debug with debug/lshw-dvdwriter
 					done
+					IFS="$IFS_bak"
 
 					add_footer "cd_drive"
 
