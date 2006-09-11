@@ -15,7 +15,6 @@ FEATURES and FIXES for 0.4:
 ----------------
 
 *	detect system encoding
-*	don't display what isn't detected (without the -vv flag)
 *	fix: user/root problem
 *	su_modules - run only su modules
 *	std_modules - non-su modules

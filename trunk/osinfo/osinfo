@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=9
-patch_version=5
+patch_version=6
 dev_status=alpha
 release_date='2006-08-xx'
 
@@ -400,10 +400,15 @@ function add_attribute() {
 #############
 # add_values
 #
-# This function inserts the input string or strings into the $infostring[] array.
+# This function inserts the input strings into the $infostring[] array.
 function add_values {
-	infostring[${#infostring[@]}]="%value%${@}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+	# if the value is empty, remove the attribute
+	# if verbosity does not require explicity (-vv)
+	if [ ! "$@" ] && [ $isverbose -lt 2 ]; then
+		unset infostring[$((${#infostring[@]}-1))]
+	else
+		infostring[${#infostring[@]}]="%value%${@}"
+	fi
 }
 
 ###################
