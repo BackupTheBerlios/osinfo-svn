@@ -1,0 +1,14 @@
+jaba@lappy:~$ cat /proc/acpi/battery/BAT0/info
+present: yes
+design capacity: 47520 mWh
+last full capacity: 37290 mWh
+battery technology: rechargeable
+design voltage: 10800 mV
+design capacity warning: 1864 mWh
+design capacity low: 200 mWh
+capacity granularity 1: 1 mWh
+capacity granularity 2: 1 mWh
+model number: IBM-08K8193
+serial number: 27612
+battery type: LION
+OEM info: SANYO 
