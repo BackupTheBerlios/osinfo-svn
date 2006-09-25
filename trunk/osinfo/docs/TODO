@@ -56,6 +56,7 @@ GENERAL NOTES:
 *	"xmllint --valid osinfo.xml" to check if the xml output is valid 
 	against the DTD 
 
+*	"xsltproc osinfo.xsl osinfo.xml > osinfo.html" to generate the HTML
 
 
 PROGRAMMING TIPS:
