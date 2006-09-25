@@ -2974,8 +2974,9 @@ Module_applications() {
 	local moduleName="Applications"
 	module_header "${moduleName}"
 
-	local APPLICATIONS app versionstring cat_print category
+	local APPLICATIONS app versionstring category cat_print=0
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
+	
 
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
