@@ -122,3 +122,10 @@ function xml_value () {
 function xml_description () {
 	echo "<description>${@}</description>"
 	}
+
+# prints hostname tag
+function xml_hostname () {
+	echo "<hostname value=\"${@}\" />"
+	}
+
+

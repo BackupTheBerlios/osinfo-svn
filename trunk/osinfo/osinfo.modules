@@ -138,8 +138,15 @@ CheckReq_sensors() {
 # Checks if we are run as root and print a message if we are not.
 # Returns 0 if we are root and 1 if we are not.
 CheckReq_root() {
+	# give a parameter is the standard output info is not describable enough
+	if [ ! "$@" ]; then
+		local msg="this information"
+	else
+		local msg="$@"
+	fi
+
 	if [ "$EUID" != 0 ]; then
-		info    "Please run $appname as super-user to collect this information"
+		info    "Please run $appname as super-user to collect $msg"
 		return 1
 	else
 		return 0
@@ -1823,16 +1830,46 @@ Module_system() {
 	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
 	if CheckReq_sensors; then
-		add_attribute "M/B temperature"
-		local mobo_temp="$(sensors | grep -i 'M/B temp' | \
-		                   grep -Eo '\+[0-9]*[[:punct:]]?[ ]?[CF]+')"
-		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
-		#add_value_footer "C"
+		scan_cpu_temp
+		scan_mb_temp
 	fi
 
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
+
+# helpers
+	scan_cpu_temp() {
+		add_attribute "CPU temperature"
+		local cpu_temp="$(sensors | grep -i 'cpu temp' | \
+						  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
+		add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
+		}
+
+	scan_mb_temp() {
+		add_attribute "M/B temperature"
+		local mobo_temp="$(sensors | grep -i 'M/B temp' | \
+		                   grep -Eo '\+[0-9]*[[:punct:]]?[ ]?[CF]+')"
+		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
+		#add_value_footer "C"
+		}
+
+	scan_cpu_fan () {
+		add_attribute   "Fan"
+		local cpu_fan="$(sensors | grep -i 'cpu fan' | \
+						  grep -Eo '[0-9]+ RPM')"
+		add_values       "$(awk  {'print $1'} <<< $cpu_fan )" 
+		[ "$cpu_fan" ] && add_value_footer "RPM"
+		}
+
+		scan_cpu_voltage () {
+			add_attribute   "Voltage"
+			local cpu_voltage="$(sensors | grep -i 'vcore' | \
+							 grep -Eo '\+[0-9. ]*')"
+			add_values       "$(awk  {'print $2'} <<< $cpu_voltage)"
+			[ "$cpu_voltage" ] && add_value_footer "V"
+			}
+
 
 
 # OPERATING SYSTEM KERNEL
@@ -1891,7 +1928,7 @@ Module_processor() {
 			cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
 		fi
 
-		if [ "$usexml" == 1 ]; then
+		if [ "$lanforce" == 1 ]; then
 			add_attribute "Count"      "processor_count"
 			add_values    $cpu_count
 		fi
@@ -1917,22 +1954,9 @@ Module_processor() {
 
 			# temperature and voltage info
 			if CheckReq_sensors; then
-				add_attribute   "Temperature"
-				local cpu_temp="$(sensors | grep -i 'cpu temp' | \
-								  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
-				add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
-
-				add_attribute   "Fan"
-				local cpu_fan="$(sensors | grep -i 'cpu fan' | \
-								  grep -Eo '[0-9]+ RPM')"
-				add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
-				add_value_footer "RPM"
-
-				add_attribute   "Voltage"
-				local voltage="$(sensors | grep -i 'vcore' | \
-								 grep -Eo '\+[0-9. ]*')"
-				add_values       "$(awk  {'print $2'} <<< $voltage)"
-				add_value_footer "V"
+				scan_cpu_temp
+				scan_cpu_fan
+				scan_cpu_voltage
 			fi
 
 			add_attribute      "Cache"
@@ -1940,11 +1964,16 @@ Module_processor() {
 					add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
 					add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
 
-			add_attribute     "Stepping"
-			add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
+			local stepping="$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+			                  awk -F': ' {'print $2'})"
 
-			if CheckReq_lshw && CheckReq_root; then
+			if [ $stepping -gt 1 ]; then
+				add_attribute     "Stepping"
+				add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+								 awk -F': ' {'print $2'})"
+			fi
+
+			if CheckReq_lshw && CheckReq_root "more information" ; then
 
 				local cpu_width
 
