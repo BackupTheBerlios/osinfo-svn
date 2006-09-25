@@ -1797,6 +1797,10 @@ Module_system() {
 	local moduleName="System"
 	module_header "${moduleName}"
 
+	# hostname
+	add_attribute "Hostname" "hostname"
+	add_values    "$(hostname 2> /dev/null)"
+
 	# operating system is set in the SYSTEM variable earlier
 	add_attribute "Operating system"		"os"
 	if [ "$(grep -i linux <<< "$SYSTEM")" ]; then

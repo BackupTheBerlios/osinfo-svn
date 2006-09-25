@@ -35,35 +35,35 @@
 #  1  string  Name of tag
 function xml_tag_start () {
 	echo "<${1}>"
-}
+	}
 
 # Simple end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_stop () {
 	echo "</${1}>"
-}
+	}
 
 # Simple start-end tag
 # Parameters:
 #  1  string  Name of tag
 function xml_tag_startstop () {
 	echo "<${1} />"
-}
+	}
 
 # Unclosed tag
 # Parameters:
 #  1  string  Name of tag
 function xml_opentag_start () {
 	echo -n "<${1}"
-}
+	}
 
 # Tag with a parameter
 #  1  string  name of parameter
 #  2  *       Value
 function xml_param_tag () {
 	echo "<${1}=\"${2}\">"
-}
+	}
 
 
 # Paramter for unclosed tag
@@ -72,7 +72,7 @@ function xml_param_tag () {
 #  2  *       Value
 function xml_opentag_param () {
 	echo -n " ${1}=\"${2}\""
-}
+	}
 
 # Close unclosed tag
 # Parameters:
@@ -96,7 +96,7 @@ function xml_opentag_stop () {
 function xml_doc_start () {
 	echo '<?xml version="1.0" ?>'
 	echo "<!DOCTYPE ${1} ${2} \"${3}\">"
-}
+	}
 
 # attribute start tag
 # Parameters:
@@ -104,16 +104,21 @@ function xml_doc_start () {
 #  2  string  attribute code
 function xml_attribute_start () {
 	echo "<attribute name=\"${1}\" code=\"${2}\">"
-}
+	}
 
 # attribute end tag
 function xml_attribute_stop () {
 	xml_tag_stop "attribute"
-}
+	}
 
 # Simple value tag
 # Parameters:
 #  1  string  data
 function xml_value () {
-	echo "<value>${1}</value>"
-}
+	echo "<value>${@}</value>"
+	}
+
+# Xml item description
+function xml_description () {
+	echo "<description>${@}</description>"
+	}

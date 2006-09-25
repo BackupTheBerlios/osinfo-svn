@@ -593,8 +593,13 @@ function print_stdout {
 
 # This function loops the $infostring and does a case on each item
 function print_xml {
-	local item itemnr code idtag value_item
+	local item itemnr code idtag iddesc value_item
 	attrib_status="closed"
+
+	# if you want to hack this, look at the case structure.
+	# it is hierarchic because values may have footers, and
+	# the attribute shouldn't be closed before the proper footer
+	# is already added.. sorry for the confusion :)
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
 
@@ -606,11 +611,9 @@ function print_xml {
 		# case by the "%identifier%" tag
 		case $idtag in
 
+			# adds the footer (value dimension)
 			'value_footer')
-				## add indentation
-				for indent in $(seq 1 1 $XML_INDENT); do
-					echo -ne "\t" >> "${XMLFILE}"
-				done
+				add_indentation
 
 				# strip tag and discard the xml code tag
 				item="$(sed s/%value_footer%// <<< "${item}" )"
@@ -619,20 +622,17 @@ function print_xml {
 				unset value_item
 			;;
 
+			# add everything else but the footer
 			*)
-
-				# if the value item is set (no footer), then print
+				# if the value item is set (no footer), then print value
 				if [ "$value_item" ]; then
-					## add indentation
-					for indent in $(seq 1 1 $XML_INDENT); do
-						echo -ne "\t" >> "${XMLFILE}"
-					done
+					add_indentation
 
 					xml_value "$value_item" >> "${XMLFILE}"
 					unset value_item
 				fi
 
-
+				# another case, which prints most everything
 				case $idtag in
 
 				'value')
@@ -646,6 +646,7 @@ function print_xml {
 
 				*)
 
+					# no more values, then close attribute tag
 					if [ "$attrib_status" == "open" ]; then
 						close_attribute_tag
 					fi
@@ -653,14 +654,17 @@ function print_xml {
 					case $idtag in
 
 						'attribute')
+							iddesc="$(awk -F% {'print $3'} <<< ${item})"
+							iddesc="$(awk -F\; {'print $1'} <<< ${iddesc})"
 							open_attribute_tag "$item"
+
+							add_indentation
+							xml_description "$iddesc" >> "${XMLFILE}"
 						;;
 
 						'header')
 							## add indentation
-							for indent in $(seq 1 1 $XML_INDENT); do
-								echo -ne "\t" >> "${XMLFILE}"
-							done
+							add_indentation
 
 							# strip tag
 							item="$(sed s/%header%// <<< "${item}")"
@@ -681,10 +685,7 @@ function print_xml {
 
 						'footer')
 							((XML_INDENT--))
-							## add indentation
-							for indent in $(seq 1 1 $XML_INDENT); do
-								echo -ne "\t" >> "${XMLFILE}"
-							done
+							add_indentation
 
 							# strip tag
 							item="$(sed s/%footer%// <<< "${item}")"
@@ -700,13 +701,17 @@ function print_xml {
 
 #############################
 ## print_xml helper functions
+	add_indentation() {
+		for indent in $(seq 1 1 $XML_INDENT); do
+			echo -ne "\t" >> "${XMLFILE}"
+		done	
+	}
+
 	close_attribute_tag() {
 		### CLOSE ATTRIBUTE TAG
 		## add indentation
 		((XML_INDENT--))
-		for indent in $(seq 1 1 $XML_INDENT); do
-			echo -ne "\t" >> "${XMLFILE}"
-		done
+		add_indentation
 
 		xml_attribute_stop >> "${XMLFILE}"
 		echo >> "${XMLFILE}"
@@ -714,9 +719,7 @@ function print_xml {
 	}
 
 	open_attribute_tag() {
-		for indent in $(seq 1 1 $XML_INDENT); do
-				echo -ne "\t" >> "${XMLFILE}"
-		done
+		add_indentation
 
 		# parse item
 		item="$(sed s/%attribute%// <<< "${item}")"
