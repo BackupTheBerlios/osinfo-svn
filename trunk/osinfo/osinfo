@@ -59,10 +59,13 @@ usexml=0
 fake=0
 dev_code=0
 quiet=0
+profile="all"
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
 XMLFILE="osinfo.xml"
+XSLFILE="osinfo.xsl.debug"
+rm "$XSLFILE" -f
 error_log="/var/log/osinfo.log"
 
 
@@ -321,34 +324,31 @@ function print_xml_footer () {
 
 
 ###########################################################################
-# module_header(), module_footer()
-# --------------------------------
+# module_header()
+# ---------------
 #
 # Print module header
 # Parameters:
 #   1 string	Module name
 module_header() {
 	if [ "$usekdialog" == '1' ]; then
-		k_title="$1"
+		local k_title="$1"
 	elif [ $usexml -eq 1 ]; then
 
 		# make valid xml tag
-		xml_tag="$(validate_xml_item "${1}")"
+		local xml_tag="$(validate_xml_item "${1}")"
 		add_header "${xml_tag}"
+		xsl_template_match_start "${xml_tag}"
+		xsl_h2 "${@}"
 
 	else
 		print_line
-		echo "${tcRED}${tUNDERLINE}Report from module${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
+		echo -n "${tcRED}${tUNDERLINE}"
+		echo -n "Report from module"
+		echo "${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
 	fi
 }
-
-# Print module footer (for xml)
-# Parameters:
-#   1 string   Module name
-module_footer() {
-	value_footer
-}
-################################################################################
+###########################################################################
 
 
 
@@ -467,10 +467,11 @@ function flush_values {
 	done
 
 	# then output according to user settings, xml or normal
-	if [ "$usexml" == "0" ]; then
+	if [ $usexml -eq 0 ]; then
 		print_stdout
-	elif [ "$usexml" == "1" ] && [ "$lanforce" == "0" ]; then
+	elif [ $usexml -eq 1 ] && [ $lanforce -eq 0 ]; then
 		print_xml
+		xsl_template_stop
 	else
 		print_lanforce_xml
 	fi
