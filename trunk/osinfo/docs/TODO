@@ -9,6 +9,8 @@ FEATURES and FIXES for 0.3:
 *	custom <value> xml tags, <value name="foo">bar</value>
 *	sensors output depends on LC_*, remove [:punct:] dependency
 *	module Motherboard (aka mobo)
+*	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
+*	xsl/html support
 	
 
 FEATURES and FIXES for 0.4:
