@@ -12,3 +12,17 @@ model number: IBM-08K8193
 serial number: 27612
 battery type: LION
 OEM info: SANYO 
+
+present:                 yes
+design capacity:         4400 mAh
+last full capacity:      3155 mAh
+battery technology:      rechargeable
+design voltage:          11720 mV
+design capacity warning: 315 mAh
+design capacity low:     157 mAh
+capacity granularity 1:  98 mAh
+capacity granularity 2:  8 mAh
+model number:            255/259
+serial number:           00001
+battery type:            LiON
+OEM info:                OEM
