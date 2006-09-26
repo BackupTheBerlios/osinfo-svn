@@ -38,6 +38,11 @@
         <h1><xsl:value-of select="@value"/></h1>
     </xsl:template>
 
+	<!-- scanning date -->
+    <xsl:template match="scanning_date">
+		<p>Scanning date <xsl:value-of select="@value"/></p>
+    </xsl:template>
+	
 
 	<!-- modules -->
     <xsl:template match="disk_information">
@@ -65,6 +70,52 @@
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
+	<xsl:template match="users">
+		<h2>Users</h2>
+        <xsl:apply-templates select="user"/>
+	        <xsl:value-of select="@unixname"/>
+    </xsl:template>
+
+	<xsl:template match="devices">
+		<h2>Devices</h2>
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+	<xsl:template match="terminal">
+		<h2>Terminal</h2>
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+	<xsl:template match="network_information">
+		<h2>Network</h2>
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+	<xsl:template match="applications">
+		<h2>Applications</h2>
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+	<xsl:template match="dmi_information">
+		<h2>OEM</h2>
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+
+
+
+
+	<xsl:template match="services">
+		<h2>Services</h2>
+		<!-- fixme; user for-each loop -->
+		<table border="0" cellpadding="0">
+			<tr>
+			<td>
+			<xsl:value-of select="value"/>
+			</td>
+			</tr>
+		</table>
+    </xsl:template>
 
 
 
@@ -82,6 +133,18 @@
 		</table>
     </xsl:template>
 
+    <xsl:template match="user">
+		<table border="0" cellpadding="0">
+			<tr>
+			<td>
+	        <xsl:value-of select="@unixname"/>
+			</td>
+			<td>
+			<xsl:value-of select="value"/>
+			</td>
+			</tr>
+		</table>
+    </xsl:template>
 
 
 

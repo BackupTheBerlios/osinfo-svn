@@ -257,25 +257,54 @@ fi
 # XML HEADER & FOOTER FUNCTIONS
 # -----------------------------
 function print_xml_header () {
+	# initialize variables (ip, hostname, date)
+
+	local ip="$(ifconfig $interface_name | \
+		grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+		grep -Eo '[0-9\.]+' | head -n 1)"
+
+    local timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
+
+	local hostname="$(hostname 2> /dev/null)" 
+
+	###############
+	# STANDARD XML
+	if [ $lanforce -eq 0 ]; then
+
+		#!DOCTYPE
+		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
+
+		# osinfo
+		xml_tag_start "${appname}" >> "${XMLFILE}"
+
+		XML_INDENT=1
+
+		# osinfo version
+		add_indentation
+		xml_param_tag_closed "${appname} version" "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
+
+		# hostname
+		add_indentation
+		xml_valuetag_startstop \
+			"hostname" "${hostname}" >> "${XMLFILE}"
+
+		# IP address
+		add_indentation
+		xml_valuetag_startstop \
+			"ipv4" "${ip}" >> "${XMLFILE}"
+
+		# scanning date
+		add_indentation
+		xml_valuetag_startstop \
+			"scanning_date" "${timestamp}" >> "${XMLFILE}"
+
+	###############
 	# LANFORCE XML
-	if [ "$lanforce" == 1 ]; then
+	elif [ $lanforce -eq 1 ]; then
 
 		# AnMaster: To produce valid XML that *needs* to be "entityset"...
 		xml_doc_start 'entityset' 'SYSTEM' 'lanforce.dtd' > "${XMLFILE}"
-		ip="$(ifconfig $interface_name | \
-			grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-			grep -Eo '[0-9\.]+' )"
-		lf_entity_start "$(hostname)" "$ip" >> "${XMLFILE}"
-
-	# STANDARD XML
-	else
-		#!DOCTYPE
-		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
-		# osinfo 
-		xml_param_tag "${appname} version" "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
-		XML_INDENT=1
-		add_indentation
-		xml_hostname "$(hostname -f 2> /dev/null)" >> "${XMLFILE}"
+		lf_entity_start "$hostname" "$ip" >> "${XMLFILE}"
 
 	fi
 }
