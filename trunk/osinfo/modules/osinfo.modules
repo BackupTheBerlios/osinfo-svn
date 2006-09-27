@@ -1441,144 +1441,6 @@ Module_memory() {
 }
 
 
-##################
-# CD/DVD DEVICES
-Module_cdrom() {
-	local moduleName="CD/DVD drives"
-	module_header "${moduleName}"
-
-	if CheckReq_lshw && CheckReq_root; then
-		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		cdrom_tmp2="$(mktemp /tmp/osinfo.XXXXXX)"
-		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
-
-		local cdrom_node cdrom_model cdrom_type cdrom_serial cdrom_bus
-
-		lshw_xml
-		if [ "$(grep -i cdrom $lshw_xml_file)" ]; then
-			extr_node 'node id="cdrom' $lshw_xml_file /node > $cdrom_tmp
-
-			#for debugging:
-			#extr_node 'node id="cdrom' debug/lshw-platon /node > $cdrom_tmp
-			# cat $cdrom_tmp
-
-			# extr_node echoes back all the cdrom drives in the system,
-			# let's see how many
-			local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
-
-			for drv_nr in $(seq 1 1 $cdrom_count); do
-
-				# collect information;
-				# if more than one unprocessed drives are found...
-				if [ $drv_nr -lt $cdrom_count ]; then
-
-					# process this drive in the temp file
-					sed -n "/%node $drv_nr%/,/%node $(($drv_nr+1))%/{p;}" \
-					    $cdrom_tmp > $cdrom_tmp2
-
-					# DEBUG:
-					# KEEP THESE for testing times on ubuntu
-					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
-					#	awk -F: {'print $1'})"
-					#local next_node="$(grep -n "%node $(($drv_nr+1))%" $cdrom_tmp | \
-					#	awk -F: {'print $1'})"
-					#sed -n "$this_node,$next_node{p;}" $cdrom_tmp > $cdrom_tmp2
-
-
-				else # one unprocessed drive..
-
-					# process temp file to EOF (\$)
-					sed -n "/%node $drv_nr%/,\${p;}" $cdrom_tmp > $cdrom_tmp2
-
-					#local this_node="$(grep -n "%node $drv_nr%" $cdrom_tmp | \
-					#	awk -F: {'print $1'})"
-					#sed -n "$this_node,\${p;}" $cdrom_tmp > $cdrom_tmp2
-
-				fi
-
-				cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $cdrom_tmp2)")"
-
-				cdrom_type[$drv_nr]="$(extr_xml_value "$(grep -i descr ${cdrom_tmp2})")"
-
-				cdrom_serial[$drv_nr]="$(extr_xml_value "$(grep -i serial ${cdrom_tmp2})")"
-
-				cdrom_node[$drv_nr]="$(extr_xml_value \
-				             "$(grep -i 'logicalname' ${cdrom_tmp2} | head -n 1)")"
-				                       # sometimes there's a 'disc' node with a second
-				                       # logicalname node, which is the same as the first
-
-				cdrom_bus[$drv_nr]="$(extr_xml_value "$(grep -i businfo ${cdrom_tmp2})")"
-
-				# extract capabilities
-				IFS_bak="$IFS"
-				IFS=$'\n'
-				local cabty value
-				for cabty in $(grep -i 'capability id' $cdrom_tmp2); do
-
-					# verbosity level 0 only reports burning \ read \ playback capabilities
-					value="$(extr_xml_value "$cabty")"
-					if [ $isverbose -ge 1 ] || \
-					   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
-					   cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
-					fi
-
-				done
-				IFS="$IFS_bak"
-
-				#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
-
-
-
-				# display data for LanForce
-				if [ $lanforce -eq 1 ]; then
-
-					# print attribute only once
-					[ $drv_nr -eq 1 ] && add_attribute 'Model'	'cdrom'
-					add_values    "${cdrom_model[$drv_nr]}"
-
-				else # standard xml and stdout
-
-					add_header  "CD/DVD drive $drv_nr" "cd_drive name"
-
-					add_attribute 'Model'	'cdrom'
-					add_values    "${cdrom_model[$drv_nr]}"
-
-					add_attribute 'Drive type'
-					add_values    "${cdrom_type[$drv_nr]}"
-
-					add_attribute 'Serial number'
-					add_values    "${cdrom_serial[$drv_nr]}"
-
-					add_attribute 'Physical bus'
-					add_values    "${cdrom_bus[$drv_nr]}"
-
-					add_attribute 'Device node'
-					add_values    "${cdrom_node[$drv_nr]}"
-
-					add_attribute 'Capabilities'
-
-					IFS_bak="$IFS"
-					IFS=";"
-					for cabty in ${cdrom_capabilities[$drv_nr]}; do
-						add_values    "${cabty}\n "
-						# debug with debug/lshw-dvdwriter
-					done
-					IFS="$IFS_bak"
-
-					add_footer "cd_drive"
-
-				fi
-			done
-
-		else
-			local status_msg='No cdrom drives detected'
-			info          "$status_msg"
-		fi
-	fi
-
-	flush_values
-}
 
 
 #######################
@@ -2646,6 +2508,15 @@ Module_network() {
 
 	flush_values
 }
+
+	function get_hostname() {
+		hostname 2> /dev/null
+	}
+
+	function get_mac_address() {
+		# debug only!
+		/sbin/ifconfig eth0 | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}'
+	}
 
 	### network helper functions
 	##

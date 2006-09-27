@@ -15,18 +15,31 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=9
-patch_version=7
+patch_version=8
 dev_status=alpha
 release_date='2006-09-xx'
 
+#############################################################
+##
 # source the necessary files
-source osinfo.modules
-source bash.functions
-source xml.functions
-source xslt.functions
-source lanforce.functions
 
-# guess the operating system
+source modules/osinfo.modules
+source modules/cdrom
+
+source lib/bash.functions      # colour & line functions
+source lib/print_help          # print --help 
+
+source lib/xml.functions       # xml tag codes
+source lib/xslt.functions      # xslt generation 
+source lib/lanforce.functions  # lanforce xml tag codes
+
+source lib/check.functions     # check various functionalities
+source lib/cmdline	           # command line options, leave last!
+
+#############################################################
+
+
+# make a guess of the operating system
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
@@ -37,6 +50,16 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #fi
 
 
+function netcat() {
+	if [ "$(type -p netcat)" ]; then
+		netcat "$@"
+	elif [ "$(type -p nc)" ]; then
+		nc "$@"
+	else
+		info "netcat binary not found!"
+		exit 1
+	fi
+}
 # On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
@@ -49,8 +72,7 @@ if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	}
 fi
 
-
-# initialize global variables
+######## SETTING USERSPACE VARIABLES
 isverbose=0
 isdebug=0
 usekdialog=0
@@ -59,80 +81,22 @@ usexml=0
 fake=0
 dev_code=0
 quiet=0
-profile="all"
+tcpdaemon=0
+tcpsend=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
-XMLFILE="osinfo.xml"
+
+#XMLFILE="$(get_hostname)_$(get_mac_address).xml"
+XMLFILE="$(get_hostname).xml"
 XSLFILE="osinfo.xsl.debug"
 rm "$XSLFILE" -f
-error_log="/var/log/osinfo.log"
+
+# if the conf file is not available..
+[ ! "$error_log" ] && error_log="/var/log/osinfo.log"
+[ ! "$rundir" ] && rundir="/var/run/osinfo/"
 
 
-function PRINT_Help {
-	local MODULE
-	print_line
-	echo "${header}${appname} displays information about the system${tSTD}"
-	echo
-	echo "Arguments are names of modules to get info from:"
-	echo
-	if [ "$SYSTEM" == "linux" ] ; then
-		for MODULE in ${MODULES_LINUX}; do
-			echo -e "\t$MODULE"
-		done
-	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
-		for MODULE in ${MODULES_BSD}; do
-			echo -e "\t\t$MODULE"
-		done
-	fi
-	echo
-	echo 'If arguments is "all" then list information from all modules'
-	echo
-	echo "${tBOLD}Syntax:${tSTD}"
-	echo "  $(basename $0) [Options] arguments"
-	echo "  $(basename $0) [--usage|--help]"
-	echo "${tBOLD}Options:${tSTD}"
-	echo "       --xml               Printout in xml format to osinfo.xml"
-	echo "       --lanforce          Makes the output to osinfo.xml according to a special DTD"
-	echo "  -o   --output [file]     Use this file for xml output"
-	echo "  -v   --verbose           Show more information"
-	echo "  -vv  --veryverbose       Show even more information"
-	echo "  -V   --version           Shows the version of ${tBOLD}${appname}${tSTD}"
-	echo "       --netcat [port]     Sends the output in xml to the tcp port via netcat"
-	echo "       --no-color          Disables color output (testing)"
-	echo "       --debug             For testing"
-	echo "  -D   --fulldebug         Print full debugging info, clutters output!"
-#	echo "       --kdialog           Show the information using KDialog"
-#	echo "                           from KDE. Experimental feature!"
-#	echo "                           Not usable yet!"
-	echo "  -P   --prefix [dir]      Use this dir as root"
-	echo "                           This disables some modules"
-	echo "                           and exits"
-	echo
-	print_line
-	if [ "$1" ]; then
-		exit $1
-	else
-		exit 0
-	fi
-}
-
-
-function Check_logfile {
-	if [ ! -e "$error_log" ]; then
-		if [ ! $(touch "$error_log") ]; then
-			info	"Could not create log file $error_log."
-		fi
-	fi
-
-	if [ ! -w "$error_log" ]; then
-		info	"Log file is not writable by you."
-	fi
-}
-
-
-######## SETTING USERSPACE VARIABLES
-#
 # Before we break path hash some binaries so the script can find them (if they exist).
 hash kdialog &>/dev/null
 # PATH here allows normal users to run ifconfig and lsmod
@@ -141,119 +105,7 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 #[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
 
 
-####### PARSE THE COMMAND LINE ARGUMENTS
-if [ "$#" -gt 0 ]; then
-	while [ "$#" -gt 0 ]; do
-		case "$1" in
-			'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
-				PRINT_Help
-				;;
-			'-P'|'--prefix')
-				if [ $2 ]; then
-					# Make sure there is only one ending "/".
-					prefix="$(echo $2 | sed 's/\/*$/\//')"
-					shift 2
-				else
-					missing_arg "$1"
-				fi
-				;;
-			'--kdialog')
-				usekdialog=1
-				shift 1
-				;;
-			'--xml')
-				usexml=1
-				shift 1
-				;;
-			'-o'|'--output')
-				if [ $2 ]; then
-					usexml=1
-					XMLFILE="${2}"
-					shift 2
-				else
-					missing_arg "$1"
-				fi
-				;;
-			'--lanforce')
-				usexml=1
-				lanforce=1
-				shift 1
-				;;
-			'--netcat')
-				if [ "$2" ] && [ "$3" ]; then
-					usexml=1
-					netcat=1
-					HOST="$2"
-					PORT="$3"
-					shift 3
-				else
-					echo "You must set the target host and port!"
-					missing_arg "$1" 2
-				fi
-				;;
-			'--no-color')
-				# set empty values
-				tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN='' 
-				tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN=''
-				shift 1
-				;;
-			'-v'|'--verbose')
-				isverbose=1
-				shift 1
-				;;
-			'-vv'|'--very-verbose')
-				isverbose=2
-				shift 1
-				;;
-			'-D'|'--fulldebug')
-				export isdebug=1
-				set -x
-				shift 1
-				;;
-			'--debug')
-				export isdebug=1
-				shift 1
-				;;
-			'--dev')
-				# for using the developement option to debug stuff
-				export dev_code=1
-				shift 1
-				;;
-			'--fake')
-				# for faking input from files to debug stuff, for example
-				# LVM drives when no such drives are available
-				export fake=1
-				shift 1
-				;;
-			'--quiet'|'-q')
-				quiet=1
-				shift 1
-				;;
-			'-V'|'--version')
-				echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
-				[ "$dev_status" == "stable" ] && \
-				echo "Release date: "$(date -d $release_date +%A\ %e\ %B\ %Y)
-				echo 'Copyright (C) 2005-2006 Arvid Norlander'
-				echo 'Copyright (C) 2006 Mikael Lammentausta'
-				echo
-				echo "This is free software; see the source for copying conditions."
-				echo
-				echo 'This program is distributed in the hope that it will be useful,'
-				echo "but ${tBOLD}WITHOUT ANY WARRANTY${tSTD}; without even the implied warranty of"
-				echo "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
-				echo 'GNU General Public License for more details.'
-				echo
-				exit 0;
-				;;
-			*)
-				cmdsnames="$cmdsnames $1"
-				shift 1;
-				;;
-		esac
-	done
-else
-	PRINT_Help
-fi
+
 
 
 ############################################
@@ -275,7 +127,7 @@ function print_xml_header () {
 	if [ $lanforce -eq 0 ]; then
 
 		#!DOCTYPE
-		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
+		xml_doc_start 'osinfo' 'SYSTEM' 'lib/osinfo.dtd' > "${XMLFILE}"
 
 		# osinfo
 		xml_tag_start "${appname}" >> "${XMLFILE}"
@@ -284,22 +136,25 @@ function print_xml_header () {
 
 		# osinfo version
 		add_indentation
-		xml_param_tag_closed "${appname} version" "${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
+		xml_param_tag_closed "${appname} version" \
+		"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
 
 		# hostname
 		add_indentation
-		xml_valuetag_startstop \
-			"hostname" "${hostname}" >> "${XMLFILE}"
+		xml_param_tag_closed "client hostname" "$(get_hostname)" >> "${XMLFILE}"
 
 		# IP address
 		add_indentation
-		xml_valuetag_startstop \
-			"ipv4" "${ip}" >> "${XMLFILE}"
+		xml_param_tag_closed "ip v4" "${ip}" >> "${XMLFILE}"
+
+		# profile
+		add_indentation
+		profile="desktop"
+		xml_param_tag_closed "computer profile" "${profile}" >> "${XMLFILE}"
 
 		# scanning date
 		add_indentation
-		xml_valuetag_startstop \
-			"scanning_date" "${timestamp}" >> "${XMLFILE}"
+		xml_param_tag_closed "scanning date" "${timestamp}" >> "${XMLFILE}"
 
 	###############
 	# LANFORCE XML
@@ -860,11 +715,11 @@ wrong_module() {
 
 
 #######################
-# THE "MAIN" FUNCTION
+# THE MAIN FUNCTION
+# this runs all checks and generates the print-out
 #
 # this is the place to put all env variables to be set for some module
-main() {
-	Check_logfile
+run_modules() {
 	for modul in $cmdsnames; do
 
 		# TODO: check that the module being called is supported on the running OS
@@ -968,13 +823,117 @@ main() {
 	cleanup_temp_files
 }
 
-# call the main function
-main
+listen_tcp() {
+
+	if [ $isverbose -ge 1 ]; then
+		info "Daemonizing" 
+		info "Listening to tcp connections from $tcp_listening_port..."
+		info "Press Ctrl-Z to exit" 
+		flush_values
+	fi
+
+	local hostdir="${rundir}/hosts"
+	# create hosts dir if it doesn't exist
+	[ ! -e "${hostdir}" ] && mkdir -p "${hostdir}" 
+
+	local clients client_hostname
+
+	# allocate a temp file
+    tcp_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+    TempFiles=("${TempFiles[@]}" "$tcp_tmp")
+
+	killall -9 nc
+
+	# in an eternal loop...
+	while [ a = a ]; do
+
+		# listen for incoming xml files
+		if [ $isverbose -ge 1 ]; then
+			netcat -v -l -p $tcp_listening_port > "$tcp_tmp" # which breaks after EOF
+		else
+			netcat -l -p $tcp_listening_port > "$tcp_tmp" # which breaks after EOF
+		fi
+
+		# notify the user of the received file
+		[ $isverbose -ge 1 ] && \
+			info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
+
+		# extract hostname from the xml
+		client_hostname="$(grep -i 'client hostname' "$tcp_tmp" | \
+		                   sed 's/[^\"]*\"\([^\"]*\)\"[^.]*/\1/' )"
+
+		# create or update the xml file for the host
+		cat "$tcp_tmp" > "${hostdir}/${client_hostname}.xml"
+		[ $isverbose -ge 1 ] && \
+			info "File '${hostdir}/${client_hostname}.xml' saved"
+
+		# create or update <hostname>.html. 
+		# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
+		if [ -e "${hostdir}/${client_hostname}.xsl" ]; then
+			xsltproc "${hostdir}/${client_hostname}.xsl" \
+			         "${hostdir}/${client_hostname}.xml" > \
+			         "${hostdir}/${client_hostname}.html" 2> "$error_log"
+
+		elif [ -e "${hostdir}/generic-host.xsl" ]; then
+			xsltproc "${hostdir}/generic-host.xsl" \
+			         "${hostdir}/${client_hostname}.xml" > \
+			         "${hostdir}/${client_hostname}.html" 2> "$error_log"
+		else
+			info "No applicaple xsl template files found in '${hostdir}'!"
+		fi
+
+		# inform the user
+		if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
+			info "File '${hostdir}/${client_hostname}.html' created"
+		fi
+
+		# create or update index.html
+		if [ -e "${rundir}/index.xsl" ]; then
+			for clients in ${hostdir}/*.xml; do
+
+				xsltproc "${rundir}/index.xsl" \
+				         "${clients}" > \
+				         "${rundir}/index.html" 2> "$error_log"
+
+			done
+		else
+			info "index.xsl template file was not found in '${rundir}'!"
+		fi
+
+		# inform the user
+		if [ $isverbose -ge 1 ] && [ -e "${rundir}/index.html" ]; then
+			info "File '${rundir}/index.html' created"
+		fi
+
+		flush_values
+	
+		# :)
+
+	done
+
+
+	cleanup_temp_files
+}
+
+
+# parse the command line arguments
+parse_arguments "${@}"
+
+# do some checks..
+Check_logfile
+#Check_rundir
+
+# if we're not running in tcp daemon mode, call the main function
+if [ $tcpdaemon -eq 0 ]; then
+	run_modules
+else
+	listen_tcp
+fi
 
 ############################################
 # FINALLY SEND OVER TCP IF THE OPTION IS SET
-if [ "$netcat" == "1" ]; then
-	cat "${XMLFILE}" | nc "$HOST" "$PORT"
+if [ $tcpsend -eq 1 ]; then
+	cat "${XMLFILE}" | netcat "$HOST" "$PORT" -q 1
 elif [ $usexml -eq 1 ] && [ $quiet -ne 1 ]; then
 	cat "${XMLFILE}"
 fi

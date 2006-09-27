@@ -34,7 +34,7 @@
 
 	<!-- hostname -->
     <xsl:template match="client">
-        <h1><xsl:value-of select="@hostname"/></h1>
+		<xsl:value-of select="@hostname"/>".xml"
     </xsl:template>
 
 	<!-- profile -->
@@ -50,18 +50,8 @@
 
 
 	<!-- modules -->
-    <xsl:template match="disk_information">
-		<h2>Disk</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
     <xsl:template match="distribution">
 		<h2>Distro</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
-    <xsl:template match="kernel">
-		<h2>Kernel</h2>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
@@ -75,53 +65,10 @@
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
-	<xsl:template match="users">
-		<h2>Users</h2>
-        <xsl:apply-templates select="user"/>
-	        <xsl:value-of select="@unixname"/>
-    </xsl:template>
-
-	<xsl:template match="devices">
-		<h2>Devices</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
-	<xsl:template match="terminal">
-		<h2>Terminal</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
 	<xsl:template match="network_information">
 		<h2>Network</h2>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
-
-	<xsl:template match="applications">
-		<h2>Applications</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
-	<xsl:template match="dmi_information">
-		<h2>OEM</h2>
-        <xsl:apply-templates select="attribute"/>
-    </xsl:template>
-
-
-
-
-
-	<xsl:template match="services">
-		<h2>Services</h2>
-		<!-- fixme; user for-each loop -->
-		<table border="0" cellpadding="0">
-			<tr>
-			<td>
-			<xsl:value-of select="value"/>
-			</td>
-			</tr>
-		</table>
-    </xsl:template>
-
 
 
     <!--Table headers and outline-->
@@ -137,20 +84,6 @@
 			</tr>
 		</table>
     </xsl:template>
-
-    <xsl:template match="user">
-		<table border="0" cellpadding="0">
-			<tr>
-			<td>
-	        <xsl:value-of select="@unixname"/>
-			</td>
-			<td>
-			<xsl:value-of select="value"/>
-			</td>
-			</tr>
-		</table>
-    </xsl:template>
-
 
 
 </xsl:stylesheet> 

@@ -51,13 +51,6 @@ function xml_tag_startstop () {
 	echo "<${1} />"
 	}
 
-# prints a start-stop tag with a value
-#  1  Attribute
-#  2  Value
-function xml_valuetag_startstop () {
-	echo "<${1} value=\"${2}\" />"
-	}
-
 # Unclosed tag
 # Parameters:
 #  1  string  Name of tag
@@ -72,7 +65,9 @@ function xml_param_tag () {
 	echo "<${1}=\"${2}\" >"
 	}
 
-
+## Tag with a parameter, closed
+#  1  string  name of parameter
+#  2  *       Value
 function xml_param_tag_closed () {
 	echo "<${1}=\"${2}\" />"
 	}
@@ -130,6 +125,8 @@ function xml_value () {
 	}
 
 # Xml item description
+# Parameters:
+#  1  string  data
 function xml_description () {
 	echo "<description>${@}</description>"
 	}

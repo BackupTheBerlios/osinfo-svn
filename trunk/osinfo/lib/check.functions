@@ -1,0 +1,23 @@
+function Check_logfile {
+	if [ ! -e "$error_log" ]; then
+		if [ ! $(touch "$error_log" &>/dev/null) ]; then
+			info	"Could not create log file $error_log."
+		fi
+	fi
+
+	if [ ! -w "$error_log" ]; then
+		info	"Log file '$error_log' is not writable by you."
+	fi
+}
+
+function Check_rundir {
+	if [ ! -e "$rundir" ]; then
+		if [ ! $(touch "$rundir" &>/dev/null) ]; then
+			info	"Could not create directory '$rundir' for runtime files."
+		fi
+	fi
+
+	if [ ! -w "$rundir" ]; then
+		info	"Runtime file directory is not writable by you."
+	fi
+}
