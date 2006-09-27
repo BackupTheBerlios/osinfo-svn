@@ -36,6 +36,8 @@ source lib/lanforce.functions  # lanforce xml tag codes
 source lib/check.functions     # check various functionalities
 source lib/cmdline	           # command line options, leave last!
 
+. /etc/osinfo.conf             # the configuration file
+
 #############################################################
 
 
@@ -94,7 +96,7 @@ rm "$XSLFILE" -f
 
 # if the conf file is not available..
 [ ! "$error_log" ] && error_log="/var/log/osinfo.log"
-[ ! "$rundir" ] && rundir="/var/run/osinfo/"
+[ ! "$rundir" ] && rundir="/var/run/osinfo"
 
 
 # Before we break path hash some binaries so the script can find them (if they exist).
@@ -127,7 +129,7 @@ function print_xml_header () {
 	if [ $lanforce -eq 0 ]; then
 
 		#!DOCTYPE
-		xml_doc_start 'osinfo' 'SYSTEM' 'lib/osinfo.dtd' > "${XMLFILE}"
+		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
 
 		# osinfo
 		xml_tag_start "${appname}" >> "${XMLFILE}"
@@ -884,15 +886,15 @@ listen_tcp() {
 
 		# inform the user
 		if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
-			info "File '${hostdir}/${client_hostname}.html' created"
+			info "File '${hostdir}/${client_hostname}.html' updated"
 		fi
 
 		# create or update index.html
 		if [ -e "${rundir}/index.xsl" ]; then
-			for clients in ${hostdir}/*.xml; do
 
-				xsltproc "${rundir}/index.xsl" \
-				         "${clients}" > \
+			for clients in "${hostdir}/*.xml"; do
+
+				xsltproc "${rundir}/index.xsl" $clients > \
 				         "${rundir}/index.html" 2> "$error_log"
 
 			done
@@ -902,7 +904,7 @@ listen_tcp() {
 
 		# inform the user
 		if [ $isverbose -ge 1 ] && [ -e "${rundir}/index.html" ]; then
-			info "File '${rundir}/index.html' created"
+			info "File '${rundir}/index.html' updated"
 		fi
 
 		flush_values
