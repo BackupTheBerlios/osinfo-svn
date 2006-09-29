@@ -27,19 +27,21 @@ source modules/osinfo.modules
 source modules/cdrom
 source modules/devices
 
-source lib/bash.functions      # colour & line functions
-source lib/PRINT_Help          # print --help 
-source lib/PRINT_Version       # print --version
+source lib/bash.functions         # colour & line functions
+source lib/PRINT_Help             # print --help 
+source lib/PRINT_Version          # print --version
 
-source lib/xml.functions       # xml tag codes
-source lib/xslt.functions      # xslt generation 
-source lib/lanforce.functions  # lanforce xml tag codes
+source lib/xml.functions          # xml tag codes
+source lib/xslt.functions         # xslt generation 
+source lib/lanforce.functions     # lanforce xml tag codes
 
-source lib/check.functions     # check various functionalities
-source lib/cmdline	           # command line options, leave last!
+source lib/infostring.functions   # infostring handler functions
+
+source lib/check.functions        # check various functionalities
+source lib/cmdline	              # command line options, leave last!
 
 [ -e "/etc/osinfo.conf" ] && \
-. /etc/osinfo.conf             # the configuration file
+. /etc/osinfo.conf                # the configuration file
 
 #############################################################
 
@@ -183,214 +185,6 @@ function print_xml_footer () {
 ############################################
 
 
-###########################################################################
-# module_header()
-# ---------------
-#
-# Print module header
-# Parameters:
-#   1 string	Module name
-module_header() {
-	if [ "$usekdialog" == '1' ]; then
-		local k_title="$1"
-	elif [ $usexml -eq 1 ]; then
-
-		# make valid xml tag
-		local xml_tag="$(validate_xml_item "${1}")"
-		add_header "${xml_tag}"
-		xsl_template_match_start "${xml_tag}"
-		xsl_h2 "${@}"
-
-	else
-		print_line
-		echo -n "${tcRED}${tUNDERLINE}"
-		echo -n "Report from module"
-		echo "${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
-	fi
-}
-###########################################################################
-
-
-
-
-###########################################################################
-# add_header(), add_footer(), add_attribute(), add_values(), flush_values()
-# -------------------------------------------------------------------------
-# these are a group of functions that are used by the modules to formulate the output.
-#
-# flush_values calls either print_xml, print_lanforce_xml or print_stdout
-# depending on the parameters the user has set during invocations of osinfo.
-#
-# the other functions use the $infostring[] to store the information
-# collected by the modules. the format of this array is like:
-# [%header%System information] [%attribute%Operating system;os] [Linux]
-# detailed information is given in each function.
-
-
-############################
-# add_header, add_nc_header
-#
-# this function inserts the input string as the last available item
-# in the $infostring array. it also adds a %header% tag which will be
-# use by print_* functions to interpret how to parse the string.
-#
-# Parameters: (example eth0)
-#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
-#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
-function add_header() {
-	infostring[${#infostring[@]}]="%header%${1};${2}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
-}
-# same as above, but without color. some modules use this because of
-# a bug in the 'column' program
-#
-# Parameters: (example eth0)
-#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
-#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
-function add_nc_header() {
-	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
-}
-
-
-##############
-# add_footer
-#
-# adds a footer tag to infostring.
-# Parameters:
-#  1 xml closing tag <string> (optional)
-# if no parameter is given, close last open header.
-function add_footer() {
-	if [ "$1" ]; then
-		infostring[${#infostring[@]}]="%footer%${@}"
-		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-	else
-		close_last_header
-	fi
-
-	unset OpenHeaders[$((${#OpenHeaders[@]}-1))]
-}
-
-
-################
-# add_attribute
-#
-# This function inserts the input string(s) as the last available item
-# in the $infostring array, with a field delimiter of ";".
-# it also adds an %attribute% tag which will be use by print_* functions
-# to interpret how to parse the string.
-# Parameters:
-#  1 free-form name    (eg. Operating system)   (required)
-#  2 code tag for xml  (eg. os)                 (optional)
-function add_attribute() {
-	infostring[${#infostring[@]}]="%attribute%${1};${2}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-#############
-# add_values
-#
-# This function inserts the input strings into the $infostring[] array.
-function add_values {
-	# if the value is empty, remove the attribute
-	# if verbosity does not require explicity (-vv)
-	if [ ! "$@" ] && [ $isverbose -lt 2 ]; then
-		unset infostring[$((${#infostring[@]}-1))]
-	else
-		infostring[${#infostring[@]}]="%value%${@}"
-	fi
-}
-
-###################
-# add_value_footer
-#
-# This function inserts a value_footer, which indicates a dimension, eg. <footer>kB/s</footer>.
-function add_value_footer {
-	infostring[${#infostring[@]}]="%value_footer%${@}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-################
-# flush_values
-#
-# calls the print functions and clears the $infostring
-function flush_values {
-	# close all open headers
-	local hdr
-	for hdr in $(seq ${#OpenHeaders[@]} -1 1); do
-		((hdr--)) # correct offset
-		add_footer "${OpenHeaders[$hdr]}"
-	done
-
-	# then output according to user settings, xml or normal
-	if [ $usexml -eq 0 ]; then
-		print_stdout
-	elif [ $usexml -eq 1 ] && [ $lanforce -eq 0 ]; then
-		print_xml
-		xsl_template_stop
-	else
-		print_lanforce_xml
-	fi
-
-	# infostring is set at functions add_*
-	# and needs to be reset here so that the informaton
-	# from this module will not be reprinted later
-	unset infostring
-}
-###########################################################################
-
-
-
-###########################################################################
-# helper functions
-# ----------------
-
-# this function searches the $infostring array backwards,
-# looking for open headers. this is called from add_footer.
-function close_last_header() {
-	local IFS_bak="$IFS"
-	IFS=$' \t\n'
-
-	local found="" position item
-	for position in $(seq ${#infostring[@]} -1 0); do
-		item="${infostring[$position]}"
-		# first collect %footer%s into $found array
-		if [ "$(grep '^%footer%' <<< "${item}")" ]; then
-			found="$(grep '^%footer%' <<< "${item}" | sed s/%footer%//)"
-
-		# then continue and add a footer if it is not already found
-		elif [ "$(grep '^%header%' <<< "${item}")" ]; then
-			item="$(sed "s/%header%//" <<< "${item}")"
-
-			if [ "${item}" != "${found}" ]; then
-			#found[${#found[@]}]="$(echo ${item} | \
-			#	grep '^%header%' | sed s/%header%/%footer%/)"
-			# then test if this has
-			#echo $found
-				infostring[${#infostring[@]}]="%footer%${item}"
-				# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-				break;
-			fi
-		fi
-	done
-
-	IFS="$IFS_bak"
-
-	#for VL in $(seq 0 ${#infostring[@]}); do
-	#	echo ${infostring[$VL]}
-	#done
-}
-
-# this is used for informational sentences in case of errors, warnings, notes etc.
-function info {
-	infostring[${#infostring[@]}]="%info%${@}"
-	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-#################################################################
 
 
 ################################################################################
