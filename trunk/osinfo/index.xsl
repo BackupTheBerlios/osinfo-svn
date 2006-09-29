@@ -60,7 +60,7 @@
 
             </head>
             <body>
-                <xsl:apply-templates/>
+                <xsl:apply-templates name="profile"/>
             </body>
         </html>
     </xsl:template>
@@ -72,49 +72,56 @@
 		-->
     </xsl:template>
 
-<!--
-<xsl:if test="contains($string,'text')"> 
--->
 
-	<!-- hostname -->
-    <xsl:template match="client">
-		<h1><xsl:value-of select="@hostname"/></h1>
-	</xsl:template>
+	<!-- profile -->
+	<xsl:template name="profile" match="computer">
+		<xsl:variable name="profile" select="@profile"/>
 
+		<!-- desktop -->
+		<xsl:if test="contains($profile,'desktop')">
+			<h1><xsl:value-of select="../client/@hostname"/>
+			-
+			    <xsl:value-of select="$profile"/></h1>
+		</xsl:if>
 
-	<!-- profile 
-    <xsl:template match="computer">
-        <h2><xsl:value-of select="@profile"/></h2>
+		<!-- server -->
+		<xsl:if test="contains($profile,'server')">
+			<h1><xsl:value-of select="$profile"/></h1>
+		</xsl:if>
+
+		<!-- laptop -->
+		<xsl:if test="contains($profile,'laptop')">
+			<h1><xsl:value-of select="$profile"/></h1>
+		</xsl:if>
+
     </xsl:template>
-	-->
 
-	<!-- scanning date 
+
+
+
+	<!-- scanning date --> 
     <xsl:template match="scanning">
 		<p>Scanning date <xsl:value-of select="@date"/></p>
     </xsl:template>
-	-->
 
 
 
 	<!-- modules -->
-    <xsl:template match="distribution">
+
 	<!--
+    <xsl:template name="distro" match="distribution">
 	<div id="wrapper">
 		<p><a onclick="switchMenu('myvar');" title="Switch the Menu">Switch it now</a></p>
 
 		<div id="myvar">
-		-->
 		<h2>Distribution</h2>
 			<xsl:apply-templates select="attribute"/>
-	<!--
 		</div>
 	</div>
-	-->
     </xsl:template>
+	-->
 
-
-
-
+<!--
     <xsl:template match="system">
 		<h2>Core system</h2>
         <xsl:apply-templates select="attribute"/>
@@ -125,8 +132,10 @@
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
+-->
+
+	<!-- the rest of the modules are not displayed -->
 	<xsl:template match="*">
-		<!-- do not print -->
     </xsl:template>
 
 
