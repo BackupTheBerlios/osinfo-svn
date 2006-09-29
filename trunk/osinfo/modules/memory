@@ -1,0 +1,42 @@
+#######################
+# MEMORY
+#
+# this module tells complete information of the memory
+# installed on the system.
+#
+# only RAM at the moment and the solution is really dirty because
+# it uses lshw. 'free' and '/proc/meminfo' would also report
+# free RAM, but slightly incorrect number because it's the total
+# ram after kernel has allocated some for system services.
+#
+# requires root access
+#
+# TODO: add support for memory type/speed detection thru lshw
+Module_memory() {
+	local moduleName="System memory"
+	module_header "${moduleName}"
+	local ram_size
+
+	if CheckReq_lshw && CheckReq_root; then
+
+		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
+
+		# meminfo or free don't give a proper value, so we use lshw
+		# meminfo="/proc/meminfo"
+
+		lshw_xml
+		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
+
+		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
+		ram_size="$(bc -l <<< scale=1\;$ram_size/1024/1024)"
+
+		add_attribute     'Total size'	'ram'
+		add_values        "$ram_size"
+		add_value_footer  "MB"
+
+	fi
+
+	flush_values
+}
+

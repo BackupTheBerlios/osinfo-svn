@@ -14,8 +14,8 @@
 appname='osinfo'
 major_version=0
 minor_version=2
-micro_version=9
-patch_version=10
+micro_version=10
+patch_version=1
 dev_status=alpha
 release_date='2006-09-xx'
 
@@ -23,23 +23,7 @@ release_date='2006-09-xx'
 ##
 # source the necessary files
 
-source modules/osinfo.modules
-source modules/cdrom
-source modules/devices
-
-source lib/bash.functions         # colour & line functions
-source lib/PRINT_Help             # print --help 
-source lib/PRINT_Version          # print --version
-
-source lib/xml.functions          # xml tag codes
-source lib/xslt.functions         # xslt generation 
-source lib/lanforce.functions     # lanforce xml tag codes
-
-source lib/infostring.functions   # infostring handler functions
-source lib/daemon.functions       # daemon mode functions
-
-source lib/check.functions        # check various functionalities
-source lib/cmdline	              # command line options, leave last!
+source sources
 
 [ -e "/etc/osinfo.conf" ] && \
 . /etc/osinfo.conf                # the configuration file
