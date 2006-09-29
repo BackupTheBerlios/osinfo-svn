@@ -1,4 +1,13 @@
-helpers=lib/bash.functions modules/cdrom modules/osinfo.modules lib/xml.functions lib/lanforce.functions lib/print_help lib/cmdline lib/xslt.functions lib/check.functions
+helpers=lib/*
+helpers+=modules/*
+#helpers+=bash.functions
+#helpers+=lib/xml.functions
+#helpers+=lib/lanforce.functions
+#helpers+=lib/print_help
+#helpers+=lib/cmdline
+#helpers+=lib/xslt.functions
+#helpers+=lib/check.functions
+#helpers+=modules/osinfo.modules
 mainapp=osinfo
 subdirs=docs conf man init.d lib modules
 appname=osinfo
@@ -43,8 +52,10 @@ dist-all-in-one: dist
 	cd dist/$(appname) && \
 	for sources in "$(helpers)"; do cat $$sources >> osinfo-all-in-one; done
 	cd dist/$(appname) && sed 's/^source[a-zA-Z. _\/]*//' $(mainapp) >> osinfo-all-in-one
+
 	#for sources in "osinfo $$(awk /^source/{'print $$2'} osinfo)"; do cat "$$sources" >> osinfo-all-in-one ; done
 	#cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
+
 	chmod +x dist/$(appname)/osinfo-all-in-one
 
 distclean: clean
