@@ -58,7 +58,8 @@ function parse_arguments() {
 						shift 2
 
 					elif [ ! "$tcp_listening_port" ]; then
-						echo "You must set the listening port!"
+						info "You must set the listening port!"
+						flush_values
 						exit 1
 
 					# the tcp port may be given at the conf file
