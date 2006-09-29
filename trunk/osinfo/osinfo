@@ -25,6 +25,7 @@ release_date='2006-09-xx'
 
 source modules/osinfo.modules
 source modules/cdrom
+source modules/devices
 
 source lib/bash.functions      # colour & line functions
 source lib/PRINT_Help          # print --help 

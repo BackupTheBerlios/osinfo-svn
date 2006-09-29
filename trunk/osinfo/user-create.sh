@@ -14,10 +14,10 @@ if [ -e "/etc/passwd" ]; then
 
 		# create new user to /etc/passwd
 		if [ "$(type -p useradd)" ]; then
-			useradd -d "$vardir" -m -c osinfo\ client -s /bin/false osinfo
+			useradd -d "$vardir" -m -c osinfo\ client -s /bin/bash osinfo
 
 		else
-			echo "osinfo:x:7776:1000:osinfo client:${vardir}:/bin/false" >> /etc/passwd
+			echo "osinfo:x:7776:1000:osinfo client:${vardir}:/bin/bash" >> /etc/passwd
 
 		fi
 
@@ -26,6 +26,8 @@ if [ -e "/etc/passwd" ]; then
 	else
 		echo "user osinfo already created"
 	fi
+
+	chown osinfo -R "${vardir}"
 fi
 
 
@@ -49,11 +51,11 @@ else
 
 	if [ "$(type -p rsync)" ]; then	
 		echo "retrieving sshkey via rsync"
-		rsync "${sshkey}" "${sshdir}"
+		rsync "${sshkey}" "${sshdir}/authorized_keys"
 		
 	elif [ "$(type -p rcp)" ]; then
 		echo "retrieving sshkey via rcp"
-		rcp "${sshkey}" "${sshdir}"
+		rcp "${sshkey}" "${sshdir}/authorized_keys"
 
 	else
 		echo "rsync nor rcp binaries not found - ssh key cannot be retrieved."

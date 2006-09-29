@@ -1,0 +1,147 @@
+#######################
+# hardware devices of the system
+#
+# this function parses the physical devices in the computer from lspci.
+# depends on pciutils.
+#
+# the output verbosity can be increased to include devices in the
+# DO_NOT_OUTPUT string to include standard motherboard controllers
+# which are suppressed in the normal level of verbosity.
+#
+# TODO: is there a way to link these devices to specific udev nodes?
+#       udevinfo 087 hadn't got the data lspci has
+
+	#12:04 < LinuxNIT> is there a way to check and see how much ram my video card actually has available/is using? not just what i set in the xorg.conf
+	#12:04 < Kevin`> lspci -vv
+	#12:06 < LinuxNIT> IRegion 0: Memory at e8000000 (32-bit, prefetchable) [size=128M]
+
+
+Module_devices() {
+	local moduleName="Devices"
+	module_header "${moduleName}"
+
+	local DEVICE arraynr=1;
+
+	# on *BSD, run this only as root
+	if [ "$(grep -i bsd <<< "$SYSTEM")" ] && ! CheckReq_root; then 		
+		flush_values
+		return 1
+	fi
+
+
+	# fill up the DEVICE array to contain ' ' separated entries from lsmod.
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
+		devices[$arraynr]="$(sed 's/:_/ /g ; s/_// ; s/^\ // ' <<< $DEVICE )"
+		 # the above changes the ':' character to space, which separates the two strings
+		 # that have '_' in their spaces. sed also removes the first odd characters.
+		 #
+		 # there's a bug here, because the sed allows '\b' into the string.
+
+			# with lspci 2.2 and later, the -m switch works fine
+			#	for DEVICE in $(lspci -m | tr ' ' '_'); do
+			#		devices_dbg[$arraynr]="$(	echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+
+		((arraynr++))
+	done
+
+	# output by category	
+	for categories in Controllers Enhancements; do
+
+		add_header "\n$categories"
+
+		case $categories in
+			'Controllers')
+				DO_NOT_OUTPUT="ethernet\|multimedia"
+				grep_lspci_array "smb\|bridge\|host\|ide\|isa\|usb"
+				;;
+			'Enhancements')
+				DO_NOT_OUTPUT="^pci\|usb\|smb\|bridge\|ide\|isa\|host"
+				grep_lspci_array "."
+				;;
+		esac
+
+	done
+
+	flush_values
+}
+
+###############################
+# helper functions for devices
+	grep_lspci_array() {
+		local device_id="$1"
+		local found_devices arraynr description
+
+		# grep the wanted nodes from the array into another array
+		for arraynr in $(seq 1 1 ${#devices[@]}); do
+
+			# if we have a hit (grep matches the device_id and we don't
+			# match the DO_NOT_PRINT expressions)
+				if [ "$(grep -i $device_id  <<< ${devices[$arraynr]} )" ] &&
+				[ -z "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$arraynr]} )" ]; then
+
+				description[${#description[@]}]="$(
+					awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
+					sed 's/^.// ; s/^ *// ; s/_/ /g')"
+
+				found_devices[${#found_devices[@]}]="$(
+					awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | \
+					tr '_' ' ')"
+
+
+#				if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
+#
+#					# these values should not be local,
+#					# older bash fails there
+#					eth_adapter[${#eth_adapter[@]}]="$device"
+#
+#				elif [ "$(grep -i 'vga\|display' <<< "$description")" ]; then
+#
+#					video_adapter[${#video_adapter[@]}]="$device"
+#
+#				else
+#					found_devices[${#found_devices[@]}]="$found_device"
+#					unset found_device
+#				fi
+			fi
+		done
+
+
+		# print
+		for arraynr in $(seq 1 1 $((${#found_devices[@]}-1)) ); do
+
+			# add an xml code for ethernet and display adapters
+			if [ "$(grep -i 'network\|ethernet' <<< "${description[$arraynr]}")" ]; then
+				add_attribute ' Ethernet controller(s)'	"network_adapter"
+
+			elif [ "$(grep -i 'vga\|display' <<< "${description[$arraynr]}")" ]; then
+				add_attribute ' Display adapter(s)'		"display_adapter"
+
+			else
+				add_attribute " ${description[$arraynr]}"
+			fi
+
+			add_values    " ${found_devices[$arraynr]}"
+		done
+
+
+#		#then report the eth and video adapters
+#		if [ "$eth_adapter" ]; then
+#			add_attribute 'Ethernet controller(s)'	"network_adapter"
+#			for i in $(seq 0 1 $((${#eth_adapter[@]}-1)) ); do
+#				add_values    "${eth_adapter[$i]}\n "
+#			done
+#		fi
+#
+#		if [ "$video_adapter" ]; then
+#			add_attribute 'Display adapter(s)'		"display_adapter"
+#			for i in $(seq 0 1 $((${#video_adapter[@]}-1)) ); do
+#				add_values    "${video_adapter[$i]}\n "
+#			done
+#		fi
+
+#set -x
+		flush_values
+	}
+
