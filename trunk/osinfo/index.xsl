@@ -72,6 +72,10 @@
 		-->
     </xsl:template>
 
+<!--
+<xsl:if test="contains($string,'text')"> 
+-->
+
 	<!-- hostname -->
     <xsl:template match="client">
 		<h1><xsl:value-of select="@hostname"/></h1>
