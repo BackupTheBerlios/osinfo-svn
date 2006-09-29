@@ -1,0 +1,111 @@
+################################################################################
+################################################################################
+## osinfo daemon functions                                                    ##
+################################################################################
+################################################################################
+
+###############
+# listen_tcp
+#
+# listens to a tcp port, writes the input xml to $rundir,
+# generates a html from the file and updates the index.html
+listen_tcp() {
+	PRINT_Version
+
+	if [ $isverbose -ge 1 ]; then
+		info "Daemonizing" 
+		info "Listening to tcp connections from $tcp_listening_port..."
+		info "Press Ctrl-Z to exit" 
+		flush_values
+	fi
+
+	local hostdir="${rundir}/hosts"
+	# create hosts dir if it doesn't exist
+	[ ! -e "${hostdir}" ] && mkdir -p "${hostdir}" 
+
+	local clients client_hostname
+
+	# allocate a temp file
+    tcp_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+    TempFiles=("${TempFiles[@]}" "$tcp_tmp")
+
+	killall -9 nc
+
+	# in an eternal loop...
+	while [ a = a ]; do
+
+		# listen for incoming xml files
+		if [ $isverbose -ge 1 ]; then
+			netcat -v -l -p $tcp_listening_port > "$tcp_tmp" # which breaks after EOF
+		else
+			netcat -l -p $tcp_listening_port > "$tcp_tmp" # which breaks after EOF
+		fi
+
+		# notify the user of the received file
+		[ $isverbose -ge 1 ] && \
+			info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
+
+		# if the input is (not) valid osinfo xml..
+		if [ ! "$(grep -i '<!doctype osinfo' )" ]; then
+			info "Input is not valid osinfo xml!"
+			
+		else
+
+			# extract hostname from the xml
+			client_hostname="$(grep -i 'client hostname' "$tcp_tmp" | \
+							   sed 's/[^\"]*\"\([^\"]*\)\"[^.]*/\1/' )"
+
+			# create or update the xml file for the host
+			cat "$tcp_tmp" > "${hostdir}/${client_hostname}.xml"
+			[ $isverbose -ge 1 ] && \
+				info "File '${hostdir}/${client_hostname}.xml' saved"
+
+			# create or update <hostname>.html. 
+			# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
+			if [ -e "${hostdir}/${client_hostname}.xsl" ]; then
+				xsltproc "${hostdir}/${client_hostname}.xsl" \
+						 "${hostdir}/${client_hostname}.xml" > \
+						 "${hostdir}/${client_hostname}.html" 2> "$error_log"
+
+			elif [ -e "${hostdir}/generic-host.xsl" ]; then
+				xsltproc "${hostdir}/generic-host.xsl" \
+						 "${hostdir}/${client_hostname}.xml" > \
+						 "${hostdir}/${client_hostname}.html" 2> "$error_log"
+			else
+				info "No applicaple xsl template files found in '${hostdir}'!"
+			fi
+
+			# inform the user
+			if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
+				info "File '${hostdir}/${client_hostname}.html' updated"
+			fi
+
+			# create or update index.html
+			if [ -e "${rundir}/index.xsl" ]; then
+
+				for clients in "${hostdir}/*.xml"; do
+
+					xsltproc "${rundir}/index.xsl" $clients > \
+							 "${rundir}/index.html" 2> "$error_log"
+
+				done
+			else
+				info "index.xsl template file was not found in '${rundir}'!"
+			fi
+
+			# inform the user
+			if [ $isverbose -ge 1 ] && [ -e "${rundir}/index.html" ]; then
+				info "File '${rundir}/index.html' updated"
+			fi
+
+		fi
+
+		flush_values
+	
+		# :)
+
+	done
+
+	cleanup_temp_files
+}
+
