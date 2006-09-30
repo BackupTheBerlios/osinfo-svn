@@ -1,40 +1,80 @@
 <html>
 <head>
 </head>
-<body bgcolor="#FFFFFF" link="#FFFFFF" vlink="#FFFFFF" text="#000000" onResize="if (navigator.appVersion=='Netscape') history.go(0);">
+	<body bgcolor="#FFFFFF" link="#000000" vlink="#000000" text="#000000" onResize="if (navigator.appVersion=='Netscape') history.go(0);">
 
-osinfo
+		<div style="position:absolute;top:5px;left:10px;width:80px;height:450px;">
 
-<div style="position:absolute;top:43px;left:0px;width:80px;height:450px;">
-<table width=80 height=450 border=0 cellpadding=0 cellspacing=0><tr valign="top"><td bgcolor="#000000">
-<br><br><br>
+			<! -- overview -->
 
-<p align=right><a href="hosts/client21.html" target="main">client21</a>&nbsp;&nbsp;<br>
-
-<br><br><br><br><br><br><br>
-<br><br>
-
-<font color="#FFFFFF">
-
-</font></tr></td></table></div>
-
-<div style="position:absolute;top:43px;left:180px;width:10px;height:450px;">
-<table width=10 height=450 border=0 cellpadding=0 cellspacing=0>
-<tr valign="top"><td bgcolor="FFFFFF"><p align="right"><font color="#000000" face="Times New Roman" size="+4">r</font></p></tr></table></div>
+			<h1>osinfo</h1>
+			<font color="#000000" face="Times New Roman" size="-1">
+			<p align="left">
+			<a href="overview.html" target="main">index</a>
+			</p>
 
 
-<div style="position:absolute;top:493px;left:0px;width:80px;height:10px;">
-<table width=180 height=10 border=0 cellpadding=0 cellspacing=0><tr valign="top"><td bgcolor="#FFFFFF">
-<p align="left"><font color="#000000" face="Times New Roman" size="-1">
-<br>
+			<!-- computers -->
 
-5/aug/2001<br>
-1:00 am<p>
+			<h2>desktops</h2>
+			<p>
+			<table width=80 border=0 cellpadding=0 cellspacing=5>
+			
+				<tr valign="top">
+				<td bgcolor="#FFFFFF">
+				<font color="#000000" face="Times New Roman" size="-1">
+					<p align=left><a href="hosts/client21.html" target="main">client21</a>
+				</td>
+				</tr>
 
+				<tr valign="top">
+				<td bgcolor="#FFFFFF">
+					<font color="#000000" face="Times New Roman" size="-1">
+					<p align=left><a href="planck.html" target="main">planck</a>
+				</td>
+				</tr>
 
-</p><br></font></tr></td></table></div>
+			</table>
 
+			<h2>servers</h2>
+			<p>
+			<table width=80 border=0 cellpadding=0 cellspacing=5>
+			
+				<tr valign="top">
+				<td bgcolor="#FFFFFF">
+				<font color="#000000" face="Times New Roman" size="-1">
+					<p align=left><a href="server05.html" target="main">server05</a>
+				</td>
+				</tr>
 
+				<tr valign="top">
+				<td bgcolor="#FFFFFF">
+					<font color="#000000" face="Times New Roman" size="-1">
+					<p align=left><a href="server03.html" target="main">server03</a>
+				</td>
+				</tr>
 
-</body>
+			</table>
+		</div>
+
+		<!-- date -->
+		<div style="position:absolute;bottom:10px;left:10px;width:80px;height:40px;">
+
+			<table width=180 height=10 border=0 cellpadding=0 cellspacing=0>
+			
+				<tr valign="top"><td bgcolor="#FFFFFF">
+			
+					<font color="#000000" face="Times New Roman" size="-2">
+						last update<br>
+					</font>
+
+					<font color="#000000" face="Times New Roman" size="-1">
+						30/sep/2006<br>
+					</font>
+
+				</tr></td>
+			</table>
+		</div>
+
+	</body>
 </html>
