@@ -1,0 +1,501 @@
+<?xml version="1.0" ?>
+<!DOCTYPE osinfo SYSTEM "osinfo.dtd">
+<osinfo>
+	<osinfo version="0.2.9-8 alpha" />
+	<client hostname="planck" />
+	<ip v4="192.168.0.100" />
+	<computer profile="desktop" />
+	<scanning date="2006-09-28 12:20:40" />
+	<system>
+		<attribute name="hostname" code="hostname">
+			<description>Hostname</description>
+			<value>planck</value>
+		</attribute>
+
+		<attribute name="operating_system" code="os">
+			<description>Operating system</description>
+			<value>Gentoo Linux 2006.1</value>
+		</attribute>
+
+		<attribute name="operating_system_kernel" code="os_build">
+			<description>Operating system kernel</description>
+			<value>Linux 2.6.17-gentoo-r8</value>
+		</attribute>
+
+		<attribute name="system_uptime" code="uptime">
+			<description>System uptime</description>
+			<value>9 min</value>
+		</attribute>
+
+		<attribute name="cpu_temperature" code="">
+			<description>CPU temperature</description>
+			<value>26.0</value>
+		</attribute>
+
+		<attribute name="m_b_temperature" code="">
+			<description>M/B temperature</description>
+			<value>26 C  </value>
+		</attribute>
+
+	</system>
+	<distribution>
+		<attribute name="root_dir" code="">
+			<description>Root dir</description>
+			<value>/</value>
+		</attribute>
+
+		<attribute name="distro_id" code="">
+			<description>Distro ID</description>
+			<value>Gentoo</value>
+		</attribute>
+
+	</distribution>
+	<kernel>
+		<attribute name="kernel_name" code="">
+			<description>Kernel name</description>
+			<value>GNU/Linux</value>
+		</attribute>
+
+		<attribute name="kernel_release" code="os_build">
+			<description>Kernel release</description>
+			<value>2.6.17-gentoo-r8</value>
+		</attribute>
+
+		<attribute name="kernel_version" code="">
+			<description>Kernel version</description>
+			<value>#1 PREEMPT Tue Sep 26 18:24:31 EEST 2006</value>
+		</attribute>
+
+		<attribute name="kernel_name" code="">
+			<description>Kernel name</description>
+			<value>Crazed Snow-Weasel</value>
+		</attribute>
+
+	</kernel>
+	<processor>
+		<attribute name="vendor" code="processor_vendor">
+			<description>Vendor</description>
+			<value>GenuineIntel</value>
+		</attribute>
+
+		<attribute name="model" code="processor_model">
+			<description>Model</description>
+			<value>Intel(R) Pentium(R) 4 CPU 2.80GHz</value>
+		</attribute>
+
+		<attribute name="frequency" code="processor_speed">
+			<description>Frequency</description>
+			<value>2800.000 MHz</value>
+		</attribute>
+
+		<attribute name="architecture" code="system_type">
+			<description>Architecture</description>
+			<value>i686</value>
+		</attribute>
+
+		<attribute name="cpu_temperature" code="">
+			<description>CPU temperature</description>
+			<value>26.0</value>
+		</attribute>
+
+		<attribute name="fan" code="">
+			<description>Fan</description>
+			<value>964 RPM</value>
+		</attribute>
+
+		<attribute name="voltage" code="">
+			<description>Voltage</description>
+			<value>+1.46 V</value>
+		</attribute>
+
+		<attribute name="cache" code="">
+			<description>Cache</description>
+			<value>512 KB</value>
+		</attribute>
+
+		<attribute name="stepping" code="">
+			<description>Stepping</description>
+			<value>9</value>
+		</attribute>
+
+	</processor>
+	<disk_information>
+		<attribute name="ide_drive" code="hard_disk">
+			<description>IDE drive</description>
+			<value>IDE drive Hitachi Deskstar 7K250 series HDS722512VLAT20 (VN341EC4G2U1RK) 123.5 GB</value>
+		</attribute>
+
+		<attribute name="partitions" code="drive">
+			<description>partitions</description>
+			<value>/dev/hda1 swap /746991 Linux swap / Solaris </value>
+			<value>/dev/hda2 - /1 W95 Ext'd (LBA) </value>
+			<value>/dev/hda3 /usr/portage 254620/498015 Linux </value>
+			<value>/dev/hda4 / 92680/13888192 Linux </value>
+			<value>/dev/hda5 /mnt/hda5 15982812/18643401 Linux </value>
+			<value>/dev/hda6 - /64324228 HPFS/NTFS </value>
+		</attribute>
+
+	</disk_information>
+	<applications>
+		<attribute name="applications" code="software">
+			<description>Applications</description>
+		</attribute>
+
+	</applications>
+	<network_information>
+		<computer name="planck" >
+			<attribute name="nis_domain" code="">
+				<description>NIS domain</description>
+				<value>(none)</value>
+			</attribute>
+
+			<iface name="dummy0" >
+				<attribute name="mac" code="mac_address">
+					<description>MAC</description>
+					<value>F6:DB:38:04:C6:91</value>
+				</attribute>
+
+				<attribute name="ip_type" code="ip_type">
+					<description>IP type</description>
+					<value>undetermined</value>
+				</attribute>
+
+				<attribute name="rx_bytes" code="">
+					<description>RX bytes</description>
+					<value>0 (0.0 b)</value>
+				</attribute>
+
+				<attribute name="tx_bytes" code="">
+					<description>TX bytes</description>
+					<value>0 (0.0 b)</value>
+				</attribute>
+
+			</iface>
+			<iface name="eth0" >
+				<attribute name="mac" code="mac_address">
+					<description>MAC</description>
+					<value>00:48:54:82:BE:30</value>
+				</attribute>
+
+				<attribute name="ipv4" code="ip_address">
+					<description>IPv4</description>
+					<value>192.168.0.100</value>
+				</attribute>
+
+				<attribute name="ip_type" code="ip_type">
+					<description>IP type</description>
+					<value>DHCP</value>
+				</attribute>
+
+				<attribute name="gateway" code="default_gateway">
+					<description>Gateway</description>
+					<value>192.168.0.254</value>
+				</attribute>
+
+				<attribute name="broadcast" code="">
+					<description>Broadcast</description>
+					<value>192.168.0.255</value>
+				</attribute>
+
+				<attribute name="netmask" code="subnet_mask">
+					<description>Netmask</description>
+					<value>255.255.255.0</value>
+				</attribute>
+
+				<attribute name="rx_bytes" code="">
+					<description>RX bytes</description>
+					<value>3286918 (3.1 Mb)</value>
+				</attribute>
+
+				<attribute name="tx_bytes" code="">
+					<description>TX bytes</description>
+					<value>508558 (496.6 Kb)</value>
+				</attribute>
+
+			</iface>
+		</computer>
+	</network_information>
+	<wlan_information>
+	</wlan_information>
+	<terminal_info>
+		<attribute name="terminal_type" code="">
+			<description>Terminal type</description>
+			<value>xterm</value>
+		</attribute>
+
+		<attribute name="terminal_speed" code="">
+			<description>Terminal speed</description>
+			<value>38400</value>
+		</attribute>
+
+		<attribute name="rows" code="">
+			<description>Rows</description>
+			<value>58</value>
+		</attribute>
+
+		<attribute name="columns" code="">
+			<description>Columns</description>
+			<value>178</value>
+		</attribute>
+
+	</terminal_info>
+	<devices>
+		<controllers>
+			<attribute name="_host_bridge" code="">
+				<description>Host bridge</description>
+				<value>Intel Corporation 82875P/E7210 Memory Controller Hub (rev 02) </value>
+			</attribute>
+
+			<attribute name="_pci_bridge" code="">
+				<description>PCI bridge</description>
+				<value>Intel Corporation 82875P Processor to AGP Controller (rev 02) </value>
+			</attribute>
+
+			<attribute name="_usb_controller" code="">
+				<description>USB Controller</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) USB UHCI Controller #1 (rev 02) </value>
+			</attribute>
+
+			<attribute name="_usb_controller" code="">
+				<description>USB Controller</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) USB UHCI Controller #2 (rev 02) </value>
+			</attribute>
+
+			<attribute name="_usb_controller" code="">
+				<description>USB Controller</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) USB UHCI Controller #3 (rev 02) </value>
+			</attribute>
+
+			<attribute name="_usb_controller" code="">
+				<description>USB Controller</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) USB UHCI Controller #4 (rev 02) </value>
+			</attribute>
+
+			<attribute name="_usb_controller" code="">
+				<description>USB Controller</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) USB2 EHCI Controller (rev 02) </value>
+			</attribute>
+
+			<attribute name="_pci_bridge" code="">
+				<description>PCI bridge</description>
+				<value>Intel Corporation 82801 PCI Bridge (rev c2) </value>
+			</attribute>
+
+			<attribute name="_isa_bridge" code="">
+				<description>ISA bridge</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) LPC Interface Bridge (rev 02) </value>
+			</attribute>
+
+			<attribute name="_ide_interface" code="">
+				<description>IDE interface</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) IDE Controller (rev 02) </value>
+			</attribute>
+
+			<attribute name="_smbus" code="">
+				<description>SMBus</description>
+				<value>Intel Corporation 82801EB/ER (ICH5/ICH5R) SMBus Controller (rev 02) </value>
+			</attribute>
+
+		</controllers>
+	</devices>
+	<enhancements>
+		<attribute name="_display_adapter(s)" code="display_adapter">
+			<description>Display adapter(s)</description>
+			<value>ATI Technologies Inc RV280 [Radeon 9200 PRO] (rev 01) </value>
+		</attribute>
+
+		<attribute name="_display_adapter(s)" code="display_adapter">
+			<description>Display adapter(s)</description>
+			<value>ATI Technologies Inc RV280 [Radeon 9200 PRO] (Secondary) (rev 01) </value>
+		</attribute>
+
+		<attribute name="_multimedia_audio_controller" code="">
+			<description>Multimedia audio controller</description>
+			<value>Creative Labs SB Audigy (rev 04) </value>
+		</attribute>
+
+		<attribute name="_input_device_controller" code="">
+			<description>Input device controller</description>
+			<value>Creative Labs SB Audigy MIDI/Game port (rev 04) </value>
+		</attribute>
+
+		<attribute name="_firewire_(ieee_1394)" code="">
+			<description>FireWire (IEEE 1394)</description>
+			<value>Creative Labs SB Audigy FireWire Port (rev 04) </value>
+		</attribute>
+
+		<attribute name="_ethernet_controller(s)" code="network_adapter">
+			<description>Ethernet controller(s)</description>
+			<value>Realtek Semiconductor Co., Ltd. RTL-8139/8139C/8139C+ (rev 10) </value>
+		</attribute>
+
+	</enhancements>
+	<dmi_information>
+		<bios>
+			<attribute name="vendor" code="">
+				<description>Vendor</description>
+				<value>American Megatrends Inc.</value>
+			</attribute>
+
+			<attribute name="revision" code="bios_version">
+				<description>Revision</description>
+				<value>1017.004</value>
+			</attribute>
+
+			<attribute name="date" code="bios_date">
+				<description>Date</description>
+				<value>07/22/2004</value>
+			</attribute>
+
+		</bios>
+		<system_info>
+			<attribute name="manufacturer" code="system_manufacturer">
+				<description>Manufacturer</description>
+				<value>To Be Filled By O.E.M.</value>
+			</attribute>
+
+			<attribute name="model" code="system_model">
+				<description>Model</description>
+				<value>To Be Filled By O.E.M.</value>
+			</attribute>
+
+			<attribute name="version_number" code="">
+				<description>Version number</description>
+				<value>To Be Filled By O.E.M.</value>
+			</attribute>
+
+			<attribute name="oem_serial_number" code="computer_product_serial">
+				<description>OEM serial number</description>
+				<value>To Be Filled By O.E.M.</value>
+			</attribute>
+
+			<attribute name="uuid" code="uuid">
+				<description>UUID</description>
+				<value>00020003-0004-0005-0006-000700080009</value>
+			</attribute>
+
+		</system_info>
+		<motherboard>
+			<attribute name="manufacturer" code="mother_board_manufacturer">
+				<description>Manufacturer</description>
+				<value>ASUSTeK Computer Inc.</value>
+			</attribute>
+
+			<attribute name="model" code="mother_board_model">
+				<description>Model</description>
+				<value>P4C800</value>
+			</attribute>
+
+			<attribute name="version" code="mother_board_version">
+				<description>Version</description>
+				<value>Rev 1.xx</value>
+			</attribute>
+
+			<attribute name="serial_number" code="mother_board_serial_number">
+				<description>Serial number</description>
+				<value>MB-1234567890</value>
+			</attribute>
+
+		</motherboard>
+		<chassis>
+			<attribute name="manufacturer" code="chassis_manufacturer">
+				<description>Manufacturer</description>
+				<value>Chassis Manufacture</value>
+			</attribute>
+
+			<attribute name="type" code="chassis_type">
+				<description>Type</description>
+				<value>Desktop</value>
+			</attribute>
+
+			<attribute name="version" code="chassis_version">
+				<description>Version</description>
+				<value>Chassis Version</value>
+			</attribute>
+
+			<attribute name="serial_number" code="chassis_serial_number">
+				<description>Serial number</description>
+				<value>Chassis Serial Number</value>
+			</attribute>
+
+			<attribute name="lock" code="chassis_lock">
+				<description>Lock</description>
+				<value>Not Present</value>
+			</attribute>
+
+			<attribute name="asset_tag" code="chassis_asset_tag">
+				<description>Asset tag</description>
+				<value>Asset-1234567890</value>
+			</attribute>
+
+		</chassis>
+	</dmi_information>
+	<system_memory>
+		<attribute name="total_size" code="ram">
+			<description>Total size</description>
+			<value>256.0 MB</value>
+		</attribute>
+
+	</system_memory>
+	<users>
+		<active_user unixname="" >
+			<value>real name: root</value>
+			<value>login date: </value>
+			<value>uid: 0</value>
+			<value>gid: 0</value>
+			<value>groups: root bin daemon sys adm disk wheel floppy dialout tape video </value>
+			<value>shell: /bin/bash
+/bin/bash</value>
+			<value>home: /root
+/root</value>
+			<value>locales: </value>
+		</active_user>
+		<wtmp_statistics>
+			<value>wtmp begins Sat Jan 14 21:50:12 2006</value>
+		</wtmp_statistics>
+		<last_login unixname="mikael" >
+			<value>uid: 1000</value>
+			<value>gid: 100</value>
+			<value>shell: /bin/bash</value>
+			<value>home: /home/mikael</value>
+			<value>first login date: 2006-01-19</value>
+			<value>last login date: 2006-09-28</value>
+			<value>latest entry: :0</value>
+			<value>login count: 429</value>
+		</last_login>
+		<all_users>
+			<user unixname="mikael" >
+				<value>uid: 1000</value>
+				<value>gid: 100</value>
+				<value>first login date: 2006-01-19</value>
+				<value>last login date: 2006-09-28</value>
+				<value>login count: 429</value>
+			</user>
+			<user unixname="" >
+				<value>first login date: </value>
+				<value>last login date: </value>
+				<value>login count: </value>
+			</user>
+			<user unixname="vaula" >
+				<value>uid: 1001</value>
+				<value>gid: 100</value>
+				<value>first login date: 2006-01-30</value>
+				<value>last login date: 2006-09-03</value>
+				<value>login count: 78</value>
+			</user>
+		</all_users>
+	</users>
+	<services>
+		<value>apache2</value>
+		<value>hald</value>
+		<value>local</value>
+		<value>net.eth0</value>
+		<value>netmount</value>
+		<value>nfs </value>
+		<value>ntp-client</value>
+		<value>portmap</value>
+		<value>splash</value>
+		<value>sshd</value>
+		<value>xdm </value>
+	</services>
+</osinfo>
