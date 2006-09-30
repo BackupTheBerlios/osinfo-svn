@@ -1,0 +1,24 @@
+<html>
+<head>
+<meta name="ROBOTS" content="NOFOLLOW">
+<META NAME="description" CONTENT="osinfo">
+<meta name="generator" content="gvim">
+
+<title>osinfo</title>
+<frameset cols="150,*" frameborder="10" frameborder="yes" scrolling="no">
+<frameset rows="*">
+<frame src="sidebar.html.example" Name="bar" scrolling="no" noresize>
+</frameset>
+
+<frameset>
+<frame src="osinfo.html" Name="main" noresize>
+</frameset>
+</head>
+<body>
+
+
+<noframes>
+Only frames supported. Sorry.
+</noframes>
+</body>
+</html>

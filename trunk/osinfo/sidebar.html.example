@@ -1,0 +1,40 @@
+<html>
+<head>
+</head>
+<body bgcolor="#FFFFFF" link="#FFFFFF" vlink="#FFFFFF" text="#000000" onResize="if (navigator.appVersion=='Netscape') history.go(0);">
+
+osinfo
+
+<div style="position:absolute;top:43px;left:0px;width:80px;height:450px;">
+<table width=80 height=450 border=0 cellpadding=0 cellspacing=0><tr valign="top"><td bgcolor="#000000">
+<br><br><br>
+
+<p align=right><a href="hosts/client21.html" target="main">client21</a>&nbsp;&nbsp;<br>
+
+<br><br><br><br><br><br><br>
+<br><br>
+
+<font color="#FFFFFF">
+
+</font></tr></td></table></div>
+
+<div style="position:absolute;top:43px;left:180px;width:10px;height:450px;">
+<table width=10 height=450 border=0 cellpadding=0 cellspacing=0>
+<tr valign="top"><td bgcolor="FFFFFF"><p align="right"><font color="#000000" face="Times New Roman" size="+4">r</font></p></tr></table></div>
+
+
+<div style="position:absolute;top:493px;left:0px;width:80px;height:10px;">
+<table width=180 height=10 border=0 cellpadding=0 cellspacing=0><tr valign="top"><td bgcolor="#FFFFFF">
+<p align="left"><font color="#000000" face="Times New Roman" size="-1">
+<br>
+
+5/aug/2001<br>
+1:00 am<p>
+
+
+</p><br></font></tr></td></table></div>
+
+
+
+</body>
+</html>
