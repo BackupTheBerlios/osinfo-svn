@@ -70,6 +70,7 @@ isdebug=0
 usekdialog=0
 lanforce=0
 usexml=0
+makehtml=0
 fake=0
 dev_code=0
 quiet=0
@@ -81,8 +82,11 @@ prefix="/"
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"
 XMLFILE="$(get_hostname).xml"
-XSLFILE="osinfo.xsl.debug"
+XSLDEBUGFILE="osinfo.xsl"
+XSLFILE="$(get_hostname).xsl"
 rm "$XSLFILE" -f
+HTMLFILE="$(get_hostname).html"
+
 
 # if the conf file is not available..
 [ ! "$error_log" ] && error_log="/var/log/osinfo.log"
@@ -621,6 +625,10 @@ else
 	listen_tcp
 fi
 
+# generate html
+if [ $makehtml -eq 1 ]; then
+	xsltproc "${XSLDEBUGFILE}" "${XMLFILE}" > "${HTMLFILE}"
+fi
 
 ############################################
 # FINALLY SEND OVER TCP IF THE OPTION IS SET

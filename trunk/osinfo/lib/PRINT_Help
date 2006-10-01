@@ -22,7 +22,7 @@ function PRINT_Help {
 	echo "  $(basename $0) [--usage|--help]"
 	echo "${tBOLD}Options:${tSTD}"
 	echo "       --xml               Printout in xml format to <hostname>.xml"
-	echo "       --html              Generates <hostname>.xsl template file and <hostname>.html"
+	echo "       --html              Generates <hostname>.html (via xml -> xsl transformation)"
 	echo
 	echo "  -o   --output [file]     Use this file for xml output"
 	echo "  -v   --verbose           Show more information"

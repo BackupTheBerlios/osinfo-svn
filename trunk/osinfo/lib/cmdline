@@ -23,6 +23,12 @@ function parse_arguments() {
 					usexml=1
 					shift 1
 					;;
+				'--html')
+					usexml=1
+					makehtml=1
+					quiet=1
+					shift 1
+					;;
 				'-o'|'--output')
 					if [ $2 ]; then
 						usexml=1
