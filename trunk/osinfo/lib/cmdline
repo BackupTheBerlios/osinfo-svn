@@ -118,8 +118,11 @@ function parse_arguments() {
 					exit 0;
 					;;
 				'--htmldebug')
-				create_indexxml
-				shift 1
+					hostdir="html/hosts"
+					usexml=1
+					create_indexxml > "index.xml"
+					cat index.xml
+					exit 0
 				;;
 				*)
 					cmdsnames="$cmdsnames $1"

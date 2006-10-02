@@ -12,6 +12,7 @@
 listen_tcp() {
 	PRINT_Version
 	local clients client_hostname
+	INDEXXMLFILE="index.xml"
 
 	if [ $isverbose -ge 1 ]; then
 		info "Daemonizing" 
@@ -29,19 +30,17 @@ listen_tcp() {
     TempFiles=("${TempFiles[@]}" "$tcp_tmp")
 
 	# kill other netcat instances (nc often hangs)
-	killall -9 nc
+	killall -9 nc 2>/dev/null
 
 	# in an eternal loop...
 	while [ a = a ]; do
 
-		netcat_instance		# which breaks after EOF
+		netcat_instance	> "${tcp_tmp}"	# which breaks after EOF
 
 		# notify the user of the received file
-		if [ $isverbose -ge 1 ]; then
-			info "$(date)" 
-			info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
-			flush_values
-		fi
+		info "$(date)" 
+		info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
+		flush_values
 
 		# if the input is (not) valid osinfo xml..
 		if [ ! "$(grep -i '<!doctype osinfo' ${tcp_tmp})" ]; then
@@ -52,6 +51,7 @@ listen_tcp() {
 			update_hostxml "${tcp_tmp}"
 			if [ $makehtml -eq 1 ]; then
 				update_hosthtml
+				create_indexxml > "${INDEXXMLFILE}"
 				update_index
 			fi
 			
@@ -74,44 +74,66 @@ listen_tcp() {
 # creates index.xml
 create_indexxml() {
 	local host
-	XMLFILE="index.xml"
-	hostdir="html/hosts"
-	usexml=1
 
-	print_xml_header > "${XMLFILE}"
+	print_xml_header
 
 	for profile in ${PROFILES}; do
 
 		# if the profile type is found in one file..
 		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then		
 
-			add_header "${profile}s"
+			add_indentation
+			((XML_INDENT++))
+			xml_tag_start "${profile}s"
 
 			# run a loop for all xml files in the hosts dir
 			for host in $(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null); do
 
-				# hostname
-				add_values "$(extract 'client hostname' ${host} )"
+				print_short_client_id
 
-				# operating system
-				#
-
-				
-				# processor
 			done
 
-			add_footer
-			flush_values
+			((XML_INDENT--))
+			add_indentation
+			echo "</${profile}s>"
 
 		fi
 
 	done
 
-	print_xml_footer >> "${XMLFILE}"
+	print_xml_footer	
+}
 
-	cat "${XMLFILE}"
-	exit 0
-	
+
+print_short_client_id() {
+
+	local hostname="$(extract 'computer hostname' ${host} )"
+	if [ "$hostname" ]; then
+
+		# <hostname>
+		add_indentation 
+		xml_tag_start "$hostname"
+		((XML_INDENT++))
+
+			# hostname
+			add_indentation
+			xml_param_tag "computer hostname" "$(extract 'computer hostname' ${host} )" 
+
+			# operating system
+			add_indentation
+			xml_param_tag "computer OS" "$(extract 'computer OS' ${host} )"
+						
+			# processor
+			add_indentation
+			xml_param_tag "computer CPU" "$(extract 'computer CPU' ${host} )"
+
+		((XML_INDENT--))
+
+		# </hostname>
+		add_indentation
+		xml_tag_start "/$hostname"
+
+	fi
 }
 
 
@@ -148,7 +170,7 @@ update_hostxml() {
 	
 	# extract hostname from the xml
 	[ ! "$client_hostname" ] && \
-	client_hostname="$(extract 'client hostname' ${1} )"
+	client_hostname="$(extract 'computer hostname' ${1} )"
 
 	# create or update the xml file for the host
 	cat "$tcp_tmp" > "${hostdir}/${client_hostname}.xml"
@@ -163,7 +185,7 @@ update_hosthtml() {
 	
 	# extract hostname from the xml
 	[ ! "$client_hostname" ] && \
-	client_hostname="$(extract 'client hostname' ${1} )"
+	client_hostname="$(extract 'computer hostname' ${1} )"
 
 	# create or update <hostname>.html. 
 	# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
@@ -202,9 +224,9 @@ extract() {
 netcat_instance() {
 	# listen for incoming xml files
 	if [ $isverbose -ge 1 ]; then
-		netcat -v -l -p $tcp_listening_port > "$tcp_tmp"
+		netcat -v -l -p $tcp_listening_port
 	else
-		netcat -l -p $tcp_listening_port > "$tcp_tmp" 
+		netcat -l -p $tcp_listening_port
 	fi
 }
 
