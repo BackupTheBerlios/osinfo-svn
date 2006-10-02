@@ -3,19 +3,25 @@ function PRINT_Help {
 	print_line
 	echo "${header}${appname} displays information about the system${tSTD}"
 	echo
-	echo "Arguments are names of modules to get info from:"
+	echo "Arguments are names of profiles or modules to get info from:"
 	echo
+	echo "    MODULES:"
 	if [ "$SYSTEM" == "linux" ] ; then
 		for MODULE in ${MODULES_LINUX}; do
 			echo -e "\t$MODULE"
 		done
 	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
 		for MODULE in ${MODULES_BSD}; do
-			echo -e "\t\t$MODULE"
+			echo -e "       $MODULE"
 		done
 	fi
 	echo
-	echo 'If arguments is "all" then list information from all modules'
+#	echo 'If arguments is "all" then list information from all modules'
+	echo "    PROFILES:"
+	echo "        all     - list information from all modules"
+	echo "        desktop - limit output to standard desktop essentials"
+	echo "        server  - server essentials"
+	echo "        laptop  - laptop essentials"
 	echo
 	echo "${tBOLD}Syntax:${tSTD}"
 	echo "  $(basename $0) [Options] arguments"
@@ -32,7 +38,7 @@ function PRINT_Help {
 	echo "       --tcpsend [port]    Sends the output in xml to the tcp port via netcat"
 	echo "       --listen [port]     Listens to incoming xml in the tcp port via netcat"
 	echo
-	echo "       --profile [desktop|server|laptop]
+	echo "       --profile [desktop|server|laptop]"
 	echo "                           Define the computer profile for output mode"
 	echo
 	echo "       --no-color          Disables color output (testing)"
