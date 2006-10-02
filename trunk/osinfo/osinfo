@@ -15,7 +15,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=10
-patch_version=1
+patch_version=2
 dev_status=alpha
 release_date='2006-09-xx'
 
@@ -123,52 +123,50 @@ function print_xml_header () {
 	if [ $lanforce -eq 0 ]; then
 
 		#!DOCTYPE
-		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' > "${XMLFILE}"
-
+		xml_doc_start 'osinfo' 'SYSTEM' 'osinfo.dtd' 
 		# osinfo
-		xml_tag_start "${appname}" >> "${XMLFILE}"
+		xml_tag_start "${appname}" 
 
 		XML_INDENT=1
 
 		# osinfo version
 		add_indentation
 		xml_param_tag_closed "${appname} version" \
-		"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}" >> "${XMLFILE}"
+		"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
 
 		# hostname
 		add_indentation
-		xml_param_tag_closed "client hostname" "$(get_hostname)" >> "${XMLFILE}"
+		xml_param_tag_closed "client hostname" "$(get_hostname)"
 
 		# IP address
 		add_indentation
-		xml_param_tag_closed "ip v4" "${ip}" >> "${XMLFILE}"
+		xml_param_tag_closed "ip v4" "${ip}"
 
 		# profile
 		add_indentation
 		profile="desktop"
-		xml_param_tag_closed "computer profile" "${profile}" >> "${XMLFILE}"
+		xml_param_tag_closed "computer profile" "${profile}" 
 
 		# scanning date
 		add_indentation
-		xml_param_tag_closed "scanning date" "${timestamp}" >> "${XMLFILE}"
+		xml_param_tag_closed "scanning date" "${timestamp}"
 
 	###############
 	# LANFORCE XML
 	elif [ $lanforce -eq 1 ]; then
 
 		# AnMaster: To produce valid XML that *needs* to be "entityset"...
-		xml_doc_start 'entityset' 'SYSTEM' 'lanforce.dtd' > "${XMLFILE}"
-		lf_entity_start "$hostname" "$ip" >> "${XMLFILE}"
+		xml_doc_start 'entityset' 'SYSTEM' 'lanforce.dtd'
+		lf_entity_start "$hostname" "$ip"
 
 	fi
 }
 
 function print_xml_footer () {
 	if [ "$lanforce" == 1 ]; then
-		lf_entity_stop >> "${XMLFILE}"
-		#lf_note
+		lf_entity_stop
 	else
-		xml_tag_stop "${appname}" >> "${XMLFILE}"
+		xml_tag_stop "${appname}"
 	fi
 }
 ############################################
@@ -294,7 +292,7 @@ function print_xml {
 				# strip tag and discard the xml code tag
 				item="$(sed s/%value_footer%// <<< "${item}" )"
 				# send the preceding value and the footer to xmlfile.
-				xml_value "$value_item ${item}" >> "${XMLFILE}"
+				xml_value "$value_item ${item}"
 				unset value_item
 			;;
 
@@ -304,7 +302,7 @@ function print_xml {
 				if [ "$value_item" ]; then
 					add_indentation
 
-					xml_value "$value_item" >> "${XMLFILE}"
+					xml_value "$value_item"
 					unset value_item
 				fi
 
@@ -335,7 +333,7 @@ function print_xml {
 							open_attribute_tag "$item"
 
 							add_indentation
-							xml_description "$iddesc" >> "${XMLFILE}"
+							xml_description "$iddesc"
 						;;
 
 						'header')
@@ -350,9 +348,9 @@ function print_xml {
 
 							# modify xml output due to contents of $item
 							if [ "$code" != "" ]; then
-								xml_param_tag "${code}" "${item}" >> "${XMLFILE}"
+								xml_param_tag "${code}" "${item}"
 							else
-								xml_tag_start "${item}" >> "${XMLFILE}"
+								xml_tag_start "${item}"
 							fi
 
 							unset code
@@ -366,7 +364,7 @@ function print_xml {
 							# strip tag
 							item="$(sed s/%footer%// <<< "${item}")"
 							item="$(validate_xml_item "${item}")"
-							xml_tag_stop "${item}" >> "${XMLFILE}"
+							xml_tag_stop "${item}"
 						;;
 					esac
 				esac
@@ -379,7 +377,7 @@ function print_xml {
 ## print_xml helper functions
 	add_indentation() {
 		for indent in $(seq 1 1 $XML_INDENT); do
-			echo -ne "\t" >> "${XMLFILE}"
+			echo -ne "\t" 
 		done	
 	}
 
@@ -389,7 +387,7 @@ function print_xml {
 		((XML_INDENT--))
 		add_indentation
 
-		xml_attribute_stop >> "${XMLFILE}"
+		xml_attribute_stop
 		echo >> "${XMLFILE}"
 		attrib_status="closed"
 	}
@@ -402,7 +400,7 @@ function print_xml {
 		code=$(awk -F\; {'print $2'} <<< "${item}")
 		# item validation strips away the code
 		item="$(validate_xml_item "${item}")"
-		xml_attribute_start "${item}" "${code}" >> ${XMLFILE}
+		xml_attribute_start "${item}" "${code}"
 		((XML_INDENT++))
 		attrib_status="open"
 	}
@@ -439,8 +437,8 @@ print_lanforce_xml() {
 					# from the value string. it's a tad slow, though.
 					item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"
 					# echo three spaces as indentation
-					echo -ne "   " >> "${XMLFILE}"
-					xml_value "${item}" >> "${XMLFILE}"
+					echo -ne "   "
+					xml_value "${item}"
 				fi
 			;;
 
@@ -451,7 +449,7 @@ print_lanforce_xml() {
 					item="$(sed s/%value_footer%// <<< "${item}" )"
 					# add item to the value string,
 					# the preceding space is intentional.
-					lf_value_footer "${item}" >> "${XMLFILE}"
+					lf_value_footer "${item}"
 				fi
 			;;
 
@@ -467,8 +465,8 @@ print_lanforce_xml() {
 				if [ "$code" != "" ]; then
 					name=$(awk -F\; {'print $1'} <<< "${item}")
 
-					echo -ne "  " >> "${XMLFILE}"
-					xml_attribute_start "${name}" "${code}" >> "${XMLFILE}"
+					echo -ne "  "
+					xml_attribute_start "${name}" "${code}"
 
 					attrib_status="open"
 				fi
@@ -484,8 +482,8 @@ print_lanforce_xml() {
 		### CLOSE ATTRIBUTE TAG
 		## add indentation
 
-		echo -ne "  " >> "${XMLFILE}"
-		xml_attribute_stop >> "${XMLFILE}"
+		echo -ne "  "
+		xml_attribute_stop
 		attrib_status="closed"
 	}
 ################################################################################
@@ -559,7 +557,7 @@ run_modules() {
 	fi
 
 	if [ "$usexml" == 1 ]; then
-		print_xml_header
+		print_xml_header > "${XMLFILE}"
 	fi
 
 	if [ -z "$cmdsnames" ]; then
@@ -601,7 +599,7 @@ run_modules() {
 	#[ "$usekdialog" -ne 1 ]  #&& print_line
 
 	if [ "$usexml" == 1 ]; then
-		print_xml_footer
+		print_xml_footer >> "${XMLFILE}"
 	elif [ "$usekdialog" -ne 1 ]; then
 		print_line
 	fi

@@ -50,8 +50,10 @@ listen_tcp() {
 		else
 
 			update_hostxml "${tcp_tmp}"
-			update_hosthtml
-			update_index
+			if [ $makehtml -eq 1 ]; then
+				update_hosthtml
+				update_index
+			fi
 			
 		fi
 
@@ -67,9 +69,24 @@ listen_tcp() {
 
 
 ################
+# create_indexxml
+#
+# creates index.xml
+create_indexxml() {
+	INDEXXMLFILE="index.xml"
+	set -x
+
+	print_xml_header > "${INDEXXMLFILE}"
+	exit 0
+	set +x
+	
+}
+
+
+################
 # update_index
 #
-# create or update index.html
+# updates index.html
 update_index() {
 	if [ -e "${rundir}/index.xsl" ]; then
 
@@ -157,3 +174,11 @@ netcat_instance() {
 	fi
 }
 
+
+###
+# makes a generic host-xsl template
+generate_generic_host_xsl() {
+	cat <<EOF>> "${hostdir}/generic-host.xsl"
+TODO
+EOF
+}

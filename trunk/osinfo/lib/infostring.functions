@@ -144,10 +144,10 @@ function flush_values {
 	if [ $usexml -eq 0 ]; then
 		print_stdout
 	elif [ $usexml -eq 1 ] && [ $lanforce -eq 0 ]; then
-		print_xml
-		xsl_template_stop
+		print_xml >> "${XMLFILE}"
+		xsl_template_stop >> "${XMLFILE}"
 	else
-		print_lanforce_xml
+		print_lanforce_xml >> "${XMLFILE}"
 	fi
 
 	# infostring is set at functions add_*

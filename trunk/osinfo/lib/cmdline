@@ -58,6 +58,7 @@ function parse_arguments() {
 
 				'--listen') # listen to tcp connections
 					tcpdaemon=1
+					makehtml=1
 
 					if [ "$2" ]; then
 						tcp_listening_port="$2"
@@ -116,6 +117,9 @@ function parse_arguments() {
 					PRINT_Version
 					exit 0;
 					;;
+				'--htmldebug')
+				create_indexxml
+				;;
 				*)
 					cmdsnames="$cmdsnames $1"
 					shift 1;
