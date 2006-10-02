@@ -36,7 +36,7 @@ EOF
 		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then		
 
 			echo "<h2>${profile}s</h2>"
-			echo "<table width="95%" border=1 cellpadding=4 cellspacing=5>"
+			echo "<table width="92%" border=1 cellpadding=4 cellspacing=5>"
 
 			# run a loop for all xml files in the hosts dir
 			for host in $(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null); do
@@ -50,7 +50,7 @@ EOF
 					<td bgcolor="#FFFFFF">
 						<p align=left>
 						<font color="#000000" face="Times New Roman" size="+1">
-							<a href="${hostdir}/${hostname}.html" target="main">${hostname}</a>
+							<a href="${rel_hostdir}/${hostname}.html" target="main">${hostname}</a>
 						</font>
 						</p>
 
@@ -79,7 +79,7 @@ EOF
 			<!-- index link and date -->
 			<div style="position:relative;bottom:5%;left:10px;right:10px;width:100%;height:10%;">
 				<p align="left">
-					<a href="${hostdir}/overview.html" target="main">index view</a>
+					<a href="./overview.html" target="main">index view</a>
 				</p>
 
 				<font color="#000000" face="Times New Roman" size="-2">

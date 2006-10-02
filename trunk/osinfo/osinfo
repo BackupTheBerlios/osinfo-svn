@@ -82,6 +82,7 @@ prefix="/"
 PROFILES="desktop server laptop"
 # default profile is desktop
 profile="desktop"
+rel_hostdir='./hosts'
 
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"

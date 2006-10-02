@@ -79,19 +79,23 @@
 
 		<!-- desktop -->
 		<xsl:if test="contains($profile,'desktop')">
-			<h1><xsl:value-of select="../client/@hostname"/>
+			<h1><xsl:value-of select="../computer/@hostname"/>
 			-
 			    <xsl:value-of select="$profile"/></h1>
 		</xsl:if>
 
 		<!-- server -->
 		<xsl:if test="contains($profile,'server')">
-			<h1><xsl:value-of select="$profile"/></h1>
+			<h1><xsl:value-of select="../computer/@hostname"/>
+			-
+			    <xsl:value-of select="$profile"/></h1>
 		</xsl:if>
 
 		<!-- laptop -->
 		<xsl:if test="contains($profile,'laptop')">
-			<h1><xsl:value-of select="$profile"/></h1>
+			<h1><xsl:value-of select="../computer/@hostname"/>
+			-
+			    <xsl:value-of select="$profile"/></h1>
 		</xsl:if>
 
     </xsl:template>
