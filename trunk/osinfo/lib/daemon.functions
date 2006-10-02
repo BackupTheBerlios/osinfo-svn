@@ -52,7 +52,8 @@ listen_tcp() {
 			if [ $makehtml -eq 1 ]; then
 				update_hosthtml
 				create_indexxml > "${INDEXXMLFILE}"
-				update_index
+				update_sidebar > "${hostdir}/sidebar.html"
+				#update_index >  "${hostdir}/overview.html"
 			fi
 			
 		fi

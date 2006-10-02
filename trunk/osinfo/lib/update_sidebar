@@ -1,0 +1,98 @@
+################
+# update_sidebar
+#
+# updates sidebar.html
+update_sidebar() {
+
+	### header
+	cat <<EOF
+<html>
+<head>
+</head>
+	<body bgcolor="#FFFFFF" link="#000000" vlink="#000000" text="#000000" >
+
+		<div style="position:absolute;top:0px;left:0px;width:100%:height:100%;">
+		
+			<! -- overview -->
+			<font color="#000000" face="Times New Roman" size="+3">
+				<p align="center">
+					${appname}
+				</p>
+			</font>
+		
+			<hr>
+EOF
+
+
+	### computers
+	cat <<EOF
+			<!-- computers -->
+			<div style="position:relative;top:0px;left:10px;right:10px;width:100%:height:95%;">
+EOF
+
+	for profile in ${PROFILES}; do
+
+		# if the profile type is found in one file..
+		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then		
+
+			echo "<h2>${profile}s</h2>"
+			echo "<table width="97%" border=1 cellpadding=4 cellspacing=5>"
+
+			# run a loop for all xml files in the hosts dir
+			for host in $(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null); do
+
+				hostname="$(extract 'computer hostname' ${host} )"
+				os="$(extract 'computer OS' ${host} )"
+				cpu="$(extract 'computer CPU' ${host} )"
+
+				cat <<EOF
+					<tr valign="top">
+					<td bgcolor="#FFFFFF">
+						<p align=left>
+						<font color="#000000" face="Times New Roman" size="+1">
+							<a href="${hostdir}/${hostname}.html" target="main">${hostname}</a>
+						</font>
+						</p>
+
+						<p align=left>
+						<font color="#000000" face="Times New Roman" size="-2">
+								${os}<br>
+								${cpu}
+						</font>
+						</p>
+					</td>
+					</tr>
+EOF
+
+			done
+
+			echo "</table>"
+		fi
+	done
+
+	### separating bar
+	echo "<hr>"
+
+
+	### index link and date
+	cat <<EOF
+			<!-- index link and date -->
+			<div style="position:relative;bottom:5%;left:10px;right:10px;width:100%;height:10%;">
+				<p align="center">
+					<a href="${hostdir}/overview.html" target="main">index view</a>
+				</p>
+
+				<font color="#000000" face="Times New Roman" size="-2">
+					last update<br>
+				</font>
+
+				<font color="#000000" face="Times New Roman" size="-1">
+					$(date)<br>
+				</font>
+			</div>
+		</div>
+	</body>
+</html>
+EOF
+}
+

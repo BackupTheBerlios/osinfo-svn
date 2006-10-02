@@ -12,6 +12,7 @@ source lib/lanforce.functions     # lanforce xml tag codes
 
 source lib/infostring.functions   # infostring handler functions
 source lib/daemon.functions       # daemon mode functions
+source lib/update_sidebar         # 
 
 source lib/check.functions        # check various functionalities
 source lib/cmdline                # command line options, leave last!

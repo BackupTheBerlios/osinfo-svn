@@ -121,6 +121,7 @@ function parse_arguments() {
 					hostdir="html/hosts"
 					usexml=1
 					create_indexxml > "index.xml"
+					update_sidebar > "sidebar.html"
 					cat index.xml
 					exit 0
 				;;
