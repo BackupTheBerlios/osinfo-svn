@@ -102,6 +102,12 @@ create_indexxml() {
 	done
 
 	print_xml_footer	
+
+	# inform the user
+	if [ $isverbose -ge 1 ] && [ -e "${INDEXXMLFILE}" ]; then
+		info "File '$INDEXXMLFILE' created"
+		flush_values
+	fi
 }
 
 
@@ -117,15 +123,19 @@ print_short_client_id() {
 
 			# hostname
 			add_indentation
-			xml_param_tag "computer hostname" "$(extract 'computer hostname' ${host} )" 
+			xml_param_tag_closed "computer hostname" "$(extract 'computer hostname' ${host} )" 
 
 			# operating system
 			add_indentation
-			xml_param_tag "computer OS" "$(extract 'computer OS' ${host} )"
+			xml_param_tag_closed "computer OS" "$(extract 'computer OS' ${host} )"
 						
 			# processor
 			add_indentation
-			xml_param_tag "computer CPU" "$(extract 'computer CPU' ${host} )"
+			xml_param_tag_closed "computer CPU" "$(extract 'computer CPU' ${host} )"
+
+			# profile
+			add_indentation
+			xml_param_tag_closed "computer profile" "$profile"
 
 		((XML_INDENT--))
 
@@ -137,11 +147,9 @@ print_short_client_id() {
 }
 
 
-################
-# update_index
-#
-# updates index.html
-update_index() {
+
+# didn't work right
+update_index_with_xsl() {
 	if [ -e "${rundir}/index.xsl" ]; then
 
 		# run a loop for all xml files in the hosts dir
@@ -159,6 +167,7 @@ update_index() {
 	# inform the user
 	if [ $isverbose -ge 1 ] && [ -e "${rundir}/index.html" ]; then
 		info "File '${rundir}/index.html' updated"
+		flush_values
 	fi
 }
 
@@ -175,7 +184,8 @@ update_hostxml() {
 	# create or update the xml file for the host
 	cat "$tcp_tmp" > "${hostdir}/${client_hostname}.xml"
 	[ $isverbose -ge 1 ] && \
-		info "File '${hostdir}/${client_hostname}.xml' saved"
+		info "File '${hostdir}/${client_hostname}.xml' saved" && \
+		flush_values
 }
 
 
@@ -205,6 +215,7 @@ update_hosthtml() {
 	# inform the user
 	if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
 		info "File '${hostdir}/${client_hostname}.html' updated"
+		flush_values
 	fi
 }
 

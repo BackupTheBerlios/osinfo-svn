@@ -7,7 +7,7 @@
 	<computer OS="Gentoo Linux 2006.0" />
 	<computer CPU="AMD Athlon(TM) XP 2000+" />
 	<ip v4="192.168.0.21" />
-	<scanning date="2006-10-02 11:38:50" />
+	<scanning date="2006-10-02 13:23:31" />
 	<system>
 		<attribute name="hostname" code="hostname">
 			<description>Hostname</description>
@@ -26,7 +26,7 @@
 
 		<attribute name="system_uptime" code="uptime">
 			<description>System uptime</description>
-			<value>26 days</value>
+			<value>27 days</value>
 		</attribute>
 
 		<attribute name="cpu_temperature" code="">
@@ -36,7 +36,7 @@
 
 		<attribute name="m_b_temperature" code="">
 			<description>M/B temperature</description>
-			<value>33 C  </value>
+			<value>34 C  </value>
 		</attribute>
 
 	</system>
@@ -129,10 +129,10 @@
 		<attribute name="partitions" code="drive">
 			<description>partitions</description>
 			<value>/dev/hda1 swap /1951866 Linux swap / Solaris </value>
-			<value>/dev/hda2 / 7102888/14651280 Linux </value>
+			<value>/dev/hda2 / 7100740/14651280 Linux </value>
 			<value>/dev/hda3 - /1 Extended </value>
 			<value>/dev/hda5 /usr/portage 256544/497983 Linux </value>
-			<value>/dev/hda6 /var 3257392/8787523 Linux </value>
+			<value>/dev/hda6 /var 3257336/8787523 Linux </value>
 			<value>/dev/hda7 - /2441848 Linux </value>
 			<value>/dev/hda8 - /10747453 Linux </value>
 		</attribute>
@@ -208,12 +208,12 @@
 
 				<attribute name="rx_bytes" code="">
 					<description>RX bytes</description>
-					<value>2339375183 (2231.0 Mb)</value>
+					<value>2344601799 (2235.9 Mb)</value>
 				</attribute>
 
 				<attribute name="tx_bytes" code="">
 					<description>TX bytes</description>
-					<value>1316798082 (1255.7 Mb)</value>
+					<value>1317911456 (1256.8 Mb)</value>
 				</attribute>
 
 			</iface>
