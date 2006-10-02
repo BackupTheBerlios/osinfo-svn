@@ -125,6 +125,15 @@ function parse_arguments() {
 					cat index.xml
 					exit 0
 				;;
+				'--profile')
+					if [ ! "$2" ]; then
+						info "Profile not defined!"
+						flush_values
+						exit 1
+					fi
+					profile="${2}"
+					shift 2
+					;;
 				*)
 					cmdsnames="$cmdsnames $1"
 					shift 1;

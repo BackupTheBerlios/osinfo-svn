@@ -32,6 +32,9 @@ function PRINT_Help {
 	echo "       --tcpsend [port]    Sends the output in xml to the tcp port via netcat"
 	echo "       --listen [port]     Listens to incoming xml in the tcp port via netcat"
 	echo
+	echo "       --profile [desktop|server|laptop]
+	echo "                           Define the computer profile for output mode"
+	echo
 	echo "       --no-color          Disables color output (testing)"
 	echo "       --debug             For testing"
 	echo "  -D   --fulldebug         Print full debugging info, clutters output!"

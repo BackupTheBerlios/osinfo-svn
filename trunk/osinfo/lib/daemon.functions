@@ -52,8 +52,8 @@ listen_tcp() {
 			if [ $makehtml -eq 1 ]; then
 				update_hosthtml
 				create_indexxml > "${INDEXXMLFILE}"
-				update_sidebar > "${hostdir}/sidebar.html"
-				#update_index >  "${hostdir}/overview.html"
+				update_sidebar > "${rundir}/sidebar.html"
+				update_index >  "${rundir}/overview.html"
 			fi
 			
 		fi
@@ -149,15 +149,13 @@ print_short_client_id() {
 
 
 
-# didn't work right
-update_index_with_xsl() {
+update_index() {
 	if [ -e "${rundir}/index.xsl" ]; then
 
 		# run a loop for all xml files in the hosts dir
 		for clients in "${hostdir}/*.xml"; do
 
-			xsltproc "${rundir}/index.xsl" $clients > \
-					 "${rundir}/index.html" 2> "$error_log"
+			xsltproc "${rundir}/index.xsl" $clients 2> "$error_log"
 
 		done
 
@@ -166,10 +164,10 @@ update_index_with_xsl() {
 	fi
 
 	# inform the user
-	if [ $isverbose -ge 1 ] && [ -e "${rundir}/index.html" ]; then
-		info "File '${rundir}/index.html' updated"
-		flush_values
-	fi
+	#if [ $isverbose -ge 1 ] && [ -e "${rundir}/overview.html" ]; then
+	#	info "File '${rundir}/overview.html' updated"
+	#	flush_values
+	#fi
 }
 
 

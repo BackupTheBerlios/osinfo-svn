@@ -80,6 +80,8 @@ tcpsend=0
 # To put this in a variable allows info on non-running systems
 prefix="/"
 PROFILES="desktop server laptop"
+# default profile is desktop
+profile="desktop"
 
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"
@@ -138,7 +140,6 @@ function print_xml_header () {
 
 		# profile
 		add_indentation
-		profile="desktop"
 		xml_param_tag_closed "computer profile" "${profile}" 
 
 		# hostname
