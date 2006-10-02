@@ -7,7 +7,7 @@
 	<computer OS="Gentoo Linux 2006.0" />
 	<computer CPU="AMD Athlon(TM) XP 2000+" />
 	<ip v4="192.168.0.21" />
-	<scanning date="2006-10-02 13:23:31" />
+	<scanning date="2006-10-02 15:21:56" />
 	<system>
 		<attribute name="hostname" code="hostname">
 			<description>Hostname</description>
@@ -129,23 +129,12 @@
 		<attribute name="partitions" code="drive">
 			<description>partitions</description>
 			<value>/dev/hda1 swap /1951866 Linux swap / Solaris </value>
-			<value>/dev/hda2 / 7100740/14651280 Linux </value>
+			<value>/dev/hda2 / 7099972/14651280 Linux </value>
 			<value>/dev/hda3 - /1 Extended </value>
 			<value>/dev/hda5 /usr/portage 256544/497983 Linux </value>
-			<value>/dev/hda6 /var 3257336/8787523 Linux </value>
+			<value>/dev/hda6 /var 3257276/8787523 Linux </value>
 			<value>/dev/hda7 - /2441848 Linux </value>
 			<value>/dev/hda8 - /10747453 Linux </value>
-		</attribute>
-
-		<attribute name="usb_drive" code="hard_disk">
-			<description>USB drive</description>
-			<value>USB drive   DataTraveler_2.0 ( ) 512 MB</value>
-		</attribute>
-
-		<attribute name="partitions" code="drive">
-			<description>partitions</description>
-			<value>/dev/sda1 - /62465 W95 FAT32 </value>
-			<value>/dev/sda2 /mnt/usbflash 80609/437968 Linux </value>
 		</attribute>
 
 	</disk_information>
@@ -208,12 +197,12 @@
 
 				<attribute name="rx_bytes" code="">
 					<description>RX bytes</description>
-					<value>2344601799 (2235.9 Mb)</value>
+					<value>2348203803 (2239.4 Mb)</value>
 				</attribute>
 
 				<attribute name="tx_bytes" code="">
 					<description>TX bytes</description>
-					<value>1317911456 (1256.8 Mb)</value>
+					<value>1319055534 (1257.9 Mb)</value>
 				</attribute>
 
 			</iface>
