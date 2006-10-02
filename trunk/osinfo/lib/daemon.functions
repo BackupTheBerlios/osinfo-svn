@@ -52,6 +52,13 @@ listen_tcp() {
 			if [ $makehtml -eq 1 ]; then
 				update_hosthtml
 				create_indexxml > "${INDEXXMLFILE}"
+
+				# inform the user
+				if [ $isverbose -ge 1 ] && [ -e "${INDEXXMLFILE}" ]; then
+					info "File '$INDEXXMLFILE' created"
+					flush_values
+				fi
+
 				update_sidebar > "${rundir}/sidebar.html"
 				update_index >  "${rundir}/overview.html"
 			fi
@@ -104,11 +111,6 @@ create_indexxml() {
 
 	print_xml_footer	
 
-	# inform the user
-	if [ $isverbose -ge 1 ] && [ -e "${INDEXXMLFILE}" ]; then
-		info "File '$INDEXXMLFILE' created"
-		flush_values
-	fi
 }
 
 
