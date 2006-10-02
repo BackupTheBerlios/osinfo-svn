@@ -508,12 +508,7 @@ Module_system() {
 
 	# operating system is set in the SYSTEM variable earlier
 	add_attribute "Operating system"		"os"
-	if [ "$(grep -i linux <<< "$SYSTEM")" ]; then
-		[ ! "$distro_id" ] && identify_Linux_distro
-		add_values      "$distro_id $(uname -s) $distro_release"
-	elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
-		add_values      "$SYSTEM"
-	fi
+	add_values    "$(get_operating_system)"
 
 	add_attribute "Operating system kernel"	"os_build"
 	add_values    "$(uname -sr 2> /dev/null)"
@@ -537,6 +532,15 @@ Module_system() {
 }
 
 # helpers
+	get_operating_system() {
+		if [ "$(grep -i linux <<< "$SYSTEM")" ]; then
+			[ ! "$distro_id" ] && identify_Linux_distro
+			echo "$distro_id $(uname -s) $distro_release"
+		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
+			echo "$SYSTEM"
+		fi
+	}
+
 	scan_cpu_temp() {
 		add_attribute "CPU temperature"
 		local cpu_temp="$(sensors | grep -i 'cpu temp' | \
@@ -600,104 +604,6 @@ Module_kernel() {
 
 	flush_values
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
-}
-
-
-# INFORMATION OF THE CPU
-#
-# uses /proc/cpuinfo (Linux only)
-# and x86info (optional)
-Module_processor() {
-	local moduleName="Processor"
-	module_header "${moduleName}"
-
-	local cpunr cpuinfo cpu_count
-
-	[ "$(grep -i linux <<< $SYSTEM)" ] && cpuinfo="/proc/cpuinfo"
-	if [ -e "$cpuinfo" ]; then
-
-		# test if /proc/cpuinfo gives a number for cpu cores.
-		# if it is does not, the kernel probebly lacks SMP support so assume 1 cpu.
-		# this is a problem with Pentium 4 Hyperthreading cpus, which kernel
-		# treats like two processors
-		if [ ! "$(grep core $cpuinfo)" ]; then
-			cpu_count=1
-		else
-			cpu_count="$(grep 'processor' ${cpuinfo} | wc -l)"
-		fi
-
-		if [ "$lanforce" == 1 ]; then
-			add_attribute "Count"      "processor_count"
-			add_values    $cpu_count
-		fi
-
-		for cpunr in $(seq 1 1 $cpu_count); do
-			[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
-
-			add_attribute     "Vendor"      "processor_vendor"
-			add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
-
-			add_attribute     "Model"       "processor_model"
-			add_values        "$(grep 'model name' ${cpuinfo} | \
-								 sed -n "$cpunr{p;q;}" | awk -F': ' {'print $2'})"
-
-			add_attribute     "Frequency"   "processor_speed"
-			add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
-			add_value_footer  "MHz"
-
-			add_attribute     "Architecture"	"system_type"
-			add_values        "$(uname -m)"
-
-			# temperature and voltage info
-			if CheckReq_sensors; then
-				scan_cpu_temp
-				scan_cpu_fan
-				scan_cpu_voltage
-			fi
-
-			add_attribute      "Cache"
-					local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q;}" )"
-					add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
-					add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
-
-			local stepping="$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-			                  awk -F': ' {'print $2'})"
-
-			if [ $stepping -gt 1 ]; then
-				add_attribute     "Stepping"
-				add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
-			fi
-
-			if CheckReq_lshw && CheckReq_root "more information" ; then
-
-				local cpu_width
-
-				lshw_xml
-				cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-				TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
-
-				extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
-
-				#set -x
-				# TODO: place the proper 'sed' here vv
-				#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
-				#cpu_width_dimension ; grep units....
-				#set +x
-
-				#clock
-
-			fi
-
-			[ $cpu_count -gt 1 ] &&	add_footer
-		done
-	else
-		info "Cpu info could not be found"
-	fi
-
-	flush_values
 }
 
 

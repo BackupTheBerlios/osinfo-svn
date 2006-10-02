@@ -119,6 +119,7 @@ function parse_arguments() {
 					;;
 				'--htmldebug')
 				create_indexxml
+				shift 1
 				;;
 				*)
 					cmdsnames="$cmdsnames $1"

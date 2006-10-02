@@ -79,6 +79,8 @@ tcpsend=0
 # The root dir.
 # To put this in a variable allows info on non-running systems
 prefix="/"
+PROFILES="desktop server laptop"
+
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"
 XMLFILE="$(get_hostname).xml"
@@ -137,6 +139,14 @@ function print_xml_header () {
 		# hostname
 		add_indentation
 		xml_param_tag_closed "client hostname" "$(get_hostname)"
+
+		# operating system
+		add_indentation
+		xml_param_tag_closed "client OS" "$(get_operating_system)"
+
+		# processor
+		add_indentation
+		xml_param_tag_closed "client CPU" "$(get_cpu_model)"
 
 		# IP address
 		add_indentation
