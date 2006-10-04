@@ -1,0 +1,21 @@
+     *-memory
+          description: System Memory
+          physical id: 27
+          slot: System board or motherboard
+          size: 512MB
+          capacity: 512MB
+        *-bank:0
+             description: DIMM DRAM Synchronous
+             physical id: 0
+             slot: DIMM 1
+             size: 512MB
+             width: 64 bits
+        *-bank:1
+             description: DIMM DRAM Synchronous [empty]
+             physical id: 1
+             slot: DIMM 2
+        *-bank:2
+             description: DIMM DRAM Synchronous [empty]
+             physical id: 2
+             slot: DIMM 3
+     *-pci
