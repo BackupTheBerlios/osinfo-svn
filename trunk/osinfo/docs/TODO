@@ -11,6 +11,7 @@ FEATURES and FIXES for 0.3:
 *	module Motherboard (aka mobo)
 *	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
 *	xsl/html support
+*	add_subheader => intended, blue title
 	
 
 FEATURES and FIXES for 0.4:
