@@ -55,37 +55,6 @@
 #################################################################################
 
 
-## META-MODULES
-#
-# can be also used as aliases on the command line,
-# but not inside another meta-module
-
-# AnMaster: I think this isn't very useful at all...
-#           Also you need to get rid of eval if you plan to use it...
-# ruxpin: this is a way to run mod_distro with mod_system, otherwise we'll have to
-#         combine the two modules because the latter depends on the former.
-#         this may well repeat later with other modules too. and besides a subset
-#         of modules is useful, we may not fully realise it yet.
-# TODO: make meta modules run the dependencies silent.
-
-Meta_all='system distro kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'
-Meta_lanforce='system processor memory network wlan dmi hdd devices cdrom users applications services env'
-Meta_system='system kernel processor'
-Meta_cpu='processor'
-Meta_apps='applications'
-Meta_net='network wlan'
-MODULES_META='all lanforce system cpu apps net'
-
-# these are used to control run access and validify against
-
-MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
-MODULES_BSD='system kernel applications terminal network devices dmi'
-MODULES_BROKEN='printers lvm bus sensors nagios battery'
-MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus'
-MODULES_SU_ONLY='cdrom hdd dmi memory oem'
-# MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors nagios battery'
-
 
 ################################################################################
 ################################################################################
