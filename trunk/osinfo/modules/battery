@@ -52,6 +52,9 @@ Module_battery() {
 				add_values    "$presence"
 			fi
 
+			add_attribute "charge status" "charge"
+			add_values    "$(get_battery_charge)"
+
 			add_attribute "battery technology"
 			add_values    "$tech"
 
@@ -84,4 +87,11 @@ Module_battery() {
 	done
 	
 	flush_values
+}
+
+# prints charge status
+get_battery_charge() {
+	[ "$(type -p acpitool)" ] && \
+		acpitool | grep -i 'battery #1' | \
+			awk -F':' {'print $2'} 
 }
