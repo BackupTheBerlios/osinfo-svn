@@ -1,0 +1,28 @@
+Module_nagios() {
+	module_header "Nagios"
+	local version running_time
+
+	if [ "$(type -p nagiostats)" ]; then
+
+		# get data
+		version="$(nagiostats | grep -i 'Nagios Stats')"
+
+		running_time="$(nagiostats | grep -i 'running time' | \
+		                awk -F':' {'print $2'} )"
+
+
+		# print values
+		add_attribute   "Version"
+		add_values      "$version"
+		
+		add_attribute   "Running time"
+		add_values      "$running_time"
+
+
+	else
+		info "nagiostats was not found"
+	fi
+
+	flush_values
+}
+

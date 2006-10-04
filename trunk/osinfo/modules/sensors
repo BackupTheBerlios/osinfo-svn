@@ -1,0 +1,15 @@
+Module_sensors() {
+	module_header "Sensors"
+
+		IFS_bak="$IFS"
+		IFS=$'\n'
+
+		for sensor_data in $(sensors); do
+			add_values "$sensor_data\n"
+		done
+
+		IFS="$IFS_bak"
+
+	flush_values	
+}
+

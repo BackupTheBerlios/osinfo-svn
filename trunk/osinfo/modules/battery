@@ -1,0 +1,87 @@
+Module_battery() {
+	module_header "Battery"
+	
+	local battery_info[1]="/proc/acpi/battery/BAT0/info"
+	local battery_info[2]="/proc/acpi/battery/BAT1/info"
+	local bat_nr 
+	
+	for bat_nr in $(seq 1 1 ${#battery_info[@]} ); do
+
+		if [ -e "${battery_info[$bat_nr]}" ]; then
+
+			add_header   "Battery $bat_nr"
+
+			local presence desing_cap lastfull_cap tech design_voltage \
+				  model_nr serial bat_type oem
+
+			# acquire data
+
+			presence="$(grep -i present ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			design_cap="$(grep -i 'design capacity\:' ${battery_info[$bat_nr]} | \
+			              awk -F':' {'print $2'})"
+
+			lastfull_cap="$(grep -i 'last full capacity' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			tech="$(grep -i 'battery technology' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			design_voltage="$(grep -i 'design voltage' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			model_nr="$(grep -i 'model number' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			serial="$(grep -i 'serial number' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			bat_type="$(grep -i 'battery type' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+			oem="$(grep -i 'OEM info' ${battery_info[$bat_nr]} | \
+			            awk -F':' {'print $2'})"
+
+
+			# print data
+
+			# do not print presence, if battery is present
+			if [ "$presence" != "yes" ]; then
+				add_attribute "present"
+				add_values    "$presence"
+			fi
+
+			add_attribute "battery technology"
+			add_values    "$tech"
+
+			add_attribute "battery type"
+			add_values    "$bat_type"
+
+			add_attribute "OEM info"
+			add_values    "$oem"
+
+			add_attribute "design capacity"
+			add_values    "$design_cap"
+
+			add_attribute "last full capacity"
+			add_values    "$lastfull_cap"
+
+			add_attribute "design voltage"
+			add_values    "$design_voltage"
+
+			add_attribute "model number"
+			add_values    "$model_nr"
+
+			add_attribute "serial number"
+			add_values    "$serial"
+
+
+			add_footer
+
+		fi
+
+	done
+	
+	flush_values
+}
