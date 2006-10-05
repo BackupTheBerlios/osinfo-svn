@@ -1,0 +1,12 @@
+cpufrequtils 002: cpufreq-info (C) Dominik Brodowski 2004-2006
+Report errors and bugs to linux@brodo.de, please.
+analyzing CPU 0:
+  driver: centrino
+  CPUs which need to switch frequency at the same time: 0
+  hardware limits: 600 MHz - 1.70 GHz
+  available frequency steps: 1.70 GHz, 1.70 GHz, 1.70 GHz, 1.70 GHz, 1.70 GHz, 1.40 GHz, 1.20 GHz, 1000 MHz, 800 MHz, 600 MHz
+  available cpufreq governors: conservative, ondemand, powersave, userspace, performance
+  current policy: frequency should be within 600 MHz and 1.70 GHz.
+                  The governor "conservative" may decide which speed to use
+                  within this range.
+  current CPU frequency is 600 MHz (asserted by call to hardware).

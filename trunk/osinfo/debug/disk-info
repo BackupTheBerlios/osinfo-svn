@@ -1,0 +1,42 @@
+Cdrdao version 1.2.0 - (C) Andreas Mueller <andreas@daneb.de>
+  SCSI interface library - (C) Joerg Schilling
+  Paranoia DAE library - (C) Monty
+
+Check http://cdrdao.sourceforge.net/drives.html#dt for current driver tables.
+
+ERROR: Cannot open SCSI device '/dev/cdrecorder': Cannot open '/dev/cdrecorder'
+
+Transport name:		sg
+Transport descr.:	Generic transport independent SCSI
+Transp. layer ind.:	
+Target specifier:	bus,target,lun
+Target example:		1,2,0
+SCSI Bus scanning:	supported
+Open via UNIX device:	not supported
+
+Transport name:		pg
+Transport descr.:	SCSI transport for ATAPI over Parallel Port
+Transp. layer ind.:	
+Target specifier:	bus,target,lun
+Target example:		1,2,0
+SCSI Bus scanning:	supported
+Open via UNIX device:	not supported
+
+Transport name:		ATA
+Transport descr.:	ATA Packet specific SCSI transport
+Transp. layer ind.:	ATAPI:
+Target specifier:	bus,target,lun
+Target example:		ATAPI:1,2,0
+SCSI Bus scanning:	supported
+Open via UNIX device:	not supported
+
+Transport name:		ATA
+Transport descr.:	ATA Packet specific SCSI transport using sg interface
+Transp. layer ind.:	ATA:
+Target specifier:	bus,target,lun
+Target example:		1,2,0
+SCSI Bus scanning:	supported
+Open via UNIX device:	not supported
+ERROR: Please use option '--device [proto:]bus,id,lun', e.g. --device 0,6,0 or --device ATA:0,0,0
+ERROR: Cannot setup device /dev/cdrecorder.
+Supported SCSI transports for this platform:
