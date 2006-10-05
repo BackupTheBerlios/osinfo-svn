@@ -1,0 +1,218 @@
+#######################
+# DISTRIBUTION
+#
+# this module will try to guess which Linux distrobution is installed.
+Module_distro() {
+	local moduleName="Distribution"
+	module_header "${moduleName}"
+
+	# NOTE: do not make distro_* variables local, as they might be used
+	# in other modules
+
+
+
+	# then call the subfunction
+	identify_Linux_distro
+
+
+	# then output what the was found..
+
+	add_attribute 'Root dir'
+	add_values    "$root_dir"
+
+	[ "${distro_id}" ] && \
+		add_attribute 'Distro ID'
+		add_values    "${distro_id}"
+
+	[ "${distro_release}" ] && \
+		add_attribute 'Release'
+		add_values    "$distro_release"
+
+	[ "${distro_codename}" ] && \
+		add_attribute 'Codename'
+		add_values    "$distro_codename"
+
+	[ "${distro_description}" ] && \
+		add_attribute 'Description'
+		add_values    "$distro_description"
+
+	[ "$SlackwareBase" ] && \
+		add_values  'Based on Slackware version' \
+		            "$SlackwareBase"
+
+	flush_values
+}
+
+	## DISTRIBUTION SUBFUNCTIONS ##################################
+	##
+	# distro_lsb_release
+	#
+	# Gets data from lsb_release
+	# Parameters:
+	#  1  string   what value to get.
+	distro_lsb_release() {
+		lsb_release -a 2> /dev/null | grep -i "^$1" | awk -F: '{print $2}' | sed -s 's/^\t*//'
+	}
+
+	###
+	# identify_Linux_distro
+	#
+	# the default tool to use is the lsb-release (Linux Standard Base
+	# version reporting utility)
+	#
+	# a secondary id source are the unique files in /etc/, and as a last
+	# resort the /etc/issue file. this makes it possible to identify
+	# a distro which resides in a chroot environment, or from a livecd.
+	identify_Linux_distro() {
+
+		# locate and echo the root directory.
+		# TODO: Some of this isn't actually needed as we allready fixed so there is at most one endning / (can be zero ending / too).
+		[ "$prefix" != '/' ] && \
+			root_dir="$(echo $prefix | sed 's/\/*$//')" || \
+			root_dir="$prefix"
+		[ "$root_dir" != '/' ] && root_dir="${root_dir}/"
+
+
+
+		# look for lsb-release if real root is used.
+		#set -x
+		if [ "$(type -p lsb_release)" ] && [ "$prefix" == '/' ]; then
+
+			distro_id="$(distro_lsb_release 'distributor')"
+			distro_release="$(distro_lsb_release 'release')"
+			distro_codename="$(distro_lsb_release 'codename')"
+			distro_description="$(distro_lsb_release 'description')"
+
+		else
+
+			# Begin searching for distro identifying files
+			local found_files="" myfile
+			for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+				[ -e $myfile ] && found_files="$found_files $myfile"
+			done
+
+			# Now make a list of distros from the $found_files list above
+			local found_distros="" distro_ident
+			for distro_ident in $found_files; do
+				case $distro_ident in
+					"${root_dir}etc/SuSE-release")
+						found_distros="$found_distros SuSE"
+						break
+						;;
+					"${root_dir}etc/fedora-release")
+						found_distros="$found_distros Fedora Core"
+						break
+						;;
+					"${root_dir}etc/redhat-release")
+						found_distros="$found_distros Red Hat"
+						break
+						;;
+					"${root_dir}etc/slackware-version")
+						found_distros="$found_distros Slackware"
+						break
+						;;
+					"${root_dir}etc/Topologilinux-version")
+						found_distros="$found_distros Topologilinux"
+						break
+						;;
+					"${root_dir}etc/gentoo-release")
+						found_distros="$found_distros Gentoo"
+						break
+						;;
+					# if nothing previous matches, then use /etc/issue
+					# AnMaster: Inform user that this might be very wrong...
+					"${root_dir}etc/issue")
+						found_distros="$found_distros misc"
+						break
+						;;
+				esac
+			done
+			# Remove leading spaces.
+			found_distros="$(sed 's/^ *//' <<< "${found_distros}")"
+
+
+			# Get distro name
+			# NOTE: have been changed to case-insensitive, although
+			# has not been thoroughly tested. the commented code
+			# may be removed after verifying the new code works.
+			case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
+				'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')
+				#'SuSE'|'Fedora Core'|'Fedora'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo'|'Ubuntu')
+
+					distro_id="${found_distros}"
+
+					# clear spaces
+					#[ "$found_distros" = 'Slackware Topologilinux' ] && \
+					#	found_distros='Topologilinux'
+					#[ "$found_distros" = 'Red Hat' ] && found_distros='RedHat'
+					#[ "$found_distros" = 'Fedora Core' ] && found_distros='Fedora'
+					;;
+
+				'topologilinux')
+					print_error 1 "This module will abort." "$usekdialog" \
+						"Topologilinux is based on Slackware and should" \
+						"contain ${root_dir}etc/slackware-version AND " \
+						"${root_dir}etc/Topologilinux-version."
+					return 1
+					;;
+
+				'misc')
+					for misc_distro in 'Ubuntu' 'Fedora' 'SuSE'; do
+						if [ "$(grep -i ${misc_distro} ${distro_ident})" ]; then
+							distro_id="${misc_distro}"
+						fi
+					done
+					;;
+
+				'')
+					# Abort if no distro found
+					print_error 1 "This module will abort." "$usekdialog" \
+								  "You have zero distros installed or use a distro " \
+								  "not recognised by ${appname}"
+					return 1
+					;;
+
+				#*)
+					# Abort if more than one distro
+					#if [ "$usekdialog" == "1" ]; then
+						#kdialog --error  "You have several distros installed at the \
+						#same time.\nInstalled distros:\n${found_distros}\n\
+						#This module will abort."
+					#else
+						#echo "${tcRED}ERROR:${tSTD} You have several distros \
+							#installed at the same time."
+						#echo "${tcRED}ERROR:${tSTD} ${tBOLD}Installed distros:${tSTD}\
+							#${found_distros}"
+						#echo "${tcRED}This module will abort.${tSTD}"
+					#fi
+					#return 1
+				#;;
+				esac
+
+
+			# Output distro version
+			case "${found_distros}" in
+				'SuSE')
+					distro_release="$(grep -F 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
+				'Red Hat')
+					distro_release="$(cat ${root_dir}etc/redhat-release)" ;;
+				'Fedora')
+					distro_release="$(cat ${root_dir}etc/fedora-release)" ;;
+				'Slackware')
+					distro_release="$(grep -F 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+				'Topologilinux')
+					distro_release="$(grep -F 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
+					local  SlackwareBase="$(grep -F 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
+				'Gentoo')
+					# AnMaster: Not sure if readlink is POSIX but it exists on Gentoo and we allready know this is Gentoo.
+					distro_release="$(readlink /etc/make.profile | grep -Eo '[0-9]{4}\.[0-9]')";;
+				'misc')
+					# FIXME: AnMaster: . is a wildcard meaning any single char. Isn't grep -F what you want?
+					distro_release="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
+					# TODO: improve the grep
+			esac
+
+		fi
+	}
+	#############################################################
+

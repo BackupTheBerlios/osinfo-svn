@@ -1,0 +1,107 @@
+###########################
+# SYSTEM SERVICES (daemons)
+
+# http://linuxhelp.blogspot.com/2006/04/enabling-and-disabling-services-during_01.html
+
+# Gentoo based:
+#  rc-status
+
+# Fedora, RedHat, Suse:
+#  /sbin/service --status-all
+#  chkconfig --list
+
+# Ubuntu, Debian based:
+#  sysv-init
+#  'runlevel' gives to values: "previous current", grep on the current
+
+# Slackware:
+#	There is no sane way to get "running services" from Slackware
+#	(at least last time I used Slackware: 9.0 I think).
+#	to change what services are started you edit the bootscripts (written in bash).
+#	(there are 7 or 8 IIRC, one for each runlevel, 1 for kernel modules to load,
+#	1 for local and 1 for system startup)
+Module_services() {
+	local moduleName="Services"
+	module_header "${moduleName}"
+
+	local method
+
+		# these functions handle scanning, they'll echo output
+		if [ "$(type -p rc-status)" ]; then
+			# Gentoo
+			method='rc-status'
+			local services="$(scan_services_rc-status)"
+
+		elif [ "$(type -p sysv-rc-conf)" ]; then
+			# Debian and Ubuntu, if they've got the package
+			method='sysv-rc-conf'
+			local services="$(scan_services_sysv)"
+
+		elif [ "$(type -p chkconfig)" ]; then
+			# Red Hat, Fedora Core, SuSE
+			method='chkconfig'
+			local services="$(scan_services_chkconfig)"
+		fi
+
+
+		# attribute only for lanfroce xml, nothing for std xml
+		if [ $lanforce = 1 ]; then
+			add_attribute 'Services'	'service'
+		elif [ $usexml = 0 ]; then
+			add_header  "$method"
+		fi
+
+
+		# then report what scan found
+		local count=0 columns=5
+		for srv in $services; do
+			if [ $count -eq $columns ]; then
+				add_values    "$srv\n "
+				count=0
+			else
+				add_values    "$srv"
+			fi
+
+			((count++))
+		done
+
+		#value_footer
+
+
+	#module_footer
+	flush_values
+}
+
+	#################################
+	### SERVICE MODULE SUBFUNCTIONS
+	##
+	# this script is used on gentoo
+	scan_services_rc-status() {
+
+		echo $(rc-status | awk '/started/{print $1}' | sort)
+
+	}
+
+	# this works on debian-based systems
+	scan_services_sysv() {
+
+		local runlevel=$(runlevel | awk {'print $2'})
+
+		echo $(sysv-rc-conf --list 2> /dev/null | \
+		       awk '/'$runlevel'\:on/{print $1}' | sort)
+
+	}
+
+	scan_services_chkconfig() {
+
+		# similar to sysv-rc-conf
+		# works on rpm-based systems
+
+		local runlevel=$(runlevel | awk {'print $2'})
+
+		echo $(chkconfig --list 2> /dev/null | \
+		       awk '/'$runlevel'\:on/{print $1}' | sort)
+
+	}
+	#################################
+
