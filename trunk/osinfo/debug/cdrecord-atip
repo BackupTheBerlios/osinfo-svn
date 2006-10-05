@@ -1,0 +1,47 @@
+Cdrecord-ProDVD-Clone 2.01.01a11 (i686-pc-linux-gnu) Copyright (C) 1995-2006 Jörg Schilling
+Using libscg version 'schily-0.8'.
+Device type    : Removable CD-ROM
+Version        : 0
+Response Format: 2
+Capabilities   : 
+Vendor_info    : 'PHILIPS '
+Identifikation : 'DVD+-RW SDVD8412'
+Revision       : 'LX07'
+Device seems to be: Generic mmc2 DVD-R/DVD-RW.
+Using generic SCSI-3/mmc-2 DVD-R/DVD-RW driver (mmc_dvd).
+Driver flags   : DVD MMC-3 SWABAUDIO BURNFREE 
+Supported modes: PACKET SAO
+book type:       DVD-R, Version 5 (2.5)
+disc size:       120mm (0)
+minimum rate:    Not specified (15)
+number of layers:0
+track path:      Parallel Track Path (0)
+layer type:      Rewritable Area (2)
+linear density:  0.267 µm/bit (0)
+track density:   0.74 µm/track (0)
+phys start:      196608
+phys end:        0
+end layer 0:     0
+bca:             0
+phys size:...    -196607
+copyr prot type: 0
+region mgt info: 0
+application code:64
+physical code:   193
+last rec address:16621272
+part v./ext code:5/2
+ind wr. power:   85
+wavelength code: 13
+write str. code: 0E 88 9A 80
+Manufacturer:   'CMC MAG. AE1'
+rzone number:       0
+border number:      124
+damage:             0
+reserved:           0 blank: 1 incremental: 1
+nwa valid:          1
+rzone start:        0
+next wr addr:       0
+free blocks:        2298400
+blocking factor:    16
+rzone size:         2298400
+last recorded addr: 0
