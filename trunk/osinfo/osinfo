@@ -76,13 +76,12 @@ dev_code=0
 quiet=0
 tcpdaemon=0
 tcpsend=0
-# The root dir.
-# To put this in a variable allows info on non-running systems
-prefix="/"
+
+prefix="/"  # The root dir. Using a variable allows info on chrooted systems
 PROFILES="desktop server laptop"
-# default profile is desktop
-profile="desktop"
-rel_hostdir='./hosts'
+profile="desktop"    # default profile is desktop
+#OUTPUT_MODES="stdout xml kdialog"  # this list is not used (yet)
+output_mode="stdout" # default output mode is stdout
 
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"
@@ -91,6 +90,7 @@ XSLDEBUGFILE="osinfo.xsl"
 XSLFILE="$(get_hostname).xsl"
 rm "$XSLFILE" -f
 HTMLFILE="$(get_hostname).html"
+rel_hostdir='./hosts'
 
 
 # if the conf file is not available..

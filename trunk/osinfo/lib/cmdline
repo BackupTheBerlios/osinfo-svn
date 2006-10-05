@@ -6,30 +6,36 @@ function parse_arguments() {
 				'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
 					PRINT_Help
 					;;
-				'-P'|'--prefix')
-					if [ $2 ]; then
-						# Make sure there is only one ending "/".
-						prefix="$(echo $2 | sed 's/\/*$/\//')"
-						shift 2
-					else
-						missing_arg "$1"
+
+				'--profile')
+					# define the output profile
+					if [ ! "$2" ]; then
+						info "Profile not defined!"
+						flush_values
+						exit 1
 					fi
+					profile="${2}"
+					shift 2
 					;;
-				'--kdialog')
-					usekdialog=1
-					shift 1
-					;;
+
 				'--xml')
+					# generate xml
 					usexml=1
+					output_mode="xml"
 					shift 1
 					;;
+
 				'--html')
+					# generate a html page of the output
 					usexml=1
+					output_mode="xml"
 					makehtml=1
 					quiet=1
 					shift 1
 					;;
+
 				'-o'|'--output')
+					# direct output to a named file
 					if [ $2 ]; then
 						usexml=1
 						XMLFILE="${2}"
@@ -38,15 +44,21 @@ function parse_arguments() {
 						missing_arg "$1"
 					fi
 					;;
+
 				'--lanforce')
+					# use a special xml format
 					usexml=1
 					lanforce=1
+					output_mode="lanforce_xml"
 					shift 1
 					;;
-				'--tcpsend'|'--netcat') # send via tcp
+
+				'--tcpsend'|'--netcat') 
+					# send xml via tcp to remote osinfo daemon
 					if [ "$2" ] && [ "$3" ]; then
 						usexml=1
 						tcpsend=1
+						output_mode="xml"
 						HOST="$2"
 						PORT="$3"
 						shift 3
@@ -56,7 +68,9 @@ function parse_arguments() {
 					fi
 					;;
 
-				'--listen') # listen to tcp connections
+				'--listen')
+					# listen for incoming tcp connections,
+					# receive xml sheet from osinfo clients
 					tcpdaemon=1
 					makehtml=1
 
@@ -76,43 +90,72 @@ function parse_arguments() {
 					;;
 
 				'--no-color')
-					# set empty values
+					# clear color codes; set empty values
 					tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN='' 
 					tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN=''
 					shift 1
 					;;
+
+				'-P'|'--prefix')
+					# define the root dir
+					if [ $2 ]; then
+						# Make sure there is only one ending "/".
+						prefix="$(echo $2 | sed 's/\/*$/\//')"
+						shift 2
+					else
+						missing_arg "$1"
+					fi
+					;;
+
+				'--kdialog')
+					# print output in kdialog window
+					usekdialog=1
+					output_mode="kdialog"
+					shift 1
+					;;
+
 				'-v'|'--verbose')
 					isverbose=1
 					shift 1
 					;;
+
 				'-vv'|'--very-verbose')
 					isverbose=2
 					shift 1
 					;;
+
+				'--debug')
+					# standard debugging option
+					export isdebug=1
+					shift 1
+					;;
+
 				'-D'|'--fulldebug')
+					# over-the-board debug option
 					export isdebug=1
 					set -x
 					shift 1
 					;;
-				'--debug')
-					export isdebug=1
-					shift 1
-					;;
+
 				'--dev')
-					# for using the developement option to debug stuff
+					# the developement option to debug stuff
 					export dev_code=1
 					shift 1
 					;;
+
 				'--fake')
 					# for faking input from files to debug stuff, for example
 					# LVM drives when no such drives are available
 					export fake=1
 					shift 1
 					;;
+
 				'--quiet'|'-q')
+					# no not print anything to stdout
 					quiet=1
 					shift 1
 					;;
+
 				'-V'|'--version')
 					PRINT_Version
 					exit 0;
@@ -124,15 +167,6 @@ function parse_arguments() {
 					update_sidebar > "sidebar.html"
 					cat index.xml
 					exit 0
-				;;
-				'--profile')
-					if [ ! "$2" ]; then
-						info "Profile not defined!"
-						flush_values
-						exit 1
-					fi
-					profile="${2}"
-					shift 2
 					;;
 				*)
 					cmdsnames="$cmdsnames $1"

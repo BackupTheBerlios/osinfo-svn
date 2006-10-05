@@ -22,22 +22,33 @@
 # Parameters:
 #   1 string	Module name
 module_header() {
-	if [ "$usekdialog" == '1' ]; then
-		local k_title="$1"
-	elif [ $usexml -eq 1 ]; then
+	case "$output_mode" in
+		'stdout')
+			print_line
+			# only print module header if being verbose
+			if [ $isverbose -ge 1 ]; then
+				echo -n "${tcRED}${tUNDERLINE}"
+				echo -n "Report from module"
+				echo "${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
+			fi
+			;;
 
-		# make valid xml tag
-		local xml_tag="$(validate_xml_item "${1}")"
-		add_header "${xml_tag}"
-		xsl_template_match_start "${xml_tag}"
-		xsl_h2 "${@}"
+		'xml')
+			# make valid xml tag
+			local xml_tag="$(validate_xml_item "${1}")"
+			add_header "${xml_tag}"
+			xsl_template_match_start "${xml_tag}"
+			xsl_h2 "${@}"
+			;;
 
-	else
-		print_line
-		echo -n "${tcRED}${tUNDERLINE}"
-		echo -n "Report from module"
-		echo "${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
-	fi
+		'kdialog')
+			local k_title="$1"
+			;;
+		*)
+			info "Improper output mode; THIS IS A BUG"
+			flush_values
+			exit 1
+	esac
 }
 
 
