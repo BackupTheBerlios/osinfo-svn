@@ -11,6 +11,7 @@ source lib/xslt.functions         # xslt generation
 source lib/lanforce.functions     # lanforce xml tag codes
 
 source lib/infostring.functions   # infostring handler functions
+source lib/print.functions        # format output
 source lib/daemon.functions       # daemon mode functions
 source lib/update_sidebar         # 
 
