@@ -1,0 +1,342 @@
+#######################
+# USERS
+#
+# reports the current user, the user's X11 session manager + shell
+# the last logged user, and other users that have logged in
+# (that wtmp has registered).
+Module_users() {
+	local moduleName="Users"
+	module_header "${moduleName}"
+
+	local last_login_date login_count user users login_from user_uid user_gid \
+	      user_fullname user_unixname groups user_home user_shell wtmp_begin session_id
+	local wtmp_file="/var/log/wtmp"
+
+	if [ ! "$(last 2>/dev/null)" ] || \
+	   [ ! -s ${wtmp_file} ]; then # last gives nothing but an error, or
+		                           # the wtmp file doesn't exist or is empty
+		info	"\n${wtmp_file} does not exist or is empty. Cannot parse past user data. " \
+		        "If this is unintentional, submit a bug and provide the location of your wtmp file."
+		unset wtmp_file
+	fi
+
+	passwd_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	if [ -w $error_log ]; then
+		getent passwd > "$passwd_tmp" 2>> "$error_log"
+	else
+		getent passwd > "$passwd_tmp" 2> /dev/null
+	fi
+	TempFiles=("${TempFiles[@]}" "$passwd_tmp")
+
+
+	### CURRENT USER (ACTIVE UID)
+	get_user_data "$(whoami)"
+	user_uid="$(id -u)"
+	user_gid="$(id -g)"
+	last_login_date="$(date -d "$(last 2>/dev/null | grep -m 1 $(whoami) | \
+		   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+		   +"%Y-%m-%d %T")"
+
+	print_current_user_data
+
+
+	###############################
+	### wtmp data
+	###
+	if [ ! -s ${wtmp_file} ]; then 
+		flush_values
+	else
+
+		# get the wtmp log starting point
+		local wtmp_begin="$(last -1 | tail -n 1)"
+		local total_users=0
+
+		if [ $usexml -eq 1 ]; then
+			add_header      "wtmp statistics"
+			add_values      "$wtmp_begin"
+			add_footer
+		fi
+
+		fake_users="reboot\|wtmp\|ftp"
+		users="$(last | awk {'print $1'} | sort | uniq | \
+		          grep -v "$fake_users" | grep '^[a-zA-Z]')"
+		          # ^^ removes fake users
+
+		for user in $users; do
+
+			((total_users++))
+
+			# call subfunction to collect the data
+			# if the current user is the same as last user,
+			# do not unset the buffer. speeds up things
+			# when there are a lot of non-local users
+			if [ "$user" != $(whoami) ]; then 
+				unset_user_data				
+				get_user_data "$user"
+			fi
+
+			if [ $total_users -eq 1 ]; then
+			####################################
+			### LAST LOGGED IN USER
+			###
+				print_last_user_data
+			fi
+
+			#################################
+			### ALL USERS
+			###
+
+			## before printing any user data, print out the header
+			if [ $total_users -eq 1 ]; then
+				print_all_users_header
+			fi
+
+			# output user data
+			print_user_data
+			unset_user_data
+		done
+	fi
+
+	flush_values
+}
+
+	###### SUBFUNCTIONS #############
+	#
+	# these functions are called from Module_users.
+	# FIXME: *BSD doesn't have 'getent' command
+	#
+	get_user_data () {
+		local user="$1"
+
+		# get the full username (user_fullname)
+		#
+		# because 'last' command, part of the sysvinit core package,
+		# interprets the binary file /var/log/wtmp, but chomps off
+		# the loginname at 8 characters, we need to find the full names
+		# from the source file. a dirty hack but may well be the only way...
+		if [ ${#user} -ge 8 ]; then
+			# parse special chars to meta-chars
+			user_unixname="$(sed 's/[[:punct:]]/\\&/g' <<< $user)"
+			user_unixname="$(grep -m 1 -Eoa "$user_unixname[a-zA-Z0-9\\\+]*" \
+							 ${wtmp_file} | uniq)"
+		else
+			user_unixname="$user"
+		fi
+
+		# get data from $passwd_tmp
+		if [ -e "$passwd_tmp" ]; then
+			user_uid="$(awk -F: /^$user_unixname\:/{'print $3'} "$passwd_tmp")"
+			user_gid="$(awk -F: /^$user_unixname\:/{'print $4'} "$passwd_tmp")"
+			user_realname="$(awk -F: /^$user_unixname\:/{'print $5'} "$passwd_tmp")"
+			user_home="$(awk -F: /$user_unixname/{'print $6'} "$passwd_tmp")"
+			user_shell="$(awk -F: /$user_unixname/{'print $7'} "$passwd_tmp")"
+		fi
+
+		# get the first and last login date & time
+		# print the times if verbosity is set
+		if [ $isverbose -ge 1 ]; then
+			last_login_date="$(date -d "$(last | grep -m 1 $user | \
+			   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			   +"%Y-%m-%d %T")"
+			first_login_date="$(date -d "$(last | grep $user | tail -n 1 | \
+			   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			   +"%Y-%m-%d %T")"
+		else
+			last_login_date="$(date -d "$(last | grep -m 1 $user | \
+			   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			   +"%Y-%m-%d")"
+			first_login_date="$(date -d "$(last | grep $user | tail -n 1 | \
+			   grep -Eo '[a-zA-Z]{3} [a-zA-Z]{3}\ *[0-9]{1,2} [0-9:]{5}')" \
+			   +"%Y-%m-%d")"
+		fi
+
+		# get from where the user last logged in
+		login_from="$(last 2> /dev/null | grep -m 1 $user )"
+		login_from="$(sed 's/[ ]+//g' <<< ${login_from:9:30})"
+
+		# get the login count
+		login_count="$(last 2> /dev/null | grep $user | wc -l)"
+
+		# get groups, may only work for local users
+		# and takes a lot of time for remote (ldap) users
+		groups="$(groups $user_unixname 2> /dev/null | \
+				  sed 's/^\ // ; s/ /\n/g ' | uniq | tr -s '\n' ' ')"
+
+		# get the default X session
+		# KDE sometimes sets $DESKTOP_SESSION nicely, Gnome doesn't.
+		# AnMaster: KDE doesn't set that for me (in konsole at least)
+		# ruxpin:   I get this in konsole: DESKTOP_SESSION="kde-7.0"
+		#           any ideas where else to look?
+
+		#session_id="$DESKTOP_SESSION"
+		#if [ "$session_id" == "default" ]; then
+		#	if [ "$GNOME_DESKTOP_SESSION_ID" ]; then
+		#		# try to get Gnome version
+		#		local gnome_version="$(gnome-about --version | awk {'print $NF'})"
+		#		session_id="Gnome $gnome_version"
+		#	fi
+		#fi
+	}
+
+	print_last_user_data() {
+		if [ $usexml -eq 1 ]; then
+			add_header  "$user_unixname" 'last_login unixname'
+			# lanforce gets special treatment
+			[ $lanforce -eq 1 ] && add_attribute "Last logged in user" 'last_logged_user'
+
+			[ "$user_realname" ] && \
+			add_values       "real name: $user_realname"
+			add_values       "uid: $user_uid"
+			add_values       "gid: $user_gid"
+			add_values       "shell: $user_shell"
+			add_values       "home: $user_home"
+			add_values       "first login date: $first_login_date"
+			add_values       "last login date: $last_login_date"
+			add_values       "latest entry: $login_from"
+			add_values       "login count: $login_count"
+			add_footer  'last_login'
+
+		else
+
+			add_header     "\nLast logged in user"
+
+			add_attribute  "Unix name"         'last_logged_user'
+			add_values     "$user_unixname"
+
+			add_attribute  'Real name'         'last_logged_real_name'
+			add_values     "$user_realname"
+
+			add_attribute  'First login date'   'first_login_date'
+			add_values     "$first_login_date"
+
+			add_attribute  'Last login date'   'last_login_date'
+			add_values     "$last_login_date"
+
+			add_attribute  'Login from'        'login_from'
+			add_values     "$login_from"
+
+			add_attribute  'Login count'        'login_count'
+			add_values     "$login_count"
+
+			add_footer
+		fi
+
+		# flush values here so that previous values do not affect future indentation
+		[ $usexml -eq 0 ] && flush_values
+	}
+
+	print_user_data () {
+		if [ $lanforce -eq 1 ]; then
+			add_values   "$user_unixname: $user_realname"
+
+		elif [ $usexml -eq 1 ]; then
+			add_header  "$user_unixname" 'user unixname'
+			[ "$user_realname" ] && \
+			add_values       "real name: $user_realname"
+			[ "$user_uid" ] && 
+			add_values       "uid: $user_uid"
+			[ "$user_gid" ] && 
+			add_values       "gid: $user_gid"
+			add_values       "first login date: $first_login_date"
+			add_values       "last login date: $last_login_date"
+			add_values       "login count: $login_count"
+			add_footer 'user'
+
+		else
+			add_values "$user_unixname"
+			[ ! "$user_realname" ] && user_realname=" "
+			[ ! "$user_uid" ] && user_uid=" "
+			[ ! "$user_gid" ] && user_gid=" "
+			add_values "$user_uid"
+			add_values "$user_realname"
+			add_values "$first_login_date"
+			add_values "$last_login_date"
+
+			[ $isverbose -ge 1 ] && \
+			add_values "$login_from"
+
+			add_values "$login_count\n"
+		fi
+	}
+
+	print_all_users_header () {
+		if [ $lanforce = 1 ]; then
+			add_attribute 'All logged in users' "users"
+		else
+			add_header    "\nAll users"
+
+			if [ $usexml -eq 0 ]; then
+				if [ $isverbose -ge 1 ]; then # print only if verbose
+					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%at%col%count\n"
+					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%--%col%-----\n"
+				else
+					add_nc_header   "Unix name%col%uid%col%real name%col%first login%col%last login%col%count\n"
+					add_nc_header   "---------%col%---%col%---------%col%-----------%col%----------%col%-----\n"
+				fi
+			fi
+		fi
+	}
+
+	unset_user_data () {
+		unset user_realname user_uid user_gid user_unixname \
+			 last_login_date login_from \
+			 first_login_date login_count user_home user_shell
+	}
+
+	print_current_user_data () {
+		# xml
+		if [ $usexml -eq 1 ]; then
+			add_header  "$user" 'active_user unixname'
+			# lanforce gets special treatment
+			[ $lanforce -eq 1 ] && add_attribute    'Active user' "active_user"
+
+			# the process the data ...
+			[ "$user_realname" ] && \
+			add_values       "real name: $user_realname"
+			add_values       "login date: $login_date"
+			add_values       "uid: $user_uid"
+			add_values       "gid: $user_gid"
+			add_values       "groups: $groups"
+			#add_values       "X Session: $session_id"
+			add_values       "shell: $user_shell"
+			add_values       "home: $user_home"
+			add_values       "locales: $LC_ALL"
+			add_footer 'active_user'
+
+		# standard
+		else 
+			add_header   "Current user"
+
+			add_attribute  'Real name'          "real_name"
+			add_values     "$user_realname"
+
+			add_attribute  "Unix name"    'active_user'
+			add_values     "$user_unixname"
+
+			add_attribute  "uid / gid"    'uid_+_gid'
+			add_values     "$user_uid / $user_gid"
+
+			add_attribute  'Groups'
+			add_values     "$groups\n " # << note that for indentation, the
+									  # space at the end of string is important!
+
+			#add_attribute  "User's X11 session"	"users_window_manager"
+			#add_values     "$session_id"
+
+			add_attribute  "Logged in since"
+			add_values     "$last_login_date"
+
+			add_attribute  "User's shell"
+			add_values     "$user_shell"
+
+			add_attribute  "Home directory"     'home'
+			add_values     "$user_home"
+
+			add_attribute  "User's locales"
+			add_values     "$LC_ALL"
+
+			add_footer
+		fi
+	}
+	#################################
+
