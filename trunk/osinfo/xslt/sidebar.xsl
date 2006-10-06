@@ -1,3 +1,5 @@
+<!-- THIS FILE IS NOT USED IN OSINFO -->
+
 <?xml version="1.0" encoding="UTF-8" ?>
 
 
