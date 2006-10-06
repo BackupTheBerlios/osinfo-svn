@@ -53,7 +53,7 @@ function parse_arguments() {
 					shift 1
 					;;
 
-				'--tcpsend'|'--netcat') 
+				'--tcpsend'|'--netcat')
 					# send xml via tcp to remote osinfo daemon
 					if [ "$2" ] && [ "$3" ]; then
 						usexml=1
@@ -91,7 +91,7 @@ function parse_arguments() {
 
 				'--no-color')
 					# clear color codes; set empty values
-					tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN='' 
+					tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN=''
 					tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN=''
 					shift 1
 					;;

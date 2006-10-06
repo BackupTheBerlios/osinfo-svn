@@ -29,7 +29,7 @@ CheckReq() {
 	if [ "$(type -p ${1})" ]; then
 		return 0
 	else
-		info    "Please install ${1} to collect this information"			
+		info    "Please install ${1} to collect this information"
 		flush_values
 		return 1
 	fi
@@ -117,4 +117,3 @@ CheckReq_smartctl() {
 		#fi
 	fi
 }
-

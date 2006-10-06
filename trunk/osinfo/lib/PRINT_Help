@@ -34,7 +34,7 @@ function PRINT_Help {
 	echo "  -v   --verbose           Show more information"
 	echo "  -vv  --veryverbose       Show even more information"
 	echo "  -V   --version           Shows the version of ${tBOLD}${appname}${tSTD} and exits"
-	echo 
+	echo
 	echo "       --tcpsend [port]    Sends the output in xml to the tcp port via netcat"
 	echo "       --listen [port]     Listens to incoming xml in the tcp port via netcat"
 	echo

@@ -12,13 +12,13 @@
 listen_tcp() {
 
 	# inform the user what is being done...
-	info "$appname daemon running..." 
+	info "$appname daemon running..."
 	if [ $isverbose -ge 1 ]; then
 		PRINT_Version
 		info "Listening to tcp connections from $tcp_listening_port..."
 	fi
 
-	info "Press Ctrl-Z to exit" 
+	info "Press Ctrl-Z to exit"
 	flush_values
 
 	# variables
@@ -27,11 +27,11 @@ listen_tcp() {
 
 	local hostdir="${rundir}/hosts"
 	# create hosts dir if it doesn't exist
-	[ ! -e "${hostdir}" ] && mkdir -p "${hostdir}" 
+	[ ! -e "${hostdir}" ] && mkdir -p "${hostdir}"
 
 	# allocate a temp file
-    tcp_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-    TempFiles=("${TempFiles[@]}" "$tcp_tmp")
+	tcp_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$tcp_tmp")
 
 	# kill other netcat instances (nc often hangs)
 	killall -9 nc 2>/dev/null
@@ -43,14 +43,14 @@ listen_tcp() {
 		netcat_instance	> "${tcp_tmp}"	# which breaks after EOF
 
 		# notify the user of the received file
-		info "$(date)" 
+		info "$(date)"
 		info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
 		flush_values
 
 		# if the input is (not) valid osinfo xml..
 		if [ ! "$(grep -i '<!doctype osinfo' ${tcp_tmp})" ]; then
 			info "Input is not valid osinfo xml!"
-			
+
 		else
 
 			update_hostxml "${tcp_tmp}"
@@ -67,12 +67,12 @@ listen_tcp() {
 				update_sidebar > "${rundir}/sidebar.html"
 				update_index >  "${rundir}/overview.html"
 			fi
-			
+
 		fi
 
 		flush_values
 		unset client_hostname
-	
+
 		# :)
 
 	done
@@ -93,7 +93,7 @@ create_indexxml() {
 	for profile in ${PROFILES}; do
 
 		# if the profile type is found in one file..
-		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then		
+		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then
 
 			add_indentation
 			((XML_INDENT++))
@@ -114,7 +114,7 @@ create_indexxml() {
 
 	done
 
-	print_xml_footer	
+	print_xml_footer
 
 }
 
@@ -125,18 +125,18 @@ print_short_client_id() {
 	if [ "$hostname" ]; then
 
 		# <hostname>
-		add_indentation 
+		add_indentation
 		xml_tag_start "$hostname"
 		((XML_INDENT++))
 
 			# hostname
 			add_indentation
-			xml_param_tag_closed "computer hostname" "$(extract 'computer hostname' ${host} )" 
+			xml_param_tag_closed "computer hostname" "$(extract 'computer hostname' ${host} )"
 
 			# operating system
 			add_indentation
 			xml_param_tag_closed "computer OS" "$(extract 'computer OS' ${host} )"
-						
+
 			# processor
 			add_indentation
 			xml_param_tag_closed "computer CPU" "$(extract 'computer CPU' ${host} )"
@@ -182,7 +182,7 @@ update_hostxml() {
 	# input is $1
 	# if client_hostname is already defined, it won't be used
 	# (which is an unlikely scenario)
-	
+
 	# extract hostname from the xml
 	[ ! "$client_hostname" ] && \
 	client_hostname="$(extract 'computer hostname' ${1} )"
@@ -198,12 +198,12 @@ update_hostxml() {
 update_hosthtml() {
 	# input is $1.
 	# if client_hostname is already defined, it won't be used
-	
+
 	# extract hostname from the xml
 	[ ! "$client_hostname" ] && \
 	client_hostname="$(extract 'computer hostname' ${1} )"
 
-	# create or update <hostname>.html. 
+	# create or update <hostname>.html.
 	# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
 	if [ -e "${hostdir}/${client_hostname}.xsl" ]; then
 		xsltproc "${hostdir}/${client_hostname}.xsl" \
@@ -230,7 +230,7 @@ extract() {
 	# $1 is the extract string
 	# $2 is the input file
 	grep -i "${1}" "${2}" | \
-	   sed 's/[^\"]*\"\([^\"]*\)\"[^.]*/\1/' 
+	   sed 's/[^\"]*\"\([^\"]*\)\"[^.]*/\1/'
 }
 
 

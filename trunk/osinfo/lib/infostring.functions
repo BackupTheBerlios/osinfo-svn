@@ -119,7 +119,7 @@ function add_attribute() {
 #
 # This function inserts the input strings into the $infostring[] array.
 #
-# if the value is empty, remove the attribute, 
+# if the value is empty, remove the attribute,
 # if verbosity does not require explicity (-vv)
 function add_values {
 	if [ ! "$@" ] && [ $isverbose -lt 2 ]; then
