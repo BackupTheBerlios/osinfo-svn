@@ -1,0 +1,27 @@
+function PRINT_Usage {
+	local MODULE
+	echo "${header}${appname} displays information about the system${tSTD}"
+	echo
+	echo "${tBOLD}Syntax:${tSTD}"
+	echo "  $(basename $0) [Options] <modules>|<profile> [--help]"
+	echo
+	echo "    ${tcGREEN}MODULES${tSTD}:"
+	if [ "$SYSTEM" == "linux" ] ; then
+		for MODULE in $(sort <<< ${MODULES_LINUX}); do
+			echo -e "\t$MODULE"
+		done
+	elif [ "$(grep bsd <<< "$SYSTEM")" ]; then
+		for MODULE in ${MODULES_BSD}; do
+			echo -e "       $MODULE"
+		done
+	fi
+	echo -e "        all     - list information from all modules"
+	echo
+#	echo 'If arguments is "all" then list information from all modules'
+	echo "    ${tcGREEN}PROFILES${tSTD}:"
+	echo -e "        desktop - limit output to standard desktop essentials"
+	echo -e "        server  - server essentials"
+	echo -e "        laptop  - laptop essentials"
+	echo
+#	echo "See --help for the full list of options."
+}

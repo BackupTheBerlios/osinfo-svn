@@ -45,10 +45,9 @@ Module_battery() {
 
 
 			# print data
-
 			# if battery is not present, do not diplay anything else
 			# if battery is present, do not mention it
-			if [ "$presence" != "yes" ]; then
+			if [ ! "$(grep yes <<< $presence)" ]; then
 				add_values    "not present"
 
 			else

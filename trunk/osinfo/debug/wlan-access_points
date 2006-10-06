@@ -1,0 +1,28 @@
+eth1      Scan completed :
+          Cell 01 - Address: 00:0D:0B:87:CA:AB
+                    ESSID:"rosewlan"
+                    Protocol:IEEE 802.11bg
+                    Mode:Master
+                    Channel:11
+                    Encryption key:on
+                    Bit Rates:1 Mb/s; 2 Mb/s; 5.5 Mb/s; 6 Mb/s; 9 Mb/s
+                              11 Mb/s; 12 Mb/s; 18 Mb/s; 24 Mb/s; 36 Mb/s
+                              48 Mb/s; 54 Mb/s
+                    Quality=41/100  Signal level=-76 dBm  
+                    IE: WPA Version 1
+                        Group Cipher : WEP-40
+                        Pairwise Ciphers (1) : WEP-40
+                        Authentication Suites (1) : PSK
+                    Extra: Last beacon: 1452ms ago
+          Cell 02 - Address: 00:13:64:19:E9:24
+                    ESSID:"default"
+                    Protocol:IEEE 802.11bg
+                    Mode:Master
+                    Channel:6
+                    Encryption key:off
+                    Bit Rates:1 Mb/s; 2 Mb/s; 5.5 Mb/s; 6 Mb/s; 9 Mb/s
+                              11 Mb/s; 12 Mb/s; 18 Mb/s; 22 Mb/s; 24 Mb/s
+                              36 Mb/s; 48 Mb/s; 54 Mb/s
+                    Quality=48/100  Signal level=-72 dBm  
+                    Extra: Last beacon: 13812ms ago
+

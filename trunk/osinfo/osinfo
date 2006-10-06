@@ -7,8 +7,6 @@
 #
 #################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                            #
-#                                                                               #
-# Some parts are taken from:                                                    #
 #   --Advanced Bash Scripting Guide (ABS)                                       #
 #################################################################################
 appname='osinfo'
@@ -17,7 +15,7 @@ minor_version=2
 micro_version=10
 patch_version=3
 dev_status=alpha
-release_date='2006-09-xx'
+release_date='2006-10-xx'
 
 #############################################################
 ##
@@ -36,70 +34,9 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
 # freebsd doesn't understand '||' or evaluation, but it's not required
 # NOTE: AnMaster: If you realy use bash it *should* understand ||.
-#	echo "This script has not been tested on other operating systems than Linux and FreeBSD."
-#	echo
+	echo
 #	exit 0;
 #fi
-
-
-# On *BSD, coreutils are prepended with 'g' to imply 'GNU'
-# http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
-if [ "$(grep bsd <<< "$SYSTEM")" ]; then
-	Meta_all="$MODULES_BSD"
-	function seq() {
-		gseq "$@"
-	}
-	function date() {
-		gdate "$@"
-	}
-fi
-
-######## SETTING USERSPACE VARIABLES
-isverbose=0
-isdebug=0
-usekdialog=0
-lanforce=0
-usexml=0
-makehtml=0
-fake=0
-dev_code=0
-quiet=0
-tcpdaemon=0
-tcpsend=0
-
-prefix="/"  # The root dir. Using a variable allows info on chrooted systems
-PROFILES="desktop server laptop"
-profile="desktop"    # default profile is desktop
-#OUTPUT_MODES="stdout xml kdialog"  # this list is not used (yet)
-output_mode="stdout" # default output mode is stdout
-
-
-#XMLFILE="$(get_hostname)_$(get_mac_address).xml"
-XMLFILE="$(get_hostname).xml"
-XSLDEBUGFILE="osinfo.xsl"
-XSLFILE="$(get_hostname).xsl"
-rm "$XSLFILE" -f
-HTMLFILE="$(get_hostname).html"
-rel_hostdir='./hosts'
-
-# Keeps track of open headers, and closes them in the correct
-# order upon flush_values.
-OpenHeaders=()
-TempFiles=()
-
-
-# if the conf file is not available..
-[ ! "$error_log" ] && error_log="/var/log/osinfo.log"
-[ ! "$rundir" ] && rundir="/var/run/osinfo"
-
-
-# Before we break path hash some binaries so the script can find them (if they exist).
-hash kdialog &>/dev/null
-# PATH here allows normal users to run ifconfig and lsmod
-export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
-# LC_ALL makes is possible to print to stdout, due to support for '' :)
-#[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
-
 
 
 
@@ -166,9 +103,9 @@ run_modules() {
 		print_xml_header > "${XMLFILE}"
 	fi
 
-	if [ -z "$cmdsnames" ]; then
-		PRINT_Help
-	fi
+	#if [ -z "$cmdsnames" ]; then
+	#	PRINT_Usage
+	#fi
 
 	# this calls the module definitions. as there are Meta-modules
 	# and the actual modules, we first check if there's a Meta-module
@@ -204,10 +141,8 @@ run_modules() {
 
 	#[ "$usekdialog" -ne 1 ]  #&& print_line
 
-	if [ "$usexml" == 1 ]; then
+	if [ $usexml -eq 1 ]; then
 		print_xml_footer >> "${XMLFILE}"
-	elif [ "$usekdialog" -ne 1 ]; then
-		print_line
 	fi
 
 	# Remove temporary files:

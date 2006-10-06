@@ -9,6 +9,9 @@
 # under developement, does not yet work!
 Module_wlan() {
 	local moduleName="Wlan information"
+	local moduleDescription="detects wireless network access points"
+	Modules=("${Modules[@]}" "$moduleName;$moduleDescription")
+
 	module_header	"${moduleName}"
 
 	iw_src="$(mktemp /tmp/osinfo.XXXXXX)"
@@ -54,8 +57,10 @@ Module_wlan() {
 			# this functions extracts each cell into a temp file
 			extr_node $access_point $ap_src Cell > $cell_tmp
 
-			add_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | sed 's/\"//g')"
+			add_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | \
+			                sed 's/\"//g')"
 
+			# if the interface is associated to this ESSID
 			if [ $accociated ]; then
 				#access_points[${access_points[@]}]="$(grep -A 1 -i ${access_point}" \
 				#awk -F: '/ESSID/ {print $2}' | sed 's/\"//g' )"
@@ -76,8 +81,9 @@ Module_wlan() {
 			add_attribute   'link quality'
 			add_values      "$(grep -Eo 'Quality[\=:][a-zA-Z0-9\/]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
+							   
 			add_attribute   'address'
-			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp | sed 's/^\ *//')"
+			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp )"
 
 			add_attribute   'channel'
 			add_values      "$(grep -Eo 'Channel[\=:][a-zA-Z0-9]+' $cell_tmp | \
@@ -87,26 +93,49 @@ Module_wlan() {
 			add_attribute   'bit rate'
 
 			add_attribute   'protocol'
-			add_values      "$(grep -Eo 'Protocol[\=:][a-zA-Z0-9. ]+' $cell_tmp | \
+			add_values      "$(grep -E 'Protocol[\=:][a-zA-Z0-9. ]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
 
 			add_attribute   'mode'
-			add_values      "$(grep -Eo 'Mode[\=:][a-zA-Z]+' $cell_tmp | \
+			add_values      "$(grep -E 'Mode[\=:][a-zA-Z]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
 
 			add_attribute   'encryption key'
-			add_values      "$(grep -Eo 'Encryption key[\=:][a-zA-Z]+' $cell_tmp | \
+			add_values      "$(grep -E 'Encryption key[\=:][a-zA-Z]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
+							   
 			add_attribute   'encryption type'
+			add_values      "$(grep  'IE:' $cell_tmp | awk -F"=|:" '{print $2}')"
+
+			if [ $isverbose -ge 1 ]; then
+				add_attribute   'group cipher'
+				add_values      "$(grep -i 'group cipher' $cell_tmp | \
+					               awk -F"=|:" '{print $2}')"
+			
+				add_attribute   'pairwise cipher'
+				add_values      "$(grep -i 'pairwise cipher' $cell_tmp | \
+				                   awk -F"=|:" '{print $2}')"
+			fi
+
+			add_attribute   'authentication'
+			add_values      "$(grep -i 'authentication' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+
 
 			add_attribute   'security mode'
 
 			add_attribute   'signal level'
-			add_values      "$(grep -Eo 'Signal level[\=:][-a-zA-Z0-9\/ ]+' $cell_tmp | \
+			add_values      "$(grep  'Signal level[\=:][-a-zA-Z0-9\/ ]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
 
+			if [ $isverbose -ge 1 ]; then
+				add_attribute   'bit rates'
+				add_values      "$(grep -i 'bit rates' $cell_tmp -A 2 | \
+								   grep -Eo '[0-9]{1,2}\ [MGTPb\/s]*\;?')"
+			fi
 
-			#value_footer
+
+			add_footer
 
 		done
 
@@ -114,7 +143,6 @@ Module_wlan() {
 
 	fi
 
-	#module_footer
 	flush_values
 }
 

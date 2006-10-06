@@ -132,4 +132,16 @@ wrong_module() {
 	do_abort "${1} is not a valid module!" 1
 }
 
+# On *BSD, coreutils are prepended with 'g' to imply 'GNU'
+# http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
+if [ "$(grep bsd <<< "$SYSTEM")" ]; then
+	Meta_all="$MODULES_BSD"
+	function seq() {
+		gseq "$@"
+	}
+	function date() {
+		gdate "$@"
+	}
+fi
+
 

@@ -175,6 +175,6 @@ function parse_arguments() {
 			esac
 		done
 	else
-		PRINT_Help
+		PRINT_Usage
 	fi
 }

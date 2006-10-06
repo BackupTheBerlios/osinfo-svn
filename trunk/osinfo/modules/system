@@ -1,4 +1,4 @@
-﻿# GENERAL INFORMATION OF THE SYSTEM
+# GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
 	local moduleName="System"
 	module_header "${moduleName}"

@@ -4,12 +4,14 @@ done
 
 source lib/bash.functions         # colour & line functions
 source lib/PRINT_Help             # print --help
+source lib/PRINT_Usage            # usage; if no parameters are given
 source lib/PRINT_Version          # print --version
 
 source lib/xml.functions          # xml tag codes
 source lib/xslt.functions         # xslt generation
 source lib/lanforce.functions     # lanforce xml tag codes
 
+source lib/global_variables       # as it says...
 source lib/infostring.functions   # infostring handler functions
 source lib/print.functions        # format output
 source lib/helper.functions       # helperts

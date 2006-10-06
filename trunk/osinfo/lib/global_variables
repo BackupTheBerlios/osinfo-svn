@@ -1,0 +1,53 @@
+############
+## GLOBAL USERSPACE VARIABLES
+isverbose=0
+isdebug=0
+usekdialog=0
+lanforce=0
+usexml=0
+makehtml=0
+fake=0
+dev_code=0
+quiet=0
+tcpdaemon=0
+tcpsend=0
+
+
+prefix="/"  # The root dir. Using a variable allows info on chrooted systems
+PROFILES="desktop server laptop"
+profile="desktop"    # default profile is desktop
+#OUTPUT_MODES="stdout xml kdialog"  # this list is not used (yet)
+output_mode="stdout" # default output mode is stdout
+
+
+#XMLFILE="$(get_hostname)_$(get_mac_address).xml"
+XMLFILE="$(get_hostname).xml"
+XSLDEBUGFILE="osinfo.xsl"
+XSLFILE="$(get_hostname).xsl"
+rm "$XSLFILE" -f
+HTMLFILE="$(get_hostname).html"
+rel_hostdir='./hosts'
+
+# Keeps track of open headers, and closes them in the correct order upon flush_values.
+OpenHeaders=()
+TempFiles=()
+Modules=()
+
+
+# if the conf file is not available..
+[ ! "$error_log" ] && error_log="/var/log/osinfo.log"
+[ ! "$rundir" ] && rundir="/var/run/osinfo"
+
+
+# Before we break path hash some binaries so the script can find them (if they exist).
+hash kdialog &>/dev/null
+
+# PATH here allows normal users to run ifconfig and lsmod
+export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
+
+# LC_ALL makes is possible to print to stdout, due to support for '' :)
+#[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
+
+
+
+
