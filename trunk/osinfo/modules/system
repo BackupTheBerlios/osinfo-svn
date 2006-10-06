@@ -11,8 +11,10 @@ Module_system() {
 	add_attribute "Operating system"		"os"
 	add_values    "$(get_operating_system)"
 
-	add_attribute "Operating system kernel"	"os_build"
-	add_values    "$(uname -sr 2> /dev/null)"
+	if [ $isverbose -ge 1 ]; then
+		add_attribute "Operating system kernel"	"os_build"
+		add_values    "$(uname -sr 2> /dev/null)"
+	fi
 
 	#add_attribute "System encoding"
 	# this is probably incorrect. determines the default output encoding
@@ -23,7 +25,7 @@ Module_system() {
 	add_values    "$(uptime | awk -F, {'print $1'} | \
 	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
 
-	if CheckReq_sensors; then
+	if [ $isverbose -ge 1 ] && CheckReq_sensors; then
 		scan_cpu_temp
 		scan_mb_temp
 	fi

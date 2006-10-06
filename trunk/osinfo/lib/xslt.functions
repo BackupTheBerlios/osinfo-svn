@@ -3,29 +3,32 @@
 ##
 
 # Parameters
-#  1 match
+#  1 module name, as it is in xml tag
+#  2 module description
 function xsl_template_match_start () {
-	echo -ne "\t" >> "${XSLFILE}"
-	echo "<xsl:template match=\"${@}\">" >> "${XSLFILE}"
+	echo "	<xsl:template match=\"${1}\">" 
+	echo "		<td>"
+	echo "			<font size=\"+1\">"
+	echo "				${2}"
+	echo "			</font>"
+	echo "			<hr/>"
+	echo "		</td>"
+	}
+
+function xsl_template_stop () {
+	echo "	</xsl:template>" 
 	}
 
 # Parameters
 #  1 free-worded description
 function xsl_h1 () {
-	echo -ne "\t\t" >> "${XSLFILE}"
-	echo "<h1>${@}</h1>" >> "${XSLFILE}"
+	echo "		<h1>${@}</h1>" 
 	}
 
 # Parameters
 #  1 free-worded description
 function xsl_h2 () {
-	echo -ne "\t\t" >> "${XSLFILE}"
-	echo "<h2>${@}</h2>" >> "${XSLFILE}"
-	}
-
-function xsl_template_stop () {
-	echo -ne "\t" >> "${XSLFILE}"
-	echo "</xsl:template>" >> "${XSLFILE}"
+	echo "		<h2>${@}</h2>" 
 	}
 
 

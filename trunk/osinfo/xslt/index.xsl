@@ -16,9 +16,9 @@
                 <style type="text/css">
                     h1          { padding: 10px; padding-width: 100%; background-color: silver }
                     h2          { font-size: 20px }
-                    td, th      { width: 20%; border: 0px solid silver; padding: 0px }
-                    td:first-child, th:first-child  { width: 20% } 
-                    table       { width: 70% }
+					h3          { font-size: 8px }
+                    td, th      { width: 40%; border: 0px solid silver; padding: 0px }
+                    td:first-child, th:first-child  { width: 30% } 
 
 					<!--
 					#wrapper {
@@ -60,52 +60,96 @@
 
             </head>
             <body>
-                <xsl:apply-templates name="profile"/>
+                <xsl:apply-templates select="computer"/>
             </body>
         </html>
     </xsl:template>
 
 
-    <xsl:template match="osinfo">
-		<!-- osinfo version 
-		<p>osinfo version <xsl:value-of select="@version"/></p>
-		-->
-    </xsl:template>
-
-
 	<!-- profile -->
 	<xsl:template name="profile" match="computer">
+
 		<xsl:variable name="profile" select="@profile"/>
 
 		<!-- desktop -->
 		<xsl:if test="contains($profile,'desktop')">
-			<h1><xsl:value-of select="../computer/@hostname"/>
-			-
-			    <xsl:value-of select="$profile"/></h1>
+
+			<xsl:call-template name="titlebar"/>
+			<xsl:call-template name="core"/>
+			
 		</xsl:if>
 
 		<!-- server -->
 		<xsl:if test="contains($profile,'server')">
-			<h1><xsl:value-of select="../computer/@hostname"/>
-			-
-			    <xsl:value-of select="$profile"/></h1>
+			
+			<xsl:call-template name="titlebar"/>
+			<xsl:call-template name="core"/>
+
 		</xsl:if>
 
 		<!-- laptop -->
 		<xsl:if test="contains($profile,'laptop')">
-			<h1><xsl:value-of select="../computer/@hostname"/>
-			-
-			    <xsl:value-of select="$profile"/></h1>
+
+			<xsl:call-template name="titlebar"/>
+			<xsl:call-template name="core"/>
+			
 		</xsl:if>
 
     </xsl:template>
 
 
 
+	<xsl:template name="titlebar">
+
+		<div style="padding: 12px; padding-width: 100%; background-color: silver;">
+			<table width="100%" >
+				<tr>
+				<td>
+					<font color="#000000" face="Times New Roman" size="+3" >
+						<xsl:value-of select="../computer/@hostname"/>
+					</font>						
+				</td>
+				<td align="right">
+					<font color="#000000" face="Times New Roman" size="-1" >
+						<xsl:apply-templates select="../osinfo"/>
+						<xsl:apply-templates select="../scanning"/>
+					</font>
+				</td>
+				</tr>
+			</table>
+		</div>
+
+    </xsl:template>
+
+
+	<xsl:template name="core">
+
+		<div style="padding: 12px; padding-width: 100%; background-color: white;">
+
+			<table border="0">
+				<tbody>
+					<xsl:apply-templates select="../system"/>
+					<xsl:apply-templates select="../ip"/>
+					<xsl:apply-templates select="../processor"/>
+					<xsl:apply-templates select="../system_memory"/>
+					<xsl:apply-templates select="../disk_information"/>
+				</tbody>
+			</table>
+
+		</div>
+
+    </xsl:template>
+
+
+
+	<!-- osinfo version  -->
+    <xsl:template name="osinfo" match="osinfo">
+		osinfo version <xsl:value-of select="@version"/><br/>
+    </xsl:template>
 
 	<!-- scanning date --> 
     <xsl:template match="scanning">
-		<p>Scanning date <xsl:value-of select="@date"/></p>
+		Scanning date <xsl:value-of select="@date"/>
     </xsl:template>
 
 
@@ -125,34 +169,44 @@
     </xsl:template>
 	-->
 
-<!--
+
     <xsl:template match="system">
-		<h2>Core system</h2>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="processor">
-		<h2>CPU</h2>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
--->
+	<xsl:template name="memory" match="system_memory">
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
 
-	<!-- the rest of the modules are not displayed -->
-	<xsl:template match="*">
+	<xsl:template name="network" match="network_information/computer/iface">
+        <xsl:apply-templates select="attribute"/>
+    </xsl:template>
+
+	<xsl:template name="ip" match="ip">
+		<tr>
+			<td> IPv4 address </td>
+			<td>
+				<xsl:apply-templates select="@v4"/>
+			</td>
+		</tr>
+    </xsl:template>
+
+	
+	<xsl:template name="disk" match="disk_information">
+        <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 
     <!--Table headers and outline-->
     <xsl:template match="attribute">
-		<table>
-		<tbody>
 			<tr>
 				<td> <xsl:value-of select="description"/> </td>
 				<td> <xsl:value-of select="value"/> </td>
 			</tr>
-		</tbody>
-		</table>
     </xsl:template>
 
 

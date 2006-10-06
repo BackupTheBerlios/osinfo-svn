@@ -74,7 +74,7 @@ MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network
 
 Meta_all='system distro kernel processor hdd applications network wlan terminal devices dmi cdrom memory users services'
 Meta_lanforce='system processor memory network wlan dmi hdd devices cdrom users applications services env'
-Meta_system='system kernel processor'
+Meta_system='system kernel processor memory'
 Meta_cpu='processor'
 Meta_apps='applications'
 Meta_net='network wlan'

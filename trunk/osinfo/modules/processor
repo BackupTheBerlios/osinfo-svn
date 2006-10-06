@@ -25,94 +25,97 @@ Module_processor() {
 		fi
 
 		if [ "$lanforce" == 1 ]; then
-			add_attribute "Count"      "processor_count"
+			add_attribute "CPU Count"      "processor_count"
 			add_values    $cpu_count
 		fi
 
 		for cpunr in $(seq 1 1 $cpu_count); do
-			[ $cpu_count -gt 1 ] && add_header	"CPU $cpunr"
+			[ $cpu_count -gt 1 ] && add_header	"CPU  $cpunr"
 
-			add_attribute     "Vendor"      "processor_vendor"
+			add_attribute "CPU Vendor"      "processor_vendor"
 			add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
 								 awk -F': ' {'print $2'})"
 
-			add_attribute     "Model"       "processor_model"
+			add_attribute "CPU Model"       "processor_model"
 			add_values        "$(get_cpu_model)"
 
-			add_attribute     "Frequency"   "processor_speed"
+			add_attribute "CPU Frequency"   "processor_speed"
 			add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
 								 awk -F': ' {'print $2'})"
 			add_value_footer  "MHz"
 
-			add_attribute     "Architecture"	"system_type"
-			add_values        "$(uname -m)"
 
-			# temperature and voltage info
-			if CheckReq_sensors; then
-				scan_cpu_temp
-				scan_cpu_fan
-				scan_cpu_voltage
-			fi
+			if [ $isverbose -ge 1 ]; then
 
-			add_attribute      "Cache"
-					local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q;}" )"
-					add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
-					add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
+				add_attribute "CPU Architecture"	"system_type"
+				add_values        "$(uname -m)"
 
-			local stepping="$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-			                  awk -F': ' {'print $2'})"
+				# temperature and voltage info
+				if CheckReq_sensors; then
+					scan_cpu_temp
+					scan_cpu_fan
+					scan_cpu_voltage
+				fi
 
-			if [ $stepping -gt 1 ]; then
-				add_attribute     "Stepping"
-				add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
-			fi
+				add_attribute "CPU Cache"
+						local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q;}" )"
+						add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
+						add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
 
-			if [ $isverbose -ge 1 ] && \
-				CheckReq_lshw && CheckReq_root "more information" ; then
+				local stepping="$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+								  awk -F': ' {'print $2'})"
 
-				local cpu_width
+				if [ $stepping -gt 1 ]; then
+					add_attribute "CPU Stepping"
+					add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
+									 awk -F': ' {'print $2'})"
+				fi
 
-				lshw_xml
-				cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-				TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
+				if	CheckReq_lshw && CheckReq_root "more information" ; then
 
-				extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
+					local cpu_width
 
-				# extract capabilities
-				IFS_bak="$IFS"
-				IFS=$'\n'
-				local cabty value
-				for cabty in $(grep -i 'capability id' $cpu_tmp); do
+					lshw_xml
+					cpu_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+					TempFiles=("${TempFiles[@]}" "$cpu_tmp" )
 
-					value="$(extr_xml_value "$cabty")"
-					if [ $isverbose -ge 1 ] || \
-					   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
-					   cpu_capabilities[$cpunr]="$value;${cpu_capabilities[$cpunr]}"
-					fi
+					extr_node "node id=\"cpu" $lshw_xml_file /node > $cpu_tmp
 
-				done
-				IFS="$IFS_bak"
-				
-				add_attribute 'Capabilities'
-
+					# extract capabilities
 					IFS_bak="$IFS"
-					IFS=";"
-					for cabty in ${cpu_capabilities[$cpunr]}; do
-						add_values    "${cabty}\n "
+					IFS=$'\n'
+					local cabty value
+					for cabty in $(grep -i 'capability id' $cpu_tmp); do
+
+						value="$(extr_xml_value "$cabty")"
+						if [ $isverbose -ge 1 ] || \
+						   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
+						   cpu_capabilities[$cpunr]="$value;${cpu_capabilities[$cpunr]}"
+						fi
+
 					done
 					IFS="$IFS_bak"
+					
+					add_attribute 'Capabilities'
+
+						IFS_bak="$IFS"
+						IFS=";"
+						for cabty in ${cpu_capabilities[$cpunr]}; do
+							add_values    "${cabty}\n "
+						done
+						IFS="$IFS_bak"
 
 
 
-				#set -x
-				# TODO: place the proper 'sed' here vv
-				#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
-				#cpu_width_dimension ; grep units....
-				#set +x
+					#set -x
+					# TODO: place the proper 'sed' here vv
+					#cpu_width="$(grep width ${cpu_tmp} | head -n 1 | sed ...)"
+					#cpu_width_dimension ; grep units....
+					#set +x
 
-				#clock
+					#clock
 
+				fi
 			fi
 
 			[ $cpu_count -gt 1 ] &&	add_footer

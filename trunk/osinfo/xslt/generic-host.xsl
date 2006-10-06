@@ -15,17 +15,61 @@
                 <title>osinfo</title>
                 <style type="text/css">
                     h1          { padding: 10px; padding-width: 100%; background-color: silver }
-                    td, th      { width: 40%; border: 1px solid silver; padding: 10px }
-                    td:first-child, th:first-child  { width: 20% } 
-                    table       { width: 650px }
-                </style>
+                    h2          { font-size: 20px }
+					h3          { font-size: 8px }
+                    td, th      { width: 40%; border: 0px solid silver; padding: 0px }
+                    td:first-child, th:first-child  { width: 30% }                 </style>
             </head>
             <body>
-                <xsl:apply-templates/>
+                <xsl:apply-templates select="computer" />
             </body>
         </html>
     </xsl:template>
 
+
+	<!-- computer -->
+    <xsl:template match="computer">
+
+		<xsl:call-template name="titlebar"/>
+
+		<div style="padding: 12px; padding-width: 100%; background-color: white;">
+
+			<table border="0">
+				<tbody>
+					<xsl:apply-templates select="../system"/>
+					<xsl:apply-templates select="../ip"/>
+					<xsl:apply-templates select="../processor"/>
+					<xsl:apply-templates select="../system_memory"/>
+					<xsl:apply-templates select="../disk_information"/>
+				</tbody>
+			</table>
+
+		</div>
+
+    </xsl:template>
+
+
+	<xsl:template name="titlebar">
+
+		<div style="padding: 12px; padding-width: 100%; background-color: silver;">
+			<table width="100%" >
+				<tr>
+				<td>
+					<font color="#000000" face="Times New Roman" size="+3" >
+						<xsl:value-of select="../computer/@hostname"/>
+					</font>						
+				</td>
+				<td align="right">
+					<font color="#000000" face="Times New Roman" size="-1" >
+						<xsl:apply-templates select="../osinfo"/>
+						<xsl:apply-templates select="../scanning"/>
+					</font>
+				</td>
+				</tr>
+			</table>
+		</div>
+
+    </xsl:template>
 
     <xsl:template match="osinfo">
 		<!-- osinfo version -->
@@ -37,10 +81,6 @@
         <h1><xsl:value-of select="@hostname"/></h1>
     </xsl:template>
 
-	<!-- profile -->
-    <xsl:template match="computer">
-        <h2><xsl:value-of select="@profile"/></h2>
-    </xsl:template>
 
 	<!-- scanning date -->
     <xsl:template match="scanning">
@@ -51,67 +91,69 @@
 
 	<!-- modules -->
     <xsl:template match="disk_information">
-		<h2>Disk</h2>
+		<td>Disk</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
     <xsl:template match="distribution">
-		<h2>Distro</h2>
+		<td>Distro</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
     <xsl:template match="kernel">
-		<h2>Kernel</h2>
+		<td>Kernel</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
     <xsl:template match="system">
-		<h2>Core system</h2>
+		<td>
+			<font size="+1">
+				Core system
+			</font>
+			<hr/>
+		</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="processor">
-		<h2>CPU</h2>
+		<td>CPU</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="users">
-		<h2>Users</h2>
+		<td>Users</td>
         <xsl:apply-templates select="user"/>
 	        <xsl:value-of select="@unixname"/>
     </xsl:template>
 
 	<xsl:template match="devices">
-		<h2>Devices</h2>
+		<td>Devices</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="terminal">
-		<h2>Terminal</h2>
+		<td>Terminal</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="network_information">
-		<h2>Network</h2>
+		<td>Network</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="applications">
-		<h2>Applications</h2>
+		<td>Applications</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 	<xsl:template match="dmi_information">
-		<h2>OEM</h2>
+		<td>OEM</td>
         <xsl:apply-templates select="attribute"/>
     </xsl:template>
 
 
-
-
-
 	<xsl:template match="services">
-		<h2>Services</h2>
+		<td> Services</td>
 		<!-- fixme; user for-each loop -->
 		<table border="0" cellpadding="0">
 			<tr>
@@ -126,16 +168,14 @@
 
     <!--Table headers and outline-->
     <xsl:template match="attribute">
-		<table border="0" cellpadding="0">
-			<tr>
+		<tr>
 			<td>
-	        <xsl:value-of select="description"/>
+				<xsl:value-of select="description"/>
 			</td>
 			<td>
-			<xsl:value-of select="value"/>
+				<xsl:value-of select="value"/>
 			</td>
-			</tr>
-		</table>
+		</tr>
     </xsl:template>
 
     <xsl:template match="user">
@@ -150,7 +190,4 @@
 			</tr>
 		</table>
     </xsl:template>
-
-
-
 </xsl:stylesheet> 
