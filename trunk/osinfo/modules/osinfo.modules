@@ -4,6 +4,20 @@
 ################################################################################
 ################################################################################
 
+
+##
+# Cleans up some temporary files in the TempFiles array.
+#
+cleanup_temp_files() {
+	if [ "$lshw_xml_file" ]; then
+		rm -f "$lshw_xml_file"
+	fi
+	local File
+	for File in "${TempFiles[@]}"; do
+		rm -f "$File"
+	done
+}
+
 ##
 # Checks if lshw was already run.
 #  if it wasn't then run lshw and export the filename of the temporary file.
@@ -103,158 +117,19 @@ extr_xml_value() {
 }
 
 
-TempFiles=()
-##
-# Cleans up some temporary files in the TempFiles array.
-#
-cleanup_temp_files() {
-	if [ "$lshw_xml_file" ]; then
-		rm -f "$lshw_xml_file"
+function netcat() {
+	if [ "$(type -p netcat)" ]; then
+		netcat "$@"
+	elif [ "$(type -p nc)" ]; then
+		nc "$@"
+	else
+		info "netcat binary not found!"
+		exit 1
 	fi
-	local File
-	for File in "${TempFiles[@]}"; do
-		rm -f "$File"
-	done
 }
 
-##
-# Keeps track of open headers, and closes them in the correct
-# order upon flush_values.
-OpenHeaders=()
-
-
-
-
-
-
-########
-# LVM
-# fake module that calls the hdd subfunction
-Module_lvm () {
-	local moduleName="Logical Volumes"
-	module_header "${moduleName}"
-
-	if CheckReq_root; then
-		scan_hdd_lvm
-	fi
-
-	flush_values
+wrong_module() {
+	do_abort "${1} is not a valid module!" 1
 }
 
-
-######################
-# buses
-#
-Module_bus () {
-	module_header "Data buses"
-	local sysfs_prepath="/sys/devices/ide"
-	local ide_devices="0/0.0 0/0.1 1/0.0 1/0.1"
-
-
-	# IDE bus
-	add_header "IDE bus"
-	for ide_path in $ide_devices; do
-		if [ -e "$sysfs_prepath$ide_path" ]; then
-			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)"
-			add_values    "$(cat $sysfs_prepath$ide_path/media)"
-		fi
-	done
-	add_footer
-
-
-	flush_values
-}
-
-
-
-# INFORMATION OF THE TERMINAL IN USE
-Module_terminal() {
-	local moduleName="Terminal info"
-	module_header "${moduleName}"
-
-	add_attribute "Terminal type"
-	add_values    "$TERM"
-
-	# TODO
-	#add_attribute "Terminal encoding"
-	#add_values    "?"
-
-	add_attribute "Terminal speed"
-	add_values    "$(stty speed)"
-
-	add_attribute "Rows"
-	add_values    "$(stty size | awk '{print $1}')"
-
-	add_attribute "Columns"
-	add_values    "$(stty size | awk '{print $2}')"
-
-	flush_values
-}
-
-
-#######################
-# PRINTERS AVAILABLE TO THE SYSTEM
-
-# EXPERIMENTAL!
-
-# uses only lpstat (cups) and hasn't been tested on multi-printer
-# environments
-#
-# TODO: add some kind of timeout function
-Module_printers() {
-	local moduleName="Printers"
-	module_header "${moduleName}"
-
-	local lp_nr
-
-	# first of all, check if lpstat is available
-	if [ "$(type -p lpstat)" ]; then
-
-		#  if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
-
-		add_attribute 	'Printer'	'local_printer'
-
-		# as there may be several printers, print info from all
-		#for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
-		#	add_values  "$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
-		#done
-
-		add_attribute	'model'
-		add_attribute	'location'
-		add_attribute	'server'
-		add_attribute	'spooler'
-		add_attribute	'status'
-		add_attribute	'completed jobs'
-
-	fi
-
-	#module_footer
-	flush_values
-}
-
-
-
-
-
-#######################
-# ENVIRONMENT VARIABLES
-#
-# xml only, stdout is not needed
-Module_env() {
-	local moduleName="Environment variables"
-	module_header "${moduleName}"
-
-	## Write the header for output
-	add_attribute   'System enviroment variables\n' \
-	                'system_enviroment_variables'
-	## Process all variables
-	for var in $(env); do
-
-		add_values  "${var}\n"
-
-	done
-
-	#module_footer
-	flush_values
-}
 

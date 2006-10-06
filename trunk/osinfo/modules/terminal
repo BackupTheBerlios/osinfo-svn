@@ -1,0 +1,24 @@
+# INFORMATION OF THE TERMINAL IN USE
+Module_terminal() {
+	local moduleName="Terminal info"
+	module_header "${moduleName}"
+
+	add_attribute "Terminal type"
+	add_values    "$TERM"
+
+	# TODO
+	#add_attribute "Terminal encoding"
+	#add_values    "?"
+
+	add_attribute "Terminal speed"
+	add_values    "$(stty speed)"
+
+	add_attribute "Rows"
+	add_values    "$(stty size | awk '{print $1}')"
+
+	add_attribute "Columns"
+	add_values    "$(stty size | awk '{print $2}')"
+
+	flush_values
+}
+

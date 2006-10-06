@@ -1,0 +1,40 @@
+#######################
+# PRINTERS AVAILABLE TO THE SYSTEM
+
+# EXPERIMENTAL!
+
+# uses only lpstat (cups) and hasn't been tested on multi-printer
+# environments
+#
+# TODO: add some kind of timeout function
+Module_printers() {
+	local moduleName="Printers"
+	module_header "${moduleName}"
+
+	local lp_nr
+
+	# first of all, check if lpstat is available
+	if [ "$(type -p lpstat)" ]; then
+
+		#  if [ "$(lpstat -a 2&>1 | grep -Eo refused)" != "refused" ]; then
+
+		add_attribute 	'Printer'	'local_printer'
+
+		# as there may be several printers, print info from all
+		#for lp_nr in $(seq 1 1 $(lpstat -a | wc -l) ); do
+		#	add_values  "$(lpstat -a 2> /dev/null | sed -n "$lp_nr{p;q;}")"
+		#done
+
+		add_attribute	'model'
+		add_attribute	'location'
+		add_attribute	'server'
+		add_attribute	'spooler'
+		add_attribute	'status'
+		add_attribute	'completed jobs'
+
+	fi
+
+	#module_footer
+	flush_values
+}
+

@@ -1,0 +1,22 @@
+#######################
+# ENVIRONMENT VARIABLES
+#
+# xml only, stdout is not needed
+Module_env() {
+	local moduleName="Environment variables"
+	module_header "${moduleName}"
+
+	## Write the header for output
+	add_attribute   'System enviroment variables\n' \
+	                'system_enviroment_variables'
+	## Process all variables
+	for var in $(env); do
+
+		add_values  "${var}\n"
+
+	done
+
+	#module_footer
+	flush_values
+}
+

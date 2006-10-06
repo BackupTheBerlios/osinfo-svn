@@ -1,0 +1,14 @@
+########
+# LVM
+# fake module that calls the hdd subfunction
+Module_lvm () {
+	local moduleName="Logical Volumes"
+	module_header "${moduleName}"
+
+	if CheckReq_root; then
+		scan_hdd_lvm
+	fi
+
+	flush_values
+}
+

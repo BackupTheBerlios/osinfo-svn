@@ -1,0 +1,23 @@
+######################
+# buses
+#
+Module_bus () {
+	module_header "Data buses"
+	local sysfs_prepath="/sys/devices/ide"
+	local ide_devices="0/0.0 0/0.1 1/0.0 1/0.1"
+
+
+	# IDE bus
+	add_header "IDE bus"
+	for ide_path in $ide_devices; do
+		if [ -e "$sysfs_prepath$ide_path" ]; then
+			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)"
+			add_values    "$(cat $sysfs_prepath$ide_path/media)"
+		fi
+	done
+	add_footer
+
+
+	flush_values
+}
+

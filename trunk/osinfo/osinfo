@@ -42,16 +42,6 @@ SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 #fi
 
 
-function netcat() {
-	if [ "$(type -p netcat)" ]; then
-		netcat "$@"
-	elif [ "$(type -p nc)" ]; then
-		nc "$@"
-	else
-		info "netcat binary not found!"
-		exit 1
-	fi
-}
 # On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then
@@ -92,6 +82,11 @@ rm "$XSLFILE" -f
 HTMLFILE="$(get_hostname).html"
 rel_hostdir='./hosts'
 
+# Keeps track of open headers, and closes them in the correct
+# order upon flush_values.
+OpenHeaders=()
+TempFiles=()
+
 
 # if the conf file is not available..
 [ ! "$error_log" ] && error_log="/var/log/osinfo.log"
@@ -107,16 +102,6 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 
 
-
-
-
-
-################################################################################
-# Module functions
-# ------------------------------------------------------------------------------
-wrong_module() {
-	do_abort "${1} is not a valid module!" 1
-}
 
 
 
