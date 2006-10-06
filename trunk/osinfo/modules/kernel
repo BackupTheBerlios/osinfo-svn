@@ -1,0 +1,31 @@
+# OPERATING SYSTEM KERNEL
+Module_kernel() {
+	local moduleName="Kernel"
+	module_header "${moduleName}"
+
+	local kernel_makefile
+
+	add_attribute "Kernel name"
+	add_values    "$(uname -o 2> /dev/null)"
+
+	add_attribute "Kernel release"		'os_build' #FIXME
+	add_values    "$(uname -r 2> /dev/null)"
+
+	add_attribute "Kernel version"
+	add_values    "$(uname -v 2> /dev/null)"
+
+	# Unique kernel name
+	if [ -e "/usr/src/linux" ]; then
+		kernel_makefile="/usr/src/linux/Makefile"
+	elif [ "$(ls /usr/src/linux* 2> /dev/null)" ]; then
+		kernel_makefile="/usr/src/linux*/Makefile"
+	fi
+	if [ -e "${kernel_makefile}" ]; then
+		add_attribute "Kernel name"
+		add_values    "$(head ${kernel_makefile} | grep NAME | \
+		                 head -n 1 | awk -F= {'print $2'})"
+	fi
+
+	flush_values
+}
+

@@ -1,16 +1,21 @@
-##################
-# CD/DVD DEVICES
+###########################
+# CD/DVD DEVICES and media
+# 
 Module_cdrom() {
 	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
 
-	if CheckReq_lshw && CheckReq_root; then
+	local cdrom_count=0
+
+	### drives
+
+	if CheckReq "lshw" && CheckReq_root "information of cd/dvd drives" ; then
 		cdrom_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		cdrom_tmp2="$(mktemp /tmp/osinfo.XXXXXX)"
 		udev_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$cdrom_tmp" "$cdrom_tmp2" "$udev_tmp")
 
-		local cdrom_node cdrom_model cdrom_type cdrom_serial cdrom_bus
+		local cdrom_node cdrom_model cdrom_type cdrom_serial cdrom_bus cdrom_modes
 
 		lshw_xml
 		if [ "$(grep -i cdrom $lshw_xml_file)" ]; then
@@ -22,7 +27,7 @@ Module_cdrom() {
 
 			# extr_node echoes back all the cdrom drives in the system,
 			# let's see how many
-			local cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
+			cdrom_count="$(grep 'node id="cdrom' $cdrom_tmp | wc -l)"
 
 			for drv_nr in $(seq 1 1 $cdrom_count); do
 
@@ -54,39 +59,11 @@ Module_cdrom() {
 
 				fi
 
-				cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $cdrom_tmp2)")"
 
-				cdrom_type[$drv_nr]="$(extr_xml_value "$(grep -i descr ${cdrom_tmp2})")"
+				# get parameters from file
+				extract_cdrom_params "$cdrom_tmp2"
 
-				cdrom_serial[$drv_nr]="$(extr_xml_value "$(grep -i serial ${cdrom_tmp2})")"
-
-				cdrom_node[$drv_nr]="$(extr_xml_value \
-				             "$(grep -i 'logicalname' ${cdrom_tmp2} | head -n 1)")"
-				                       # sometimes there's a 'disc' node with a second
-				                       # logicalname node, which is the same as the first
-
-				cdrom_bus[$drv_nr]="$(extr_xml_value "$(grep -i businfo ${cdrom_tmp2})")"
-
-				# extract capabilities
-				IFS_bak="$IFS"
-				IFS=$'\n'
-				local cabty value
-				for cabty in $(grep -i 'capability id' $cdrom_tmp2); do
-
-					# verbosity level 0 only reports burning \ read \ playback capabilities
-					value="$(extr_xml_value "$cabty")"
-					if [ $isverbose -ge 1 ] || \
-					   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
-					   cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
-					fi
-
-				done
-				IFS="$IFS_bak"
-
-				#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
-
-
-
+					
 				# display data for LanForce
 				if [ $lanforce -eq 1 ]; then
 
@@ -123,17 +100,146 @@ Module_cdrom() {
 					done
 					IFS="$IFS_bak"
 
+					add_attribute 'Modes'
+					add_values     "${cdrom_modes[$drv_nr]}"
+
 					add_footer "cd_drive"
 
 				fi
 			done
 
 		else
-			local status_msg='No cdrom drives detected'
-			info          "$status_msg"
+			info          "No cdrom drives detected"
 		fi
 	fi
 
 	flush_values
+
+
+	### media
+	
+	# root access is only required if the cdrom devices can't be accurately detected otherwise
+	if [ $isverbose -ge 1 ] && [ $cdrom_count -ge 1 ] && \
+		CheckReq_root "information of inserted media" && CheckReq "cdrecord" ; then
+
+		media_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$media_tmp")
+
+		local media_type media_material media_make media_subtype
+
+		# scan all devices for inserted media
+		for drv_nr in $(seq 1 1 $cdrom_count); do
+
+			cdrecord dev="${cdrom_node[$drv_nr]}" -atip > $media_tmp 2>/dev/null
+
+			# if the media is found
+			if [ "$(grep 'info from disk' $media_tmp)" ]; then
+
+				add_header "Media"
+					extract_atip_data $media_tmp
+					print_atip_data
+
+			fi
+		done
+
+	fi
+
+	flush_values
+
 }
 
+
+	# subfunctions #####
+	#
+	#
+	# extract_cdrom_params
+	#
+	# Parameters
+	#  1 tmpfile from lshw
+	extract_cdrom_params() {
+
+		tmpfile="${1}"
+		#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}	
+
+		cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $tmpfile)")"
+
+		cdrom_type[$drv_nr]="$(extr_xml_value "$(grep -i descr ${tmpfile})")"
+
+		cdrom_serial[$drv_nr]="$(extr_xml_value "$(grep -i serial ${tmpfile})")"
+
+		cdrom_node[$drv_nr]="$(extr_xml_value \
+					 "$(grep -i 'logicalname' ${tmpfile} | head -n 1)")"
+							   # sometimes there's a 'disc' node with a second
+							   # logicalname node, which is the same as the first
+
+		cdrom_bus[$drv_nr]="$(extr_xml_value "$(grep -i businfo ${tmpfile})")"
+
+
+		# extract capabilities
+		IFS_bak="$IFS"
+		IFS=$'\n'
+		local cabty value
+		for cabty in $(grep -i 'capability id' $tmpfile); do
+
+			# verbosity level 0 only reports burning \ read \ playback capabilities
+			value="$(extr_xml_value "$cabty")"
+			if [ $isverbose -ge 1 ] || \
+			   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
+			   cdrom_capabilities[$drv_nr]="$value;${cdrom_capabilities[$drv_nr]}"
+			fi
+
+		done
+		IFS="$IFS_bak"
+
+		# tmpfile is no longer needed, overwrite
+		if [ $isverbose -eq 1 ]; then
+			cdrecord dev="${cdrom_node[$drv_nr]}" -atip > $tmpfile 2>/dev/null
+			cdrom_modes[$drv_nr]="$(grep -i 'supported modes' $tmpfile | \
+				awk -F': ' {'print $2'})"
+
+		fi
+
+	}
+
+	extract_atip_data() {
+
+		tmpfile="${1}"
+
+		media_type="$(grep -i 'disk type' $tmpfile | \
+			awk -F': ' {'print $2'})"
+	
+		media_make="$(grep -i 'manufacturer' $tmpfile | \
+			awk -F': ' {'print $2'})"
+
+		# grep all atip lines that begin with a whitespace
+		IFS_bak="$IFS"
+		IFS=$'\n'
+		local atip value
+		for atip in $(grep -i '^atip info' -A 10 $tmpfile | grep '^[\ ]'); do
+
+			media_atip="$media_atip;$atip"
+
+		done
+		IFS="$IFS_bak"
+
+
+	}
+
+	# print atip data, (manufacturer, physical media type etc..)
+	print_atip_data() {
+
+		add_attribute   "Media manufacturer"
+		add_values      "$media_make"
+
+		add_attribute   "Media type"
+		add_values      "$media_type"
+
+		IFS_bak="$IFS"
+		IFS=";"
+		add_attribute   "ATIP data"
+		for atip in ${media_atip}; do
+			add_values    "${atip}\n "
+		done
+		IFS="$IFS_bak"
+
+	}

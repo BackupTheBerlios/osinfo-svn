@@ -22,12 +22,27 @@ function Check_rundir {
 	fi
 }
 
+# checks application requirements
+# Parameters
+#  1  application
+CheckReq() {
+	if [ "$(type -p ${1})" ]; then
+		return 0
+	else
+		info    "Please install ${1} to collect this information"			
+		flush_values
+		return 1
+	fi
+}
+
 ##
 # Checks for lshw and print a message if it doesn't exist
 # Returns 0 if lshw eixsts and 1 if it is missing.
+# DEPRECATED
 CheckReq_lshw() {
 	if [ ! "$(type -p lshw)" ]; then
 		info    "Please install lshw to collect this information"
+		flush_values
 		return 1
 	else
 		return 0
@@ -40,6 +55,7 @@ CheckReq_lshw() {
 CheckReq_dmidecode() {
 	if [ ! "$(type -p dmidecode)" ]; then
 		info    "Please install dmidecode to collect this information"
+		flush_values
 		return 1
 	else
 		return 0
@@ -76,6 +92,7 @@ CheckReq_root() {
 
 	if [ "$EUID" != 0 ]; then
 		info    "Please run $appname as super-user to collect $msg"
+		flush_values
 		return 1
 	else
 		return 0

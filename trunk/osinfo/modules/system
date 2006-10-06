@@ -1,0 +1,74 @@
+# GENERAL INFORMATION OF THE SYSTEM
+Module_system() {
+	local moduleName="System"
+	module_header "${moduleName}"
+
+	# hostname
+	add_attribute "Hostname" "hostname"
+	add_values    "$(hostname 2> /dev/null)"
+
+	# operating system is set in the SYSTEM variable earlier
+	add_attribute "Operating system"		"os"
+	add_values    "$(get_operating_system)"
+
+	add_attribute "Operating system kernel"	"os_build"
+	add_values    "$(uname -sr 2> /dev/null)"
+
+	#add_attribute "System encoding"
+	# this is probably incorrect. determines the default output encoding
+	# of the echo command.
+	#add_values    "$(echo ä | file - | awk -F': ' {'print $2'})"
+
+	add_attribute "System uptime"			"uptime"
+	add_values    "$(uptime | awk -F, {'print $1'} | \
+	                 grep -Eo 'up [a-z0-9: ]*' | sed 's/^[up ]*//')"
+
+	if CheckReq_sensors; then
+		scan_cpu_temp
+		scan_mb_temp
+	fi
+
+	flush_values
+}
+
+	# helpers
+	get_operating_system() {
+		if [ "$(grep -i linux <<< "$SYSTEM")" ]; then
+			[ ! "$distro_id" ] && identify_Linux_distro
+			echo "$distro_id $(uname -s) $distro_release"
+		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
+			echo "$SYSTEM"
+		fi
+	}
+
+	scan_cpu_temp() {
+		add_attribute "CPU temperature"
+		local cpu_temp="$(sensors | grep -i 'cpu temp' | \
+						  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
+		add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
+		}
+
+	scan_mb_temp() {
+		add_attribute "M/B temperature"
+		local mobo_temp="$(sensors | grep -i 'M/B temp' | \
+		                   grep -Eo '\+[0-9]*[[:punct:]]?[ ]?[CF]+')"
+		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
+		#add_value_footer "C"
+		}
+
+	scan_cpu_fan () {
+		add_attribute   "Fan"
+		local cpu_fan="$(sensors | grep -i 'cpu fan' | \
+						  grep -Eo '[0-9]+ RPM')"
+		add_values       "$(awk  {'print $1'} <<< $cpu_fan )" 
+		[ "$cpu_fan" ] && add_value_footer "RPM"
+		}
+
+		scan_cpu_voltage () {
+			add_attribute   "Voltage"
+			local cpu_voltage="$(sensors | grep -i 'vcore' | \
+							 grep -Eo '\+[0-9. ]*')"
+			add_values       "$(awk  {'print $2'} <<< $cpu_voltage)"
+			[ "$cpu_voltage" ] && add_value_footer "V"
+			}
+

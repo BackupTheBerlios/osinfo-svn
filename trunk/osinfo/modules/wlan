@@ -1,0 +1,120 @@
+###################################################
+# MODULE WLAN
+#
+# detects wireless network access points
+#
+# uses wireless-tools (iwconfig, iwlist)
+# Linux only
+#
+# under developement, does not yet work!
+Module_wlan() {
+	local moduleName="Wlan information"
+	module_header	"${moduleName}"
+
+	iw_src="$(mktemp /tmp/osinfo.XXXXXX)"
+	ap_src="$(mktemp /tmp/osinfo.XXXXXX)"
+	cell_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
+	#TempFiles=("${TempFiles[@]}" "$cell_tmp")
+
+	if [ ! "$(type -p iwconfig)" ]; then
+
+		info "No wireless extensions found"
+
+	elif [ "$SYSTEM" == "linux" ] ; then
+
+		# get the basic info
+		iwconfig 2>/dev/null > $iw_src
+		local wlan_devices="$(grep 'IEEE 802' ${iw_src} | awk  {'print $1'})"
+		iwlist $wlan_devices scan 2> /dev/null > $ap_src
+
+
+		# for debugging purposes
+		if [ "$fake" == 1 ]; then
+			iw_src="debug/wlan-iwconfig-on"
+			wlan_devices="eth1"
+			ap_src="debug/wlan-stations"
+		fi
+
+		local ap_count="$(grep -i cell $ap_src | wc -l)"
+
+		# print status
+		if [ "$ap_count" -ge 1 ]; then
+			info "$ap_count access points found by device $wlan_devices"
+		else
+			info "No access points found by device $wlan_devices"
+		fi
+
+		# process all access points
+		IFS_bak="$IFS"
+		IFS=$'\n'
+
+		for access_point in $(grep -i cell ${ap_src}); do
+
+			# this functions extracts each cell into a temp file
+			extr_node $access_point $ap_src Cell > $cell_tmp
+
+			add_header    "$(awk -F: '/ESSID/ {print $2}' $cell_tmp | sed 's/\"//g')"
+
+			if [ $accociated ]; then
+				#access_points[${access_points[@]}]="$(grep -A 1 -i ${access_point}" \
+				#awk -F: '/ESSID/ {print $2}' | sed 's/\"//g' )"
+
+
+				#add_attribute   'associated ESSID'
+				#add_header    "$(grep -Eo 'ESSID[:"A-Za-z/ ]*' "${iw_src}" | \
+				#                awk -F: {'print $2'})"
+
+				add_attribute   'device node'
+				add_values      "$(grep -Eo '^[a-z0-9]'+ ${iw_src})"
+								# the device associated to this AP
+
+				add_attribute   'device'
+				#add_values     "some_device_from_mod_devices"
+			fi
+
+			add_attribute   'link quality'
+			add_values      "$(grep -Eo 'Quality[\=:][a-zA-Z0-9\/]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+			add_attribute   'address'
+			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp | sed 's/^\ *//')"
+
+			add_attribute   'channel'
+			add_values      "$(grep -Eo 'Channel[\=:][a-zA-Z0-9]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+
+			add_attribute   'frequency'
+			add_attribute   'bit rate'
+
+			add_attribute   'protocol'
+			add_values      "$(grep -Eo 'Protocol[\=:][a-zA-Z0-9. ]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+
+			add_attribute   'mode'
+			add_values      "$(grep -Eo 'Mode[\=:][a-zA-Z]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+
+			add_attribute   'encryption key'
+			add_values      "$(grep -Eo 'Encryption key[\=:][a-zA-Z]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+			add_attribute   'encryption type'
+
+			add_attribute   'security mode'
+
+			add_attribute   'signal level'
+			add_values      "$(grep -Eo 'Signal level[\=:][-a-zA-Z0-9\/ ]+' $cell_tmp | \
+			                   awk -F"=|:" '{print $2}')"
+
+
+			#value_footer
+
+		done
+
+		IFS="$IFS_bak"
+
+	fi
+
+	#module_footer
+	flush_values
+}
+
