@@ -10,7 +10,7 @@ Module_processor() {
 	local cpunr cpuinfo cpu_count
 
 	define_cpuinfo
-	
+
 	if [ "$cpuinfo" ]; then
 
 		# test if /proc/cpuinfo gives a number for cpu cores.
@@ -34,14 +34,14 @@ Module_processor() {
 
 			add_attribute "CPU Vendor"      "processor_vendor"
 			add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
+			                     awk -F': ' {'print $2'})"
 
 			add_attribute "CPU Model"       "processor_model"
 			add_values        "$(get_cpu_model)"
 
 			add_attribute "CPU Frequency"   "processor_speed"
 			add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								 awk -F': ' {'print $2'})"
+			                     awk -F': ' {'print $2'})"
 			add_value_footer  "MHz"
 
 
@@ -63,12 +63,12 @@ Module_processor() {
 						add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
 
 				local stepping="$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-								  awk -F': ' {'print $2'})"
+				                  awk -F': ' {'print $2'})"
 
 				if [ $stepping -gt 1 ]; then
 					add_attribute "CPU Stepping"
 					add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
-									 awk -F': ' {'print $2'})"
+					                     awk -F': ' {'print $2'})"
 				fi
 
 				if	CheckReq_lshw && CheckReq_root "more information" ; then
@@ -90,12 +90,12 @@ Module_processor() {
 						value="$(extr_xml_value "$cabty")"
 						if [ $isverbose -ge 1 ] || \
 						   [ "$(grep -i 'burning\|read\ \|playback' <<< $value)" ]; then
-						   cpu_capabilities[$cpunr]="$value;${cpu_capabilities[$cpunr]}"
+							cpu_capabilities[$cpunr]="$value;${cpu_capabilities[$cpunr]}"
 						fi
 
 					done
 					IFS="$IFS_bak"
-					
+
 					add_attribute 'Capabilities'
 
 						IFS_bak="$IFS"
@@ -131,7 +131,7 @@ Module_processor() {
 
 	get_cpu_model() {
 		[ ! "$cpuinfo" ] && define_cpuinfo
-		
+
 		if [ "$cpuinfo" ]; then
 			grep 'model name' ${cpuinfo} | \
 				sed -n "$cpunr{p;q;}" | awk -F': ' {'print $2'}
@@ -139,7 +139,7 @@ Module_processor() {
 		}
 
 	define_cpuinfo() {
-		[ "$(grep -i linux <<< $SYSTEM)" ] && cpuinfo="/proc/cpuinfo"	
+		[ "$(grep -i linux <<< $SYSTEM)" ] && cpuinfo="/proc/cpuinfo"
 		}
 
 ############################################

@@ -66,7 +66,7 @@ extr_node() {
 			# basically it just searches for $node_closer and gets the line#
 			IFS_bak="$IFS"; IFS=$'\n' ;
 			for node in $(sed -n "$(($begin+1)),\${p;}" $input_tmp | \
-				      grep ${node_closer}); do
+			              grep ${node_closer}); do
 
 				# if the indentation matches...
 				if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
@@ -76,7 +76,7 @@ extr_node() {
 					# the line number of the closing node
 					local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
 					((nigeb--)) # this prevents the closing node to displaying
-						    # as sometimes this may not be wanted
+					            # as sometimes this may not be wanted
 					break;
 
 				fi
@@ -155,7 +155,7 @@ Module_bus () {
 	add_header "IDE bus"
 	for ide_path in $ide_devices; do
 		if [ -e "$sysfs_prepath$ide_path" ]; then
-			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)" 
+			add_attribute "IDE $(sed 's/^.\///' <<< $ide_path)"
 			add_values    "$(cat $sysfs_prepath$ide_path/media)"
 		fi
 	done

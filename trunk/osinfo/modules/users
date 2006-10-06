@@ -43,7 +43,7 @@ Module_users() {
 	###############################
 	### wtmp data
 	###
-	if [ ! -s ${wtmp_file} ]; then 
+	if [ ! -s ${wtmp_file} ]; then
 		flush_values
 	else
 
@@ -70,8 +70,8 @@ Module_users() {
 			# if the current user is the same as last user,
 			# do not unset the buffer. speeds up things
 			# when there are a lot of non-local users
-			if [ "$user" != $(whoami) ]; then 
-				unset_user_data				
+			if [ "$user" != $(whoami) ]; then
+				unset_user_data
 				get_user_data "$user"
 			fi
 
@@ -233,9 +233,9 @@ Module_users() {
 			add_header  "$user_unixname" 'user unixname'
 			[ "$user_realname" ] && \
 			add_values       "real name: $user_realname"
-			[ "$user_uid" ] && 
+			[ "$user_uid" ] &&
 			add_values       "uid: $user_uid"
-			[ "$user_gid" ] && 
+			[ "$user_gid" ] &&
 			add_values       "gid: $user_gid"
 			add_values       "first login date: $first_login_date"
 			add_values       "last login date: $last_login_date"
@@ -304,7 +304,7 @@ Module_users() {
 			add_footer 'active_user'
 
 		# standard
-		else 
+		else
 			add_header   "Current user"
 
 			add_attribute  'Real name'          "real_name"

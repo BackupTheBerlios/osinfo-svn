@@ -10,6 +10,6 @@ Module_sensors() {
 
 		IFS="$IFS_bak"
 
-	flush_values	
+	flush_values
 }
 

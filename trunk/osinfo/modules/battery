@@ -1,10 +1,10 @@
 Module_battery() {
 	module_header "Battery"
-	
+
 	local battery_info[1]="/proc/acpi/battery/BAT0/info"
 	local battery_info[2]="/proc/acpi/battery/BAT1/info"
-	local bat_nr 
-	
+	local bat_nr
+
 	for bat_nr in $(seq 1 1 ${#battery_info[@]} ); do
 
 		if [ -e "${battery_info[$bat_nr]}" ]; then
@@ -50,7 +50,7 @@ Module_battery() {
 			# if battery is present, do not mention it
 			if [ "$presence" != "yes" ]; then
 				add_values    "not present"
-				
+
 			else
 
 				add_attribute "charge status" "charge"
@@ -79,7 +79,7 @@ Module_battery() {
 
 				add_attribute "serial number"
 				add_values    "$serial"
-				
+
 			fi
 
 			add_footer
@@ -87,7 +87,7 @@ Module_battery() {
 		fi
 
 	done
-	
+
 	flush_values
 }
 
@@ -95,6 +95,6 @@ Module_battery() {
 get_battery_charge() {
 	[ "$(type -p acpitool)" ] && \
 		acpitool | grep -i "battery #$1" | \
-			awk -F':' {'print $2'} 
+			awk -F':' {'print $2'}
 }
 

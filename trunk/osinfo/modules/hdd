@@ -31,7 +31,7 @@ Module_hdd() {
 		# declare variables
 		local hdd_total_capacity=0 hdd_total_used=0 hdd_total_free=0 hdd_ID=0
 
-		# allocate a temp file		
+		# allocate a temp file
 		fdisk_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$fdisk_info")
 		fdisk -l > $fdisk_info 2>/dev/null
@@ -172,7 +172,7 @@ Module_hdd() {
 					else
 						#add_values  "$hdd_dma"
 						add_values  "${tcGREEN}$hdd_dma${tSTD}"
-					fi					
+					fi
 
 				if [ "$(type -p smartctl)" ]; then
 					# TODO: use add_subheader
@@ -207,7 +207,7 @@ Module_hdd() {
 				add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
 				add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
 
-			
+
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# print the device node
 					add_attribute "  ${hdd_pt_node[$hdd_pt]}"
@@ -256,7 +256,7 @@ Module_hdd() {
 				;;
 
 			'xml')	# XML OUTPUT
-		
+
 				add_attribute "$hdd_type"			'hard_disk'
 				# TODO: how to break these into many lines in the code?
 				add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
@@ -383,7 +383,7 @@ Module_hdd() {
 		fi
 
 		CheckReq_smartctl # allocates temp file $smart_info
-		# allocate a temp file		
+		# allocate a temp file
 		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$smart_info")
 
@@ -715,8 +715,8 @@ Module_hdd() {
 			udevinfo -q all -n ${dev_scan} > ${udev_info}
 		fi
 
-		if CheckReq_smartctl; then 
-			# allocate a temp file		
+		if CheckReq_smartctl; then
+			# allocate a temp file
 			smart_sata="$(mktemp /tmp/osinfo.XXXXXX)"
 			TempFiles=("${TempFiles[@]}" "$smart_sata")
 			smartctl -a -d ata ${dev_scan} > $smart_sata
@@ -823,7 +823,7 @@ Module_hdd() {
 
 		###############
 		# Serial number
-		
+
 		# prefer smartmontools
 		if [ $smart_sata ]; then
 
@@ -853,7 +853,7 @@ Module_hdd() {
 
 		###########
 		# scan for SMART attributes
-		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi	
+		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi
 	}
 
 
@@ -867,7 +867,7 @@ Module_hdd() {
 
 	#######################
 	# LVM PARTITIONS
-	#	
+	#
 	scan_hdd_lvm() {
 		# check that lvm extensions are in the system
 		if [ ! "$(cat /proc/misc | grep device-mapper)" ]; then
@@ -912,7 +912,7 @@ Module_hdd() {
 					                         $lvm_group_tmp)"
 					vg_size_dimension[$volgroup_nr]="$(awk /VG\ Size/{'print $4'} \
 					                                   $lvm_group_tmp)"
-					
+
 					# PE size
 					pe_size[$volgroup_nr]="$(awk /PE\ Size/{'print $3'} \
 					                         $lvm_group_tmp)"
@@ -925,7 +925,7 @@ Module_hdd() {
 
 					# Logical Volumes
 					lv_nr[$volgroup_nr]="$(awk /Cur\ LV/{'print $3'} \
-					                       $lvm_group_tmp)"					
+					                       $lvm_group_tmp)"
 
 					((volgroup_nr++))
 
@@ -934,14 +934,14 @@ Module_hdd() {
 				# print data
 				#add_attribute	"Volume groups" "volume_groups"
 				volgroup_nr=0
-				
+
 				for volgroup in $volgroups; do
 
 					add_header	$volgroup  "logical volume"
 
 					add_attribute    'Format' "format"
 					add_values       "${format[$volgroup_nr]}"
-					
+
 					add_attribute    'Physical volume'
 					add_values       "${pv[$volgroup_nr]}"
 
@@ -964,7 +964,7 @@ Module_hdd() {
 
 					scan_lvm_lv "$volgroup"
 
-					# print header					
+					# print header
 					if [ $lv_Nr -ge 1 ]; then
 
 						add_header	'' # adds a space into stdout, does not affect xml

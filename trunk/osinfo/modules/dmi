@@ -85,32 +85,32 @@ Module_dmi() {
 					              'system_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Model'	'system_model'
 					add_values    "$(grep -i product ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Version number'
 					add_values    "$(grep -i version ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'OEM serial number' \
 					              'computer_product_serial'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'UUID' 	'uuid'
 					add_values    "$(grep -i uuid ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 					add_footer
 					;;
@@ -123,28 +123,28 @@ Module_dmi() {
 					              'mother_board_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Model' \
 					              'mother_board_model'
 					add_values    "$(grep -i product ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Version' \
 					              'mother_board_version'
 					add_values    "$(grep -i version ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Serial number' \
 					              'mother_board_serial_number'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 					add_footer
 					;;
@@ -156,25 +156,25 @@ Module_dmi() {
 					add_attribute 'Vendor'
 					add_values    "$(grep -i vendor ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Revision'	'bios_version'
 					add_values    "$(grep -i version ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Date'	'bios_date'
 					add_values    "$(grep -i date ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Serial number'	'bios_serial_number'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 					add_footer
 					;;
@@ -187,38 +187,38 @@ Module_dmi() {
 					add_attribute 'Manufacturer' 	'chassis_manufacturer'
 					add_values    "$(grep -i manufacturer ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Type' 	'chassis_type'
 					add_values    "$(grep -i type ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Version' 	'chassis_version'
 					add_values    "$(grep -i version ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Serial number' \
 					              'chassis_serial_number'
 					add_values    "$(grep -i serial ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 
 					add_attribute 'Lock' 	'chassis_lock'
 					add_values    "$(grep -i lock ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
+					                 sed 's/^\ *//')"
 
 					add_attribute 'Asset tag' 'chassis_asset_tag'
 					add_values    "$(grep -i asset ${dmi_tmp} | \
 					                 awk -F':' {'print $2'} | \
-									 sed 's/^\ *//')"
-									 
+					                 sed 's/^\ *//')"
+
 					add_footer
 					;;
 

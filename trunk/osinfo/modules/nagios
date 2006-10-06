@@ -14,7 +14,7 @@ Module_nagios() {
 		# print values
 		add_attribute   "Version"
 		add_values      "$version"
-		
+
 		add_attribute   "Running time"
 		add_values      "$running_time"
 

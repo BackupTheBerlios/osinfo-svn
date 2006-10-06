@@ -23,7 +23,7 @@ Module_devices() {
 	local DEVICE arraynr=1;
 
 	# on *BSD, run this only as root
-	if [ "$(grep -i bsd <<< "$SYSTEM")" ] && ! CheckReq_root; then 		
+	if [ "$(grep -i bsd <<< "$SYSTEM")" ] && ! CheckReq_root; then
 		flush_values
 		return 1
 	fi
@@ -46,7 +46,7 @@ Module_devices() {
 		((arraynr++))
 	done
 
-	# output by category	
+	# output by category
 	for categories in Controllers Enhancements; do
 
 		add_header "\n$categories"

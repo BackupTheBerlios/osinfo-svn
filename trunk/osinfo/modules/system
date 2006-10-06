@@ -1,4 +1,4 @@
-# GENERAL INFORMATION OF THE SYSTEM
+﻿# GENERAL INFORMATION OF THE SYSTEM
 Module_system() {
 	local moduleName="System"
 	module_header "${moduleName}"
@@ -46,9 +46,9 @@ Module_system() {
 	scan_cpu_temp() {
 		add_attribute "CPU temperature"
 		local cpu_temp="$(sensors | grep -i 'cpu temp' | \
-						  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
+		                  grep -Eo '[0-9\.]+[[:punct:]]?[ ]?[CF]+')"
 		add_values       "$(awk  {'print $1'} <<< $cpu_temp )"
-		}
+	}
 
 	scan_mb_temp() {
 		add_attribute "M/B temperature"
@@ -56,21 +56,21 @@ Module_system() {
 		                   grep -Eo '\+[0-9]*[[:punct:]]?[ ]?[CF]+')"
 		add_values       "$(awk -F'+' {'print $2'} <<< $mobo_temp)\n "
 		#add_value_footer "C"
-		}
+	}
 
 	scan_cpu_fan () {
 		add_attribute   "Fan"
 		local cpu_fan="$(sensors | grep -i 'cpu fan' | \
-						  grep -Eo '[0-9]+ RPM')"
+		                 grep -Eo '[0-9]+ RPM')"
 		add_values       "$(awk  {'print $1'} <<< $cpu_fan )" 
 		[ "$cpu_fan" ] && add_value_footer "RPM"
-		}
+	}
 
-		scan_cpu_voltage () {
-			add_attribute   "Voltage"
-			local cpu_voltage="$(sensors | grep -i 'vcore' | \
-							 grep -Eo '\+[0-9. ]*')"
-			add_values       "$(awk  {'print $2'} <<< $cpu_voltage)"
-			[ "$cpu_voltage" ] && add_value_footer "V"
-			}
+	scan_cpu_voltage () {
+		add_attribute   "Voltage"
+		local cpu_voltage="$(sensors | grep -i 'vcore' | \
+		                     grep -Eo '\+[0-9. ]*')"
+		add_values       "$(awk  {'print $2'} <<< $cpu_voltage)"
+		[ "$cpu_voltage" ] && add_value_footer "V"
+	}
 

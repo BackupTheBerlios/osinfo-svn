@@ -9,7 +9,7 @@ Module_applications() {
 
 	local APPLICATIONS app versionstring category cat_print=0
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
-	
+
 
 	## Applications to look for..
 	if [ "$SYSTEM" == "linux" ] ; then
@@ -26,7 +26,7 @@ Module_applications() {
 
 		UNTESTED="Graphical_interface: \
 			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
-		               gnat-gcc gnat-gpl gpc icc ifc open-cobol \
+			           gnat-gcc gnat-gpl gpc icc ifc open-cobol \
 			Tools: mono"
 
 			# Shells: ash ccsh dash esh ksh mksh psh rssh sash shish
@@ -63,7 +63,7 @@ Module_applications() {
 			# if verbosity is less than 1
 			if [ $isverbose -lt 1 ] && [ "$category" == "Shells" ]; then
 				cat_print=0
-			else 
+			else
 				# print the category to stdout
 				cat_print=1
 				add_header "$category"
@@ -80,7 +80,7 @@ Module_applications() {
 			else
 				add_values	"\t${versionstring} ($app)\n"
 			fi
-		fi	
+		fi
 	done
 
 	flush_values
@@ -96,7 +96,7 @@ Module_applications() {
 							   grep -Eo 'v[ A-Za-z0-9.-]*')
 				;;
 			'python')
-				python -V 2>&1 | head -n 1 
+				python -V 2>&1 | head -n 1
 				;;
 			'X')
 				X -version 2>&1 | grep Revision
@@ -123,12 +123,12 @@ Module_applications() {
 				echo  "Samba $($app -V 2>&1 )"
 				;;
 			'udevinfo')
-				$app -V 2>&1 
+				$app -V 2>&1
 				;;
 			'awk')
 				# awk is a bit tricky.. it can go into a captive cmd interpreter mode
 				if [ ! "$(awk -V 2> /dev/null)" ]; then
-					awk -W version 2>&1 | head -n 1 
+					awk -W version 2>&1 | head -n 1
 				else
 					awk -V
 				fi

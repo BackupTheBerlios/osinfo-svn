@@ -1,6 +1,6 @@
 ###########################
 # CD/DVD DEVICES and media
-# 
+#
 Module_cdrom() {
 	local moduleName="CD/DVD drives"
 	module_header "${moduleName}"
@@ -63,7 +63,7 @@ Module_cdrom() {
 				# get parameters from file
 				extract_cdrom_params "$cdrom_tmp2"
 
-					
+
 				# display data for LanForce
 				if [ $lanforce -eq 1 ]; then
 
@@ -117,7 +117,7 @@ Module_cdrom() {
 
 
 	### media
-	
+
 	# root access is only required if the cdrom devices can't be accurately detected otherwise
 	if [ $isverbose -ge 1 ] && [ $cdrom_count -ge 1 ] && \
 		CheckReq_root "information of inserted media" && CheckReq "cdrecord" ; then
@@ -159,7 +159,7 @@ Module_cdrom() {
 	extract_cdrom_params() {
 
 		tmpfile="${1}"
-		#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}	
+		#udevinfo -q all -n "${cdrom_node[$drv_nr]}" > ${udev_tmp}
 
 		cdrom_model[$drv_nr]="$(extr_xml_value "$(grep -i product $tmpfile)")"
 
@@ -168,9 +168,9 @@ Module_cdrom() {
 		cdrom_serial[$drv_nr]="$(extr_xml_value "$(grep -i serial ${tmpfile})")"
 
 		cdrom_node[$drv_nr]="$(extr_xml_value \
-					 "$(grep -i 'logicalname' ${tmpfile} | head -n 1)")"
-							   # sometimes there's a 'disc' node with a second
-							   # logicalname node, which is the same as the first
+		                       "$(grep -i 'logicalname' ${tmpfile} | head -n 1)")"
+		                       # sometimes there's a 'disc' node with a second
+		                       # logicalname node, which is the same as the first
 
 		cdrom_bus[$drv_nr]="$(extr_xml_value "$(grep -i businfo ${tmpfile})")"
 
@@ -195,7 +195,7 @@ Module_cdrom() {
 		if [ $isverbose -eq 1 ]; then
 			cdrecord dev="${cdrom_node[$drv_nr]}" -atip > $tmpfile 2>/dev/null
 			cdrom_modes[$drv_nr]="$(grep -i 'supported modes' $tmpfile | \
-				awk -F': ' {'print $2'})"
+			                        awk -F': ' {'print $2'})"
 
 		fi
 
@@ -206,10 +206,10 @@ Module_cdrom() {
 		tmpfile="${1}"
 
 		media_type="$(grep -i 'disk type' $tmpfile | \
-			awk -F': ' {'print $2'})"
-	
+		              awk -F': ' {'print $2'})"
+
 		media_make="$(grep -i 'manufacturer' $tmpfile | \
-			awk -F': ' {'print $2'})"
+		              awk -F': ' {'print $2'})"
 
 		# grep all atip lines that begin with a whitespace
 		IFS_bak="$IFS"
@@ -223,13 +223,13 @@ Module_cdrom() {
 		IFS="$IFS_bak"
 
 		media_booktype="$(grep -i 'book type' $tmpfile | \
-			awk -F': ' {'print $2'})"
+		                  awk -F': ' {'print $2'})"
 
 		media_copypr="$(grep -i 'copyr prot' $tmpfile | \
-			awk -F': ' {'print $2'})"
+		                awk -F': ' {'print $2'})"
 
 		media_layers="$(grep -i 'number of layers' $tmpfile | \
-			awk -F': ' {'print $2'})"
+		                awk -F': ' {'print $2'})"
 
 
 
