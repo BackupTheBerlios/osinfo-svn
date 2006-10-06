@@ -222,6 +222,16 @@ Module_cdrom() {
 		done
 		IFS="$IFS_bak"
 
+		media_booktype="$(grep -i 'book type' $tmpfile | \
+			awk -F': ' {'print $2'})"
+
+		media_copypr="$(grep -i 'copyr prot' $tmpfile | \
+			awk -F': ' {'print $2'})"
+
+		media_layers="$(grep -i 'number of layers' $tmpfile | \
+			awk -F': ' {'print $2'})"
+
+
 
 	}
 
@@ -233,6 +243,16 @@ Module_cdrom() {
 
 		add_attribute   "Media type"
 		add_values      "$media_type"
+
+		add_attribute   "Media booktype"
+		add_values      "$media_booktype"
+
+		add_attribute   "Media copy protection"
+		add_values      "$media_copypr"
+
+		add_attribute   "Media layers"
+		add_values      "$media_layers"
+
 
 		IFS_bak="$IFS"
 		IFS=";"
