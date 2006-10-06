@@ -63,7 +63,6 @@ Module_users() {
 		          # ^^ removes fake users
 
 		for user in $users; do
-
 			((total_users++))
 
 			# call subfunction to collect the data
@@ -128,6 +127,9 @@ Module_users() {
 			user_uid="$(awk -F: /^$user_unixname\:/{'print $3'} "$passwd_tmp")"
 			user_gid="$(awk -F: /^$user_unixname\:/{'print $4'} "$passwd_tmp")"
 			user_realname="$(awk -F: /^$user_unixname\:/{'print $5'} "$passwd_tmp")"
+			# sometimes the realname isn't defined; column segfaults if the
+			# values are empty (columns don't match)
+			[ ! "$user_realname" ] && user_realname="<unknown>"
 			user_home="$(awk -F: /$user_unixname/{'print $6'} "$passwd_tmp")"
 			user_shell="$(awk -F: /$user_unixname/{'print $7'} "$passwd_tmp")"
 		fi
@@ -255,7 +257,7 @@ Module_users() {
 			[ $isverbose -ge 1 ] && \
 			add_values "$login_from"
 
-			add_values "$login_count\n"
+			add_values "$login_count"
 		fi
 	}
 
@@ -284,8 +286,8 @@ Module_users() {
 	}
 
 	print_current_user_data () {
-		# xml
-		if [ $usexml -eq 1 ]; then
+		case $output_mode in
+		'xml')
 			add_header  "$user" 'active_user unixname'
 			# lanforce gets special treatment
 			[ $lanforce -eq 1 ] && add_attribute    'Active user' "active_user"
@@ -302,10 +304,10 @@ Module_users() {
 			add_values       "home: $user_home"
 			add_values       "locales: $LC_ALL"
 			add_footer 'active_user'
+			;;
 
-		# standard
-		else
-			add_header   "Current user"
+		'stdout')
+			add_header     "Current user"
 
 			add_attribute  'Real name'          "real_name"
 			add_values     "$user_realname"
@@ -336,7 +338,8 @@ Module_users() {
 			add_values     "$LC_ALL"
 
 			add_footer
-		fi
+			;;
+		esac
 	}
 	#################################
 

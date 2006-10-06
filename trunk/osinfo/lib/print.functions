@@ -163,7 +163,6 @@ function print_stdout {
 
 	echo -e $(sed 's/%value%/\?/g ; s/%col%/\?/g' <<< ${value_string}) | \
 	          column -t -s? 
-
 	echo	
 }
 
