@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-#################################################################################
+################################################################################
 # OSINFO
 #
 # osinfo lists system information available to the OS.
 # see `man osinfo` for details.
 #
-#################################################################################
+################################################################################
 # Written by Arvid Norlander and Mikael Lammentausta                            #
 #   --Advanced Bash Scripting Guide (ABS)                                       #
-#################################################################################
+################################################################################
 appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=10
-patch_version=3
+patch_version=4
 dev_status=alpha
 release_date='2006-10-xx'
 
 #############################################################
 ##
 # source the necessary files
-
 source sources
 
 [ -e "/etc/osinfo.conf" ] && \
@@ -29,24 +28,44 @@ source sources
 #############################################################
 
 
-# make a guess of the operating system
-SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
-#if [ ! "$(echo $SYSTEM | grep 'linux')" ] | [ ! "$(echo $SYSTEM | grep bsd)" ]; then
-# freebsd doesn't understand '||' or evaluation, but it's not required
-# NOTE: AnMaster: If you realy use bash it *should* understand ||.
-	echo
-#	exit 0;
-#fi
+################################################################################
+################################################################################
+## MAIN FUNCTION                                                              ##
+################################################################################
+################################################################################
+main() {
+	# parse the command line arguments
+	parse_arguments "${@}"
+
+	# do some checks..
+	Check_logfile
+	#Check_rundir
+
+	# if we're not running in tcp daemon mode, call the main function
+	if [ $tcpdaemon -eq 0 ]; then
+		run_modules
+	else
+		listen_tcp
+	fi
 
 
+	# generate html
+	if [ $makehtml -eq 1 ]; then
+		xsltproc "${XSLDEBUGFILE}" "${XMLFILE}" > "${HTMLFILE}"
+	fi
+
+	############################################
+	# FINALLY SEND OVER TCP IF THE OPTION IS SET
+	if [ $tcpsend -eq 1 ]; then
+		cat "${XMLFILE}" | netcat "$HOST" "$PORT" -q 1
+	elif [ $usexml -eq 1 ] && [ $quiet -ne 1 ]; then
+		cat "${XMLFILE}"
+	fi
+	############################################
+}
 
 
-
-#######################
-# THE MAIN FUNCTION
-# this runs all checks and generates the print-out
-#
-# this is the place to put all env variables to be set for some module
+# this runs all modules and generates the print-out
 run_modules() {
 	for modul in $cmdsnames; do
 
@@ -99,9 +118,8 @@ run_modules() {
 		done
 	fi
 
-	if [ "$usexml" == 1 ]; then
-		print_xml_header > "${XMLFILE}"
-	fi
+	[ $usexml -eq 1 ] && print_xml_header > "${XMLFILE}"
+
 
 	#if [ -z "$cmdsnames" ]; then
 	#	PRINT_Usage
@@ -150,33 +168,8 @@ run_modules() {
 }
 
 
-# parse the command line arguments
-parse_arguments "${@}"
-
-# do some checks..
-Check_logfile
-#Check_rundir
-
-# if we're not running in tcp daemon mode, call the main function
-if [ $tcpdaemon -eq 0 ]; then
-	run_modules
-else
-	listen_tcp
-fi
-
-# generate html
-if [ $makehtml -eq 1 ]; then
-	xsltproc "${XSLDEBUGFILE}" "${XMLFILE}" > "${HTMLFILE}"
-fi
-
-############################################
-# FINALLY SEND OVER TCP IF THE OPTION IS SET
-if [ $tcpsend -eq 1 ]; then
-	cat "${XMLFILE}" | netcat "$HOST" "$PORT" -q 1
-elif [ $usexml -eq 1 ] && [ $quiet -ne 1 ]; then
-	cat "${XMLFILE}"
-fi
-############################################
+# run main
+main "${@}"
 
 # exit cleanly
 exit 0

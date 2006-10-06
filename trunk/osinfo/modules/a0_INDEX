@@ -1,9 +1,9 @@
-#################################################################################
-# OSINFO MODULES
-#
-# osinfo lists system information available to the OS.
-#
-# this file contains the osinfo modules and module subfunctions.
+################################################################################
+################################################################################
+## OSINFO MODULES                                                             ##
+################################################################################
+################################################################################
+
 # modules can be freely added; the data processing and outputting is taken
 # care of by other functions. these are accessed by the following functions,
 # and here they are presented in the order in which they should appear in
@@ -50,10 +50,10 @@
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='system distro kernel processor hdd network wlan applications terminal devices dmi cdrom memory users services'
+MODULES_LINUX='system distro kernel processor memory hdd network wlan dmi applications terminal devices cdrom services battery'
 MODULES_BSD='system kernel applications terminal network devices dmi'
-MODULES_BROKEN='printers lvm bus sensors nagios battery'
-MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus'
+MODULES_BROKEN='printers lvm bus sensors nagios users'
+MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus battery'
 MODULES_SU_ONLY='cdrom hdd dmi memory oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
 MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors nagios battery'
@@ -80,10 +80,4 @@ Meta_apps='applications'
 Meta_net='network wlan'
 MODULES_META='all lanforce system cpu apps net'
 
-
-################################################################################
-################################################################################
-## Modules                                                                    ##
-################################################################################
-################################################################################
 

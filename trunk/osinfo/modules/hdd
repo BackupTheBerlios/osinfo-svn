@@ -11,6 +11,7 @@
 # fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc
 Module_hdd() {
 	local moduleName="Disk information"
+	local moduleDescription=""
 	module_header "${moduleName}"
 
 	# developement status:
@@ -123,6 +124,7 @@ Module_hdd() {
 			      hdd_smart hdd_lifetime hdd_tempC hdd_health \
 			      hdd_pt_node hdd_pt_mp hdd_pt_blocks hdd_pt_fs \
 			      hdd_ata_standard hdd_pt_free hdd_startup
+
 		done
 
 
@@ -137,7 +139,6 @@ Module_hdd() {
 
 
 		#DISKFREE=$(($DISKFREE+$partfree))
-
 	fi
 
 	flush_values
@@ -169,9 +170,11 @@ Module_hdd() {
 					# if DMA is off, print it in red
 					if [ "$(grep -i off <<< $hdd_dma)" ]; then
 						add_values  "${tcRED}$hdd_dma${tSTD}"
-					else
+					elif [ "$(grep -i on <<< $hdd_dma)" ]; then
 						#add_values  "$hdd_dma"
 						add_values  "${tcGREEN}$hdd_dma${tSTD}"
+					else
+						add_values  "${tcRED}n/a${tSTD}"
 					fi
 
 				if [ "$(type -p smartctl)" ]; then
@@ -182,7 +185,8 @@ Module_hdd() {
 						add_values  "$hdd_startup"
 					add_attribute   'Temperature'
 						add_values  "$hdd_tempC"
-						add_value_footer "C"
+						[ "$hdd_tempC" ] && \
+							add_value_footer "C"
 				[ $isverbose -ge 1 ] && \
 					add_attribute   'S.M.A.R.T.' && \
 						add_values  "$hdd_smart"
@@ -844,7 +848,7 @@ Module_hdd() {
 		########
 		# Driver
 		if [ -e "${proc_info}" ]; then
-			hdd_driver="Linux SCSI Generic (sg) v.$(cat ${sg_version})"
+			hdd_driver="Linux SCSI Generic (sg) v. ${sg_version}"
 		fi
 
 

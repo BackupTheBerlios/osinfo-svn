@@ -40,7 +40,7 @@ Modules=()
 
 
 # Before we break path hash some binaries so the script can find them (if they exist).
-hash kdialog &>/dev/null
+#hash kdialog &>/dev/null
 
 # PATH here allows normal users to run ifconfig and lsmod
 export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/

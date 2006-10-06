@@ -24,13 +24,14 @@
 module_header() {
 	case "$output_mode" in
 		'stdout')
-			print_line
 			# only print module header if being verbose
 			if [ $isverbose -ge 1 ]; then
-				echo -n "${tcRED}${tUNDERLINE}"
-				echo -n "Report from module"
-				echo "${tSTD}${tUNDERLINE} ${tcBLUE}$@${tSTD}:"
+				print_line
+				#echo -n "${tcRED}${tUNDERLINE}"
+				#echo -n "Report from module"
+				#echo "${tSTD}${tUNDERLINE} ${tcGREEN}$@${tSTD}:"
 			fi
+				echo "${tUNDERLINE}${tcGREEN}$@${tSTD}:"
 			;;
 
 		'xml')
@@ -119,17 +120,21 @@ function add_attribute() {
 #
 # This function inserts the input strings into the $infostring[] array.
 #
-# if the value is empty, remove the attribute,
-# if verbosity does not require explicity (-vv)
+# if the value is empty, or just whitespaces, remove the preceding attribute,
+# if verbosity does not require extreme explicity (-vv)
 function add_values {
-	if [ ! "$@" ] && [ $isverbose -lt 2 ]; then
+	if [ ! "$@" ] || \
+	   [ ! "$(grep '[^\ *]' <<< "${@}")" ]; then
+#	   [ $isverbose -lt 2 ]; then
 		# if the last non-empty item (second to last)
 		# is an attribute or a header, unset it
-		if [ "$(grep 'attribute\|header' <<< infostring[$((${#infostring[@]}-1))] )" ]; then
+		if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
 			unset infostring[$((${#infostring[@]}-1))]
 		fi
-	else
-		infostring[${#infostring[@]}]="%value%${@}"
+	else # there is an input value
+		# clear leading whitespaces
+		local value="$(sed 's/^\ *//' <<< ${@})"
+		infostring[${#infostring[@]}]="%value%${value}"
 	fi
 }
 

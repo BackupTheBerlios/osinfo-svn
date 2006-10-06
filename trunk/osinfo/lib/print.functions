@@ -154,16 +154,17 @@ function print_stdout {
 
 	# EXPLANATION OF THE INDENTATION SOLUTION
 	# this is a trick to overcome the limitation in column;
-	# use the special character '$' as the column delimiter, since
+	# use the special character '?' as the column delimiter, since
 	# it won't accept a string. the character _has_ to be ascii-standard.
 	# the column delimiter can be %value% or %col%
 
 	# the bad thing is that column interprets color codes as characters,
 	# and using colours on $value_string messes up column.
 
-	#echo -e $(sed 's/%value%/\$/g ; s/%col%/\$/g' <<< ${value_string}) | \
 	echo -e $(sed 's/%value%/\?/g ; s/%col%/\?/g' <<< ${value_string}) | \
 	          column -t -s? 
+
+	echo	
 }
 
 
