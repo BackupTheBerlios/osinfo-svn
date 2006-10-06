@@ -12,7 +12,7 @@ FEATURES and FIXES for 0.3:
 *	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
 *	xsl/html support
 *	add_subheader => intended, blue title
-	
+
 
 FEATURES and FIXES for 0.4:
 ----------------
@@ -56,8 +56,8 @@ GENERAL NOTES:
 *	"svn revert somefile" to revert uncommited changes
 	"svn up -r revnr somename" to revert to a specific version
 
-*	"xmllint --valid osinfo.xml" to check if the xml output is valid 
-	against the DTD 
+*	"xmllint --valid osinfo.xml" to check if the xml output is valid
+	against the DTD
 
 *	"xsltproc osinfo.xsl osinfo.xml > osinfo.html" to generate the HTML
 
@@ -78,5 +78,5 @@ PROGRAMMING TIPS:
 
 *	Get tabsize dynamically: "tput it"
 
-*	sort a file reversely by: 
-	<stdin> | grep -n . | sort -rn | cut -d':' -f 2 | <stdout> 
+*	sort a file reversely by:
+	<stdin> | grep -n . | sort -rn | cut -d':' -f 2 | <stdout>
