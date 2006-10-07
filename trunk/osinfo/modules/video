@@ -1,0 +1,10 @@
+Module_multimedia() {
+	local moduleName="multimedia"
+	local moduleDescription="Multimedia components"
+
+	add_attribute     'Direct rendering'
+	add_values        "$(glxinfo | grep -i 'direct rendering' | \
+						 awk -F: {'print $2'})"
+
+	flush_values
+}
