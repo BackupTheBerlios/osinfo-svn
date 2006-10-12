@@ -304,9 +304,13 @@ Module_hdd() {
 		# and swap if not counted in
 		for hdd_pt in $(seq 1 1 $partitions_on_drive);do
 
-			let hdd_used[$ID]+=hdd_pt_used[$hdd_pt]
-			((hdd_free[$ID]+=hdd_pt_free[$hdd_pt]))
+			# if pt size is numbers (only)
+			if [ ! "$(grep -Eo '[^0-9]' <<< ${hdd_pt_free[$ID]})" ]; then
 
+				let hdd_used[$ID]+=hdd_pt_used[$hdd_pt]
+				((hdd_free[$ID]+=hdd_pt_free[$hdd_pt]))
+
+			fi
 		done
 
 		#echo "${hdd_free[$ID]}/${hdd_used[$ID]}/$hdd_capacity"
@@ -499,14 +503,25 @@ Module_hdd() {
 				hdd_pt_free_pc[$ID]="$(bc -s <<< scale=1\;" \
 					"${hdd_pt_free[$ID]}/${hdd_pt_capacity[$ID]}*100)%"
 
-			elif [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
-				# mark 'swap' as mountpoint for swap partitions, if they're in use
-				hdd_pt_mp[$ID]="swap"
-				hdd_pt_used[$ID]="$(swapon -s | grep ^${hdd_pt_node[$ID]} | \
-				                    awk {'print $4'})"
-
 			else # unmounted
-				hdd_pt_mp[$ID]="-"
+				
+				# it might be swap..
+				if [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
+				# mark 'swap' as mountpoint for swap partitions, if they're in use
+					hdd_pt_mp[$ID]="swap"
+					hdd_pt_used[$ID]="$(swapon -s | \
+						grep ^${hdd_pt_node[$ID]} | awk {'print $4'})"
+
+				else
+					hdd_pt_mp[$ID]="-"
+					hdd_pt_used[$ID]="n/a"
+				fi
+
+				# set the rest to unknown values for proper columnation
+				hdd_pt_capacity[$ID]="n/a"
+				hdd_pt_free[$ID]="n/a"
+				hdd_pt_used_pc[$ID]="n/a"
+				hdd_pt_fs_size[$ID]="n/a"
 
 			fi
 
