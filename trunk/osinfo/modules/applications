@@ -22,7 +22,7 @@ Module_applications() {
 			Userspace_tools: make unsermake awk sed grep ls gzip lspci lshw dmidecode smartctl hdparm \
 			Languages: perl python java-config ruby php \
 			Servers: apache2 mysql ssh smbd cups-config \
-			Miscellaneous: x11vnc nagios firefox thunderbird mozilla cdrecord"
+			Miscellaneous: x11vnc Xvnc nagios firefox thunderbird mozilla cdrecord"
 
 		UNTESTED="Graphical_interface: \
 			Compilers: ccc cxx cfal erlang fpc gforth ghc gnat \
@@ -153,6 +153,9 @@ Module_applications() {
 				;;
 			'firefox')
 				firefox --version 2>/dev/null | head -n 1
+				;;
+			'Xvnc')
+				Xvnc -version 2>&1
 				;;
 			*)
 				$app --version 2>&1 | grep '\w' | head -n 1
