@@ -1,6 +1,6 @@
 ########
 # LVM
-# fake module that calls the hdd subfunction
+# scan Logical Volume (v2) drives
 Module_lvm () {
 	local moduleName="Logical Volumes"
 	module_header "${moduleName}"
@@ -12,3 +12,202 @@ Module_lvm () {
 	flush_values
 }
 
+	#######################
+	# SCAN LVM PARTITIONS
+	#
+	scan_hdd_lvm() {
+		# check that lvm extensions are in the system
+		if [ ! "$(cat /proc/misc | grep device-mapper)" ]; then
+			# the device-mapper
+			info "Module device-mapper is not installed"
+
+		elif [ ! "$(type -p vgscan)" ]; then
+			# lvm tools
+			info "Lvm2 tools are not found!"
+
+		else
+			local volgroups volgroup
+
+			# get lvm groups with vgscan
+			volgroups="$(vgscan | grep -i found | \
+						 grep -Eo '\"[a-zA-Z0-9]+\"' | sed 's/\"//g')"
+
+			if [ "$volgroups" != "" ]; then
+				lvm_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+				lvm_group_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+				TempFiles=("${TempFiles[@]}" "$lvm_full_tmp" "$lvm_group_tmp" )
+				vgdisplay -v 2>/dev/null > $lvm_full_tmp
+
+				# information is stored into arrays
+				local format pv vg_size pe_size vg_size_dimension pe_size_dimension \
+				      vg_uuid
+				local volgroup_nr=0
+
+				# acquire data
+				for volgroup in $volgroups; do
+
+					extr_node 'Volume group' $lvm_full_tmp > $lvm_group_tmp
+
+					# the format of the lvm (most likely lvm2)
+					format[$volgroup_nr]="$(awk /Format/{'print $2'} $lvm_group_tmp)"
+
+					# physical volume
+					pv[$volgroup_nr]="$(awk /PV\ Name/{'print $3'} $lvm_group_tmp)"
+
+					# VG size
+					vg_size[$volgroup_nr]="$(awk /VG\ Size/{'print $3'} \
+					                         $lvm_group_tmp)"
+					vg_size_dimension[$volgroup_nr]="$(awk /VG\ Size/{'print $4'} \
+					                                   $lvm_group_tmp)"
+
+					# PE size
+					pe_size[$volgroup_nr]="$(awk /PE\ Size/{'print $3'} \
+					                         $lvm_group_tmp)"
+					pe_size_dimension[$volgroup_nr]="$(awk /PE\ Size/{'print $4'} \
+					                                   $lvm_group_tmp)"
+
+					# UUID
+					vg_uuid[$volgroup_nr]="$(awk /VG\ UUID/{'print $3'} \
+					                         $lvm_group_tmp)"
+
+					# Logical Volumes
+					lv_nr[$volgroup_nr]="$(awk /Cur\ LV/{'print $3'} \
+					                       $lvm_group_tmp)"
+
+					((volgroup_nr++))
+
+				done
+
+				# print data
+				#add_attribute	"Volume groups" "volume_groups"
+				volgroup_nr=0
+
+				for volgroup in $volgroups; do
+
+					add_header	$volgroup  "logical volume"
+
+					add_attribute    'Format' "format"
+					add_values       "${format[$volgroup_nr]}"
+
+					add_attribute    'Physical volume'
+					add_values       "${pv[$volgroup_nr]}"
+
+					add_attribute    'VG size'
+					add_values       "${vg_size[$volgroup_nr]}"
+					add_value_footer "${vg_size_dimension[$volgroup_nr]}"
+
+					add_attribute    'VG UUID'
+					add_values       "${vg_uuid[$volgroup_nr]}"
+
+					#add_attribute    'PE size'
+					#add_values       "${pe_size[$volgroup_nr]}"
+					#add_value_footer "${pe_size_dimension[$volgroup_nr]}"
+
+					add_attribute    'Logical Volumes'
+					add_values       "${lv_nr[$volgroup_nr]}"
+
+					# do not let previos data affect the column output
+					flush_values
+
+					scan_lvm_lv "$volgroup"
+
+					# print header
+					if [ $lv_Nr -ge 1 ]; then
+
+						add_header	'' # adds a space into stdout, does not affect xml
+						add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
+						add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
+					fi
+
+					# print data
+					for lv_nr in $(seq 0 1 $(($lv_Nr-1))); do
+
+						add_attribute   " ${lv_name[lv_nr]}"
+						add_values      "${lv_mntpt[lv_nr]}"
+						add_values      "$(hdd_human_readable ${lv_blocks[lv_nr]})"
+						add_values      "$(hdd_human_readable ${lv_free[lv_nr]})"
+						add_values      "${lv_fs[lv_nr]}"
+
+						unset lv_mntpt lv_blocks lv_free lv_fs
+
+					done
+
+					((volgroup_nr++))
+
+				done
+
+			fi
+		fi
+	}
+
+	# scan LVM logical volume data
+	scan_lvm_lv() {
+		lvm_lv_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		lvm_lv_full_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$lvm_lv_tmp" "$lvm_lv_full_tmp" )
+		lvdisplay -v 2>/dev/null > $lvm_lv_full_tmp
+
+		local volgroup="$1"
+		local kernel_mtab="/proc/mounts"
+		local system_mtab="/etc/mtab"
+
+		lv_Nr="$(grep -i 'VG Name'  $lvm_lv_full_tmp | grep "$volgroup" | wc -l)"
+
+
+		for lv_nr in $(seq 0 1 $(($lv_Nr-1))); do
+
+			# get the l.volume names
+			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_full_tmp | \
+			                   dog -l $(($lv_nr+1)))"
+							# FIXME: replace dog with sed!
+
+			# get the node name for extr_node()
+			node_name="$(grep 'LV Name' $lvm_lv_full_tmp | \
+			             grep ${lv_name[$lv_nr]})"
+
+			# extract the logvol info
+			extr_node "$node_name" $lvm_lv_full_tmp 'LV Name' >  $lvm_lv_tmp
+			unset node_name
+
+			# physical device node
+			lv_name[$lv_nr]="$(awk /LV\ Name/{'print $3'} $lvm_lv_tmp )"
+
+			# use kernel mtab for the data source
+			if [ "$(grep ${lv_name[$lv_nr]} "$kernel_mtab")" ]; then
+
+				# locate the mountpoint
+				lv_mntpt[$lv_nr]="$(grep -i ${lv_name[$lv_nr]} "$kernel_mtab" | \
+				                    awk {'print $2'})"
+
+				# free space, since system mtab and kernel mtab use different
+				# device names, we need to check that they match via mntpt
+				lv_free[$lv_nr]="$(df -Plk | grep ${lv_mntpt[$lv_nr]} | \
+				                   awk {'print $4'} )"
+
+				# filesystem
+				lv_fs[$lv_nr]="$(grep -i ${lv_name[$lv_nr]} "$kernel_mtab" | \
+				                 awk {'print $3'})"
+
+				#TODO: blocks
+				lv_blocks[$lv_nr]="$(df -Plk | grep  ${lv_mntpt[$lv_nr]} | \
+				                      awk {'print $2'} )"
+
+			else # unmounted
+
+				lv_mntpt[$lv_nr]="-"
+				lv_blocks[$lv_nr]=" "
+				lv_free[$lv_nr]=" "
+				lv_fs[$lv_nr]=" "
+
+				if [ "$(swapon -s | grep ${lv_name[$lv_nr]})" ]; then
+					# mark 'swap' as mountpoint for swap partitions,
+					# if they're in use.
+					# FIXME: since swapon uses the devmapper name,
+					# the grep above is wrong.
+					lv_mntpt[$lv_nr]="swap"
+				fi
+			fi
+
+		done
+	}
+	########################
