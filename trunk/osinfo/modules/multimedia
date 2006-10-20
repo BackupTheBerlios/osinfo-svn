@@ -3,6 +3,11 @@ Module_multimedia() {
 	local moduleDescription="Multimedia components"
 	module_header     "$moduleName"
 
+	add_attribute     'Video card'
+	add_attribute     'Video card chipset'
+	add_attribute     'X version'
+	add_attribute     'Available X video overlays'
+
 	add_attribute     'Direct rendering'
 	add_values        "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
 						 awk -F: {'print $2'})"
