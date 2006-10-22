@@ -1,8 +1,8 @@
 function Check_logfile {
 	if [ ! -e "$error_log" ]; then
-		if [ ! $(touch "$error_log" &>/dev/null) ]; then
+		touch "${error_log}" && chmod 664 "${error_log}"
+		[[ $0 -ne 0 ]] && \
 			info	"Could not create log file $error_log."
-		fi
 	fi
 
 	if [ ! -w "$error_log" ]; then
