@@ -185,8 +185,7 @@ Module_hdd() {
 						add_values  "$hdd_startup"
 					add_attribute   'Temperature'
 						add_values  "$hdd_tempC"
-						[ "$hdd_tempC" ] && \
-							add_value_footer "C"
+						[ "$hdd_tempC" ] 
 				[ $isverbose -ge 1 ] && \
 					add_attribute   'S.M.A.R.T.' && \
 						add_values  "$hdd_smart"
@@ -404,8 +403,13 @@ Module_hdd() {
 
 		hdd_startup="$(grep -i start_stop $smart_info | awk {'print $NF'})"
 
-		hdd_tempC="$(grep -i temperature_celsius $smart_info | \
+		# prefer hddtemp
+		if [ "$(type -p hddtemp)" ]; then
+			hdd_tempC="$(hddtemp $dev_scan | awk -F: {'print $NF'})"
+		else
+			hdd_tempC="$(grep -i temperature_celsius $smart_info | \
 		             awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
+		fi
 
 		hdd_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
 
