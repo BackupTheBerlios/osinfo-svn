@@ -10,8 +10,11 @@ FEATURES and FIXES for 0.3:
 *	sensors output depends on LC_*, remove [:punct:] dependency
 *	module Motherboard (aka mobo)
 *	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
-*	xsl/html support
+*	complete xsl/html support
 *	add_subheader => intended, blue title
+*	checker to see if netcat is installed
+*	--checkdeps switch
+
 
 
 FEATURES and FIXES for 0.4:
