@@ -9,11 +9,12 @@ SRC_URI="ftp://ftp.berlios.de/pub/osinfo/last"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~amd64 ~x86-fbsd"
-IUSE="xsl lshw hdparm smartmontools"
+IUSE="xsl lshw hdparm smartmontools ddc"
 
 DEPEND="xsl? (dev-libs/libxslt)
 		lshw? (sys-apps/lshw)
 		hdparm? (sys-apps/hdparm)
+		ddc? (sys-apps/ddcxinfo-knoppix)
 		smartmontools? (sys-apps/smartmontools)
 		app-shells/bash
 		sys-apps/coreutils
