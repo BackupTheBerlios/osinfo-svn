@@ -14,6 +14,7 @@ FEATURES and FIXES for 0.3:
 *	add_subheader => intended, blue title
 *	checker to see if netcat is installed
 *	--checkdeps switch
+*	mod_users: newlines are broken for "all users"
 
 
 

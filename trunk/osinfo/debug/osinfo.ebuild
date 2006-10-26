@@ -16,6 +16,7 @@ DEPEND="xsl? (dev-libs/libxslt)
 		hdparm? (sys-apps/hdparm)
 		ddc? (sys-apps/ddcxinfo-knoppix)
 		smartmontools? (sys-apps/smartmontools)
+		app-admin/hddtemp
 		app-shells/bash
 		sys-apps/coreutils
 		sys-apps/grep
