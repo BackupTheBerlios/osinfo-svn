@@ -1,4 +1,5 @@
 for module in modules/*; do
+	[ "$module" != "modules/experimental" ] && \
    source $module
 done
 
