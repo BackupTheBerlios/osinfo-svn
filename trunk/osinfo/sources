@@ -1,6 +1,6 @@
 for module in modules/*; do
 	[ "$module" != "modules/experimental" ] && \
-   source $module
+		source $module
 done
 
 source lib/bash.functions         # colour & line functions
