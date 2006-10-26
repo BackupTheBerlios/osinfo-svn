@@ -24,6 +24,7 @@ output_mode="stdout" # default output mode is stdout
 XMLFILE="$(get_hostname).xml"
 XSLDEBUGFILE="osinfo.xsl"
 XSLFILE="$(get_hostname).xsl"
+[ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
 rm "$XSLFILE" -f
 HTMLFILE="$(get_hostname).html"
 rel_hostdir='./hosts'

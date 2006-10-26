@@ -89,6 +89,22 @@ function parse_arguments() {
 					fi
 					;;
 
+				'--Xorglog')
+					# read Xorg detected values from this file
+					# (by default /var/log/Xorg.0.log)
+					if [ "$2" ]; then
+						if [ ! -e "${2}" ]; then
+							echo "File $2 does not exist!"
+							exit 1
+						fi
+						XORG_LOG="${2}"
+						shift 2
+					else
+						echo "Please give Xorg log input file!"
+						missing_arg "$1" 1
+					fi
+					;;
+
 				'--no-color'|'--no-colour'|'--nocolor'|'--nocolour')
 					# clear color codes; set empty values
 					tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN=''

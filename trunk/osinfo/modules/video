@@ -6,14 +6,19 @@ Module_video() {
 	#add_attribute     'Video card'
 	#add_attribute     'Video card chipset'
 
-	add_attribute     'X version'
+	add_attribute      'X version'
 	add_values         "$(X -version 2>&1 | grep Revision)"
+
+	add_attribute      'Xorg log date*'
+	add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
 
 	#add_attribute     'Available X video overlays'
 
 	add_attribute     'Direct rendering'
 	add_values        "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
 						 awk -F: {'print $2'})"
+
+	info "Data is based on ${XORG_LOG}"
 
 	flush_values
 }
