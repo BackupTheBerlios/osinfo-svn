@@ -9,16 +9,89 @@ Module_video() {
 	add_attribute      'X version'
 	add_values         "$(X -version 2>&1 | grep Revision)"
 
+	#add_attribute     'Available X video overlays'
+
+	add_attribute      '* Found chipset'
+	add_values         "$(get_found_chipset)"
+
+	add_attribute      '* AGP speed'
+	add_values         "$(get_agp_mode)"
+
+	add_header         'Direct rendering'
+
+	add_attribute      "Enabled"
+	add_values         "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
+						 awk -F: {'print $2'})"
+
+	add_attribute      "* Dri vendor"
+	add_values         "$(get_dri_vendor)"
+
+	add_attribute      "* Drm vendor"
+	add_values         "$(get_drm_vendor)"
+
+	add_attribute      "* GLX vendor"
+	add_values         "$(get_glx_vendor)"
+
+	add_attribute      "* GLX"
+	add_values         "$(get_glx)"
+
+	add_attribute      "* AIGLX"
+	add_values         "$(get_aiglx)"
+
+	add_footer
+
+	add_header         'Xorg errors'
+	add_values         "$(get_xorg_errors)"
+
+	info "\nData is based on ${XORG_LOG}"
+
 	add_attribute      'Xorg log date*'
 	add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
 
-	#add_attribute     'Available X video overlays'
-
-	add_attribute     'Direct rendering'
-	add_values        "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
-						 awk -F: {'print $2'})"
-
-	info "Data is based on ${XORG_LOG}"
-
 	flush_values
 }
+
+	function get_videodev_name () {
+		echo TODO
+
+		}
+
+	function get_dri_vendor () {
+		awk -F\" '/Module dri/{print $2}' ${XORG_LOG} 
+		}
+
+	function get_drm_vendor () {
+		awk -F\" '/Module drm/{print $2}' ${XORG_LOG} 
+		}
+
+	function get_glx_vendor () {
+		awk -F\" '/Module glx/{print $2}' ${XORG_LOG} 
+		}
+
+	function get_aiglx () {
+		grep ') AIGLX' ${XORG_LOG} 
+		}
+
+	function get_glx () {
+		grep ') GLX' ${XORG_LOG} 
+		}
+
+	function get_found_chipset () {
+		found_chipsets[${#found_chipsets[@]}]="$(
+			grep 'Chipset [a-zA-Z0-9]* found' ${XORG_LOG} )"
+
+		# TODO: debug with several video cards
+
+		found_chipsets[${#found_chipsets[@]}]="$(
+			sed 's/Chipset\ // ; s/\ found//' <<< found_chipsets[${#found_chipsets[@]}] )"
+			
+		echo ${found_chipsets[0]}
+		}
+
+	function get_agp_mode () {
+		grep 'Using AGP [0-9]*x mode' ${XORG_LOG} 
+		}
+
+	function get_xorg_errors () {
+		grep '^(EE)'  ${XORG_LOG} 
+		}
