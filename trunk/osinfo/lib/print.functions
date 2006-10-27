@@ -2,15 +2,15 @@
 # XML HEADER & FOOTER FUNCTIONS
 # -----------------------------
 function print_xml_header () {
-	# initialize variables (ip, hostname, date)
+	# initialize variables (ip, timestamp)
 
+	# should be more accurate, as there may be many network cards + ip addresses
 	local ip="$(ifconfig $interface_name | \
 		grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
 		grep -Eo '[0-9\.]+' | head -n 1)"
 
 	local timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
 
-	local hostname="$(hostname 2> /dev/null)"
 
 	###############
 	# STANDARD XML
@@ -23,34 +23,7 @@ function print_xml_header () {
 
 		XML_INDENT=1
 
-		# osinfo version
-		add_indentation
-		xml_param_tag_closed "${appname} version" \
-		"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
-
-		# profile
-		add_indentation
-		xml_param_tag_closed "computer profile" "${profile}"
-
-		# hostname
-		add_indentation
-		xml_param_tag_closed "computer hostname" "$(get_hostname)"
-
-		# operating system
-		add_indentation
-		xml_param_tag_closed "computer OS" "$(get_operating_system)"
-
-		# processor
-		add_indentation
-		xml_param_tag_closed "computer CPU" "$(get_cpu_model)"
-
-		# IP address
-		add_indentation
-		xml_param_tag_closed "ip v4" "${ip}"
-
-		# scanning date
-		add_indentation
-		xml_param_tag_closed "scanning date" "${timestamp}"
+		print_xml_computer_overview
 
 	###############
 	# LANFORCE XML
@@ -58,7 +31,7 @@ function print_xml_header () {
 
 		# AnMaster: To produce valid XML that *needs* to be "entityset"...
 		xml_doc_start 'entityset' 'SYSTEM' 'lanforce.dtd'
-		lf_entity_start "$hostname" "$ip"
+		lf_entity_start "$(get_hostname)" "$ip"
 
 	fi
 }
@@ -70,7 +43,46 @@ function print_xml_footer () {
 		xml_tag_stop "${appname}"
 	fi
 }
+
+
+print_xml_computer_overview () {
+
+	# osinfo version
+	add_indentation
+	xml_param_tag_closed "script version" \
+	"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
+
+	# profile
+	add_indentation
+	xml_param_tag_closed "computer profile" "${profile}"
+
+	# hostname
+	add_indentation
+	xml_param_tag_closed "computer hostname" "$(get_hostname)"
+
+	# IP address
+	#add_indentation
+	#xml_param_tag_closed "computer ipv4" "${ip}"
+
+	# DNS Domain
+	add_indentation
+	xml_param_tag_closed "computer domain" "${get_dns_domain}"
+
+	# operating system
+	add_indentation
+	xml_param_tag_closed "computer OS" "$(get_operating_system)"
+
+	# processor
+	add_indentation
+	xml_param_tag_closed "computer CPU" "$(get_cpu_model)"
+
+	# scanning date
+	add_indentation
+	xml_param_tag_closed "scanning date" "${timestamp}"
+}
 ############################################
+
+
 
 
 

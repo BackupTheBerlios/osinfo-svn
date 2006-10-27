@@ -18,17 +18,18 @@
                     h2          { font-size: 20px }
 					h3          { font-size: 8px }
                     td, th      { width: 40%; border: 0px solid silver; padding: 0px }
-                    td:first-child, th:first-child  { width: 30% }                 </style>
+                    td:first-child, th:first-child  { width: 30% }
+				</style>
             </head>
-            <body>
-                <xsl:apply-templates select="computer" />
-            </body>
+			<body>
+                <xsl:apply-templates select="script" />
+			</body>
         </html>
     </xsl:template>
 
 
 	<!-- computer -->
-    <xsl:template match="computer">
+    <xsl:template match="script">
 
 		<xsl:call-template name="titlebar"/>
 
@@ -61,7 +62,7 @@
 				</td>
 				<td align="right">
 					<font color="#000000" face="Times New Roman" size="-1" >
-						<xsl:apply-templates select="../osinfo"/>
+						osinfo <xsl:apply-templates select="../script/@version"/>
 						<xsl:apply-templates select="../scanning"/>
 					</font>
 				</td>
@@ -71,9 +72,8 @@
 
     </xsl:template>
 
-    <xsl:template match="osinfo">
+    <xsl:template match="osinfov">
 		<!-- osinfo version -->
-		<p>osinfo version <xsl:value-of select="@version"/></p>
     </xsl:template>
 
 	<!-- hostname -->

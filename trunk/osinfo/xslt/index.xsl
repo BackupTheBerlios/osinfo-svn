@@ -132,7 +132,9 @@
 					<xsl:apply-templates select="../ip"/>
 					<xsl:apply-templates select="../processor"/>
 					<xsl:apply-templates select="../system_memory"/>
+					<!--
 					<xsl:apply-templates select="../disk_information"/>
+					-->
 				</tbody>
 			</table>
 
@@ -143,7 +145,7 @@
 
 
 	<!-- osinfo version  -->
-    <xsl:template name="osinfo" match="osinfo">
+    <xsl:template name="osinfo" match="script">
 		osinfo version <xsl:value-of select="@version"/><br/>
     </xsl:template>
 
@@ -208,6 +210,4 @@
 				<td> <xsl:value-of select="value"/> </td>
 			</tr>
     </xsl:template>
-
-
 </xsl:stylesheet> 

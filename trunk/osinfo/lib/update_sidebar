@@ -35,8 +35,10 @@ EOF
 		# if the profile type is found in one file..
 		if [ "$(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null)" ]; then
 
-			echo "<h2>${profile}s</h2>"
-			echo "<table width="92%" border=1 cellpadding=4 cellspacing=5>"
+			cat<<EOF
+				<h2>${profile}s</h2>
+				<table width="92%" border=1 cellpadding=4 cellspacing=5>
+EOF
 
 			# run a loop for all xml files in the hosts dir
 			for host in $(grep -l profile\=\"$profile ${hostdir}/*.xml 2> /dev/null); do
@@ -66,13 +68,18 @@ EOF
 
 			done
 
-			echo "</table>"
+		cat <<EOF
+				</table>
+EOF
+
 		fi
 	done
 
 
 	### separating bar
-	echo "<hr/>"
+	cat <<EOF
+			<hr/>
+EOF
 
 
 	### index link and date
