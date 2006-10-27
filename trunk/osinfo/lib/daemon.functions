@@ -4,15 +4,16 @@
 ################################################################################
 ################################################################################
 
-###############
-# listen_tcp
+################
+## listen_tcp ##
+################
 #
 # listens to a tcp port, writes the input xml to $rundir,
 # generates a html from the file and updates the index.html
+#
 listen_tcp() {
 
-	# inform the user what is being done...
-	info "$appname daemon running..."
+	info "$appname daemon running..." # inform the user...
 	if [ $isverbose -ge 1 ]; then
 		PRINT_Version
 		info "Listening to tcp connections from $tcp_listening_port..."
@@ -23,15 +24,13 @@ listen_tcp() {
 
 	# variables
 	local clients client_hostname
-	INDEXXMLFILE="index.xml"
 
-	local hostdir="${rundir}/hosts"
 	# create hosts dir if it doesn't exist
 	[ ! -e "${hostdir}" ] && mkdir -p "${hostdir}"
 
 	# allocate a temp file
-	tcp_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-	TempFiles=("${TempFiles[@]}" "$tcp_tmp")
+	inputxml_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$inputxml_tmp")
 
 	# kill other netcat instances (nc often hangs)
 	killall -9 nc 2>/dev/null
@@ -40,34 +39,42 @@ listen_tcp() {
 	# in an eternal loop...
 	while [ a = a ]; do
 
-		netcat_instance	> "${tcp_tmp}"	# which breaks after EOF
+		netcat_instance	> "${inputxml_tmp}"	# which breaks after EOF
 
 		# notify the user of the received file
 		info "$(date)"
-		info "$(wc -l $tcp_tmp | grep -Eo '^[0-9]*') lines caught!"
+		info "$(wc -l $inputxml_tmp | grep -Eo '^[0-9]*') lines caught!"
 		flush_values
 
 		# if the input is (not) valid osinfo xml..
-		if [ ! "$(grep -i '<!doctype osinfo' ${tcp_tmp})" ]; then
+		if [ ! "$(grep -i '<!doctype osinfo' ${inputxml_tmp})" ]; then
 			info "Input is not valid osinfo xml!"
 
 		else
 
-			update_hostxml "${tcp_tmp}"
-			if [ $makehtml -eq 1 ]; then
+			update_hostxml "${inputxml_tmp}" # save input to correct location
+			if [ $makehtml -eq 1 ]; then     # if we want html ...
+
+				# update the host html page
 				update_hosthtml
+
+				# update the sidebar html
+				update_sidebar > "${rundir}/sidebar.html"
+
+				# create/update the index (overview) xml
 				create_indexxml > "${INDEXXMLFILE}"
 
-				# inform the user
-				if [ $isverbose -ge 1 ] && [ -e "${INDEXXMLFILE}" ]; then
-					info "File '$INDEXXMLFILE' created"
+				# update the overview html (the right hand panel)
+				update_index >  "${rundir}/overview.html"
+
+				# inform the user of the generated files
+				if [ $isverbose -ge 1 ]; then
+				    if [ -e "${INDEXXMLFILE}" ]; then
+						info "File '$INDEXXMLFILE' created"
+					fi
 					flush_values
 				fi
-
-				update_sidebar > "${rundir}/sidebar.html"
-				update_index >  "${rundir}/overview.html"
 			fi
-
 		fi
 
 		flush_values
@@ -81,8 +88,9 @@ listen_tcp() {
 }
 
 
-################
-# create_indexxml
+####################
+# create_indexxml ##
+####################
 #
 # creates index.xml
 create_indexxml() {
@@ -115,12 +123,10 @@ create_indexxml() {
 	done
 
 	print_xml_footer
-
 }
 
 
 print_short_client_id() {
-
 	local hostname="$(extract 'computer hostname' ${host} )"
 	if [ "$hostname" ]; then
 
@@ -155,24 +161,32 @@ print_short_client_id() {
 }
 
 
-
+##################
+## update_index ##
+##################
+#
+# creates (or updates by overwriting) the index.html in the /var/run folder.
+# NOTE: this function should not generate any info messages to stdout!
+# 
 update_index() {
-	if [ -e "${rundir}/index.xsl" ]; then
+	if [ -e "${xsltdir}/index.xsl" ]; then
 
-		# run a loop for all xml files in the hosts dir
+		# run a loop for all xml files in the hosts dir - 
+		# do not change quotation, or else xsltproc will fail!
 		for clients in "${hostdir}/*.xml"; do
 
-			xsltproc "${rundir}/index.xsl" $clients 2> "$error_log"
+			xsltproc "${xsltdir}/index.xsl" $clients 2> "$error_log"
 
 		done
 
 	else
-		info "index.xsl template file was not found in '${rundir}'!"
+		info "index.xsl template file was not found in '${xsltdir}'!"
+		flush_values
 	fi
 
 	# inform the user
 	#if [ $isverbose -ge 1 ] && [ -e "${rundir}/overview.html" ]; then
-	#	info "File '${rundir}/overview.html' updated"
+	#	echo "File '${rundir}/overview.html' updated"
 	#	flush_values
 	#fi
 }
@@ -188,7 +202,7 @@ update_hostxml() {
 	client_hostname="$(extract 'computer hostname' ${1} )"
 
 	# create or update the xml file for the host
-	cat "$tcp_tmp" > "${hostdir}/${client_hostname}.xml"
+	cat "$inputxml_tmp" > "${hostdir}/${client_hostname}.xml"
 	[ $isverbose -ge 1 ] && \
 		info "File '${hostdir}/${client_hostname}.xml' saved" && \
 		flush_values
@@ -205,17 +219,17 @@ update_hosthtml() {
 
 	# create or update <hostname>.html.
 	# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
-	if [ -e "${hostdir}/${client_hostname}.xsl" ]; then
-		xsltproc "${hostdir}/${client_hostname}.xsl" \
+	if [ -e "${xsltdir}/${client_hostname}.xsl" ]; then
+		xsltproc "${xsltdir}/${client_hostname}.xsl" \
 				 "${hostdir}/${client_hostname}.xml" > \
 				 "${hostdir}/${client_hostname}.html" 2> "$error_log"
 
-	elif [ -e "${hostdir}/generic-host.xsl" ]; then
-		xsltproc "${hostdir}/generic-host.xsl" \
+	elif [ -e "${xsltdir}/generic-host.xsl" ]; then
+		xsltproc "${xsltdir}/generic-host.xsl" \
 				 "${hostdir}/${client_hostname}.xml" > \
 				 "${hostdir}/${client_hostname}.html" 2> "$error_log"
 	else
-		info "No applicaple xsl template files found in '${hostdir}'!"
+		info "No applicaple xsl template files found in '${xsltdir}'!"
 	fi
 
 	# inform the user
@@ -234,8 +248,9 @@ extract() {
 }
 
 
-####################
-# netcat_instance
+#####################
+## netcat_instance ##
+#####################
 #
 # which breaks after EOF
 netcat_instance() {
@@ -251,7 +266,7 @@ netcat_instance() {
 ###
 # makes a generic host-xsl template
 generate_generic_host_xsl() {
-	cat <<EOF>> "${hostdir}/generic-host.xsl"
+	cat <<EOF>> "${xsltdir}/generic-host.xsl"
 TODO
 EOF
 }

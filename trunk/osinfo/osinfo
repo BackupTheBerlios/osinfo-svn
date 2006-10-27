@@ -13,7 +13,7 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=10
-patch_version=4
+patch_version=5
 dev_status=alpha
 release_date='2006-10-xx'
 
@@ -65,7 +65,14 @@ main() {
 }
 
 
-# this runs all modules and generates the print-out
+#################
+## run_modules ##
+#################
+#
+# modules are separated into stable and experimental, and are evaluated
+# separately. (TODO)
+#
+# the flush_values function generates the print-out.
 run_modules() {
 	for modul in $cmdsnames; do
 
@@ -168,7 +175,7 @@ run_modules() {
 }
 
 
-# run main
+# run main, and pass all arguments
 main "${@}"
 
 # exit cleanly

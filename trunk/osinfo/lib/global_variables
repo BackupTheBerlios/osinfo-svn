@@ -20,24 +20,34 @@ profile="desktop"    # default profile is desktop
 output_mode="stdout" # default output mode is stdout
 
 
-#XMLFILE="$(get_hostname)_$(get_mac_address).xml"
-XMLFILE="$(get_hostname).xml"
-XSLDEBUGFILE="osinfo.xsl"
-XSLFILE="$(get_hostname).xsl"
-[ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
-rm "$XSLFILE" -f
-HTMLFILE="$(get_hostname).html"
-rel_hostdir='./hosts'
-
 # Keeps track of open headers, and closes them in the correct order upon flush_values.
 OpenHeaders=()
 TempFiles=()
 Modules=()
 
 
+### XORG LOG FILE ###
+
+[ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
+
+
+### DAEMON MODE VARIABLES ###
+
 # if the conf file is not available..
 [ ! "$error_log" ] && error_log="/var/log/osinfo.log"
 [ ! "$rundir" ] && rundir="/var/run/osinfo"
+
+#XMLFILE="$(get_hostname)_$(get_mac_address).xml"
+INDEXXMLFILE="${rundir}/index.xml"
+XMLFILE="$(get_hostname).xml"
+XSLDEBUGFILE="osinfo.xsl"
+XSLFILE="$(get_hostname).xsl" ; rm "$XSLFILE" -f
+HTMLFILE="$(get_hostname).html"
+
+rel_hostdir='./hosts'
+hostdir="${rundir}/hosts"
+xsltdir="${rundir}/xslt"
+
 
 
 # Before we break path hash some binaries so the script can find them (if they exist).

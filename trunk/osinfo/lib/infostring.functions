@@ -38,8 +38,8 @@ module_header() {
 			# make valid xml tag
 			local xml_tag="$(validate_xml_item "${1}")"
 			add_header "${xml_tag}"
-			xsl_template_match_start "${xml_tag}"
-			xsl_h2 "${@}"
+			xsl_template_match_start "${xml_tag}" >> "${XSLFILE}"
+			xsl_h2 "${@}" >> "${XSLFILE}"
 			;;
 
 		'kdialog')
@@ -165,7 +165,7 @@ function flush_values {
 		print_stdout
 	elif [ $usexml -eq 1 ] && [ $lanforce -eq 0 ]; then
 		print_xml >> "${XMLFILE}"
-		xsl_template_stop >> "${XMLFILE}"
+		xsl_template_stop >> "${XSLFILE}"
 	else
 		print_lanforce_xml >> "${XMLFILE}"
 	fi
