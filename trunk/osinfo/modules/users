@@ -129,7 +129,7 @@ Module_users() {
 			user_realname="$(awk -F: /^$user_unixname\:/{'print $5'} "$passwd_tmp")"
 			# sometimes the realname isn't defined; column segfaults if the
 			# values are empty (columns don't match)
-			[ ! "$user_realname" ] && user_realname="<unknown>"
+			[ ! "$user_realname" ] && user_realname="-unknown-"
 			user_home="$(awk -F: /$user_unixname/{'print $6'} "$passwd_tmp")"
 			user_shell="$(awk -F: /$user_unixname/{'print $7'} "$passwd_tmp")"
 		fi
