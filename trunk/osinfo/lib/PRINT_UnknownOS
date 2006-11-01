@@ -1,0 +1,10 @@
+function PRINT_UnknownOS {
+	echo "${appname} cannot recognise the operating system."
+	echo "If you wish to contribute to the project, see the source code"
+	echo "and contact ${bugreport_email}."
+	echo
+	echo "This script has been tested only on Linux and FreeBSD."
+	print_line
+
+	exit 1
+}
