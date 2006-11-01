@@ -24,7 +24,6 @@ function PRINT_Help {
 	echo "       --lanforce          Makes the output to osinfo.xml according to a special DTD"
 	echo
 	print_line
-	echo "This script has not been tested on other operating systems than Linux and FreeBSD."
 
 	if [ "$1" ]; then
 		exit $1
