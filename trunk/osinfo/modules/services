@@ -30,7 +30,7 @@ Module_services() {
 		if [ "$(type -p rc-status)" ]; then
 			# Gentoo
 			method='rc-status'
-			local services="$(scan_services_rc-status)"
+			local services="$(scan_services_rcstatus)"
 
 		elif [ "$(type -p sysv-rc-conf)" ]; then
 			# Debian and Ubuntu, if they've got the package
@@ -76,7 +76,7 @@ Module_services() {
 	### SERVICE MODULE SUBFUNCTIONS
 	##
 	# this script is used on gentoo
-	scan_services_rc-status() {
+	scan_services_rcstatus() {
 
 		echo $(rc-status | awk '/started/{print $1}' | sort)
 
