@@ -45,18 +45,18 @@ dist: distclean
 
 	cd dist/$(appname) && \
 	for sources in "src/modules/*" "src/lib/*" ; do \
-		cat $$sources >> osinfo-all-in-one 2>/dev/null ; \
+		cat $$sources >> osinfo 2>/dev/null ; \
 	done
 
 	# finally the mainfile
 	# clear out sourcing external files, since it's now all-in-one
 	cd dist/$(appname) && \
-		sed 's/^source[a-zA-Z. _\/]*//' src/$(mainapp) >> osinfo-all-in-one
+		sed 's/^source[a-zA-Z. _\/]*//' src/$(mainapp) >> osinfo
 
 	#for sources in "osinfo $$(awk /^source/{'print $$2'} osinfo)"; do cat "$$sources" >> osinfo-all-in-one ; done
 	#cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
 
-	chmod +x dist/$(appname)/osinfo-all-in-one
+	chmod +x dist/$(appname)/osinfo
 
 
 
