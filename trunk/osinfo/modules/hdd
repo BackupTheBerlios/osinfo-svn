@@ -260,14 +260,29 @@ Module_hdd() {
 
 			'xml')	# XML OUTPUT
 
-				add_attribute "$hdd_type"			'hard_disk'
-				# TODO: how to break these into many lines in the code?
-				add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
+				add_header    "drive"
 
-				add_attribute "partitions"		'drive'
-				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
-					add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
-				done
+					add_attribute "$hdd_type"			'hard_disk'
+					# TODO: how to break these into many lines in the code?
+					add_values    "$hdd_type $hdd_vendor $hdd_model ($hdd_serial) $hdd_capacity_label"
+
+					if [ $lanforce -eq 1 ]; then
+						add_attribute "partitions"		'drive'
+					else
+						add_header    "partitions"
+					fi
+
+					for hdd_pt in $(seq 1 1 $partitions_on_drive); do
+						add_values    "${hdd_pt_node[$hdd_pt]} ${hdd_pt_mp[$hdd_pt]} ${hdd_pt_free[$hdd_pt]}/${hdd_pt_blocks[$hdd_pt]} ${hdd_pt_fs[$hdd_pt]}"
+					done
+
+
+					if [ $lanforce -eq 0 ]; then
+						add_footer
+					fi
+
+				add_footer
+
 				;;
 		esac
 	}

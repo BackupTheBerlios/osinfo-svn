@@ -92,7 +92,7 @@
 	<!-- modules -->
     <xsl:template match="disk_information">
 		<td>Disk</td>
-        <xsl:apply-templates select="attribute"/>
+        <xsl:apply-templates select="drive/attribute"/>
     </xsl:template>
 
     <xsl:template match="distribution">
@@ -163,7 +163,6 @@
 			</tr>
 		</table>
     </xsl:template>
-
 
 
     <!--Table headers and outline-->

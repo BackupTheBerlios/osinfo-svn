@@ -12,7 +12,6 @@
 # generates a html from the file and updates the index.html
 #
 listen_tcp() {
-
 	info "$appname daemon running..." # inform the user...
 	if [ $isverbose -ge 1 ]; then
 		PRINT_Version
@@ -55,8 +54,8 @@ listen_tcp() {
 			update_hostxml "${inputxml_tmp}" # save input to correct location
 			if [ $makehtml -eq 1 ]; then     # if we want html ...
 
-				# update the host html page
-				update_hosthtml
+				# update all host html pages
+				update_hosthtmls
 
 				# update the sidebar html
 				update_sidebar > "${rundir}/sidebar.html"
@@ -209,34 +208,40 @@ update_hostxml() {
 }
 
 
-update_hosthtml() {
-	# input is $1.
-	# if client_hostname is already defined, it won't be used
+update_hosthtmls() {
+	# reads the content of hosts/ dir for xml files and generates
+	# the html pages
+	#
+	#
+	# run a loop for all xml files in the hosts dir - 
+	# do not change quotation, or else xsltproc will fail!
+	for clients in ${hostdir}/*.xml; do
 
-	# extract hostname from the xml
-	[ ! "$client_hostname" ] && \
-	client_hostname="$(extract 'computer hostname' ${1} )"
+		# extract hostname from the xml
+		client_hostname="$(extract 'computer hostname' ${clients} )"
 
-	# create or update <hostname>.html.
-	# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
-	if [ -e "${xsltdir}/${client_hostname}.xsl" ]; then
-		xsltproc "${xsltdir}/${client_hostname}.xsl" \
-				 "${hostdir}/${client_hostname}.xml" > \
-				 "${hostdir}/${client_hostname}.html" 2> "$error_log"
+		# create or update <hostname>.html.
+		# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
+		if [ -e "${xsltdir}/${client_hostname}.xsl" ]; then
+			xsltproc "${xsltdir}/${client_hostname}.xsl" \
+					 "${hostdir}/${client_hostname}.xml" > \
+					 "${hostdir}/${client_hostname}.html" 2> "$error_log"
 
-	elif [ -e "${xsltdir}/generic-host.xsl" ]; then
-		xsltproc "${xsltdir}/generic-host.xsl" \
-				 "${hostdir}/${client_hostname}.xml" > \
-				 "${hostdir}/${client_hostname}.html" 2> "$error_log"
-	else
-		info "No applicaple xsl template files found in '${xsltdir}'!"
-	fi
+		elif [ -e "${xsltdir}/generic-host.xsl" ]; then
+			xsltproc "${xsltdir}/generic-host.xsl" \
+					 "${hostdir}/${client_hostname}.xml" > \
+					 "${hostdir}/${client_hostname}.html" 2> "$error_log"
+		else
+			info "No applicaple xsl template files found in '${xsltdir}'!"
+		fi
 
-	# inform the user
-	if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
-		info "File '${hostdir}/${client_hostname}.html' updated"
-		flush_values
-	fi
+		# inform the user
+		if [ $isverbose -ge 1 ] && [ -e "${hostdir}/${client_hostname}.html" ]; then
+			info "File '${hostdir}/${client_hostname}.html' updated"
+			flush_values
+		fi
+
+	done
 }
 
 

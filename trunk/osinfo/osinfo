@@ -13,9 +13,9 @@ appname='osinfo'
 major_version=0
 minor_version=2
 micro_version=10
-patch_version=5
+patch_version=6
 dev_status=alpha
-release_date='2006-10-xx'
+release_date='2006-11-xx'
 
 #############################################################
 ##

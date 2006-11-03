@@ -132,9 +132,7 @@
 					<xsl:apply-templates select="../ip"/>
 					<xsl:apply-templates select="../processor"/>
 					<xsl:apply-templates select="../system_memory"/>
-					<!--
 					<xsl:apply-templates select="../disk_information"/>
-					-->
 				</tbody>
 			</table>
 
@@ -196,10 +194,9 @@
 			</td>
 		</tr>
     </xsl:template>
-
 	
 	<xsl:template name="disk" match="disk_information">
-        <xsl:apply-templates select="attribute"/>
+        <xsl:apply-templates select="drive/attribute"/>
     </xsl:template>
 
 
