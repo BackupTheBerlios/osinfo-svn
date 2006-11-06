@@ -1,0 +1,2 @@
+netstat -A inet
+Active Internet connections (w/o servers)
