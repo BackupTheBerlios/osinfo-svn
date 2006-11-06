@@ -6,8 +6,7 @@ inherit eutils
 
 DESCRIPTION="osinfo lists system information available to the OS"
 HOMEPAGE="http://osinfo.berlios.de"
-SRC_URI=""
-#SRC_URI="ftp://ftp.berlios.de/pub/osinfo/last"
+SRC_URI="ftp://ftp.berlios.de/pub/osinfo/osinfo.tar.bz2"
 
 LICENSE="BSD"
 SLOT="0"
@@ -29,10 +28,13 @@ DEPEND="xsl? (dev-libs/libxslt)
 RDEPEND="${DEPEND}"
 
 src_unpack() {
+	mkdir -p ${S} # S is our source dir, where we copy our source files to
 
-	mkdir ${S} # S is our source dir, where wo copy our source files to
-	cp ${FILESDIR}/osinfo.gz ${S}
-	gzip -d ${S}/osinfo.gz
+	# does not work yet..
+	tar xjf ${DISTDIR}/${A} -C ${S}
+
+#	cp ${FILESDIR}/osinfo.gz ${S}
+#	gzip -d ${S}/osinfo.gz
 
 }
 
@@ -41,7 +43,7 @@ src_unpack() {
 
 src_install() {
 	
-	mkdir ${D}/usr/sbin		# D is like a virtual / where we install our stuff, before emerge merge it with the real /
+	mkdir -p ${D}/usr/sbin		# D is like a virtual / where we install our stuff, before emerge merge it with the real /
 	cp osinfo ${D}/usr/sbin
 
 	#if use doc; then
