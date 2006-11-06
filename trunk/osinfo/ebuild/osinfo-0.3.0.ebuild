@@ -14,20 +14,17 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64 ~x86-fbsd"
 IUSE="xsl lshw hdparm smartmontools ddc"
 
-#DEPEND="xsl? (dev-libs/libxslt)"
-DEPEND=""
-
-#DEPEND="xsl? (dev-libs/libxslt)
-#		lshw? (sys-apps/lshw)
-#		hdparm? (sys-apps/hdparm)
-#		ddc? (sys-apps/ddcxinfo-knoppix)
-#		smartmontools? (sys-apps/smartmontools)
-#		app-admin/hddtemp
-#		app-shells/bash
-#		sys-apps/coreutils
-#		sys-apps/grep
-#		sys-apps/sed
-#		sys-apps/gawk || sys-apps/mawk"
+DEPEND="xsl? (dev-libs/libxslt)
+		lshw? (sys-apps/lshw)
+		hdparm? (sys-apps/hdparm)
+		ddc? (sys-apps/ddcxinfo-knoppix)
+		smartmontools? (sys-apps/smartmontools)
+		app-admin/hddtemp
+		app-shells/bash
+		sys-apps/coreutils
+		sys-apps/grep
+		sys-apps/sed
+		|| (sys-apps/gawk sys-apps/mawk)"
 
 RDEPEND="${DEPEND}"
 
