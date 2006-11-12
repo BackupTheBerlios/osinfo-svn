@@ -21,5 +21,6 @@ source lib/daemon.functions       # daemon mode functions
 source lib/update_sidebar         # 
 
 source lib/check.functions        # check various functionalities
-source lib/cmdline                # command line options, leave last!
+source profiles/*                 # source all computer profiles for a coherent view of data
+source lib/cmdline                # command line options, leave as last!
 

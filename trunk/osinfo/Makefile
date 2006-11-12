@@ -7,10 +7,13 @@
 #helpers+=lib/check.functions
 #helpers+=modules/osinfo.modules
 mainapp=osinfo
-subdirs=docs conf man init.d lib modules xslt
+subdirs=docs conf man init.d lib modules xslt profiles
 
-helpers=lib/*
-helpers+=modules/*
+#helpers=lib/*
+#helpers+=modules/*
+#helpers+=profiles/*
+# helpers go only to the src/ directory
+helpers=sources
 
 appname=osinfo
 our_dtd=osinfo.dtd
@@ -33,7 +36,7 @@ dist: distclean
 		mkdir -p dist/$(appname)/src/$$dir ; \
 		cp $$dir/* dist/$(appname)/src/$$dir ; \
 	done
-#	cp $(helpers) dist/$(appname)
+	cp $(helpers) dist/$(appname)/src
 	cp $(mainapp) dist/$(appname)/src
 	cp $(our_dtd) dist/$(appname)/src
 
@@ -44,7 +47,7 @@ dist: distclean
 	#@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
 
 	cd dist/$(appname) && \
-	for sources in "src/modules/*" "src/lib/*" ; do \
+	for sources in "src/profiles/*" "src/modules/*" "src/lib/*" ; do \
 		cat $$sources >> osinfo 2>/dev/null ; \
 	done
 
@@ -57,8 +60,6 @@ dist: distclean
 	#cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
 
 	chmod +x dist/$(appname)/osinfo
-
-
 
 # Not very elegant
 # It greps the definitons out of osinfo and then evals it.
