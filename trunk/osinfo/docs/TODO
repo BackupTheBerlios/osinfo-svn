@@ -18,6 +18,7 @@ FEATURES and FIXES for 0.3:
 *	don't leave osinfo.XXXXXX and <hostname>.x?? files around!
 *	top 10 memory hoggers :)
 *	apache interface requires osinfo cgi
+*	pdf output sheet of the profile
 
 
 
