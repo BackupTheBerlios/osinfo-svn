@@ -4,6 +4,16 @@
 # this function parses the physical devices in the computer from lspci.
 # depends on pciutils.
 #
+# Group:
+#   Motherboard:
+#    --make && model--
+#    bridges, chipsets, bus speeds, etc
+#   PCI:
+#   PCI-E:
+#   AGP:
+#    with the dev address
+#    -v switch reveals extra info
+
 # the output verbosity can be increased to include devices in the
 # DO_NOT_OUTPUT string to include standard motherboard controllers
 # which are suppressed in the normal level of verbosity.

@@ -7,7 +7,7 @@
 #helpers+=lib/check.functions
 #helpers+=modules/osinfo.modules
 mainapp=osinfo
-subdirs=docs conf man init.d lib modules xslt profiles
+subdirs=docs conf man init.d lib modules modules/experimental xslt profiles
 
 #helpers=lib/*
 #helpers+=modules/*
@@ -47,7 +47,7 @@ dist: distclean
 	#@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
 
 	cd dist/$(appname) && \
-	for sources in "src/profiles/*" "src/modules/*" "src/lib/*" ; do \
+	for sources in "src/profiles/*" "src/modules/*" "src/modules/experimental/*" "src/lib/*" ; do \
 		cat $$sources >> osinfo 2>/dev/null ; \
 	done
 
