@@ -1,7 +1,8 @@
-for module in modules/*; do
+for module in modules/* modules/experimental/*; do
 	[ "$module" != "modules/experimental" ] && \
 		source $module
 done
+
 
 source lib/bash.functions         # colour & line functions
 source lib/PRINT_Help             # print --help
