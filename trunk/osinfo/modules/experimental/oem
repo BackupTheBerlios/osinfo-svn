@@ -21,17 +21,19 @@ Module_oem() {
 	local moduleName="OEM information"
 	module_header "${moduleName}"
 
-	if CheckReq_lshw && CheckReq_root; then
+	if lshw_xml && CheckReq_root; then
 
 		# the interesting entries:
 		# $hostname
 		# core
 		# firmware
 
-		local NODES="$(hostname) core firmware"
+		#local NODES="$(hostname) core firmware"
+		local NODES="network"
+
 
 		oem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$oem_info" )
+		TempFiles=("${TempFiles[@]}" "$oem_tmp" )
 
 		# following loop extracts the data under the nodes variable.
 
@@ -41,7 +43,11 @@ Module_oem() {
 
 		for myNODE in $NODES; do
 
-			extr_xml_value $myNODE > $oem_tmp
+			set -x
+
+			extr_node $myNODE "$lshw_xml_file" node > $oem_tmp
+			less $oem_tmp
+			exit 1
 
 			local IFSbk="$IFS"
 			IFS=$'\n'
