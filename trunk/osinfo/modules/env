@@ -16,7 +16,6 @@ Module_env() {
 
 	done
 
-	#module_footer
 	flush_values
 }
 
