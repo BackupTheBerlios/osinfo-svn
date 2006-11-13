@@ -64,7 +64,7 @@ main() {
 select_profile() {
 	case $profile in
 		'desktop')
-			desktop_profile
+			desktop_profile "${module_cmds}"
 			;;
 		'laptop')
 			laptop_profile

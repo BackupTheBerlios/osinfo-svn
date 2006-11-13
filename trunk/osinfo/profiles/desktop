@@ -1,4 +1,26 @@
 desktop_profile() {
-	echo "TODO"
+ 	for module in $module_cmds; do
+		case $module in
+
+				system|\
+				distro|\
+				kernel|\
+				processor|\
+				memory|\
+				hdd|\
+				network|\
+				wlan|\
+				dmi|\
+				applications|\
+				terminal|\
+				devices|\
+				cdrom|\
+				users|\
+				services) \
+				Module_${module}
+				;;
+
+		esac
+	done
 }
 

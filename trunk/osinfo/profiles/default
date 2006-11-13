@@ -1,6 +1,6 @@
 default_profile() {
-	for modul in $module_cmds; do
-
+ 	for module in $module_cmds; do
+	
 		# TODO: check that the module being called is supported on the running OS
 
 		# TODO: something like this to not even attempt to run REQ_ROOT modules
@@ -11,7 +11,7 @@ default_profile() {
 		#	allowed_modules=$MODULES_ALL-$MODULES_SU_ONLY
 		#fi
 
-		if [ $modul = 'all' ]; then
+		if [ $module = 'all' ]; then
 			if [ "$SYSTEM" == "linux" ] ; then
 				#module_cmds="$MODULES_LINUX"
 				break
@@ -20,14 +20,14 @@ default_profile() {
 				#module_cmds="$MODULES_BSD"
 				break
 			fi
-		elif [ $modul = 'lanforce' ]; then
+		elif [ $module = 'lanforce' ]; then
 			lanforce=1
 			usexml=1
 			#module_cmds="$MODULES_LANFORCE"
 			break
 		fi
 
-		validate_arg "$modul" "$MODULES_ALL $MODULES_META" || wrong_module "$modul"
+		validate_arg "$module" "$MODULES_ALL $MODULES_META" || wrong_module "$modul"
 		# validate_arg is called to check that the module exits at all.
 		# AnMaster: If we DON'T validate user input *and* use eval below we
 		#           are *realy* stupid. So don't comment that out.
@@ -53,41 +53,59 @@ default_profile() {
 	[ $usexml -eq 1 ] && print_xml_header > "${XMLFILE}"
 
 
-	#if [ -z "$module_cmds" ]; then
-	#	PRINT_Usage
-	#fi
-
 	# this calls the module definitions. as there are Meta-modules
 	# and the actual modules, we first check if there's a Meta-module
 	# of that name. in that case, it is used.
 	# NOTE: FreeBSD runs all modules
-	for module in $module_cmds; do
 
-		# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before?
-		#           that would solve it.
-		# ruxpin: that would require a modification to this list after adding a module,
-		#         which I want to avoid.
-		# AnMaster: local modulename="Meta_${module}"
-		#           metamod="${!modulename}"
-		#           Needs bash 3 at least.
-		#           Or base it on some declare magic.
-		eval metamod="\${Meta_${module}}"
+ 	for module in $module_cmds; do
 
-		if [ "$(echo $metamod)" ]; then
+		case $module in
 
-			for submodule in $metamod; do
+				system|\
+				distro|\
+				kernel|\
+				processor|\
+				memory|\
+				hdd|\
+				network|\
+				wlan|\
+				dmi|\
+				battery|\
+				applications|\
+				terminal|\
+				devices|\
+				cdrom|\
+				users|\
+				services) \
+				Module_${module}
+				;;
 
-				Module_${submodule}
+			*)
+				info "You are running an experimental module - beware"
+				flush_values
 
-			done
+				eval metamod="\${Meta_${module}}"
 
-		else
+				if [ "$(echo $metamod)" ]; then
 
-			Module_${module}
+					for submodule in $metamod; do
 
-		fi
+						Module_${submodule}
 
+					done
+
+				else
+
+					Module_${module}
+
+				fi
+
+				;;
+
+		esac
 	done
+
 
 	#[ "$usekdialog" -ne 1 ]  #&& print_line
 
