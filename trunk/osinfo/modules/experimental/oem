@@ -1,9 +1,6 @@
 ######################
-# OEM INFORMATION (rewrite)
+# OEM INFORMATION 
 # this module is deprecated in favor of module_dmi
-#
-# also, this is broken due to extr_lshw subfunction, this function
-# is caught in an eternal loop, no idea why. probably easy to solve.
 #
 # this module collects information from lshw, a somewhat rare package, which
 # tells a lot of interesting information of the system hardware.  it also seems
@@ -28,8 +25,8 @@ Module_oem() {
 		# core
 		# firmware
 
-		#local NODES="$(hostname) core firmware"
-		local NODES="network"
+		local NODES="$(hostname) core firmware"
+		#local NODES="memory"
 
 
 		oem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
@@ -43,11 +40,7 @@ Module_oem() {
 
 		for myNODE in $NODES; do
 
-			set -x
-
-			extr_node $myNODE "$lshw_xml_file" node > $oem_tmp
-			less $oem_tmp
-			exit 1
+			extr_lshw_node $myNODE > $oem_tmp
 
 			local IFSbk="$IFS"
 			IFS=$'\n'

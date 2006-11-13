@@ -17,7 +17,7 @@ Module_memory() {
 	module_header "${moduleName}"
 	local ram_size
 
-	if CheckReq lshw && CheckReq_root "information of memory"; then
+	if CheckReq lshw; then
 
 		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
@@ -26,7 +26,7 @@ Module_memory() {
 		# meminfo="/proc/meminfo"
 
 		lshw_xml
-		extr_node "node id=\"memory" $lshw_xml_file /node > $mem_tmp
+		extr_lshw_node memory > $mem_tmp
 
 		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
 		ram_size="$(bc -l <<< scale=1\;$ram_size/1024/1024)"

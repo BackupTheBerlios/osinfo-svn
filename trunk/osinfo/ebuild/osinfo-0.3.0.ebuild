@@ -17,10 +17,12 @@ DEPEND="xsl? (dev-libs/libxslt)
 		lshw? (sys-apps/lshw)
 		hdparm? (sys-apps/hdparm)
 		ddc? (sys-apps/ddcxinfo-knoppix)
-		smartmontools? (sys-apps/smartmontools)
+		smartmontools? (>=sys-apps/smartmontools-5.36)
 		dvb? (media-tv/dvbtune
               media-tv/linuxtv-dvb-apps
               media-video/dvbsnoop)
+		sys-apps/pciutils
+		sys-apps/usbutils
 		app-admin/hddtemp
 		app-shells/bash
 		sys-apps/coreutils

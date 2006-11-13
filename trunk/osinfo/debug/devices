@@ -42,8 +42,6 @@ Module_devices() {
 		return 1
 	fi
 
-	# load lshw xml
-	lshw_xml
 
 	# fill up the DEVICE array to contain ' ' separated entries from lsmod.
 	# [1] device type		# [2] manufacturer		# [3] device name	etc
@@ -85,22 +83,6 @@ Module_devices() {
 
 ###############################
 # helper functions for devices
-#
-#
-	print_moboinfo(){
-
-		add_header    "Motherboard"
-		add_footer
-	
-	}
-#	print_mobobusinfo(){}
-#	print_pciinfo(){}
-#	print_apginfo(){}
-#	print_idebusinfo(){}
-#	print_scsibusinfo(){}
-#	print_usbbusinfo(){}
-
-
 	grep_lspci_array() {
 		local device_id="$1"
 		local found_devices arraynr description

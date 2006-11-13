@@ -25,7 +25,8 @@ cleanup_temp_files() {
 lshw_xml() {
 	if [ -z "$lshw_xml_file" ]; then
 		export lshw_xml_file="$(mktemp /tmp/osinfo.XXXXXX)"
-		lshw -xml > "$lshw_xml_file"
+		TempFiles=("${TempFiles[@]}" "$lshw_xml_file" )
+		lshw -xml > "$lshw_xml_file" 2>/dev/null
 	fi
 }
 
@@ -109,6 +110,85 @@ extr_node() {
 		done
 	fi
 }
+
+##################################
+# extracts a node from lshw xml file
+# based on node id value and xml format
+#
+# operation is case-insensitive
+#
+#	parameters:
+#	(1) node id, the begin keyword
+#	(2) node closer, the end keyword, defaults to 'node id'
+extr_lshw_node() {
+	local node_id="${1}"
+	local node_closer="${2}"
+	local nr node
+	local all_nodes=""
+	local node_count=0
+
+	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$input_tmp" )
+
+	# add line numbers
+	grep -n . "${lshw_xml_file}" > "$input_tmp"
+
+	# if a special node closer is not defined, use the node_id
+	[ ! "$node_closer" ] && node_closer="node"
+
+	# get all matching nodes and node count
+	all_nodes="$(grep  -i "node id=\"${node_id}" "$input_tmp")"
+	# NOTE: this uses an extra grep, because '<<<' adds a '\n' and
+	# wc counts an empty variable line length as '1'
+	node_count="$(grep -i "${node_id}" <<< "${all_nodes}" | wc -l)"
+
+	# this loop extracts the information between the node begin
+	# and end lines, based on indentation level (xml), echoing
+	# the results out
+	if [ $node_count -ge 1 ]; then
+		for nr in $(seq 1 1 $node_count); do
+			this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
+
+			# this gets the line number of the wanted node from lshw
+			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
+			local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
+					     grep -Eo '^[ ]*' | wc -m)"
+
+			# this loop takes care that all subnodes are included, by comparing
+			# the indentation level. not very elegant..
+			# basically it just searches for $node_closer and gets the line#
+			IFS_bak="$IFS"; IFS=$'\n' ;
+			for node in $(sed -n "$(($begin+1)),\${p;}" "${input_tmp}" | \
+			              grep ${node_closer}); do
+
+				# if the indentation matches...
+				if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
+					wc -m)" == "$node_indent" ]; then
+
+					# read the line# to $nigeb (begin backwards)
+					# the line number of the closing node
+					local nigeb="$(awk -F: {'print $1'} <<< "${node}" )"
+					((nigeb--)) # this prevents the closing node to displaying
+					            # as sometimes this may not be wanted
+					break;
+
+				fi
+
+			done
+
+			# if the closing node wasn't found, read to EOF
+			[ ! "$nigeb" ] && nigeb="$"
+			IFS="$IFS_bak"
+
+			# then what's between the first node and the closing id
+			# is echoed to whichever function called this
+			echo "%node $nr%"
+			sed -n "$begin,$nigeb{p;}" "${lshw_xml_file}"
+
+		done
+	fi
+}
+
 
 # extracts value from <xml>value</xml>
 extr_xml_value() {

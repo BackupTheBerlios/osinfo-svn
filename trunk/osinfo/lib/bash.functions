@@ -29,18 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######
 
-#### NOTE:
-#''Report from module'' ''System'':
-#''Operating'' system       FreeBSD
-#''Network'' node hostname  client26.openlab
-#''Kernel'' release         6.0-RELEASE
-#''Machine'' hardware name  i386
-#''System'' locale
-#''System'' uptime          up 58 mins
-#
-# FreeBSD cannot handle this color formatting!
-
-
 # Set the variable in $2 to the terminal cap $1
 # WARNING: Use this function ONLY for string caps!
 # Parameters:
@@ -107,6 +95,7 @@ fi
 #TODO: Add more terminaltypes
 #BUG: Don't work in:
 #BUG:   xiterm (Output a lot of small "DC2")
+#BUG:   bterm
 print_line() {
 	local sup_ext=0
 	tput enacs >/dev/null
@@ -117,10 +106,10 @@ print_line() {
 	if [ $sup_ext == 0 ]; then
 		tput enacs
 		tput smacs
-		yes 'q' | head -n$(tput cols) | tr -d '\012'
+		yes 'q' | head -n $(tput cols) | tr -d '\012'
 		tput rmacs
 	else
-		yes '-' | head -n$(tput cols) | tr -d '\012'
+		yes '-' | head -n $(tput cols) | tr -d '\012'
 		echo
 	fi
 }
