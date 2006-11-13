@@ -32,7 +32,7 @@ Module_dmi() {
 
 		print_bios_info
 		print_oem_info
-		print_mobo_info
+		print_mobo_dmi
 		print_chassis_info
 
 	fi
@@ -145,7 +145,7 @@ Module_dmi() {
 	}
 
 
-	print_mobo_info(){
+	print_mobo_dmi(){
 		local handle_desc='Base Board information'
 
 		# extract the handle to a temp file
@@ -155,15 +155,14 @@ Module_dmi() {
 
 		add_attribute 'Manufacturer' \
 					  'mother_board_manufacturer'
-		add_values    "$(grep -i manufacturer ${osinfo_tmp} | \
-						 awk -F':' {'print $2'} | sed 's/^\ *//')"
+		add_values    "$(get_mobo_manufacturer)"
+
 		
 		
 		add_attribute 'Model' \
 					  'mother_board_model'
-		add_values    "$(grep -i product ${osinfo_tmp} | \
-						 awk -F':' {'print $2'} | sed 's/^\ *//')"
-		
+		add_values    "$(get_mobo_model)"
+	
 		
 		add_attribute 'Version' \
 					  'mother_board_version'
@@ -228,3 +227,13 @@ Module_dmi() {
 		add_footer	
 	}
 
+		get_mobo_manufacturer() {
+			grep -i manufacturer ${osinfo_tmp} | \
+			awk -F':' {'print $2'} | sed 's/^\ *//'
+		}
+
+		get_mobo_model() {
+			grep -i product ${osinfo_tmp} | \
+			 awk -F':' {'print $2'} | sed 's/^\ *//'
+		}
+	
