@@ -99,7 +99,7 @@ print_xml_computer_overview () {
 # values for each attribute are printed on the same line,
 # and indentation is formed with the 'column' tool.
 function print_stdout {
-	local header_color="${tcGREEN}"
+	local header_color="${tcMAGENTA}"
 	local info_color="${tcYELLOW}"
 	local item itemnr value_string=""
 

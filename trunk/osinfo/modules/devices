@@ -45,54 +45,28 @@ Module_devices() {
 	# load lshw xml
 	lshw_xml
 
-	# fill up the DEVICE array to contain ' ' separated entries from lsmod.
-	# [1] device type		# [2] manufacturer		# [3] device name	etc
-	# ${#devices[@]} # is the number of devices in the array
-	for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
-		devices[$arraynr]="$(sed 's/:_/ /g ; s/_// ; s/^\ // ' <<< $DEVICE )"
-		 # the above changes the ':' character to space, which separates the two strings
-		 # that have '_' in their spaces. sed also removes the first odd characters.
-		 #
-		 # there's a bug here, because the sed allows '\b' into the string.
+	# get entries from lspci to $DEVICE[]
+	load_device_array
 
-			# with lspci 2.2 and later, the -m switch works fine
-			#	for DEVICE in $(lspci -m | tr ' ' '_'); do
-			#		devices_dbg[$arraynr]="$(	echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
-
-		((arraynr++))
-	done
+	print_moboinfo
 
 	# output by category
-	for categories in Controllers Enhancements; do
-
-		add_header "\n$categories"
-
-		case $categories in
-			'Controllers')
-				DO_NOT_OUTPUT="ethernet\|multimedia"
-				grep_lspci_array "smb\|bridge\|host\|ide\|isa\|usb"
-				;;
-			'Enhancements')
-				DO_NOT_OUTPUT="^pci\|usb\|smb\|bridge\|ide\|isa\|host"
-				grep_lspci_array "."
-				;;
-		esac
-
-	done
+	#print_categories
 
 	flush_values
 }
 
-###############################
-# helper functions for devices
-#
-#
+############################################
+# helper functions for to get device data
+# 
+
 	print_moboinfo(){
 
 		add_header    "Motherboard"
 		add_footer
 	
 	}
+
 #	print_mobobusinfo(){}
 #	print_pciinfo(){}
 #	print_apginfo(){}
@@ -100,6 +74,46 @@ Module_devices() {
 #	print_scsibusinfo(){}
 #	print_usbbusinfo(){}
 
+	# this is a simple view of devices
+	print_categories(){
+		for categories in Controllers Enhancements; do
+
+			add_header "\n$categories"
+
+			case $categories in
+				'Controllers')
+					DO_NOT_OUTPUT="ethernet\|multimedia"
+					grep_lspci_array "smb\|bridge\|host\|ide\|isa\|usb"
+					;;
+				'Enhancements')
+					DO_NOT_OUTPUT="^pci\|usb\|smb\|bridge\|ide\|isa\|host"
+					grep_lspci_array "."
+					;;
+			esac
+
+		done
+	}
+#
+#
+
+	# fill up the DEVICE array to contain ' ' separated entries from lsmod.
+	# [1] device type		# [2] manufacturer		# [3] device name	etc
+	# ${#devices[@]} # is the number of devices in the array
+	load_device_array() {
+		for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
+			devices[$arraynr]="$(sed 's/:_/ /g ; s/_// ; s/^\ // ' <<< $DEVICE )"
+			 # the above changes the ':' character to space, which separates the two strings
+			 # that have '_' in their spaces. sed also removes the first odd characters.
+			 #
+			 # there's a bug here, because the sed allows '\b' into the string.
+
+				# with lspci 2.2 and later, the -m switch works fine
+				#	for DEVICE in $(lspci -m | tr ' ' '_'); do
+				#		devices_dbg[$arraynr]="$(	echo $DEVICE | grep -Eo '"[^"]+"' | awk -F\" {'print $2'} )";
+
+			((arraynr++))
+		done
+	}
 
 	grep_lspci_array() {
 		local device_id="$1"

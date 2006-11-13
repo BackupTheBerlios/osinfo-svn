@@ -30,6 +30,14 @@ lshw_xml() {
 	fi
 }
 
+dmi_info() {
+	if [ -z "$dmi_tmp_file" ]; then
+		export dmi_tmp_file="$(mktemp /tmp/osinfo.XXXXXX)"
+		TempFiles=("${TempFiles[@]}" "$dmi_tmp_file" )
+		dmidecode > "$dmi_tmp_file" 2>/dev/null
+	fi
+}
+
 ##################################
 # extracts a node from input file
 # based on indentation, and the begin and end keywords

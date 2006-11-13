@@ -62,4 +62,9 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 bugreport_email="osinfo@lists.berlios.de"
 
+# allocate a universal temp file
+osinfo_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+TempFiles=("${TempFiles[@]}" "$osinfo_tmp")
+
+
 #############################################################

@@ -25,13 +25,16 @@ module_header() {
 	case "$output_mode" in
 		'stdout')
 			# only print module header if being verbose
-			if [ $isverbose -ge 1 ]; then
+			#if [ $isverbose -ge 1 ]; then
+			#	print_line
+			#	echo -n "${tcRED}${tUNDERLINE}"
+			#	echo -n "Report from module"
+			#	echo "${tSTD}${tUNDERLINE} ${tcGREEN}$@${tSTD}:"
+			#	print_line
+			#fi
 				print_line
-				#echo -n "${tcRED}${tUNDERLINE}"
-				#echo -n "Report from module"
-				#echo "${tSTD}${tUNDERLINE} ${tcGREEN}$@${tSTD}:"
-			fi
 				echo "${tUNDERLINE}${tcGREEN}$@${tSTD}:"
+				print_line
 			;;
 
 		'xml')
