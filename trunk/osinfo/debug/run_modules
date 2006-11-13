@@ -1,0 +1,109 @@
+#################
+## run_modules ##
+#################
+#
+# modules are separated into stable and experimental, and are evaluated
+# separately. (TODO)
+#
+# the flush_values function generates the print-out.
+run_modules() {
+	for modul in $cmdsnames; do
+
+		# TODO: check that the module being called is supported on the running OS
+
+		# TODO: something like this to not even attempt to run REQ_ROOT modules
+		#       as normal user, but shouldn't burden the script too much
+		#       with excessive loops
+		#allowed_modules=''
+		#if ! CheckReq_root; then
+		#	allowed_modules=$MODULES_ALL-$MODULES_SU_ONLY
+		#fi
+
+		if [ $modul = 'all' ]; then
+			if [ "$SYSTEM" == "linux" ] ; then
+				#cmdsnames="$MODULES_LINUX"
+				break
+			# TODO: please check if this works on bsd and old bash
+			elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
+				#cmdsnames="$MODULES_BSD"
+				break
+			fi
+		elif [ $modul = 'lanforce' ]; then
+			lanforce=1
+			usexml=1
+			#cmdsnames="$MODULES_LANFORCE"
+			break
+		fi
+
+		validate_arg "$modul" "$MODULES_ALL $MODULES_META" || wrong_module "$modul"
+		# validate_arg is called to check that the module exits at all.
+		# AnMaster: If we DON'T validate user input *and* use eval below we
+		#           are *realy* stupid. So don't comment that out.
+		#           Instead update the variable MODULES_ALL in osinfo.modules
+		#           We MUST validate the user input if we are going to use eval
+		#           otherwise someone could use that to run something evil
+		#           (as root), like rm -rf /.
+
+	done
+
+	if [ "$prefix" != '/' ] ; then
+		tmp_cmdsnames="$cmdsnames"
+		cmdsnames=""
+		for modul in $tmp_cmdsnames; do
+			realrootrequired=0
+			for real_root_modul in $MODULES_REAL_ROOT_ONLY; do
+				[ "$modul" == "$real_root_modul" ] && realrootrequired=1
+			done
+			[ $realrootrequired -eq 0 ] && cmdsnames="$cmdsnames $modul"
+		done
+	fi
+
+	[ $usexml -eq 1 ] && print_xml_header > "${XMLFILE}"
+
+
+	#if [ -z "$cmdsnames" ]; then
+	#	PRINT_Usage
+	#fi
+
+	# this calls the module definitions. as there are Meta-modules
+	# and the actual modules, we first check if there's a Meta-module
+	# of that name. in that case, it is used.
+	# NOTE: FreeBSD runs all modules
+	for module in $cmdsnames; do
+
+		# AnMaster: What the hell are you doing... why not use a case .. esac statment like we did before?
+		#           that would solve it.
+		# ruxpin: that would require a modification to this list after adding a module,
+		#         which I want to avoid.
+		# AnMaster: local modulename="Meta_${module}"
+		#           metamod="${!modulename}"
+		#           Needs bash 3 at least.
+		#           Or base it on some declare magic.
+		eval metamod="\${Meta_${module}}"
+
+		if [ "$(echo $metamod)" ]; then
+
+			for submodule in $metamod; do
+
+				Module_${submodule}
+
+			done
+
+		else
+
+			Module_${module}
+
+		fi
+
+	done
+
+	#[ "$usekdialog" -ne 1 ]  #&& print_line
+
+	if [ $usexml -eq 1 ]; then
+		print_xml_footer >> "${XMLFILE}"
+	fi
+
+	# Remove temporary files:
+	cleanup_temp_files
+}
+

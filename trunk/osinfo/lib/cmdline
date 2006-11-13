@@ -57,6 +57,7 @@ function parse_arguments() {
 					# send xml via tcp to remote osinfo daemon
 					if [ "$2" ] && [ "$3" ]; then
 						usexml=1
+						makehtml=0
 						tcpsend=1
 						output_mode="xml"
 						HOST="$2"
@@ -185,7 +186,7 @@ function parse_arguments() {
 					exit 0
 					;;
 				*)
-					cmdsnames="$cmdsnames $1"
+					module_cmds="$module_cmds $1"
 					shift 1;
 					;;
 			esac

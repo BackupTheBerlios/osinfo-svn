@@ -21,7 +21,11 @@ source lib/helper.functions       # helperts
 source lib/daemon.functions       # daemon mode functions
 source lib/update_sidebar         # 
 
+source profiles/default           # source all computer profiles for a coherent view of data
+source profiles/desktop
+source profiles/server
+source profiles/laptop
+
 source lib/check.functions        # check various functionalities
-source profiles/*                 # source all computer profiles for a coherent view of data
 source lib/cmdline                # command line options, leave as last!
 

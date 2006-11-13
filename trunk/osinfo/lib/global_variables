@@ -15,7 +15,8 @@ tcpsend=0
 
 prefix="/"  # The root dir. Using a variable allows info on chrooted systems
 PROFILES="desktop server laptop"
-profile="desktop"    # default profile is desktop
+#profile="desktop"    # default profile is desktop
+profile="undefined"
 #OUTPUT_MODES="stdout xml kdialog"  # this list is not used (yet)
 output_mode="stdout" # default output mode is stdout
 

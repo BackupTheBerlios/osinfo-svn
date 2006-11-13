@@ -7,7 +7,13 @@
 # modules can be freely added; the data processing and outputting is taken
 # care of by other functions. these are accessed by the following functions,
 # and here they are presented in the order in which they should appear in
-# the modules.
+# the modules. a new module should be placed into experimental and tested
+# on several systems before classified as stable.
+#
+# howto stabilise a module: 
+#  1) 
+#  2) 
+#  3) 
 #
 # module_header	"Module name <string>"
 #  each module should begin with this line.
