@@ -14,7 +14,6 @@ FEATURES and FIXES for 0.3:
 *	add_subheader => intended, blue title
 *	checker to see if netcat is installed
 *	--checkdeps switch
-*	mod_users: newlines are broken for "all users"
 *	don't leave osinfo.XXXXXX and <hostname>.x?? files around!
 *	top 10 memory hoggers :)
 *	apache interface requires osinfo cgi

@@ -127,9 +127,6 @@ Module_users() {
 			user_uid="$(awk -F: /^$user_unixname\:/{'print $3'} "$passwd_tmp")"
 			user_gid="$(awk -F: /^$user_unixname\:/{'print $4'} "$passwd_tmp")"
 			user_realname="$(awk -F: /^$user_unixname\:/{'print $5'} "$passwd_tmp")"
-			# sometimes the realname isn't defined; column segfaults if the
-			# values are empty (columns don't match)
-			[ ! "$user_realname" ] && user_realname="-unknown-"
 			user_home="$(awk -F: /$user_unixname/{'print $6'} "$passwd_tmp")"
 			user_shell="$(awk -F: /$user_unixname/{'print $7'} "$passwd_tmp")"
 		fi
@@ -246,9 +243,18 @@ Module_users() {
 
 		else
 			add_values "$user_unixname"
-			[ ! "$user_realname" ] && user_realname=" "
-			[ ! "$user_uid" ] && user_uid=" "
-			[ ! "$user_gid" ] && user_gid=" "
+
+			# sometimes the realname isn't defined; column segfaults if the
+			# values are empty (columns don't match)
+			[ ! "$user_realname" ] && user_realname="-"
+			[ ! "$user_uid" ] && user_uid="-"
+			[ ! "$user_gid" ] && user_gid="-"
+			[ ! "$user_gid" ] && user_gid="-"
+			[ ! "$first_login_date" ] && first_login_date="-"
+			[ ! "$last_login_date" ] && last_login_date="-"
+			[ ! "$login_from" ] && login_from="-"
+			[ ! "$login_count" ] && login_count="-"
+
 			add_values "$user_uid"
 			add_values "$user_realname"
 			add_values "$first_login_date"
@@ -257,7 +263,7 @@ Module_users() {
 			[ $isverbose -ge 1 ] && \
 			add_values "$login_from"
 
-			add_values "$login_count"
+			add_values "$login_count\n"
 		fi
 	}
 
