@@ -1,26 +1,23 @@
 desktop_profile() {
- 	for module in $module_cmds; do
-		case $module in
+		
+	for module in system \
+	              distro \
+				  kernel \
+				  processor \
+				  memory \
+				  hdd \
+				  network \
+				  wlan \
+				  dmi \
+				  applications \
+				  terminal \
+				  devices \
+				  cdrom \
+				  users \
+				  services; do
 
-				system|\
-				distro|\
-				kernel|\
-				processor|\
-				memory|\
-				hdd|\
-				network|\
-				wlan|\
-				dmi|\
-				applications|\
-				terminal|\
-				devices|\
-				cdrom|\
-				users|\
-				services) \
-				Module_${module}
-				;;
+		Module_${module}
 
-		esac
 	done
 }
 
