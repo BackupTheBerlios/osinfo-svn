@@ -3,6 +3,7 @@ for module in modules/* modules/experimental/*; do
 		source $module
 done
 
+source lib/version                # osinfo version info
 
 source lib/bash.functions         # colour & line functions
 source lib/PRINT_Help             # print --help

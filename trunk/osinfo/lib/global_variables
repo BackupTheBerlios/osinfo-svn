@@ -1,4 +1,11 @@
-############
+#############################################################
+## source the necessary files
+source sources # lines beginning with "source" are removed in the all-in-one package
+
+[ -e "/etc/osinfo.conf" ] && \
+. /etc/osinfo.conf                # the configuration file
+
+
 ## GLOBAL USERSPACE VARIABLES
 isverbose=0
 isdebug=0
@@ -11,7 +18,6 @@ dev_code=0
 quiet=0
 tcpdaemon=0
 tcpsend=0
-
 
 prefix="/"  # The root dir. Using a variable allows info on chrooted systems
 PROFILES="desktop server laptop"
@@ -63,3 +69,4 @@ export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
 
 bugreport_email="osinfo@lists.berlios.de"
 
+#############################################################

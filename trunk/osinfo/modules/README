@@ -1,0 +1,56 @@
+#################################################################################
+#
+# modules can be freely added; the data processing and outputting is taken
+# care of by other functions. these are accessed by the following functions,
+# and here they are presented in the order in which they should appear in
+# the modules. a new module should be placed into experimental and tested
+# on several systems before classified as stable.
+#
+# howto create a new experimental module:
+#  1) create the module file into modules/experimental/
+#  2) add the module name into the module index file
+#
+# howto stabilise a module: 
+#  1) add the module name to the profiles/default file
+#  2) add the module name optionally to other profiles
+#  3) move the module from modules/experimental/ to modules/
+#
+# module_header	"Module name <string>"
+#  each module should begin with this line.
+#  it will be printed in colour at stdout and as a tag to xml.
+#  it may contain spaces; in the xml tag they will be replaced by '_'
+#
+# add_header	"Header <string>" "Xml modifier <string> (optional)"
+#  the argument is printed on a single line in bold to stdout,
+#  and as a <header> tag to the xml, unless the modifier
+#  is present. see add_header() for more information.
+#  each module may contain several calls of this type.
+#
+# add_attribute "Common Name <string>"	"xml_code <string>"
+#  the first argument is printed at the first field to stdout,
+#  and the xml output is formulated as:
+#  <xml_code>
+#   <value>foo</value>
+#  </xml_code>
+#  each module may contain several calls of this type.
+#  the previous attribute tag is automatically closed when a new
+#  one is introduced.
+#
+# add_values "value 1 <any type>" "value 2" "value n"
+#  several values can be given;
+#  all of them will be separated with tab at stdout,
+#  and they will each get their own <value>foo</value> line at xml output.
+#  special characters as '\n' and '\t' can be used;
+#  they will not affect the xml output.
+#  each module may contain several calls of this type.
+#
+# add_footer "Footer <string>"
+#  this call may follow a block of values, if the add_header
+#  function is called before them. this closes open header tags.
+#
+# flush_values
+#  prints the values to xml file or to stdout.
+#  this should be the final command in a module.
+#
+#################################################################################
+

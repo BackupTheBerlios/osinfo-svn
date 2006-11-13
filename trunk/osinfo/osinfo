@@ -1,33 +1,3 @@
-#!/usr/bin/env bash
-################################################################################
-# OSINFO
-#
-# osinfo lists system information available to the OS.
-# see `man osinfo` for details.
-#
-################################################################################
-# Written by Arvid Norlander and Mikael Lammentausta                            #
-#   --Advanced Bash Scripting Guide (ABS)                                       #
-################################################################################
-appname='osinfo'
-major_version=0
-minor_version=2
-micro_version=11
-patch_version=1
-dev_status=beta
-release_date='2006-11-xx'
-
-#############################################################
-##
-# source the necessary files
-source sources
-
-[ -e "/etc/osinfo.conf" ] && \
-. /etc/osinfo.conf                # the configuration file
-
-#############################################################
-
-
 ################################################################################
 ################################################################################
 ## MAIN FUNCTION                                                              ##
@@ -77,7 +47,6 @@ select_profile() {
 			;;
 	esac
 }
-
 
 
 # run main, and pass all arguments

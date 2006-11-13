@@ -47,7 +47,7 @@ dist: distclean
 	#@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
 
 	cd dist/$(appname) && \
-	for sources in "src/profiles/*" "src/modules/*" "src/modules/experimental/*" "src/lib/*" ; do \
+	for sources in "src/lib/version" "src/profiles/*" "src/modules/*" "src/modules/experimental/*" "src/lib/*[^version]*" ; do \
 		cat $$sources >> osinfo 2>/dev/null ; \
 	done
 
