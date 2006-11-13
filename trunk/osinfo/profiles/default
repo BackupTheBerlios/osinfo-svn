@@ -82,23 +82,28 @@ default_profile() {
 				;;
 
 			*)
-				info "You are running an experimental module - beware"
-				flush_values
+				if [ $isdebug -eq 1 ]; then
+					info "You are running an experimental module $module - beware"
+					flush_values
 
-				eval metamod="\${Meta_${module}}"
+					eval metamod="\${Meta_${module}}"
 
-				if [ "$(echo $metamod)" ]; then
+					if [ "$(echo $metamod)" ]; then
 
-					for submodule in $metamod; do
+						for submodule in $metamod; do
 
-						Module_${submodule}
+							Module_${submodule}
 
-					done
+						done
 
+					else
+
+						Module_${module}
+
+					fi
 				else
-
-					Module_${module}
-
+					info "Experimental module $module will not be executed - run with the -d switch"
+					flush_values
 				fi
 
 				;;

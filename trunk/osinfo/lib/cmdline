@@ -141,7 +141,7 @@ function parse_arguments() {
 					shift 1
 					;;
 
-				'--debug')
+				'-d'|'--debug')
 					# standard debugging option
 					export isdebug=1
 					shift 1
