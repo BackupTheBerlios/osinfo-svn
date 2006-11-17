@@ -68,7 +68,7 @@ Module_dmi() {
 
 
 	print_bios_info(){
-Â		local handle_desc='BIOS Information'
+		local handle_desc='BIOS Information'
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
