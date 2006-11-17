@@ -42,9 +42,8 @@ Module_devices() {
 		return 1
 	fi
 
-	# load lshw xml and dmi temp files
+	# load lshw xml temp file
 	lshw_xml
-	dmi_info
 
 	# get entries from lspci to $DEVICE[]
 	load_device_array
@@ -62,9 +61,9 @@ Module_devices() {
 # 
 
 	print_mobo_info(){
-		local handle_desc='Base Board information'
 
-		# extract the handle to a temp file
+		# load MOBO info from dmi
+		local handle_desc='Base Board information'
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
 
 		add_header    "Motherboard"
@@ -77,6 +76,13 @@ Module_devices() {
 		add_attribute ' Model' \
 					  'mother_board_model'
 		add_values    "$(get_mobo_model)"
+
+		# load BIOS info from dmi
+		local handle_desc='BIOS Information'
+		extract_dmi ${handle_desc} > ${osinfo_tmp}
+
+		add_attribute ' BIOS revision'	'bios_version'
+		add_values    "$(get_bios_revision)"
 
 		add_footer
 

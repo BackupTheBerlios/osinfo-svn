@@ -44,6 +44,9 @@ Module_processor() {
 			                     awk -F': ' {'print $2'})"
 			add_value_footer  "MHz"
 
+			add_attribute     "Virtualization"   "vmx"
+			add_values        "$(get_cpu_vmx)"
+
 
 			if [ $isverbose -ge 1 ]; then
 
@@ -128,6 +131,17 @@ Module_processor() {
 	}
 
 	# CPU subfunctions
+	get_cpu_vmx() {
+		[ ! "$cpuinfo" ] && define_cpuinfo
+
+		if [ "$cpuinfo" ]; then
+			if [ "$(grep 'vmx' ${cpuinfo})" ]; then
+				echo "yes"
+			else
+				echo "no"
+			fi
+		fi
+		}
 
 	get_cpu_model() {
 		[ ! "$cpuinfo" ] && define_cpuinfo

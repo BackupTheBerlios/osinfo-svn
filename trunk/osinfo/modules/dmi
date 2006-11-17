@@ -68,8 +68,7 @@ Module_dmi() {
 
 
 	print_bios_info(){
-
-		local handle_desc='BIOS Information'
+Â		local handle_desc='BIOS Information'
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
@@ -83,9 +82,8 @@ Module_dmi() {
 
 
 		add_attribute 'Revision'	'bios_version'
-		add_values    "$(grep -i version ${osinfo_tmp} | \
-		                 awk -F':' {'print $2'} | sed 's/^\ *//')"
-
+		add_values    "$(get_bios_revision)"
+	
 
 		add_attribute 'Date'	'bios_date'
 		add_values    "$(grep -i date ${osinfo_tmp} | \
@@ -156,7 +154,6 @@ Module_dmi() {
 		add_attribute 'Manufacturer' \
 					  'mother_board_manufacturer'
 		add_values    "$(get_mobo_manufacturer)"
-
 		
 		
 		add_attribute 'Model' \
@@ -236,4 +233,8 @@ Module_dmi() {
 			grep -i product ${osinfo_tmp} | \
 			 awk -F':' {'print $2'} | sed 's/^\ *//'
 		}
-	
+
+		get_bios_revision() {
+			grep -i version ${osinfo_tmp} | \
+		    awk -F':' {'print $2'} | sed 's/^\ *//'
+		}
