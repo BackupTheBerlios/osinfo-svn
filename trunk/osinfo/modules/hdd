@@ -168,7 +168,7 @@ Module_hdd() {
 				add_values  "$hdd_capacity_label"
 
 				# verbose
-				if [ $isverbose -eq 1 ]; then
+				if [ $isverbose -ge 1 ]; then
 
 					# HDD ACTUAL CAPACITY (verbose)
 					add_attribute 'Capacity (actual)'

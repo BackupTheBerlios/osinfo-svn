@@ -192,7 +192,7 @@ Module_cdrom() {
 		IFS="$IFS_bak"
 
 		# tmpfile is no longer needed, overwrite
-		if [ $isverbose -eq 1 ]; then
+		if [ $isverbose -ge 1 ]; then
 			cdrecord dev="${cdrom_node[$drv_nr]}" -atip > $tmpfile 2>/dev/null
 			cdrom_modes[$drv_nr]="$(grep -i 'supported modes' $tmpfile | \
 			                        awk -F': ' {'print $2'})"
