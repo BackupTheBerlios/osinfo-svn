@@ -48,7 +48,9 @@ Module_devices() {
 	# get entries from lspci to $DEVICE[]
 	load_device_array
 
-	print_mobo_info
+	if CheckReq_root "motherboard and BIOS data"; then
+		print_mobo_info
+	fi
 
 	# output by category
 	print_categories
@@ -95,9 +97,20 @@ Module_devices() {
 #	print_scsibusinfo(){}
 #	print_usbbusinfo(){}
 
-	# this is a simple view of devices
+	# loads the categories to display
+	load_categories() {
+		CATEGORIES="Controllers Enhancements USB"
+	}
+
+	# this function defines all categories
+	# and prints the selected ones
 	print_categories(){
-		for categories in Controllers Enhancements; do
+
+		# load the category definitions
+		load_categories
+
+		# print
+		for categories in $CATEGORIES; do
 
 			add_header "\n$categories"
 
@@ -105,10 +118,17 @@ Module_devices() {
 				'Controllers')
 					DO_NOT_OUTPUT="ethernet\|multimedia"
 					grep_lspci_array "smb\|bridge\|host\|ide\|isa\|usb"
+					flush_values
 					;;
 				'Enhancements')
 					DO_NOT_OUTPUT="^pci\|usb\|smb\|bridge\|ide\|isa\|host"
 					grep_lspci_array "."
+					flush_values
+					;;
+
+				'USB')
+					print_usb_devices
+					flush_values
 					;;
 			esac
 
@@ -210,5 +230,22 @@ Module_devices() {
 
 #set -x
 		flush_values
+	}
+
+	# prints the usb devices in the system's usb bus
+	print_usb_devices(){
+		# backup IFS
+		IFS_bak="$IFS" ; IFS=$'\n'
+
+		# load lsusb into variable
+		local usb_devices="$(lsusb)"
+
+		# loop
+		for usb_device in $usb_devices; do
+			add_values "\n $usb_device"
+		done
+
+		# restore IFS
+		IFS="$IFS_bak"
 	}
 
