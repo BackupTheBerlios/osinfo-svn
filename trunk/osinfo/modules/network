@@ -19,7 +19,8 @@ Module_network() {
 
 	# allocate a temp file
 	local nw_info="$(mktemp /tmp/osinfo.XXXXXX)"
-	TempFiles=("${TempFiles[@]}" "$nw_info")
+	local iw_info="$(mktemp /tmp/osinfo.XXXXXX)"
+	TempFiles=("${TempFiles[@]}" "$nw_info" "$iw_info")
 
 	################################
 	# DETECT (WIRED) NETWORK DEVICES
@@ -62,12 +63,13 @@ Module_network() {
 
 			# collect the information from detected network devices
 			for interface_name in $ETH_DEVICES; do
-				ifconfig $interface_name > ${nw_info}
+				ifconfig $interface_name > ${nw_info} 2>/dev/null
+				iwconfig $interface_name > ${iw_info} 2>/dev/null
 
 				add_header    $interface_name   'iface name'
 
 				add_attribute 'Device'
-				add_values    "$(get_device_name ${nw_info})"
+				add_values    "$(get_device_name ${nw_info} ${iw_info})"
 
 				add_attribute 'MAC'		"mac_address"
 				add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
@@ -94,6 +96,13 @@ Module_network() {
 				add_values    "$(sed "s/  /\n/g" ${nw_info} | \
 								 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
 								 grep -Eo '[0-9\.fx]+' )"
+
+				# wireless extensions
+				if [ -s ${iw_info} ] ; then
+					# this is only available for root
+					add_attribute 'Encryption key'
+					add_values    "$(get_enckey ${iw_info})"
+				fi
 
 				# verbose
 				if [ $isverbose -ge 1 ]; then
@@ -143,6 +152,12 @@ Module_network() {
 	        grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' 
 		}
 
+	function get_enckey() {
+		# parameters:
+		#  1  output of iwconfig (file)
+		grep -Eoi 'encryption key:[0-9A-Z\-]*' ${1} | awk -F\: {'print $2'}		
+	}
+
 	function get_mac_address() {
 		# debug only!
 		/sbin/ifconfig eth0 | grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}'
@@ -151,6 +166,7 @@ Module_network() {
 	function get_device_name() {
 		# parameters:
 		#  1  output of ifconfig (file)
+		#  1  output of iwconfig (file)
 
 		# detect IRQ from ifconfig and compare it to lspci
 		local irq="$(grep -o 'Interrupt[[:punct:]][0-9]*' "${1}" | \
@@ -163,8 +179,9 @@ Module_network() {
 			awk -F: {'print $NF'}
 
 		# otherwise it could be PCMCIA or USB device
+		# check iwconfig
 		else
-			echo "FIXME"			
+			grep ${interface_name} ${2} | awk {'print $2'}
 		fi
 		}
 
