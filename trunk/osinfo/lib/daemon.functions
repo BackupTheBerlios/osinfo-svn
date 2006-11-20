@@ -164,7 +164,7 @@ print_short_client_id() {
 ## update_index ##
 ##################
 #
-# creates (or updates by overwriting) the index.html in the /var/run folder.
+# creates (or updates by overwriting) the index.html in the runfolder.
 # NOTE: this function should not generate any info messages to stdout!
 # 
 update_index() {

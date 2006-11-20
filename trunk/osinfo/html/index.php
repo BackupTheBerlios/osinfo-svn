@@ -22,9 +22,12 @@ ini_set('magic_quotes_runtime', 'off');
 ini_set('register_globals', 'off');
 
 if (!file_exists(APP_ROOT . '/index.html')) {
-  echo '<center><b>Error: config.php does not exist.</b></center>';
+  echo '<center><b>Error: index.html does not exist.</b></center>';
   exit;
 } 
+
+osinfo --listen 7776
+
 
 require_once(APP_ROOT . '/config.php'); // get the config file
 

@@ -35,7 +35,7 @@ Modules=()
 
 # if the conf file is not available..
 [ ! "$error_log" ] && error_log="/var/log/osinfo.log"
-[ ! "$rundir" ] && rundir="/var/run/osinfo"
+[ ! "$rundir" ] && rundir="/var/www/localhost/htdocs/osinfo"
 
 #XMLFILE="$(get_hostname)_$(get_mac_address).xml"
 INDEXXMLFILE="${rundir}/index.xml"
