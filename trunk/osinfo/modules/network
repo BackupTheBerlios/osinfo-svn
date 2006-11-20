@@ -67,7 +67,6 @@ Module_network() {
 			add_attribute 'MAC'		"mac_address"
 			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
 
-
 			add_attribute 'IPv4'		"ip_address"
 			add_values    "$(get_ipv4 ${nw_info})"
 
@@ -143,14 +142,23 @@ Module_network() {
 		}
 
 	function get_device_name() {
-		# based on IRQ detection and comparison with lspci <=> ifconfig
 		# parameters:
 		#  1  output of ifconfig (file)
-			local irq="$(grep -o 'Interrupt[[:punct:]][0-9]*' "${1}" | \
-				grep -Eo '[0-9]+' )"
+
+		# detect IRQ from ifconfig and compare it to lspci
+		local irq="$(grep -o 'Interrupt[[:punct:]][0-9]*' "${1}" | \
+			grep -Eo '[0-9]+' )"
+
+		# if the device has an IRQ
+		if [ "$irq" ]; then
 			lspci -vvv | grep -i 'network\|ethernet' -A 7 | \
-				grep "IRQ $irq" -B 5 | grep -i 'network\|ethernet' | \
-				awk -F: {'print $NF'}
+			grep "IRQ $irq" -B 5 | grep -i 'network\|ethernet' | \
+			awk -F: {'print $NF'}
+
+		# otherwise it could be PCMCIA or USB device
+		else
+			echo "FIXME"			
+		fi
 		}
 
 	function get_device_flags() {
