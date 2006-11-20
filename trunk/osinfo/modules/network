@@ -40,70 +40,77 @@ Module_network() {
 		fi
 	fi
 
-
-	### generic information
-	add_header  "$(get_hostname)" 'computer name'
-
-		add_attribute 'NIS domain'
-		add_values    "$(get_nis_domain)"
-
-		add_attribute 'DNS domain'	'domain'
-		add_values    "$(get_dns_domain)"
-
-		add_attribute 'FQDN'		"fully_qualified_domain_name"
-		add_values    "$(get_fqdn)"
-
-		local ipv4 ipv6
-
-		# collect the information from detected network devices
-		for interface_name in $ETH_DEVICES; do
-			ifconfig $interface_name > ${nw_info}
-
-			add_header    $interface_name   'iface name'
-
-			add_attribute 'Device'
-			add_values    "$(get_device_name ${nw_info})"
-
-			add_attribute 'MAC'		"mac_address"
-			add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
-
-			add_attribute 'IPv4'		"ip_address"
-			add_values    "$(get_ipv4 ${nw_info})"
-
-			add_attribute 'IPv6'
-			add_values    "$(get_ipv6 ${nw_info})"
-
-			add_attribute 'IP type'	"ip_type"
-			add_values    "$(detect_ip_type)"
-
-			add_attribute 'Gateway'	"default_gateway"
-			add_values    "$(route -n | grep $interface_name | \
-			              awk '/^0.0.0.0/{print $2}')"
-
-			add_attribute 'Broadcast'
-			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-			                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-			                 grep -Eo '[0-9\.]+' )"
-
-			add_attribute 'Netmask'	"subnet_mask"
-			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-			                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
-			                 grep -Eo '[0-9\.fx]+' )"
-
-			add_attribute 'RX bytes'
-			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-			                 grep -i 'RX bytes' | awk -F: {'print $2'})"
-
-			add_attribute 'TX bytes'
-			add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-			                 grep -i 'TX bytes' | awk -F: {'print $2'})"
-
-			add_footer    "iface"
-		done
-	add_footer    'computer'
+	print_network_information
 
 	flush_values
 }
+
+	print_network_information() {
+		### generic information
+		add_header  "$(get_hostname)" 'computer name'
+
+			add_attribute 'NIS domain'
+			add_values    "$(get_nis_domain)"
+
+			add_attribute 'DNS domain'	'domain'
+			add_values    "$(get_dns_domain)"
+
+			add_attribute 'FQDN'		"fully_qualified_domain_name"
+			add_values    "$(get_fqdn)"
+
+			local ipv4 ipv6
+
+			# collect the information from detected network devices
+			for interface_name in $ETH_DEVICES; do
+				ifconfig $interface_name > ${nw_info}
+
+				add_header    $interface_name   'iface name'
+
+				add_attribute 'Device'
+				add_values    "$(get_device_name ${nw_info})"
+
+				add_attribute 'MAC'		"mac_address"
+				add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
+
+				add_attribute 'IPv4'		"ip_address"
+				add_values    "$(get_ipv4 ${nw_info})"
+
+				add_attribute 'IPv6'
+				add_values    "$(get_ipv6 ${nw_info})"
+
+				add_attribute 'IP type'	"ip_type"
+				add_values    "$(detect_ip_type)"
+
+				add_attribute 'Gateway'	"default_gateway"
+				add_values    "$(route -n | grep $interface_name | \
+							  awk '/^0.0.0.0/{print $2}')"
+
+				add_attribute 'Broadcast'
+				add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+								 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+								 grep -Eo '[0-9\.]+' )"
+
+				add_attribute 'Netmask'	"subnet_mask"
+				add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+								 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
+								 grep -Eo '[0-9\.fx]+' )"
+
+				# verbose
+				if [ $isverbose -ge 1 ]; then
+					add_attribute 'RX bytes'
+					add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+									 grep -i 'RX bytes' | awk -F: {'print $2'})"
+
+					add_attribute 'TX bytes'
+					add_values    "$(sed "s/  /\n/g" ${nw_info} | \
+									 grep -i 'TX bytes' | awk -F: {'print $2'})"
+				fi
+
+				add_footer    "iface"
+			done
+		add_footer    'computer'
+	}
+
 
 	function get_hostname() {
 		# hostname produces stderr if no network is available
@@ -187,7 +194,7 @@ Module_network() {
 						echo    'static'
 
 					else # give up
-						echo    'undetermined'
+						echo    ''
 					fi
 				fi
 			done
