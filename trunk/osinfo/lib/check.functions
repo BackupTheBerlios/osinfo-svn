@@ -117,3 +117,18 @@ CheckReq_smartctl() {
 		#fi
 	fi
 }
+
+# Tests a string
+# Input : string to test ($1)
+# Output : true or false
+is_yes () {
+	echo "$1" | grep -qi '^yes$'
+}
+
+# Tests a string
+# Input : string to test ($1)
+# Output : true or false
+is_no () {
+	echo "$1" | grep -qi '^no$'
+}
+

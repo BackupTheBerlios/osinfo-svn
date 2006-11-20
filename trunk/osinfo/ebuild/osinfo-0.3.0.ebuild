@@ -11,19 +11,19 @@ SRC_URI="ftp://ftp.berlios.de/pub/osinfo/osinfo.tar.bz2"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~amd64 ~x86-fbsd"
-IUSE="xsl lshw hdparm smartmontools ddc dvb"
+IUSE="xsl lshw hdd ddc dvb"
 
 DEPEND="xsl? (dev-libs/libxslt)
 		lshw? (sys-apps/lshw)
-		hdparm? (sys-apps/hdparm)
+		hdd? (sys-apps/hdparm
+		      app-admin/hddtemp
+		      >=sys-apps/smartmontools-5.36)
 		ddc? (sys-apps/ddcxinfo-knoppix)
-		smartmontools? (>=sys-apps/smartmontools-5.36)
 		dvb? (media-tv/dvbtune
               media-tv/linuxtv-dvb-apps
               media-video/dvbsnoop)
 		sys-apps/pciutils
 		sys-apps/usbutils
-		app-admin/hddtemp
 		app-shells/bash
 		sys-apps/coreutils
 		sys-apps/grep

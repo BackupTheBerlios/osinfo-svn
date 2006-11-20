@@ -156,16 +156,30 @@ Module_hdd() {
 		case "$output_mode" in
 			'stdout')	# standard output
 
+				# HDD DEVICE NODE
 				add_header  "\n${drvdev}"
 
+				# HDD TYPE
 				add_attribute "$hdd_type"
-					add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
+				add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
+
+				# HDD REPORTED CAPACITY
 				add_attribute 'Capacity (reported)'
-					add_values  "$hdd_capacity_label"
-				add_attribute 'Capacity (actual)'
-					add_values  "$(hdd_human_readable $hdd_capacity)"
-				add_attribute 'Serial number'
-					add_values  "$hdd_serial"
+				add_values  "$hdd_capacity_label"
+
+				# verbose
+				if [ $isverbose -eq 1 ]; then
+
+					# HDD ACTUAL CAPACITY (verbose)
+					add_attribute 'Capacity (actual)'
+					add_values    "$(hdd_human_readable $hdd_capacity)"
+
+					# SERIAL NUMBER
+					add_attribute 'Serial number'
+					add_values    "$hdd_serial"
+				fi
+
+				# DMA
 				add_attribute 'DMA'
 					# if DMA is off, print it in red
 					if [ "$(grep -i off <<< $hdd_dma)" ]; then
@@ -177,30 +191,57 @@ Module_hdd() {
 						add_values  "${tcRED}n/a${tSTD}"
 					fi
 
-				if [ "$(type -p smartctl)" ]; then
-					# TODO: use add_subheader
-					add_attribute   'Lifetime'
-						add_values  "$hdd_lifetime"
-					add_attribute   'Start-up count'
-						add_values  "$hdd_startup"
-					add_attribute   'Temperature'
-						add_values  "$hdd_tempC"
-						[ "$hdd_tempC" ] 
-				[ $isverbose -ge 1 ] && \
-					add_attribute   'S.M.A.R.T.' && \
-						add_values  "$hdd_smart"
-					add_attribute   'Health Status'
-						add_values  "$hdd_health"
-				[ $isverbose -ge 1 ] && \
-					add_attribute   'ATA Standard' && \
-						add_values  "$hdd_ata_standard"
+				# ACTIVITY STATE
+				add_attribute 'State'
+				add_values "$hdd_state"
+
+
+				# more verbose
+				if [ $isverbose -ge 2 ]; then
+					add_attribute   'ATA Standard'
+					add_values      "$hdd_ata_standard"
+
+					add_attribute 'Driver'
+					add_values    "$hdd_driver" 
+
+					add_attribute 'Geometry' 
+					add_values    "$hdd_geometry"
 				fi
 
-				[ $isverbose -ge 1 ] && \
-					add_attribute 'Driver' && \
-						add_values  "$hdd_driver" && \
-				add_attribute 'Geometry' && \
-					add_values  "$hdd_geometry"
+
+				# verbose
+				if [ $isverbose -ge 1 ]; then
+					# SMART capability
+					add_attribute   'S.M.A.R.T.' 
+					add_values      "$hdd_smart"
+				fi
+
+				# S.M.A.R.T DATA
+				# TODO: use add_subheader
+				if [ "$(type -p smartctl)" ]; then
+
+					# TEMPERATURE
+					add_attribute   'Temperature'
+					add_values  "$hdd_tempC"
+						[ "$hdd_tempC" ] 
+
+					# verbose
+					if [ $isverbose -ge 1 ]; then
+
+						# LIFETIME
+						add_attribute   'Lifetime'
+						add_values      "$hdd_lifetime"
+
+						# START-UP COUNT
+						add_attribute   'Start-up count'
+						add_values      "$hdd_startup"
+
+						# HEALTH STATUS
+						add_attribute   'Health Status'
+						add_values      "$hdd_health"
+					fi
+				fi
+
 
 				flush_values
 
@@ -379,6 +420,9 @@ Module_hdd() {
 
 		# fdisk gives drive capacity in kB
 		hdd_capacity="$(fdisk -s $dev_scan)"
+
+		# get the activity state of the HDD
+		hdd_state="$(hdparm -C $dev_scan | awk -F\: {'print $NF'})"
 	}
 
 
@@ -901,6 +945,5 @@ Module_hdd() {
 	scan_hdd_raid() {
 		info	"todo"
 	}
-
 	###### END OF HDD SUBFUNCTIONS #############
 

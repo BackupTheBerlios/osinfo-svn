@@ -17,7 +17,6 @@ FEATURES and FIXES for 0.3:
 *	top 10 memory hoggers :)
 *	apache interface requires osinfo cgi
 *	pdf output sheet of the profile
-*	hdparm into HDD ; some HDD info only to verbose mode
 
 
 
