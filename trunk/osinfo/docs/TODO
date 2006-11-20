@@ -17,7 +17,7 @@ FEATURES and FIXES for 0.3:
 *	top 10 memory hoggers :)
 *	apache interface requires osinfo cgi
 *	pdf output sheet of the profile
-
+*	check for netcat binary in daemon mode!
 
 
 FEATURES and FIXES for 0.4:
