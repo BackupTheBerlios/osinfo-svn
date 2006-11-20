@@ -46,7 +46,7 @@ Module_devices() {
 	lshw_xml
 
 	# get entries from lspci to $DEVICE[]
-	load_device_array
+	load_lspci_array
 
 	if CheckReq_root "motherboard and BIOS data"; then
 		print_mobo_info
@@ -61,47 +61,17 @@ Module_devices() {
 ############################################
 # helper functions for to get device data
 # 
-
-	print_mobo_info(){
-
-		# load MOBO info from dmi
-		local handle_desc='Base Board information'
-		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_header    "Motherboard"
-
-		add_attribute ' Manufacturer' \
-					  'mother_board_manufacturer'
-		add_values    "$(get_mobo_manufacturer)"
-		              # these functions are inherited from module_dmi	
-		
-		add_attribute ' Model' \
-					  'mother_board_model'
-		add_values    "$(get_mobo_model)"
-
-		# load BIOS info from dmi
-		local handle_desc='BIOS Information'
-		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_attribute ' BIOS revision'	'bios_version'
-		add_values    "$(get_bios_revision)"
-
-		add_footer
-
-	
-	}
-#	print_mobobusinfo(){}
-#	print_pciinfo(){}
-#	print_apginfo(){}
-#	print_idebusinfo(){}
-#	print_scsibusinfo(){}
-#	print_usbbusinfo(){}
-
+	###################
+	## load_categories
+	#
 	# loads the categories to display
 	load_categories() {
 		CATEGORIES="Controllers Enhancements USB"
 	}
 
+	#####################
+	## print_categories
+	#
 	# this function defines all categories
 	# and prints the selected ones
 	print_categories(){
@@ -134,13 +104,44 @@ Module_devices() {
 
 		done
 	}
-#
-#
 
-	# fill up the DEVICE array to contain ' ' separated entries from lsmod.
+	####################
+	## print_mobo_info
+	print_mobo_info(){
+		# load MOBO info from dmi
+		local handle_desc='Base Board information'
+		extract_dmi ${handle_desc} > ${osinfo_tmp}
+
+		add_header    "Motherboard"
+
+		add_attribute ' Manufacturer' \
+					  'mother_board_manufacturer'
+		add_values    "$(get_mobo_manufacturer)"
+		              # these functions are inherited from module_dmi	
+		
+		add_attribute ' Model' \
+					  'mother_board_model'
+		add_values    "$(get_mobo_model)"
+
+		# load BIOS info from dmi
+		local handle_desc='BIOS Information'
+		extract_dmi ${handle_desc} > ${osinfo_tmp}
+
+		add_attribute ' BIOS revision'	'bios_version'
+		add_values    "$(get_bios_revision)"
+
+		add_footer
+	}
+
+
+
+	#####################
+	## load_lspci_array
+	#
+	# fill up the lspci array to contain ' ' separated entries from lsmod.
 	# [1] device type		# [2] manufacturer		# [3] device name	etc
 	# ${#devices[@]} # is the number of devices in the array
-	load_device_array() {
+	load_lspci_array() {
 		for DEVICE in $(lspci | awk {'$1="\b" ; print $0'} | tr ' ' '_' ); do
 			devices[$arraynr]="$(sed 's/:_/ /g ; s/_// ; s/^\ // ' <<< $DEVICE )"
 			 # the above changes the ':' character to space, which separates the two strings
@@ -156,6 +157,10 @@ Module_devices() {
 		done
 	}
 
+	#######################
+	## grep_lspci_array
+	#
+	# extracts entries from the device array 
 	grep_lspci_array() {
 		local device_id="$1"
 		local found_devices arraynr description
@@ -232,7 +237,10 @@ Module_devices() {
 		flush_values
 	}
 
-	# prints the usb devices in the system's usb bus
+	#######################
+	## print_usb_devices
+	#
+	# prints the usb devices in the system's usb bus seen by lsusb
 	print_usb_devices(){
 		# backup IFS
 		IFS_bak="$IFS" ; IFS=$'\n'
@@ -248,4 +256,12 @@ Module_devices() {
 		# restore IFS
 		IFS="$IFS_bak"
 	}
+
+	# some possible future functios
+	#	print_mobobusinfo(){}
+	#	print_pciinfo(){}
+	#	print_apginfo(){}
+	#	print_idebusinfo(){}
+	#	print_scsibusinfo(){}
+	#	print_usbbusinfo(){}
 

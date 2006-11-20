@@ -23,6 +23,9 @@ Module_video() {
 	add_values         "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
 						 awk -F: {'print $2'})"
 
+	add_attribute      "OpenGL renderer"
+	add_values         "$(get_opengl_renderer)"
+
 	add_attribute      "* Dri vendor"
 	add_values         "$(get_dri_vendor)"
 
@@ -48,6 +51,7 @@ Module_video() {
 	add_attribute      'Xorg log date*'
 	add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
 
+	
 	flush_values
 }
 
@@ -59,6 +63,11 @@ Module_video() {
 	function get_dri_vendor () {
 		awk -F\" '/Module dri/{print $2}' ${XORG_LOG} 
 		}
+
+	function get_opengl_renderer () {
+		glxinfo 2> /dev/null | grep -i 'opengl renderer' | \
+		 awk -F: {'print $NF'}
+	}
 
 	function get_drm_vendor () {
 		awk -F\" '/Module drm/{print $2}' ${XORG_LOG} 
