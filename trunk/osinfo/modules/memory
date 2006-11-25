@@ -2,30 +2,31 @@
 # MEMORY
 #
 # this module tells complete information of the memory
-# installed on the system.
+# installed and used on the system.
+# THE MODULE IS STILL VERY INCOMPLETE!
 #
-# only RAM at the moment and the solution is really dirty because
-# it uses lshw. 'free' and '/proc/meminfo' would also report
-# free RAM, but slightly incorrect number because it's the total
-# ram after kernel has allocated some for system services.
-#
-# requires root access
+# lshw is used for RAM size evaluation. the size is reported by BIOS
+# and is the most accurate way to detect the physical system memory.
+# 'free' and '/proc/meminfo' would also report free RAM, but slightly 
+# incorrectly, since they only detect total ram after kernel allocation.
 #
 # TODO: add support for memory type/speed detection thru lshw
+# TODO: memory usage
 Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"
+
 	local ram_size
 
 	if CheckReq lshw; then
 
+		# reserve a temp file
 		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
 		# meminfo or free don't give a proper value, so we use lshw
 		# meminfo="/proc/meminfo"
 
-		lshw_xml
 		extr_lshw_node memory > $mem_tmp
 
 		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
@@ -35,8 +36,17 @@ Module_memory() {
 		add_values        "$ram_size"
 		add_value_footer  "MB"
 
+		if [ $isdebug -ge 1 ]; then
+			print_total_usage
+		fi
+
 	fi
 
 	flush_values
 }
+
+	function print_total_usage() {
+		add_nc_header "Process%col%PID%col%usage MB%col%usage %%col%forks"
+	}
+
 

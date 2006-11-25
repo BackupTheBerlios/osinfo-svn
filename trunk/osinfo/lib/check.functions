@@ -27,6 +27,13 @@ function Check_rundir {
 #  1  application
 CheckReq() {
 	if [ "$(type -p ${1})" ]; then
+		case ${1} in
+			'lshw')
+				# run lshw, since if the requirement is asked, it is going
+				# to be run anyway.
+				lshw_xml
+				;;
+		esac
 		return 0
 	else
 		info    "Please install ${1} to collect this information"
@@ -45,6 +52,9 @@ CheckReq_lshw() {
 		flush_values
 		return 1
 	else
+		# run lshw, since if the requirement is asked, it is going
+		# to be run anyway.
+		lshw_xml
 		return 0
 	fi
 }
