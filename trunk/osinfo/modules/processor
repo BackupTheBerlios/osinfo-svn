@@ -32,20 +32,17 @@ Module_processor() {
 		for cpunr in $(seq 1 1 $cpu_count); do
 			[ $cpu_count -gt 1 ] && add_header	"CPU  $cpunr"
 
-			add_attribute "CPU Vendor"      "processor_vendor"
+			add_attribute     "CPU Vendor"      "processor_vendor"
 			add_values        "$(grep 'vendor' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
 			                     awk -F': ' {'print $2'})"
 
-			add_attribute "CPU Model"       "processor_model"
+			add_attribute     "CPU Model"       "processor_model"
 			add_values        "$(get_cpu_model)"
 
-			add_attribute "CPU Frequency"   "processor_speed"
+			add_attribute     "CPU Frequency"   "processor_speed"
 			add_values        "$(grep 'cpu MHz' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
 			                     awk -F': ' {'print $2'})"
 			add_value_footer  "MHz"
-
-			add_attribute     "Virtualization"   "vmx"
-			add_values        "$(get_cpu_vmx)"
 
 
 			if [ $isverbose -ge 1 ]; then
@@ -60,7 +57,7 @@ Module_processor() {
 					scan_cpu_voltage
 				fi
 
-				add_attribute "CPU Cache"
+				add_attribute "CPU L2 Cache"
 						local cache_size="$(grep 'cache' ${cpuinfo} | sed -n "$cpunr{p;q;}" )"
 						add_values       "$(grep -Eo '[0-9]+' <<< $cache_size)"
 						add_value_footer "$(awk {'print $NF'} <<< $cache_size)"
@@ -73,6 +70,11 @@ Module_processor() {
 					add_values        "$(grep 'stepping' ${cpuinfo} | sed -n "$cpunr{p;q;}" | \
 					                     awk -F': ' {'print $2'})"
 				fi
+
+				add_attribute     "Virtualization"   "vmx"
+				add_values        "$(get_cpu_vmx)"
+
+				flush_values
 
 				if	CheckReq_lshw && CheckReq_root "more information" ; then
 

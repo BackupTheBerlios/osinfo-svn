@@ -166,7 +166,7 @@ Module_network() {
 	function get_device_name() {
 		# parameters:
 		#  1  output of ifconfig (file)
-		#  1  output of iwconfig (file)
+		#  2  output of iwconfig (file)
 
 		# detect IRQ from ifconfig and compare it to lspci
 		local irq="$(grep -o 'Interrupt[[:punct:]][0-9]*' "${1}" | \

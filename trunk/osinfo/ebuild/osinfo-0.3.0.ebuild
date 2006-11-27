@@ -28,6 +28,7 @@ DEPEND="xsl? (dev-libs/libxslt)
 		sys-apps/coreutils
 		sys-apps/grep
 		sys-apps/sed
+		sys-devel/bc
 		|| (sys-apps/gawk sys-apps/mawk)"
 
 RDEPEND="${DEPEND}"

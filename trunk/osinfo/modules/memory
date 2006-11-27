@@ -16,37 +16,66 @@ Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"
 
-	local ram_size
+	print_physical_ram_info
 
-	if CheckReq lshw; then
+	# meminfo="/proc/meminfo"
 
-		# reserve a temp file
-		mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-		TempFiles=("${TempFiles[@]}" "$mem_tmp" )
+	add_attribute     'Available RAM'
+	add_values        "$(get_available_ram)"
 
-		# meminfo or free don't give a proper value, so we use lshw
-		# meminfo="/proc/meminfo"
-
-		extr_lshw_node memory > $mem_tmp
-
-		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
-		ram_size="$(bc -l <<< scale=1\;$ram_size/1024/1024)"
-
-		add_attribute     'Total RAM'	'ram'
-		add_values        "$ram_size"
-		add_value_footer  "MB"
-
-		if [ $isdebug -ge 1 ]; then
-			print_total_usage
-		fi
-
+	if [ $isdebug -ge 1 ]; then
+		print_total_usage
 	fi
+
 
 	flush_values
 }
+
+	function print_physical_ram_info() {
+
+		if CheckReq lshw; then
+
+			# reserve a temp file
+			mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$mem_tmp" )
+
+			extr_lshw_node memory > $mem_tmp
+
+
+			# PRINT
+
+			add_attribute     'Physical RAM'	'ram'
+			add_values        "$(get_physical_ram_size ${mem_tmp})"
+			add_value_footer  "MB"
+
+			add_attribute     'RAM description'
+			add_attribute     'RAM vendor'
+			add_attribute     'RAM serial'
+			add_attribute     'RAM slot'
+			add_attribute     'RAM bits'
+			add_attribute     'RAM speed'
+			
+			flush_values
+		fi
+
+	}
 
 	function print_total_usage() {
 		add_nc_header "Process%col%PID%col%usage MB%col%usage %%col%forks"
 	}
 
+	function get_physical_ram_size() {
+	# Parameters:
+	#  1  lshw xml memory node file 
+	#     (output from `extr_lshw_node memory`)
 
+		mem_tmp="${1}"
+		local ram_size
+
+		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
+		bc -l <<< scale=1\;$ram_size/1024/1024
+	}
+
+	function get_available_ram() {
+		free | grep ^Mem | awk {'print $2'}
+	}
