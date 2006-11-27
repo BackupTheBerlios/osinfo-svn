@@ -32,7 +32,6 @@ Module_memory() {
 }
 
 	function print_physical_ram_info() {
-
 		if CheckReq lshw; then
 
 			# reserve a temp file
@@ -40,6 +39,7 @@ Module_memory() {
 			TempFiles=("${TempFiles[@]}" "$mem_tmp" )
 
 			extr_lshw_node memory > $mem_tmp
+			#cat "$mem_tmp"
 
 
 			# PRINT
@@ -57,7 +57,6 @@ Module_memory() {
 			
 			flush_values
 		fi
-
 	}
 
 	function print_total_usage() {

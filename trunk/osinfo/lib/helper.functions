@@ -192,7 +192,6 @@ extr_lshw_node() {
 			# is echoed to whichever function called this
 			echo "%node $nr%"
 			sed -n "$begin,$nigeb{p;}" "${lshw_xml_file}"
-
 		done
 	fi
 }
