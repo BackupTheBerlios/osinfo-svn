@@ -1,0 +1,116 @@
+#######################
+# MEMORY
+#
+# This module tells complete information of the RAM memory installed on the system.
+#
+# lshw is used for RAM size evaluation. the size is reported by BIOS
+# and is the most accurate way to detect the physical system memory.
+# 'free' and '/proc/meminfo' would also report free RAM, but slightly 
+# incorrectly, since they only detect total ram after kernel allocation.
+#
+Module_memory() {
+	local moduleName="System memory"
+	module_header "${moduleName}"
+
+	print_physical_ram_info
+
+	flush_values
+}
+
+	function print_physical_ram_info() {
+		if CheckReq lshw; then
+
+			# reserve temp file
+			ramnode="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$ramnode" "$banknode" )
+
+			extr_lshw_node memory > $ramnode
+
+			# print
+			add_header        'RAM'
+			add_attribute     'Physical RAM'	'ram'
+			add_values        "$(get_physical_ram_size ${ramnode})"
+			add_value_footer  "MB"
+
+			# xml cannot flush here, as add_footer is defined below
+			[ $usexml -ne 1 ] && flush_values 
+
+			# get specific membank info
+			#if CheckReq_root more specific RAM information; then
+			if CheckReq_root silent; then
+
+				# reserve another temp file
+				banknode="$(mktemp /tmp/osinfo.XXXXXX)"
+				TempFiles=("${TempFiles[@]}" "$banknode" )
+
+				# get the number of memory banks installed
+				local membank_nr="$(grep bank ${ramnode} | wc -l)"
+
+				# correct the offset
+				((membank_nr--))
+
+				# extract information of each bank
+				for bank in $(seq 0 1 $membank_nr); do
+
+					# extract the corresponding bank node
+					extr_lshw_node "bank:$bank"	> ${banknode}
+
+					# debug
+					[ $isdebug -ge 1 ] && cat $banknode
+
+					add_header        "Bank $bank"
+
+					add_attribute     "RAM bank$bank description"
+					add_values        "$(extr_xml_value \
+					                  $(grep description $banknode))"
+
+					add_attribute     "RAM bank$bank size"
+					add_values        "$(extr_xml_value \
+					                  $(grep size $banknode))"
+
+					add_attribute     "RAM bank$bank vendor"
+					add_values        "$(extr_xml_value \
+					                  $(grep vendor $banknode))"
+
+					add_attribute     "RAM bank$bank serial"
+					add_values        "$(extr_xml_value \
+					                  $(grep serial $banknode))"
+
+					add_attribute     "RAM bank$bank slot"
+					add_values        "$(extr_xml_value \
+					                  $(grep slot $banknode))"
+
+					add_attribute     "RAM bank$bank width"
+					add_values        "$(extr_xml_value \
+					                  $(grep width $banknode))"
+
+					add_attribute     "RAM bank$bank speed"
+					add_values        "$(extr_xml_value \
+					                  $(grep speed $banknode))"
+
+					add_footer        "Bank"
+
+					[ $usexml -ne 1 ] && flush_values 
+					# xml cannot flush here, as add_footer is defined below
+
+				done
+
+			fi
+			
+			[ $usexml -eq 1 ] && add_footer # RAM
+			flush_values
+		fi
+	}
+
+	function get_physical_ram_size() {
+	# Parameters:
+	#  1  lshw xml memory node file 
+	#     (output from `extr_lshw_node memory`)
+
+		ramnode="${1}"
+		local ram_size
+
+		ram_size="$(grep size ${ramnode} | head -n 1 | grep -Eo '[0-9]+')"
+		bc -l <<< scale=1\;$ram_size/1024/1024
+	}
+
