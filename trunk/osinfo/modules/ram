@@ -1,5 +1,5 @@
 #######################
-# MEMORY
+# RAM
 #
 # This module tells complete information of the RAM memory installed on the system.
 #
@@ -8,8 +8,8 @@
 # 'free' and '/proc/meminfo' would also report free RAM, but slightly 
 # incorrectly, since they only detect total ram after kernel allocation.
 #
-Module_memory() {
-	local moduleName="System memory"
+Module_ram() {
+	local moduleName="System RAM memory"
 	module_header "${moduleName}"
 
 	print_physical_ram_info
