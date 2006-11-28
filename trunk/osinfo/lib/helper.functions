@@ -181,7 +181,6 @@ extr_lshw_node() {
 					break;
 
 				fi
-
 			done
 
 			# if the closing node wasn't found, read to EOF
@@ -212,6 +211,44 @@ function netcat() {
 	else
 		info "netcat binary not found!"
 		exit 1
+	fi
+}
+
+
+function check_dependencies() {
+	local deps=0 # 0 is ok
+
+	DEPENDENCIES="netcat lshw bc foobar" # add more
+	info "Checking dependencies..."
+	flush_values
+
+	for dep in $DEPENDENCIES; do
+		case $dep in
+			'netcat')
+				set -x
+				if ! isinstalled netcat || ! isinstalled nc; then
+					info "netcat not found"
+					info "  netcat is required to send/receive data to/from osinfo daemon"
+				fi
+				set +x
+			;;
+			*)
+				if ! isinstalled $dep; then
+					info "$dep not found"
+				fi
+			;;
+			
+		esac
+
+		flush_values
+	done
+}
+
+function isinstalled() {
+	if [ "$(type -p ${1})" ]; then
+		return 0
+	else
+		return 1
 	fi
 }
 

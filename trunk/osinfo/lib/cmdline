@@ -177,6 +177,12 @@ function parse_arguments() {
 					PRINT_Version
 					exit 0;
 					;;
+
+				'--checkdeps')
+					check_dependencies
+					exit 0
+					;;
+
 				'--htmldebug')
 					hostdir="html/hosts"
 					usexml=1
