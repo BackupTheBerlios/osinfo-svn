@@ -131,15 +131,16 @@ extr_node() {
 extr_lshw_node() {
 	local node_id="${1}"
 	local node_closer="${2}"
-	local nr node
+	local nr node begin_indent
 	local all_nodes=""
 	local node_count=0
 
+	# generate the temp files
 	input_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-	TempFiles=("${TempFiles[@]}" "$input_tmp" )
+	TempFiles=("${TempFiles[@]}" "${input_tmp}" )
 
-	# add line numbers
-	grep -n . "${lshw_xml_file}" > "$input_tmp"
+	# add line numbers (the lshw_xml_file is global)
+	grep -n . "${lshw_xml_file}" > "${input_tmp}"
 
 	# if a special node closer is not defined, use the node_id
 	[ ! "$node_closer" ] && node_closer="node"
@@ -151,7 +152,7 @@ extr_lshw_node() {
 	node_count="$(grep -i "${node_id}" <<< "${all_nodes}" | wc -l)"
 
 	# this loop extracts the information between the node begin
-	# and end lines, based on indentation level (xml), echoing
+	# and end lines, based on indentation level (spaces), echoing
 	# the results out
 	if [ $node_count -ge 1 ]; then
 		for nr in $(seq 1 1 $node_count); do
@@ -159,8 +160,11 @@ extr_lshw_node() {
 
 			# this gets the line number of the wanted node from lshw
 			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
-			local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
-					     grep -Eo '^[ ]*' | wc -m)"
+
+			# count the node indentation (spaces)
+			local begin_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
+					     grep -Eo '\ *' | wc -m)"
+					     #grep -Eo '^[ ]*' | wc -m)"
 
 			# this loop takes care that all subnodes are included, by comparing
 			# the indentation level. not very elegant..
@@ -169,9 +173,9 @@ extr_lshw_node() {
 			for node in $(sed -n "$(($begin+1)),\${p;}" "${input_tmp}" | \
 			              grep ${node_closer}); do
 
-				# if the indentation matches...
+				# if the indentation matches (counting spaces)
 				if [ "$(awk -F: {'print $2'} <<< ${node} | grep -Eo '\ *' | \
-					wc -m)" == "$node_indent" ]; then
+					wc -m)" == "$begin_indent" ]; then
 
 					# read the line# to $nigeb (begin backwards)
 					# the line number of the closing node
@@ -197,9 +201,11 @@ extr_lshw_node() {
 
 
 # extracts value from <xml>value</xml>
+# Parameters: 
+#  1 stdin xml string (variable)
 extr_xml_value() {
-	#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' <<< "${1}"
-	sed 's/[^>]*>\([^<]*\)\(<[^.]*\)*/\1/' <<< "${1}"
+	#sed 's/[^>]*>\([^<]*\)<[^.]*/\1/' <<< "${@}"
+	sed 's/[^>]*>\([^<]*\)\(<[^.]*\)*/\1/' <<< "${@}"
 }
 
 

@@ -94,7 +94,6 @@ function add_nc_header() {
 function add_footer() {
 	if [ "$1" ]; then
 		infostring[${#infostring[@]}]="%footer%${@}"
-		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	else
 		close_last_header
 	fi

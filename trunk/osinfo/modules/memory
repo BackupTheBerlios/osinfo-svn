@@ -18,12 +18,12 @@ Module_memory() {
 
 	print_physical_ram_info
 
-	# meminfo="/proc/meminfo"
-
-	add_attribute     'Available RAM'
-	add_values        "$(get_available_ram)"
-
 	if [ $isdebug -ge 1 ]; then
+		# meminfo="/proc/meminfo"
+
+		add_attribute     'Available RAM'
+		add_values        "$(get_available_ram)"
+
 		print_total_usage
 	fi
 
@@ -35,26 +35,74 @@ Module_memory() {
 		if CheckReq lshw; then
 
 			# reserve a temp file
-			mem_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-			TempFiles=("${TempFiles[@]}" "$mem_tmp" )
+			ramnode="$(mktemp /tmp/osinfo.XXXXXX)"
+			banknode="$(mktemp /tmp/osinfo.XXXXXX)"
+			TempFiles=("${TempFiles[@]}" "$ramnode" "$banknode" )
 
-			extr_lshw_node memory > $mem_tmp
-			#cat "$mem_tmp"
+			extr_lshw_node memory > $ramnode
 
-
-			# PRINT
-
+			# print
+			add_header        'RAM'
 			add_attribute     'Physical RAM'	'ram'
-			add_values        "$(get_physical_ram_size ${mem_tmp})"
+			add_values        "$(get_physical_ram_size ${ramnode})"
 			add_value_footer  "MB"
 
-			add_attribute     'RAM description'
-			add_attribute     'RAM vendor'
-			add_attribute     'RAM serial'
-			add_attribute     'RAM slot'
-			add_attribute     'RAM bits'
-			add_attribute     'RAM speed'
+			[ $usexml -ne 1 ] && flush_values 
+			# xml cannot flush here, as add_footer is defined below
+
+			# get specific membank info
+			#if CheckReq_root more specific RAM information; then
+			if CheckReq_root silent; then
+
+				# get the number of memory banks installed
+				local membank_nr="$(grep bank ${ramnode} | wc -l)"
+
+				# correct the offset
+				((membank_nr--))
+
+				# extract information of each bank
+				for bank in $(seq 0 1 $membank_nr); do
+
+					# extract the corresponding bank node
+					extr_lshw_node "bank:$bank"	> ${banknode}
+					#cat $banknode
+
+					add_header        "Bank $bank"
+
+					add_attribute     'RAM description'
+					add_values        "$(extr_xml_value \
+					                  $(grep description $banknode))"
+
+					add_attribute     'RAM vendor'
+					add_values        "$(extr_xml_value \
+					                  $(grep vendor $banknode))"
+
+					add_attribute     'RAM serial'
+					add_values        "$(extr_xml_value \
+					                  $(grep serial $banknode))"
+
+					add_attribute     'RAM slot'
+					add_values        "$(extr_xml_value \
+					                  $(grep slot $banknode))"
+
+					add_attribute     'RAM bits'
+					add_values        "$(extr_xml_value \
+					                  $(grep bits $banknode))"
+
+					add_attribute     'RAM speed'
+					add_values        "$(extr_xml_value \
+					                  $(grep speed $banknode))"
+
+					add_footer        "Bank"
+
+					[ $usexml -ne 1 ] && flush_values 
+					# xml cannot flush here, as add_footer is defined below
+
+				done
+
+			fi
 			
+			[ $usexml -eq 1 ] && add_footer # RAM
 			flush_values
 		fi
 	}
@@ -68,10 +116,10 @@ Module_memory() {
 	#  1  lshw xml memory node file 
 	#     (output from `extr_lshw_node memory`)
 
-		mem_tmp="${1}"
+		ramnode="${1}"
 		local ram_size
 
-		ram_size="$(grep size ${mem_tmp} | head -n 1 | grep -Eo '[0-9]+')"
+		ram_size="$(grep size ${ramnode} | head -n 1 | grep -Eo '[0-9]+')"
 		bc -l <<< scale=1\;$ram_size/1024/1024
 	}
 

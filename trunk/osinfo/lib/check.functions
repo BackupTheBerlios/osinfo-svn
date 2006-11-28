@@ -92,17 +92,22 @@ CheckReq_sensors() {
 ##
 # Checks if we are run as root and print a message if we are not.
 # Returns 0 if we are root and 1 if we are not.
+#  Parameters:
+#   The parameters given to this function generate the info message.
+#   If the parameter is 'silent', nothing will be printed.
 CheckReq_root() {
-	# give a parameter is the standard output info is not describable enough
-	if [ ! "$@" ]; then
+	# give a parameter if the standard message is too ambiguent
+	if [ ${#@} -eq 0 ]; then
 		local msg="this information"
 	else
 		local msg="$@"
 	fi
 
 	if [ "$EUID" != 0 ]; then
-		info    "Please run $appname as super-user to collect $msg"
-		flush_values
+		if [ "$1" != "silent" ]; then
+			info    "Please run $appname as super-user to collect $msg"
+			flush_values
+		fi
 		return 1
 	else
 		return 0

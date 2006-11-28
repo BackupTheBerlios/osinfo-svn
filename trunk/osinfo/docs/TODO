@@ -46,7 +46,6 @@ LATER FEATURES:
 *	general usb device detection: cameras etc
 *	hal/dbus stuff
 *	window manager version
-*	--checkdep switch
 
 
 BUGS:
