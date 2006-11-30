@@ -1,0 +1,16 @@
+Module_samba() {
+	local moduleName="Samba share status"
+	module_header   "${moduleName}"
+
+	if isinstalled smbstatus; then
+
+		smbstatus
+
+	else
+
+		info "smbstatus binary not found"
+		flush_values
+
+	fi
+
+}
