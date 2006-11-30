@@ -50,12 +50,28 @@ src_unpack() {
 src_install() {
 	
 	mkdir -p ${D}/usr/sbin		# D is like a virtual / where we install our stuff, before emerge merge it with the real /
-	cp osinfo ${D}/usr/sbin
+	cp osinfo/osinfo ${D}/usr/sbin
+
+	doman osinfo/osinfo.1
 
 	#if use doc; then
 	#	mkdir -p ${D}/usr/share/doc/${P}
 	#	cp ${FILESDIR}/readme.gz ${D}/usr/share/doc/${P}/
 	#fi
+}
 
+pkg_postinst() {
+	einfo
+	einfo "Osinfo is still beta; you can help be addressing bugs at"
+	einfo "the osinfo mailinglist: osinfo@lists.berlios.de"
+	einfo
+	einfo "Osinfo has many nice features that are not obvious at first."
+	einfo "You can create an HTML document of the computers in your"
+	einfo "LAN, run osinfo in daemon mode on a box with Apache server."
+	einfo "Send the xml sheet to the daemon with the --tcpsend option."
+	einfo
+	einfo "You can freely add more modules to osinfo. Check the source"
+	einfo "code inside the tarball. Thank you for interest."
+	einfo 
 }
 

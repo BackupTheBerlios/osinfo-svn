@@ -30,7 +30,7 @@ help:
 	@echo "  clean           - remove *~"
 	@echo "  dist-all-in-one - makes a huge all in one script. (replaces source foo with foo)"
 
-dist: distclean
+dist: distclean man
 	mkdir -p dist/$(appname)/src
 	for dir in $(subdirs); do \
 		mkdir -p dist/$(appname)/src/$$dir ; \
@@ -51,6 +51,9 @@ dist: distclean
 		cat $$sources >> osinfo 2>/dev/null ; \
 	done
 
+	# manual
+	cp man/osinfo.1 dist/osinfo
+
 	# finally the mainfile
 	# clear out sourcing external files, since it's now all-in-one
 	cd dist/$(appname) && \
@@ -67,10 +70,15 @@ dist: distclean
 # And then include the output in the paramerter of tar.
 # Bad that it doesn't work in a variable.
 dist-tarbz2: dist
-	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../osinfo | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}-$${patch_version}).tar.bz2" $(appname)
+	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../lib/version | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}-$${patch_version}).tar.bz2" $(appname)
 
 distclean: clean
 	-rm -rf dist
+
+man: 
+	cd man
+	cat osinfo.man.txt |  txt2man -t osinfo -s 1 -r "OSinfo manual" > osinfo.1
+	cd ..
 
 clean:
 	-rm -f *~ *.tmp
@@ -78,5 +86,7 @@ clean:
 
 checkxml:
 	xmllint --valid osinfo.xml
+
+tarbz2: dist-tarbz2
 
 .PHONY : all clean dist distclean checkxml

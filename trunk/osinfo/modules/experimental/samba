@@ -7,10 +7,8 @@ Module_samba() {
 		smbstatus
 
 	else
-
 		info "smbstatus binary not found"
-		flush_values
-
 	fi
 
+	flush_values
 }
