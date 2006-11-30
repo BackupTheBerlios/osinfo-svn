@@ -7,7 +7,7 @@
 #helpers+=lib/check.functions
 #helpers+=modules/osinfo.modules
 mainapp=osinfo
-subdirs=docs conf man init.d lib modules modules/experimental xslt profiles
+subdirs=docs conf man init.d lib modules modules/experimental xslt profiles include
 
 #helpers=lib/*
 #helpers+=modules/*

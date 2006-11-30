@@ -1,5 +1,14 @@
+#################################
+## Default profile
+#
+# The profile defines what kind of output osinfo gives in standard mode.
+# Add stable modules to all profiles where applicaple.
+
+# The profile section of osinfo requires still much work.
 default_profile() {
  	for module in $module_cmds; do
+
+		local GOOD_MODULES
 	
 		# TODO: check that the module being called is supported on the running OS
 
@@ -11,19 +20,21 @@ default_profile() {
 		#	allowed_modules=$MODULES_ALL-$MODULES_SU_ONLY
 		#fi
 
-		if [ $module = 'all' ]; then
-			if [ "$SYSTEM" == "linux" ] ; then
-				#module_cmds="$MODULES_LINUX"
-				break
-			# TODO: please check if this works on bsd and old bash
-			elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
-				#module_cmds="$MODULES_BSD"
-				break
-			fi
-		elif [ $module = 'lanforce' ]; then
+		# check OS modules
+		if [ "$SYSTEM" == "linux" ] ; then
+			GOOD_MODULES="$MODULES_LINUX"
+			break
+		# TODO: please check if this works on bsd and old bash
+		elif [ "$(grep -i bsd <<< "$SYSTEM")" ]; then
+			GOOD_MODULES="$MODULES_BSD"
+			break
+		fi
+
+		# check LanForce output
+		if [ $module = 'lanforce' ]; then
 			lanforce=1
 			usexml=1
-			#module_cmds="$MODULES_LANFORCE"
+			GOOD_MODULES="$MODULES_LANFORCE"
 			break
 		fi
 
@@ -38,6 +49,7 @@ default_profile() {
 
 	done
 
+	# real root stuff here, this doesn't work right yet
 	if [ "$prefix" != '/' ] ; then
 		tmp_module_cmds="$module_cmds"
 		module_cmds=""
@@ -57,29 +69,16 @@ default_profile() {
 	# and the actual modules, we first check if there's a Meta-module
 	# of that name. in that case, it is used.
 	# NOTE: FreeBSD runs all modules
-
  	for module in $module_cmds; do
-
 		case $module in
-
-				system|\
-				distro|\
-				kernel|\
-				processor|\
-				ram|\
-				memory|\
-				hdd|\
-				network|\
-				wlan|\
-				dmi|\
-				battery|\
-				applications|\
-				terminal|\
-				devices|\
-				cdrom|\
-				users|\
-				services) \
+			$(grep -o $module <<< $GOOD_MODULES) )
 				Module_${module}
+				;;
+
+			'all')
+				for _module in $GOOD_MODULES; do
+					Module_${_module}
+				done
 				;;
 
 			*)
@@ -108,7 +107,6 @@ default_profile() {
 				fi
 
 				;;
-
 		esac
 	done
 

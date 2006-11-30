@@ -9,11 +9,11 @@
 
 MODULES_LINUX='system distro kernel processor ram memory hdd network wlan dmi applications terminal devices cdrom users services battery oem'
 MODULES_BSD='system kernel applications terminal network devices dmi'
-MODULES_BROKEN='printers lvm bus sensors nagios'
+MODULES_BROKEN='printers lvm bus sensors nagios samba nfs shares'
 MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus battery oem ram'
 MODULES_SU_ONLY='cdrom hdd dmi oem'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors nagios battery video ram'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network oem printers processor services system terminal users wlan lvm bus sensors nagios battery video ram samba nfs shares'
 
 
 ## META-MODULES
