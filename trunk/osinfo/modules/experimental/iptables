@@ -1,0 +1,10 @@
+Module_iptables() {
+	local moduleName="Iptables"
+	local moduleDescription="Linux kernel iptables rule parser"
+	module_header   "${moduleName}"
+
+	iptables -L -v -n
+
+	flush_values
+}
+

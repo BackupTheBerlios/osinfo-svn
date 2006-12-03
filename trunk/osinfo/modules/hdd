@@ -10,8 +10,8 @@
 # used tools:
 # fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc
 Module_hdd() {
-	local moduleName="Disk information"
-	local moduleDescription=""
+	local moduleName="Hard drive configuration"
+	local moduleDescription="Information of the hard drives in the system"
 	module_header "${moduleName}"
 
 	# developement status:
@@ -529,6 +529,10 @@ Module_hdd() {
 		local dev_scan="${1}" part_free=0
 		partitions_on_drive="$(grep ^${dev_scan} ${fdisk_info} | wc -l)"
 		local ID=$hdd_pt_ID
+		#local swap_color="${tcYELLOW}"
+		# marking partitions in different colours would be great, but
+		# the 'column' tool does not allow that. we should rewrite the
+		# column function.
 
 		#TODO for version 0.5 or so
 		#hdd_fs_ID=[83] [7] [82] ... #which tells the FS type
@@ -595,6 +599,7 @@ Module_hdd() {
 				# it might be swap..
 				if [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
 				# mark 'swap' as mountpoint for swap partitions, if they're in use
+					#hdd_pt_mp[$ID]="${swap_color}swap${tSTD}"
 					hdd_pt_mp[$ID]="swap"
 					hdd_pt_used[$ID]="$(swapon -s | \
 						grep ^${hdd_pt_node[$ID]} | awk {'print $4'})"

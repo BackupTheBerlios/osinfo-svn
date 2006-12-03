@@ -1,0 +1,11 @@
+Module_template() {
+	local moduleName="<insert module's name to be printed>"
+	local moduleDescription="<insert a short description of the module>"
+	module_header   "${moduleName}"
+
+	# the module
+
+	flush_values
+}
+
+	# additional module subfunctions
