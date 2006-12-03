@@ -274,6 +274,10 @@ if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	}
 fi
 
+function hddtemp() { 
+	hddtemp 2>"${error_log}"
+	}
+
 # make a guess of the operating system
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"
 

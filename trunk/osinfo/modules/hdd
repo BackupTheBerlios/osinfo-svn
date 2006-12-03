@@ -159,9 +159,33 @@ Module_hdd() {
 				# HDD DEVICE NODE
 				add_header  "\n${drvdev}"
 
-				# HDD TYPE
+				# HDD TYPE and model name
 				add_attribute "$hdd_type"
 				add_values  "$(echo $hdd_vendor $hdd_model | sed 's/^ *//')"
+
+				# bus configuration; verbose
+				if [ $isverbose -ge 1 ]; then
+					add_attribute 'Bus configuration'
+					# case by the last letter in $drvdev
+					case ${drvdev: -1:1} in
+						'a')
+							add_values 'primary master'
+							;;
+						'b')
+							add_values 'primary slave'
+							;;
+						'c')
+							add_values 'secondary master'
+							;;
+						'd')
+							add_values 'secondary slave'
+							;;
+						*)
+							add_values 'unknown'
+							;;
+					esac
+				fi
+
 
 				# HDD REPORTED CAPACITY
 				add_attribute 'Capacity (reported)'
@@ -191,12 +215,13 @@ Module_hdd() {
 						add_values  "${tcRED}n/a${tSTD}"
 					fi
 
-				# ACTIVITY STATE
-				add_attribute 'State'
-				add_values "$hdd_state"
+				# ACTIVITY STATE; verbose
+				if [ $isverbose -ge 1 ]; then
+					add_attribute 'State'
+					add_values "$hdd_state"
+				fi
 
-
-				# more verbose
+				# ATA standard; more verbose
 				if [ $isverbose -ge 2 ]; then
 					add_attribute   'ATA Standard'
 					add_values      "$hdd_ata_standard"
@@ -209,8 +234,8 @@ Module_hdd() {
 				fi
 
 
-				# verbose
-				if [ $isverbose -ge 1 ]; then
+				# SMART capability; more verbose
+				if [ $isverbose -ge 2 ]; then
 					# SMART capability
 					add_attribute   'S.M.A.R.T.' 
 					add_values      "$hdd_smart"
@@ -251,7 +276,6 @@ Module_hdd() {
 				add_nc_header	" Partition%col%mountpoint%col%blocks%col%free%col%filesystem\n"
 				add_nc_header	" ---------%col%----------%col%------%col%----%col%----------"
 
-
 				for hdd_pt in $(seq 1 1 $partitions_on_drive); do
 					# print the device node
 					add_attribute "  ${hdd_pt_node[$hdd_pt]}"
@@ -271,7 +295,7 @@ Module_hdd() {
 									   ${hdd_pt_free[$hdd_pt]})"
 						#add_values    "${hdd_pt_free_pc[$hdd_pt]})"
 						else
-							add_values ' '
+							add_values '-'
 						fi
 
 						# fs type
@@ -580,11 +604,11 @@ Module_hdd() {
 					hdd_pt_used[$ID]="n/a"
 				fi
 
-				# set the rest to unknown values for proper columnation
-				hdd_pt_capacity[$ID]="n/a"
-				hdd_pt_free[$ID]="n/a"
-				hdd_pt_used_pc[$ID]="n/a"
-				hdd_pt_fs_size[$ID]="n/a"
+				# define the rest to empty values.
+				hdd_pt_capacity[$ID]=""
+				hdd_pt_free[$ID]=""
+				hdd_pt_used_pc[$ID]=""
+				hdd_pt_fs_size[$ID]=""
 
 			fi
 
