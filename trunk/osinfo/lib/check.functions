@@ -4,11 +4,12 @@
 # checks 1) if the logfile exists,
 #        2) if it is writable
 #        3) tries to touch one if applicaple
+#        4) change file owner properties to a+rwx
 function Check_logfile {
 	touch "${error_log}" &>/dev/null
 
 	if [ $? -eq 0 ]; then # success
-		chmod 664 "${error_log}"
+		chmod a+rwx "${error_log}" &>/dev/null
 	else # fail
 		error "Could not touch log file $error_log."
 	fi
