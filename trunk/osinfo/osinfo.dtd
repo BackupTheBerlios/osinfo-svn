@@ -1,72 +1,112 @@
-<!ELEMENT osinfo (distribution|
+<!ELEMENT osinfo (script|
+                  computer|
+                  scanning|
                   system|
+                  distribution|
                   kernel|
                   processor|
-                  applications|
-                  terminal_info|
-                  dmi_information|
+                  system_ram_memory|
                   system_memory|
-                  devices|
-                  users|
-                  cd_dvd_drives|
+                  hard_drive_configuration|
                   network_information|
                   wlan_information|
-                  disk_information|
-                  services)*>
+                  dmi_information|
+                  applications|
+                  terminal_info|
+                  devices|
+                  enhancements|
+                  cd_dvd_drives|
+                  users|
+                  services|
+                  battery|
+                  oem_information)*>
+
+
+<!ELEMENT script EMPTY>
+<!ATTLIST script version CDATA #REQUIRED>
+
+<!ELEMENT computer EMPTY>
+<!ATTLIST computer profile  CDATA #REQUIRED
+                   hostname CDATA #REQUIRED
+                   domain   CDATA #REQUIRED
+                   os       CDATA #REQUIRED
+                   cpu      CDATA #REQUIRED>
+
+<!ELEMENT scanning EMPTY>
+<!ATTLIST scanning date CDATA #REQUIRED>
 
 
 
-<!ELEMENT cd_dvd_drives (cd_drive)*>
-<!ELEMENT cd_drive (attribute+)>
-<!ATTLIST cd_drive name CDATA #REQUIRED>
 
-<!ELEMENT devices (attribute+)>
+<!ELEMENT attribute (description|value)*>
+<!ATTLIST attribute name CDATA #REQUIRED
+                    code CDATA #IMPLIED>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT value (#PCDATA)>
 
-<!ELEMENT system_memory (attribute+)>
-
-<!ELEMENT users (current_user|
-                 last_logged_in_user|
-                 all_users)*>
-<!ELEMENT current_user (attribute+)>
-<!ELEMENT last_logged_in_user (attribute+)>
-<!ELEMENT all_users (value+)>
-
-<!ELEMENT applications (attribute+)>
-
-<!ELEMENT terminal_info (attribute+)>
-
-<!ELEMENT processor (attribute+)>
-
-<!ELEMENT kernel (attribute+)>
 
 <!ELEMENT system (attribute+)>
-
 <!ELEMENT distribution (attribute+)>
-
-<!ELEMENT wlan_information (attribute*)>
-
+<!ELEMENT kernel (attribute+)>
+<!ELEMENT processor (attribute+)>
+<!ELEMENT system_ram_memory (ram+)>
+<!ELEMENT system_memory (ram+)>
+<!ELEMENT hard_drive_configuration (drive+)>
 <!ELEMENT network_information (computer*)>
-<!ELEMENT computer (attribute|iface)*>
-<!ATTLIST computer name CDATA #REQUIRED>
-<!ELEMENT iface (attribute+)>
-<!ATTLIST iface name CDATA #REQUIRED>
-
+<!ELEMENT wlan_information (attribute*)> <!-- UNKNOWN -->
 <!ELEMENT dmi_information (bios|
                            system_info|
                            motherboard|
                            chassis)*>
+<!ELEMENT applications (attribute+)>
+<!ELEMENT terminal_info (attribute+)>
+<!ELEMENT devices (motherboard,controllers)>
+<!ELEMENT enhancements (attribute+)>
+<!ELEMENT cd_dvd_drives (cd_drive)*>
+<!ELEMENT users (active_user,wtmp_statistics)>
+<!ELEMENT services (value+)>
+<!ELEMENT battery (attribute*)> <!-- UNKNOWN -->
+<!ELEMENT oem_information (attribute+)>
+
+
+
+<!-- system_ram_memory, system_memory -->
+<!ELEMENT ram (attribute+)>
+
+
+<!-- hard_drive_configuration -->
+<!ELEMENT drive (attribute|partitions)*>
+<!ELEMENT partitions (value+)>
+
+
+<!-- network_information -->
+<!-- <!ELEMENT computer (attribute|iface)*>
+<!ATTLIST computer name CDATA #REQUIRED> -->
+<!ELEMENT iface (attribute+)>
+<!ATTLIST iface name CDATA #REQUIRED>
+
+
+<!-- dmi_information, devices -->
+<!ELEMENT motherboard (attribute+)>
+
+
+<!-- dmi_information -->
 <!ELEMENT bios (attribute+)>
 <!ELEMENT system_info (attribute+)>
-<!ELEMENT motherboard (attribute+)>
-<!ELEMENT chassis (attribute+)>
-
-<!ELEMENT services (value+)>
-
-<!ELEMENT disk_information (attribute+)>
+<!ELEMENT chassis (attribute*)>
 
 
+<!-- devices -->
+<!ELEMENT controllers (attribute+)>
 
-<!ELEMENT attribute (value*)>
-<!ATTLIST attribute name CDATA #REQUIRED
-                    code CDATA #IMPLIED>
-<!ELEMENT value (#PCDATA)>
+
+<!-- cd_dvd_drives -->
+<!ELEMENT cd_drive (attribute+)>
+<!ATTLIST cd_drive name CDATA #REQUIRED>
+
+
+<!-- users -->
+<!ELEMENT active_user (value+)>
+<!ATTLIST active_user unixname CDATA #REQUIRED>
+<!ELEMENT wtmp_statistics (value+)>
+

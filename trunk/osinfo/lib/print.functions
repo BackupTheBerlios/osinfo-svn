@@ -1,3 +1,4 @@
+#!/bin/bash
 ############################################
 # XML HEADER & FOOTER FUNCTIONS
 # -----------------------------
@@ -52,29 +53,29 @@ print_xml_computer_overview () {
 	xml_param_tag_closed "script version" \
 	"${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
 
-	# profile
 	add_indentation
-	xml_param_tag_closed "computer profile" "${profile}"
+	xml_opentag_start "computer"
+
+	# profile
+	xml_opentag_param "profile" "${profile}"
 
 	# hostname
-	add_indentation
-	xml_param_tag_closed "computer hostname" "$(get_hostname)"
+	xml_opentag_param "hostname" "$(get_hostname)"
 
 	# IP address
 	#add_indentation
 	#xml_param_tag_closed "computer ipv4" "${ip}"
 
 	# DNS Domain
-	add_indentation
-	xml_param_tag_closed "computer domain" "${get_dns_domain}"
+	xml_opentag_param "domain" "${get_dns_domain}"
 
 	# operating system
-	add_indentation
-	xml_param_tag_closed "computer OS" "$(get_operating_system)"
+	xml_opentag_param "os" "$(get_operating_system)"
 
 	# processor
-	add_indentation
-	xml_param_tag_closed "computer CPU" "$(get_cpu_model)"
+	xml_opentag_param "cpu" "$(get_cpu_model)"
+
+	xml_opentag_stop 0
 
 	# scanning date
 	add_indentation
