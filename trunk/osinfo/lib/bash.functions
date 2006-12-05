@@ -99,8 +99,8 @@ if [ "$TERM" ]; then
 		;;
 	esac
 
-     header="${tcBLUE}"
-  subheader="${tcBLUE}${tBOLD}"
+	   header="${tcBLUE}"
+	subheader="${tcBLUE}${tBOLD}"
 
 fi
 
