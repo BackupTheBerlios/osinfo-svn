@@ -218,14 +218,6 @@ function close_last_header() {
 	#done
 }
 
-
-#########
-# info
-#
-# this is used for informational sentences in case of errors, warnings, notes etc.
-function info {
-	infostring[${#infostring[@]}]="%info%${@}"
-}
 #################################################################
 
 # HACK: As syntax highlighting seems broken in my editor,

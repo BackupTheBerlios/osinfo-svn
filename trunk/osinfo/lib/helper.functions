@@ -262,6 +262,26 @@ wrong_module() {
 	do_abort "${1} is not a valid module!" 1
 }
 
+
+#########
+# info
+#
+# this is used for informational sentences in case of errors, warnings, notes etc.
+function info {
+	#infostring[${#infostring[@]}]="%info%${@}"
+	echo "${tcYELLOW}${@}${tSTD}"
+}
+
+#########
+# error
+#
+# this is used to send error messages to the user
+function error {
+	#infostring[${#infostring[@]}]="%error%${@}"
+	echo "${tcRED}${@}${tSTD}"
+}
+
+
 # On *BSD, coreutils are prepended with 'g' to imply 'GNU'
 # http://www.freebsd.org/cgi/url.cgi?ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/sysutils/coreutils/pkg-descr
 if [ "$(grep bsd <<< "$SYSTEM")" ]; then

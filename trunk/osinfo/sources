@@ -4,8 +4,8 @@ for module in modules/* modules/experimental/*; do
 done
 
 source lib/version                # osinfo version info
+source lib/global_variables       # as it says...
 
-source lib/bash.functions         # colour & line functions
 source lib/PRINT_Help             # print --help
 source lib/PRINT_Usage            # usage; if no parameters are given
 source lib/PRINT_Version          # print --version
@@ -13,14 +13,15 @@ source lib/PRINT_UnknownOS
 
 source lib/xml.functions          # xml tag codes
 source lib/xslt.functions         # xslt generation
-source lib/lanforce.functions     # lanforce xml tag codes
 
-source lib/global_variables       # as it says...
+source lib/bash.functions         # colour & line functions
 source lib/infostring.functions   # infostring handler functions
 source lib/print.functions        # format output
 source lib/helper.functions       # helperts
 source lib/daemon.functions       # daemon mode functions
-source lib/update_sidebar         # 
+source lib/lanforce.functions     # lanforce xml tag codes
+
+source lib/update_sidebar         # html function
 
 source profiles/default           # source all computer profiles for a coherent view of data
 source profiles/desktop

@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######
 
+
 # Set the variable in $2 to the terminal cap $1
 # WARNING: Use this function ONLY for string caps!
 # Parameters:
@@ -134,7 +135,7 @@ print_line() {
 	fi
 }
 
-# TODO: document
+# prints an error message in red to the console
 print_negative_message() {
 	echo "${tcRED}${1}${tSTD}"
 }

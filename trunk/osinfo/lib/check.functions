@@ -10,11 +10,11 @@ function Check_logfile {
 	if [ $? -eq 0 ]; then # success
 		chmod 664 "${error_log}"
 	else # fail
-		info	"Could not touch log file $error_log."
+		error "Could not touch log file $error_log."
 	fi
 
 	#if [ ! -w "$error_log" ]; then
-	#	info	"Log file '$error_log' is not writable by you."
+	#	error "Log file '$error_log' is not writable by you."
 	#fi
 
 	flush_values
