@@ -1,3 +1,4 @@
+#!/bin/bash
 ##########
 # NETWORK
 #
@@ -47,6 +48,7 @@ Module_network() {
 		fi
 	fi
 
+	# We can still print DNS domain and such though even if we coudln't run ifconfig.
 	print_network_information
 
 	flush_values
