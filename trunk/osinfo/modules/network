@@ -31,10 +31,10 @@ Module_network() {
 	# more of less similarity, but the one on FreeBSD 6.0 is different.
 	if [ "$(type -p ifconfig)" ]; then
 		nw_src="ifconfig"
-		
+
 		# Can we run ifconfig?
 		if [ -x "$(type -p ifconfig)" ]; then
-		
+
 			if [ "$SYSTEM" == "linux" ] ; then
 				ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | \
 				grep -Ev '(^ )|(^--)|LOOPBACK' | awk  {'print $1'})"

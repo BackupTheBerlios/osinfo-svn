@@ -1,3 +1,4 @@
+#!/bin/bash
 ###########################################################################
 ### infostring handler functions
 ##
@@ -52,6 +53,7 @@ module_header() {
 			info "Improper output mode; THIS IS A BUG"
 			flush_values
 			exit 1
+			;;
 	esac
 }
 
@@ -94,6 +96,7 @@ function add_nc_header() {
 function add_footer() {
 	if [ "$1" ]; then
 		infostring[${#infostring[@]}]="%footer%${@}"
+		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	else
 		close_last_header
 	fi
@@ -114,6 +117,7 @@ function add_footer() {
 #  2 code tag for xml  (eg. os)                 (optional)
 function add_attribute() {
 	infostring[${#infostring[@]}]="%attribute%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
@@ -130,13 +134,15 @@ function add_values {
 #	   [ $isverbose -lt 2 ]; then
 		# if the last non-empty item (second to last)
 		# is an attribute or a header, unset it
-		if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
+#		if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
 			unset infostring[$((${#infostring[@]}-1))]
+			# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 		fi
 	else # there is an input value
 		# clear leading whitespaces
 		local value="$(sed 's/^\ *//' <<< ${@})"
 		infostring[${#infostring[@]}]="%value%${value}"
+		# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	fi
 }
 
@@ -147,6 +153,7 @@ function add_values {
 # This function inserts a value_footer, which indicates a dimension, eg. <footer>kB/s</footer>.
 function add_value_footer {
 	infostring[${#infostring[@]}]="%value_footer%${@}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 }
 
 
