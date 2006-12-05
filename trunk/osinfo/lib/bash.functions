@@ -46,7 +46,7 @@ check_cap () {
 	if [ $sup_cap -eq 0 ]; then
 		eval "$2=\"\$(tput $1)\""
 	else
-		eval "$2=\"\${3:-''}\""
+		eval "$2=\"\${3:-}\""
 	fi
 	return $sup_cap
 }
