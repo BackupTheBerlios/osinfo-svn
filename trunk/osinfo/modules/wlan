@@ -60,7 +60,7 @@ Module_wlan() {
 			               sed 's/\"//g')"
 
 			add_header   "$essid"
-			
+
 			# if the interface is associated to this ESSID
 			if [ $accociated ]; then
 				#access_points[${access_points[@]}]="$(grep -A 1 -i ${access_point}" \
@@ -82,7 +82,7 @@ Module_wlan() {
 			add_attribute   'link quality'
 			add_values      "$(grep -Eo 'Quality[\=:][a-zA-Z0-9\/]+' $cell_tmp | \
 			                   awk -F"=|:" '{print $2}')"
-							   
+
 			add_attribute   'address'
 			add_values      "$(awk -F"Address:" '{print $2}' $cell_tmp )"
 
@@ -94,7 +94,7 @@ Module_wlan() {
 			add_values      "$(grep -i $essid -A 2 $iw_src | \
 			                   grep -Eo 'Frequency[:0-9\.\ MGTP]*Hz' | \
 							   awk -F':' {'print $2'})"
-							   
+
 			add_attribute   'bit rate'
 			add_values      "$(grep -i $essid -A 2 $iw_src | \
 			                   grep -iEo 'bit rate[:0-9\.\ MGTP]*b\/s' | \
@@ -119,7 +119,7 @@ Module_wlan() {
 				add_attribute   'group cipher'
 				add_values      "$(grep -i 'group cipher' $cell_tmp | \
 					               awk -F"=|:" '{print $2}')"
-			
+
 				add_attribute   'pairwise cipher'
 				add_values      "$(grep -i 'pairwise cipher' $cell_tmp | \
 				                   awk -F"=|:" '{print $2}')"
@@ -131,7 +131,7 @@ Module_wlan() {
 
 
 			#add_attribute   'security mode'
-			
+
 
 			add_attribute   'signal level'
 			add_values      "$(grep  'Signal level[\=:][-a-zA-Z0-9\/ ]+' $cell_tmp | \

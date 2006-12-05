@@ -62,7 +62,7 @@ Module_system() {
 		add_attribute   "Fan"
 		local cpu_fan="$(sensors | grep -i 'cpu fan' | \
 		                 grep -Eo '[0-9]+ RPM')"
-		add_values       "$(awk  {'print $1'} <<< $cpu_fan )" 
+		add_values       "$(awk  {'print $1'} <<< $cpu_fan )"
 		[ "$cpu_fan" ] && add_value_footer "RPM"
 	}
 

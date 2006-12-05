@@ -5,7 +5,7 @@
 #
 # lshw is used for RAM size evaluation. the size is reported by BIOS
 # and is the most accurate way to detect the physical system memory.
-# 'free' and '/proc/meminfo' would also report free RAM, but slightly 
+# 'free' and '/proc/meminfo' would also report free RAM, but slightly
 # incorrectly, since they only detect total ram after kernel allocation.
 #
 Module_ram() {
@@ -33,7 +33,7 @@ Module_ram() {
 			add_value_footer  "MB"
 
 			# xml cannot flush here, as add_footer is defined below
-			[ $usexml -ne 1 ] && flush_values 
+			[ $usexml -ne 1 ] && flush_values
 
 			# get specific membank info
 			#if CheckReq_root more specific RAM information; then
@@ -90,13 +90,13 @@ Module_ram() {
 
 					add_footer        "Bank"
 
-					[ $usexml -ne 1 ] && flush_values 
+					[ $usexml -ne 1 ] && flush_values
 					# xml cannot flush here, as add_footer is defined below
 
 				done
 
 			fi
-			
+
 			[ $usexml -eq 1 ] && add_footer # RAM
 			flush_values
 		fi
@@ -104,7 +104,7 @@ Module_ram() {
 
 	function get_physical_ram_size() {
 	# Parameters:
-	#  1  lshw xml memory node file 
+	#  1  lshw xml memory node file
 	#     (output from `extr_lshw_node memory`)
 
 		ramnode="${1}"

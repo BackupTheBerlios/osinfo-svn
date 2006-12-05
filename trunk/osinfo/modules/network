@@ -127,35 +127,35 @@ Module_network() {
 		}
 
 	function get_nis_domain() {
-		hostname -y 2> /dev/null	
+		hostname -y 2> /dev/null
 		}
 
 	function get_dns_domain() {
-		hostname -d 2> /dev/null	
+		hostname -d 2> /dev/null
 		}
 
 	function get_fqdn() {
-		hostname -f 2> /dev/null	
+		hostname -f 2> /dev/null
 		}
 
 	function get_ipv4() {
 		# parameters:
 		#  1  output of ifconfig (file)
 		grep -Eio 'inet[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' ${1} | \
-	        grep -Eo '[0-9\.]+' 
+	        grep -Eo '[0-9\.]+'
 		}
 
 	function get_ipv6() {
 		# parameters:
 		#  1  output of ifconfig (file)
 		sed "s/  /\n/g" ${1} | grep -i inet6 | \
-	        grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})' 
+	        grep -Eio '([0-9a-f]{3,4}(\:){1,2}){4,8}([0-9a-f]{3,4})'
 		}
 
 	function get_enckey() {
 		# parameters:
 		#  1  output of iwconfig (file)
-		grep -Eoi 'encryption key:[0-9A-Z\-]*' ${1} | awk -F\: {'print $2'}		
+		grep -Eoi 'encryption key:[0-9A-Z\-]*' ${1} | awk -F\: {'print $2'}
 	}
 
 	function get_mac_address() {
