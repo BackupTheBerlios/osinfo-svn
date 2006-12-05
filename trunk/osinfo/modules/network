@@ -30,14 +30,20 @@ Module_network() {
 	# more of less similarity, but the one on FreeBSD 6.0 is different.
 	if [ "$(type -p ifconfig)" ]; then
 		nw_src="ifconfig"
+		
+		# Can we run ifconfig?
+		if [ -x "$(type -p ifconfig)" ]; then
+		
+			if [ "$SYSTEM" == "linux" ] ; then
+				ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | \
+				grep -Ev '(^ )|(^--)|LOOPBACK' | awk  {'print $1'})"
 
-		if [ "$SYSTEM" == "linux" ] ; then
-			ETH_DEVICES="$(ifconfig -a | grep BROADCAST -B 3 | \
-			grep -Ev '(^ )|(^--)|LOOPBACK' | awk  {'print $1'})"
-
-		else # *BSD ifconfig
-			ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | \
-			awk -F': ' {'print $1'})"
+			else # *BSD ifconfig
+				ETH_DEVICES="$(ifconfig -a | grep BROADCAST | grep -v LOOPBACK | \
+				awk -F': ' {'print $1'})"
+			fi
+		else
+			CheckReq_root
 		fi
 	fi
 
