@@ -49,8 +49,8 @@ src_unpack() {
 
 src_install() {
 	
-	mkdir -p ${D}/usr/sbin		# D is like a virtual / where we install our stuff, before emerge merge it with the real /
-	cp osinfo/osinfo ${D}/usr/sbin
+	mkdir -p ${D}/usr/bin		# D is like a virtual / where we install our stuff, before emerge merge it with the real /
+	cp osinfo/osinfo ${D}/usr/bin
 
 	doman osinfo/osinfo.1
 
