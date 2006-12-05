@@ -51,6 +51,19 @@ check_cap () {
 	return $sup_cap
 }
 
+
+if [ "$TERM" ]; then
+	tput cols &>/dev/null
+	if [ $? -eq 0 ]; then
+		get_cols() { echo -n "$(tput cols)"; }
+	else
+		get_cols() { echo -n '80'; }
+	fi
+else
+	# Bleh, no $TERM...
+	get_cols() { echo -n '80'; }
+fi
+
 check_cap bold  tBOLD
 check_cap smul  tbUNDERLINE
 check_cap rmul  teUNDERLINE
@@ -103,18 +116,19 @@ fi
 #BUG:   bterm
 print_line() {
 	local sup_ext=0
-	tput enacs >/dev/null
+	tput enacs &>/dev/null
 	[ $? -eq 0 ] && tput enacs
-	tput smacs >/dev/null
+	tput smacs &>/dev/null
 	[ $? -ne 0 ] && sup_ext=1
+	[ -z "$TERM" ] && sup_ext=1
 	[ "$TERM" == 'linux' ] && sup_ext=1
 	if [ $sup_ext == 0 ]; then
 		tput enacs
 		tput smacs
-		yes 'q' | head -n $(tput cols) | tr -d '\012'
+		yes 'q' | head -n "$(get_cols)" | tr -d '\012'
 		tput rmacs
 	else
-		yes '-' | head -n $(tput cols) | tr -d '\012'
+		yes '-' | head -n "$(get_cols)" | tr -d '\012'
 		echo
 	fi
 }
