@@ -1,13 +1,23 @@
+######
+## Check_logfile
+#
+# checks 1) if the logfile exists,
+#        2) if it is writable
+#        3) tries to touch one if applicaple
 function Check_logfile {
-	if [ ! -e "$error_log" ]; then
-		touch "${error_log}" && chmod 664 "${error_log}"
-		[[ "$?" -ne 0 ]] && \
-			info	"Could not create log file $error_log."
+	touch "${error_log}" &>/dev/null
+
+	if [ $? -eq 0 ]; then # success
+		chmod 664 "${error_log}"
+	else # fail
+		info	"Could not touch log file $error_log."
 	fi
 
-	if [ ! -w "$error_log" ]; then
-		info	"Log file '$error_log' is not writable by you."
-	fi
+	#if [ ! -w "$error_log" ]; then
+	#	info	"Log file '$error_log' is not writable by you."
+	#fi
+
+	flush_values
 }
 
 function Check_rundir {
