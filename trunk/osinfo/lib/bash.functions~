@@ -46,23 +46,10 @@ check_cap () {
 	if [ $sup_cap -eq 0 ]; then
 		eval "$2=\"\$(tput $1)\""
 	else
-		eval "$2=\"\${3:-}\""
+		eval "$2=\"\${3:-''}\""
 	fi
 	return $sup_cap
 }
-
-
-if [ "$TERM" ]; then
-	tput cols &>/dev/null
-	if [ $? -eq 0 ]; then
-		get_cols() { echo -n "$(tput cols)"; }
-	else
-		get_cols() { echo -n '80'; }
-	fi
-else
-	# Bleh, no $TERM...
-	get_cols() { echo -n '80'; }
-fi
 
 check_cap bold  tBOLD
 check_cap smul  tbUNDERLINE
@@ -88,19 +75,19 @@ check_cap 'setaf 7' tcWHITE
 if [ "$TERM" ]; then
 	case $TERM in
 		'linux')
-			  tcBLACK="${tcBLACK}${tBOLD}"
-			    tcRED="${tcRED}${tBOLD}"
-			  tcGREEN="${tcGREEN}${tBOLD}"
-			 tcYELLOW="${tcYELLOW}${tBOLD}"
-			   tcBLUE="${tcBLUE}${tBOLD}"
-			tcMAGENTA="${tcMAGENTA}${tBOLD}"
-			   tcCYAN="${tcCYAN}${tBOLD}"
-			  tcWHITE="${tcWHITE}${tBOLD}"
+		tcBLACK="${tcBLACK}${tBOLD}"
+		  tcRED="${tcRED}${tBOLD}"
+		tcGREEN="${tcGREEN}${tBOLD}"
+	   tcYELLOW="${tcYELLOW}${tBOLD}"
+		 tcBLUE="${tcBLUE}${tBOLD}"
+	  tcMAGENTA="${tcMAGENTA}${tBOLD}"
+		 tcCYAN="${tcCYAN}${tBOLD}"
+		tcWHITE="${tcWHITE}${tBOLD}"
 		;;
 	esac
 
-	   header="${tcBLUE}"
-	subheader="${tcBLUE}${tBOLD}"
+     header="${tcBLUE}"
+  subheader="${tcBLUE}${tBOLD}"
 
 fi
 
@@ -116,20 +103,18 @@ fi
 #BUG:   bterm
 print_line() {
 	local sup_ext=0
-	tput enacs &>/dev/null
+	tput enacs >/dev/null
 	[ $? -eq 0 ] && tput enacs
-	tput smacs &>/dev/null
+	tput smacs >/dev/null
 	[ $? -ne 0 ] && sup_ext=1
-	[ -z "$TERM" ] && sup_ext=1
-	[ $no_fancy -eq 1 ] && sup_ext=1
 	[ "$TERM" == 'linux' ] && sup_ext=1
-	if [ $sup_ext -eq 0 ]; then
+	if [ $sup_ext == 0 ]; then
 		tput enacs
 		tput smacs
-		yes 'q' | head -n "$(get_cols)" | tr -d '\012'
+		yes 'q' | head -n $(tput cols) | tr -d '\012'
 		tput rmacs
 	else
-		yes '-' | head -n "$(get_cols)" | tr -d '\012'
+		yes '-' | head -n $(tput cols) | tr -d '\012'
 		echo
 	fi
 }

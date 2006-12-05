@@ -11,6 +11,7 @@ dev_code=0
 quiet=0
 tcpdaemon=0
 tcpsend=0
+no_fancy=0
 
 prefix="/"  # The root dir. Using a variable allows info on chrooted systems
 PROFILES="desktop server laptop"
