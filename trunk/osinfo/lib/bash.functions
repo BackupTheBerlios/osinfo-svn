@@ -83,7 +83,6 @@ check_cap sgr0  tSTD
 esc="$(echo -ne '\e')"
 tab="$(echo -ne '\t')"
 
-
 check_cap 'setaf 0' tcBLACK
 check_cap 'setaf 1' tcRED
 check_cap 'setaf 2' tcGREEN

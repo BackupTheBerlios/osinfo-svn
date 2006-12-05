@@ -1,3 +1,4 @@
+#!/bin/bash
 ################################################################################
 ################################################################################
 ## General helper functions                                                   ##
@@ -269,7 +270,7 @@ wrong_module() {
 # this is used for informational sentences in case of errors, warnings, notes etc.
 function info {
 	#infostring[${#infostring[@]}]="%info%${@}"
-	echo "${tcYELLOW}${@}${tSTD}"
+	echo -e "${tcYELLOW}${@}${tSTD}"
 }
 
 #########
