@@ -52,7 +52,7 @@ check_cap () {
 	return $sup_cap
 }
 
-
+graph_got_q=0
 if [ "$TERM" ]; then
 	tput cols &>/dev/null
 	if [ $? -eq 0 ]; then
@@ -60,6 +60,13 @@ if [ "$TERM" ]; then
 	else
 		get_cols() { echo -n '80'; }
 	fi
+	altchars="$(tput acsc)"
+	while read -rn 2 chpair; do
+		if [ "${chpair:0:1}" == "q" ]; then
+			graph_got_q=1
+			graph_q="${chpair:1:1}"
+		fi
+	done < <(tput acsc)
 else
 	# Bleh, no $TERM...
 	get_cols() { echo -n '80'; }
@@ -120,14 +127,14 @@ print_line() {
 	tput enacs &>/dev/null
 	[ $? -eq 0 ] && tput enacs
 	tput smacs &>/dev/null
-	[ $? -ne 0 ] && sup_ext=1
-	[ -z "$TERM" ] && sup_ext=1
-	[ $no_fancy -eq 1 ] && sup_ext=1
-	[ "$TERM" == 'linux' ] && sup_ext=1
-	if [ $sup_ext -eq 0 ]; then
+	[ $? -eq 0 ] && sup_ext=1
+	[ $graph_got_q -eq 1 ] && sup_ext=1
+	[ -z "$TERM" ] && sup_ext=0
+	[ $no_fancy -eq 1 ] && sup_ext=0
+	if [ $sup_ext -eq 1 ]; then
 		tput enacs
 		tput smacs
-		yes 'q' | head -n "$(get_cols)" | tr -d '\012'
+		yes "$graph_q" | head -n "$(get_cols)" | tr -d '\012'
 		tput rmacs
 	else
 		yes '-' | head -n "$(get_cols)" | tr -d '\012'
