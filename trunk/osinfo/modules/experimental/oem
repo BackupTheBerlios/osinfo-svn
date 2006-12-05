@@ -1,5 +1,5 @@
 ######################
-# OEM INFORMATION 
+# OEM INFORMATION
 # this module is deprecated in favor of module_dmi
 #
 # this module collects information from lshw, a somewhat rare package, which

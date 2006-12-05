@@ -10,7 +10,7 @@
 #  1) create the module file into modules/experimental/
 #  2) add the module name into the module index file
 #
-# howto stabilise a module: 
+# howto stabilise a module:
 #  1) add the module name to the profiles/default file
 #  2) add the module name optionally to other profiles
 #  3) move the module from modules/experimental/ to modules/

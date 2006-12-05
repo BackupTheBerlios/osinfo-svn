@@ -51,7 +51,7 @@ Module_video() {
 	add_attribute      'Xorg log date*'
 	add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
 
-	
+
 	flush_values
 }
 
@@ -61,7 +61,7 @@ Module_video() {
 		}
 
 	function get_dri_vendor () {
-		awk -F\" '/Module dri/{print $2}' ${XORG_LOG} 
+		awk -F\" '/Module dri/{print $2}' ${XORG_LOG}
 		}
 
 	function get_opengl_renderer () {
@@ -70,19 +70,19 @@ Module_video() {
 	}
 
 	function get_drm_vendor () {
-		awk -F\" '/Module drm/{print $2}' ${XORG_LOG} 
+		awk -F\" '/Module drm/{print $2}' ${XORG_LOG}
 		}
 
 	function get_glx_vendor () {
-		awk -F\" '/Module glx/{print $2}' ${XORG_LOG} 
+		awk -F\" '/Module glx/{print $2}' ${XORG_LOG}
 		}
 
 	function get_aiglx () {
-		grep ') AIGLX' ${XORG_LOG} 
+		grep ') AIGLX' ${XORG_LOG}
 		}
 
 	function get_glx () {
-		grep ') GLX' ${XORG_LOG} 
+		grep ') GLX' ${XORG_LOG}
 		}
 
 	function get_found_chipset () {
@@ -93,14 +93,14 @@ Module_video() {
 
 		found_chipsets[${#found_chipsets[@]}]="$(
 			sed 's/Chipset\ // ; s/\ found//' <<< found_chipsets[${#found_chipsets[@]}] )"
-			
+
 		echo ${found_chipsets[0]}
 		}
 
 	function get_agp_mode () {
-		grep 'Using AGP [0-9]*x mode' ${XORG_LOG} 
+		grep 'Using AGP [0-9]*x mode' ${XORG_LOG}
 		}
 
 	function get_xorg_errors () {
-		grep '^(EE)'  ${XORG_LOG} 
+		grep '^(EE)'  ${XORG_LOG}
 		}

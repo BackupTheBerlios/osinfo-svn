@@ -174,8 +174,8 @@ function print_stdout {
 	# and using colours on $value_string messes up column.
 
 	echo -e $(sed 's/%value%/\?/g ; s/%col%/\?/g' <<< ${value_string}) | \
-	          column -t -s? 
-	echo	
+	          column -t -s?
+	echo
 }
 
 

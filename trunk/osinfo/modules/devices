@@ -60,7 +60,7 @@ Module_devices() {
 
 ############################################
 # helper functions for to get device data
-# 
+#
 	###################
 	## load_categories
 	#
@@ -117,8 +117,8 @@ Module_devices() {
 		add_attribute ' Manufacturer' \
 					  'mother_board_manufacturer'
 		add_values    "$(get_mobo_manufacturer)"
-		              # these functions are inherited from module_dmi	
-		
+		              # these functions are inherited from module_dmi
+
 		add_attribute ' Model' \
 					  'mother_board_model'
 		add_values    "$(get_mobo_model)"
@@ -160,7 +160,7 @@ Module_devices() {
 	#######################
 	## grep_lspci_array
 	#
-	# extracts entries from the device array 
+	# extracts entries from the device array
 	grep_lspci_array() {
 		local device_id="$1"
 		local found_devices arraynr description

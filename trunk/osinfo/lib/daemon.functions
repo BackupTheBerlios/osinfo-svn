@@ -166,11 +166,11 @@ print_short_client_id() {
 #
 # creates (or updates by overwriting) the index.html in the runfolder.
 # NOTE: this function should not generate any info messages to stdout!
-# 
+#
 update_index() {
 	if [ -e "${xsltdir}/index.xsl" ]; then
 
-		# run a loop for all xml files in the hosts dir - 
+		# run a loop for all xml files in the hosts dir -
 		# do not change quotation, or else xsltproc will fail!
 		for clients in "${hostdir}/*.xml"; do
 
@@ -213,7 +213,7 @@ update_hosthtmls() {
 	# the html pages
 	#
 	#
-	# run a loop for all xml files in the hosts dir - 
+	# run a loop for all xml files in the hosts dir -
 	# do not change quotation, or else xsltproc will fail!
 	for clients in ${hostdir}/*.xml; do
 

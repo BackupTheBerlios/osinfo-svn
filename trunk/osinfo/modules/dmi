@@ -52,7 +52,7 @@ Module_dmi() {
 		# IFS need to be changed because the values are separated by newline
 		local IFS_bak="$IFS" value
 		IFS=$','
-		
+
 		# extract the handle and string the first line
 		# (%node% identifier that is useless here)
 		extr_node ${handle_desc} ${dmi_tmp_file} Handle | \
@@ -83,7 +83,7 @@ Module_dmi() {
 
 		add_attribute 'Revision'	'bios_version'
 		add_values    "$(get_bios_revision)"
-	
+
 
 		add_attribute 'Date'	'bios_date'
 		add_values    "$(grep -i date ${osinfo_tmp} | \
@@ -105,7 +105,7 @@ Module_dmi() {
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
-	
+
 		add_header  "System info"
 
 		add_attribute 'Manufacturer' \
@@ -154,13 +154,13 @@ Module_dmi() {
 		add_attribute 'Manufacturer' \
 					  'mother_board_manufacturer'
 		add_values    "$(get_mobo_manufacturer)"
-		
-		
+
+
 		add_attribute 'Model' \
 					  'mother_board_model'
 		add_values    "$(get_mobo_model)"
-	
-		
+
+
 		add_attribute 'Version' \
 					  'mother_board_version'
 		add_values    "$(grep -i version ${osinfo_tmp} | \
@@ -174,7 +174,7 @@ Module_dmi() {
 						 awk -F':' {'print $2'} | \
 						 sed 's/^\ *//')"
 
-		add_footer	
+		add_footer
 	}
 
 
@@ -221,7 +221,7 @@ Module_dmi() {
 						 awk -F':' {'print $2'} | \
 						 sed 's/^\ *//')"
 
-		add_footer	
+		add_footer
 	}
 
 		get_mobo_manufacturer() {
