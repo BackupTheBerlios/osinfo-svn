@@ -88,14 +88,14 @@ check_cap 'setaf 7' tcWHITE
 if [ "$TERM" ]; then
 	case $TERM in
 		'linux')
-		tcBLACK="${tcBLACK}${tBOLD}"
-		  tcRED="${tcRED}${tBOLD}"
-		tcGREEN="${tcGREEN}${tBOLD}"
-	   tcYELLOW="${tcYELLOW}${tBOLD}"
-		 tcBLUE="${tcBLUE}${tBOLD}"
-	  tcMAGENTA="${tcMAGENTA}${tBOLD}"
-		 tcCYAN="${tcCYAN}${tBOLD}"
-		tcWHITE="${tcWHITE}${tBOLD}"
+			  tcBLACK="${tcBLACK}${tBOLD}"
+			    tcRED="${tcRED}${tBOLD}"
+			  tcGREEN="${tcGREEN}${tBOLD}"
+			 tcYELLOW="${tcYELLOW}${tBOLD}"
+			   tcBLUE="${tcBLUE}${tBOLD}"
+			tcMAGENTA="${tcMAGENTA}${tBOLD}"
+			   tcCYAN="${tcCYAN}${tBOLD}"
+			  tcWHITE="${tcWHITE}${tBOLD}"
 		;;
 	esac
 
