@@ -121,8 +121,9 @@ print_line() {
 	tput smacs &>/dev/null
 	[ $? -ne 0 ] && sup_ext=1
 	[ -z "$TERM" ] && sup_ext=1
+	[ "$no_fancy" -eq 1 ] && sup_ext=1
 	[ "$TERM" == 'linux' ] && sup_ext=1
-	if [ $sup_ext == 0 ]; then
+	if [ $sup_ext -eq 0 ]; then
 		tput enacs
 		tput smacs
 		yes 'q' | head -n "$(get_cols)" | tr -d '\012'

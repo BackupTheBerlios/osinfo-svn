@@ -109,7 +109,7 @@ function parse_arguments() {
 				'--no-color'|'--no-colour'|'--nocolor'|'--nocolour')
 					# clear color codes; set empty values
 					tSTD='' ; tBOLD='' ; tcBLACK='' ; tcWHITE='' ; tcRED='' ; tcGREEN=''
-					tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN=''
+					tcYELLOW='' ; tcBLUE='' ; tcMAGENTA='' ; tcCYAN='' ; no_fancy=1
 					shift 1
 					;;
 
