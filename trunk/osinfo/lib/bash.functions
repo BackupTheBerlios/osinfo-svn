@@ -72,19 +72,24 @@ check_cap 'setaf 5' tcMAGENTA
 check_cap 'setaf 6' tcCYAN
 check_cap 'setaf 7' tcWHITE
 
-if [ "$TERM" == "linux" ]; then
-    tcBLACK="${tcBLACK}${tBOLD}"
-      tcRED="${tcRED}${tBOLD}"
-    tcGREEN="${tcGREEN}${tBOLD}"
-   tcYELLOW="${tcYELLOW}${tBOLD}"
-     tcBLUE="${tcBLUE}${tBOLD}"
-  tcMAGENTA="${tcMAGENTA}${tBOLD}"
-     tcCYAN="${tcCYAN}${tBOLD}"
-    tcWHITE="${tcWHITE}${tBOLD}"
-fi
+if [ "$TERM" ]; then
+	case $TERM in
+		'linux')
+		tcBLACK="${tcBLACK}${tBOLD}"
+		  tcRED="${tcRED}${tBOLD}"
+		tcGREEN="${tcGREEN}${tBOLD}"
+	   tcYELLOW="${tcYELLOW}${tBOLD}"
+		 tcBLUE="${tcBLUE}${tBOLD}"
+	  tcMAGENTA="${tcMAGENTA}${tBOLD}"
+		 tcCYAN="${tcCYAN}${tBOLD}"
+		tcWHITE="${tcWHITE}${tBOLD}"
+		;;
+	esac
 
      header="${tcBLUE}"
   subheader="${tcBLUE}${tBOLD}"
+
+fi
 
 # Prints a line of 80 "─" if terminal has caps "enacs" and "smacs"
 # otherwise print a line of "-"
