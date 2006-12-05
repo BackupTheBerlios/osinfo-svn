@@ -91,17 +91,17 @@ Module_network() {
 
 				add_attribute 'Gateway'	"default_gateway"
 				add_values    "$(route -n | grep $interface_name | \
-							  awk '/^0.0.0.0/{print $2}')"
+				                 awk '/^0.0.0.0/{print $2}')"
 
 				add_attribute 'Broadcast'
 				add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-								 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
-								 grep -Eo '[0-9\.]+' )"
+				                 grep -Eio 'cast[A-Za-z: ]*([0-9]{1,3}\.){3}[0-9]{1,3}' | \
+				                 grep -Eo '[0-9\.]+' )"
 
 				add_attribute 'Netmask'	"subnet_mask"
 				add_values    "$(sed "s/  /\n/g" ${nw_info} | \
-								 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
-								 grep -Eo '[0-9\.fx]+' )"
+				                 grep -Eio 'mask[A-Za-z: ]*((([0-9]{1,3}\.){3}[0-9]{1,3})|(0x[0-f]{8}))' | \
+				                 grep -Eo '[0-9\.fx]+' )"
 
 				# wireless extensions
 				if [ -s ${iw_info} ] ; then
