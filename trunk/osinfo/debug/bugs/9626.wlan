@@ -1,0 +1,147 @@
+++ shift 1
+++ '[' 1 -gt 0 ']'
+++ case "$1" in
+++ module_cmds=' wlan'
+++ shift 1
+++ '[' 0 -gt 0 ']'
+++ Check_logfile
+++ touch /var/log/osinfo.log
+++ '[' 0 -eq 0 ']'
+++ chmod a+rwx /var/log/osinfo.log
+++ flush_values
+++ local hdr
++++ seq 0 -1 1
+++ '[' 0 -eq 0 ']'
+++ print_stdout
+++ local 'header_color='
+++ local 'info_color='
+++ local item itemnr value_string=
++++ seq 1 1 0
++++ sed 's/%value%/\?/g ; s/%col%/\?/g'
+++ column -t '-s?'
+++ echo -e
+++ echo
+
+++ unset infostring
+++ '[' 0 -eq 0 ']'
+++ select_profile
+++ case $profile in
+++ default_profile
+++ for module in '$module_cmds'
+++ local GOOD_MODULES
+++ '[' linux == linux ']'
+++ GOOD_MODULES='system distro kernel processor ram memory hdd network wlan dmi applications terminal devices cdrom users services battery oem'
+++ break
+++ '[' / '!=' / ']'
+++ '[' 0 -eq 1 ']'
+++ for module in '$module_cmds'
+++ case $module in
++++ grep -o wlan
+++ Module_wlan
+++ local 'moduleName=Wlan information'
+++ local 'moduleDescription=detects wireless network access points'
+++ Modules=("${Modules[@]}" "$moduleName;$moduleDescription")
+++ module_header 'Wlan information'
+++ case "$output_mode" in
+++ print_line
+++ local sup_ext=0
+++ tput enacs
+++ '[' 0 -eq 0 ']'
+++ tput enacs
+++ tput smacs
+++ '[' 0 -eq 0 ']'
+++ sup_ext=1
+++ '[' 1 -eq 1 ']'
+++ sup_ext=1
+++ '[' -z rxvt-unicode ']'
+++ '[' 0 -eq 1 ']'
+++ '[' 1 -eq 1 ']'
+++ tput enacs
+++ tput smacs
+++ ≤␊⎽ ─
+++ ├⎼ -␍ '\012'
++++ ±␊├ ␌⎺┌⎽
+++++ ├⎻┤├ ␌⎺┌⎽
++++ ␊␌␤⎺ -┼ 80
+++ ␤␊▒␍ -┼ 80
+────────────────────────────────────────────────────────────────────────────────++ ├⎻┤├ ⎼└▒␌⎽
+++ echo 'Wlan information:'
+Wlan information:
+++ print_line
+++ local sup_ext=0
+++ tput enacs
+++ '[' 0 -eq 0 ']'
+++ tput enacs
+++ tput smacs
+++ '[' 0 -eq 0 ']'
+++ sup_ext=1
+++ '[' 1 -eq 1 ']'
+++ sup_ext=1
+++ '[' -z rxvt-unicode ']'
+++ '[' 0 -eq 1 ']'
+++ '[' 1 -eq 1 ']'
+++ tput enacs
+++ tput smacs
+++ ≤␊⎽ ─
++++ ±␊├ ␌⎺┌⎽
+++++ ├⎻┤├ ␌⎺┌⎽
+++ ├⎼ -␍ '\012'
++++ ␊␌␤⎺ -┼ 80
+++ ␤␊▒␍ -┼ 80
+────────────────────────────────────────────────────────────────────────────────++ ├⎻┤├ ⎼└▒␌⎽
++++ mktemp /tmp/osinfo.XXXXXX
+++ iw_src=/tmp/osinfo.VDEPRJ
++++ mktemp /tmp/osinfo.XXXXXX
+++ ap_src=/tmp/osinfo.A0ZtZJ
++++ mktemp /tmp/osinfo.XXXXXX
+++ cell_tmp=/tmp/osinfo.pWcU9J
+++ TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
++++ type -p iwconfig
+++ '[' '!' /sbin/iwconfig ']'
+++ '[' linux == linux ']'
+++ iwconfig
++++ grep 'IEEE 802' /tmp/osinfo.VDEPRJ
++++ awk '{print $1}'
+++ local wlan_devices=
+++ iwlist scan
+++ '[' 0 == 1 ']'
++++ grep -i cell /tmp/osinfo.A0ZtZJ
++++ wc -l
+++ local ap_count=12
+++ '[' 12 -ge 1 ']'
+++ info '12 access points found by device '
+++ echo -e '12 access points found by device '
+12 access points found by device 
+++ IFS_bak=' hift
+'
+++ IFS='
+'
++++ grep -i cell /tmp/osinfo.A0ZtZJ
+++ for access_point in '$(grep -i cell ${ap_src})'
+++ extr_node '          Cell 01 - Address: 00:09:5B:6C:DF:BC' /tmp/osinfo.A0ZtZJ Cell
+++ local 'node_id=          Cell 01 - Address: 00:09:5B:6C:DF:BC'
+++ local input_file=/tmp/osinfo.A0ZtZJ
+++ local node_closer=Cell
+++ local nr node
+++ local all_nodes=
+++ local node_count=0
++++ mktemp /tmp/osinfo.XXXXXX
+++ input_tmp=/tmp/osinfo.UHufMH
+++ TempFiles=("${TempFiles[@]}" "$input_tmp")
+++ grep -n . /tmp/osinfo.A0ZtZJ
+++ '[' '!' Cell ']'
++++ grep -i '          Cell 01 - Address: 00:09:5B:6C:DF:BC' /tmp/osinfo.UHufMH
+++ all_nodes='2:          Cell 01 - Address: 00:09:5B:6C:DF:BC'
++++ grep -i '          Cell 01 - Address: 00:09:5B:6C:DF:BC'
++++ wc -l
+++ node_count=1
+++ '[' 1 -ge 1 ']'
++++ seq 1 1 1
+++ for nr in '$(seq 1 1 $node_count)'
++++ sed -n '1{p;q;}'
+++ this_node='2:          Cell 01 - Address: 00:09:5B:6C:DF:BC'
++++ awk -F: '{print $1}'
+++ local begin=2
++++ awk -F: '{print $2}'
++++ grep -Eo '^[ ]*'
++++ wc -m

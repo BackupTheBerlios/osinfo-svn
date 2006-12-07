@@ -126,17 +126,20 @@ function add_attribute() {
 #
 # This function inserts the input strings into the $infostring[] array.
 #
-# if the value is empty, or just whitespaces, remove the preceding attribute,
-# if verbosity does not require extreme explicity (-vv)
 function add_values {
+	# if the value is empty, or just whitespaces, remove the preceding attribute
 	if [ ! "$@" ] || \
 	   [ ! "$(grep '[^\ *]' <<< "${@}")" ]; then
-#	   [ $isverbose -lt 2 ]; then
-		# if the last non-empty item (second to last)
-		# is an attribute or a header, unset it
-#		if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
-			unset infostring[$((${#infostring[@]}-1))]
-			# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+
+		# but only if verbosity does not require extreme explicity (-vv)
+		if [ $isverbose -ge 2 ]; then
+
+			# if the last non-empty item (second to last)
+			# is an attribute or a header, unset it
+			if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
+				unset infostring[$((${#infostring[@]}-1))]
+				# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+			fi
 		fi
 	else # there is an input value
 		# clear leading whitespaces
