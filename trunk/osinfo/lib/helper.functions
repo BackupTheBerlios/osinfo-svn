@@ -252,7 +252,7 @@ function check_dependencies() {
 }
 
 function isinstalled() {
-	if [ "$(type -p ${1})" ]; then
+	if [ "$(type -p "${1}")" ]; then
 		return 0
 	else
 		return 1
@@ -297,36 +297,38 @@ fi
 
 ####
 ## redefine external programs so they won't produce stderr messages
-if [ $isdebug -lt 1 ]; then
-	function hddtemp() {
-		hddtemp 2>"${error_log}"
-		}
+## generally these may give errors. and if used with "isinstalled" function
+## osinfo will hang.
+#if [ $isdebug -lt 1 ]; then
+	#function hddtemp() {
+	#	hddtemp 2>"${error_log}"
+	#	}
 
-	function smartctl() {
-		smartctl 2>"${error_log}"
-		}
+	#function smartctl() {
+	#	smartctl 2>"${error_log}"
+	#	}
 
-	function hostname() {
-		hostname 2>"${error_log}"
-		}
+	#function hostname() # will cause hangs. do not define.
 
-	function fdisk() {
-		fdisk 2>"${error_log}"
-		}
+	#function fdisk() {
+	#	fdisk 2>"${error_log}"
+	#	}
 
-	function iwconfig() {
-		iwconfig 2>"${error_log}"
-		}
+	#function iwconfig() {
+	#	iwconfig 2>"${error_log}"
+	#	}
 
-	function ifconfig() {
-		ifconfig 2>"${error_log}"
-		}
+	#function ifconfig() {
+	#set -x
+		#ifconfig 2>"${error_log}"
+	#set +x
+	#	}
 	
-	function iwlist() {
-		iwlist 2>"${error_log}"
-		}
+	#function iwlist() {
+	#	iwlist 2>"${error_log}"
+	#	}
 
-fi
+#fi
 
 
 # make a guess of the operating system
