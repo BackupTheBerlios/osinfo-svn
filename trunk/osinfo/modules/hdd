@@ -35,7 +35,7 @@ Module_hdd() {
 		# allocate a temp file
 		fdisk_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$fdisk_info")
-		fdisk -l > $fdisk_info 2>/dev/null
+		fdisk -l > $fdisk_info
 
 		# detect all drives in the system
 		local drives="$(grep -Eo '\/(dev)\/[a-z]+' ${fdisk_info} | uniq )"

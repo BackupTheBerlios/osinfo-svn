@@ -295,9 +295,39 @@ if [ "$(grep bsd <<< "$SYSTEM")" ]; then
 	}
 fi
 
-function hddtemp() {
-	hddtemp 2>"${error_log}"
-	}
+####
+## redefine external programs so they won't produce stderr messages
+if [ $isdebug -lt 1 ]; then
+	function hddtemp() {
+		hddtemp 2>"${error_log}"
+		}
+
+	function smartctl() {
+		smartctl 2>"${error_log}"
+		}
+
+	function hostname() {
+		hostname 2>"${error_log}"
+		}
+
+	function fdisk() {
+		fdisk 2>"${error_log}"
+		}
+
+	function iwconfig() {
+		iwconfig 2>"${error_log}"
+		}
+
+	function ifconfig() {
+		ifconfig 2>"${error_log}"
+		}
+	
+	function iwlist() {
+		iwlist 2>"${error_log}"
+		}
+
+fi
+
 
 # make a guess of the operating system
 SYSTEM="$(uname -s  | tr 'A-Z' 'a-z' )"

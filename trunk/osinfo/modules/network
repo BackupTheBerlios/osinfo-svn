@@ -71,8 +71,11 @@ Module_network() {
 
 			# collect the information from detected network devices
 			for interface_name in $ETH_DEVICES; do
-				ifconfig $interface_name > ${nw_info} 2>/dev/null
-				iwconfig $interface_name > ${iw_info} 2>/dev/null
+
+				# wired 
+				ifconfig $interface_name > ${nw_info}
+				# wireless
+				iwconfig $interface_name > ${iw_info}
 
 				add_header    $interface_name   'iface name'
 
@@ -130,20 +133,19 @@ Module_network() {
 
 
 	function get_hostname() {
-		# hostname produces stderr if no network is available
-		hostname 2> /dev/null
+		hostname # this might be redundant...
 		}
 
 	function get_nis_domain() {
-		hostname -y 2> /dev/null
+		hostname -y 
 		}
 
 	function get_dns_domain() {
-		hostname -d 2> /dev/null
+		hostname -d
 		}
 
 	function get_fqdn() {
-		hostname -f 2> /dev/null
+		hostname -f
 		}
 
 	function get_ipv4() {
