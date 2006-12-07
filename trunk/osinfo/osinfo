@@ -10,7 +10,6 @@ source sources # lines beginning with "source" are removed in the all-in-one pac
 [ -e "/etc/osinfo.conf" ] && \
 . /etc/osinfo.conf                # the configuration file
 
-
 main() {
 	# parse the command line arguments
 	parse_arguments "${@}"

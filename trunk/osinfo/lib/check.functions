@@ -13,13 +13,13 @@ function Check_logfile {
 		chmod a+rwx "${error_log}" &>/dev/null
 	else # fail
 		error "Could not touch log file $error_log."
+		flush_values
 	fi
 
 	#if [ ! -w "$error_log" ]; then
 	#	error "Log file '$error_log' is not writable by you."
 	#fi
 
-	flush_values
 }
 
 function Check_rundir {
