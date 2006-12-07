@@ -18,7 +18,8 @@ Module_wlan() {
 	cell_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 	TempFiles=("${TempFiles[@]}" "$iw_src" "$ap_src" "$cell_tmp")
 	#TempFiles=("${TempFiles[@]}" "$cell_tmp")
-	if [ ! "$(isintalled iwconfig)" ]; then
+	
+	if ! isinstalled iwconfig; then
 		info "No wireless extensions found"
 
 	elif [ "$SYSTEM" == "linux" ] ; then

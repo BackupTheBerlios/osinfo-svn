@@ -80,10 +80,15 @@ extr_node() {
 		for nr in $(seq 1 1 $node_count); do
 			this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
 
-			# this gets the line number of the wanted node from lshw
+			# this gets the line number of the wanted node
 			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
-			local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
-					     grep -Eo '^[ ]*' | wc -m)"
+			# debug: the line below should work.
+			#local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
+			#		     grep -o '^[ ]*' | wc -m)"
+			# debug: let's debug this line further
+			local node_indent_dbg="$(awk -F: {'print $2'} <<< "${this_node}")"
+			local node_indent_dbg2="$(grep -o '^[ ]*' <<< "$node_indent_dbg")"
+			local node_indent="$(wc -m <<< "$node_indent_dbg2")"
 
 			# this loop takes care that all subnodes are included, by comparing
 			# the indentation level. not very elegant..
@@ -279,7 +284,7 @@ function info {
 # this is used to send error messages to the user
 function error {
 	#infostring[${#infostring[@]}]="%error%${@}"
-	echo "${tcRED}${@}${tSTD}"
+	echo -e "${tcRED}${@}${tSTD}"
 }
 
 
