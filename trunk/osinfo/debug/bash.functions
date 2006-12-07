@@ -1,0 +1,269 @@
+#!/bin/bash
+#######
+# bash.functions - shared functions used by some apps.
+# Copyright (C) 2006 Arvid Norlander
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#     * this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#     * notice, this list of conditions and the following disclaimer in the
+#     * documentation and/or other materials provided with the distribution.
+#     * Neither the name of the <ORGANIZATION> nor the names of its
+#     * contributors may be used to endorse or promote products derived from
+#     * this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#######
+
+# Set the variable in $2 to the terminal cap $1
+# WARNING: Use this function ONLY for string caps!
+# Parameters:
+#   1 string capname
+#   2 string Return variable name (Use Ind. ref.)
+#   3 string Optional: What to use if cap not sup.
+# Exit code:
+#  0=OK
+#  1=Not sup. or unknown cap
+check_cap () {
+	local sup_cap=0
+	tput $1 &>/dev/null
+	[ $? -ne 0 ] && sup_cap=1
+	# Eval is safe here as this should never be called with user input
+	if [ $sup_cap -eq 0 ]; then
+		eval "$2=\"\$(tput $1)\""
+	else
+		eval "$2=\"\${3:-''}\""
+	fi
+	return $sup_cap
+}
+
+check_cap bold  tBOLD
+check_cap smul  tbUNDERLINE
+check_cap rmul  teUNDERLINE
+check_cap blink tBLINK
+check_cap rev   tREVERSE
+check_cap bel   tBELL
+check_cap sgr0  tSTD
+
+esc="$(echo -ne '\e')"
+tab="$(echo -ne '\t')"
+
+
+check_cap 'setaf 0' tcBLACK
+check_cap 'setaf 1' tcRED
+check_cap 'setaf 2' tcGREEN
+check_cap 'setaf 3' tcYELLOW
+check_cap 'setaf 4' tcBLUE
+check_cap 'setaf 5' tcMAGENTA
+check_cap 'setaf 6' tcCYAN
+check_cap 'setaf 7' tcWHITE
+
+if [ "$TERM" == "linux" ]; then
+    tcBLACK="${tcBLACK}${tBOLD}"
+      tcRED="${tcRED}${tBOLD}"
+    tcGREEN="${tcGREEN}${tBOLD}"
+   tcYELLOW="${tcYELLOW}${tBOLD}"
+     tcBLUE="${tcBLUE}${tBOLD}"
+  tcMAGENTA="${tcMAGENTA}${tBOLD}"
+     tcCYAN="${tcCYAN}${tBOLD}"
+    tcWHITE="${tcWHITE}${tBOLD}"
+fi
+
+     header="${tcBLUE}"
+  subheader="${tcBLUE}${tBOLD}"
+
+# Prints a line of 80 "─" if terminal has caps "enacs" and "smacs"
+# otherwise print a line of "-"
+# Example:
+#   Output on "xterm" or "kterm" "─────────"
+#   Output on "linux" console    "---------"
+#
+#TODO: Add more terminaltypes
+#BUG: Don't work in:
+#BUG:   xiterm (Output a lot of small "DC2")
+#BUG:   bterm
+print_line() {
+	local sup_ext=0
+	tput enacs >/dev/null
+	[ $? -eq 0 ] && tput enacs
+	tput smacs >/dev/null
+	[ $? -ne 0 ] && sup_ext=1
+	[ "$TERM" == 'linux' ] && sup_ext=1
+	if [ $sup_ext == 0 ]; then
+		tput enacs
+		tput smacs
+		yes 'q' | head -n $(tput cols) | tr -d '\012'
+		tput rmacs
+	else
+		yes '-' | head -n $(tput cols) | tr -d '\012'
+		echo
+	fi
+}
+
+# TODO: document
+print_negative_message() {
+	echo "${tcRED}${1}${tSTD}"
+}
+
+# Aborts program with message
+# Parameters:
+#   1 string   Message
+#   2 string   Exit status
+# Returns:
+#   Does not return
+do_abort() {
+	print_negative_message "${tcRED}Error:${tSTD} ${1}"
+	print_negative_message "Aborting"
+	exit $2
+}
+
+# Prints a callstack.
+print_traceback() {
+	print_negative_message "Traceback:"
+	local i=0 j=0
+	while [ "${FUNCNAME[$i]}" != "main" ]; do
+		let j=i+1
+		echo "${FUNCNAME[$i]} ${BASH_SOURCE[$i]} -- ${BASH_LINENO[$i]} ${BASH_SOURCE[$j]}"
+		let i++
+	done | column -t | sed 's/--/-- Called from line/'
+}
+
+
+# Aborts program with message about deprecated function
+# Parameters:
+#   1 string   Name of function
+#   2 string   Name of file
+# Returns:
+#   Does not return
+error_deprecated() {
+	print_negative_message "${tcRED}Error:${tSTD} Function $1 in $2 is is dperecated. Please make sure not to use it."
+	print_traceback
+	print_negative_message "${tcRED}Error:${tSTD} As a end user you should never see this."
+	do_abort "Please contact the programmers about this (provide this exact error message to them)." 20
+}
+
+# Shows message about missing argument(s) and exits with status 1.
+# Parameters:
+#   1 string   Name of option missing an argument(s)
+#   2 integer  Optional: Number of arguments Std=1
+# Returns:
+#   Does not return
+missing_arg() {
+	if [ $2 ]; then
+		do_abort "${1} requires ${2} arguments" 1
+	else
+		do_abort "${1} requires an argument" 1
+	fi
+}
+
+# Shows message about invalid argument(s) and exits with status 1.
+# Parameters:
+#   1 string   Name of option with invalid argument(s)
+#   2 string   Name of the invalid argument
+#   3 integer  Optional: Number of arguments Std=1
+# Returns:
+#   Does not return
+wrong_arg() {
+	if [ $3 ]; then
+		do_abort "${2} are invalid arguments to ${1}" 1
+	else
+		do_abort "${2} is an invalid argument to ${1}" 1
+	fi
+}
+
+# Check if valid argument
+# Parameters:
+#   1 string   The argument
+#   2 string   Space separated list of valid argument(s).
+# Returns:
+#   0 if valid
+#   1 else
+validate_arg() {
+	local my_arg
+	for my_arg in $2; do
+		[ "$my_arg" = "$1" ] && return 0
+	done
+	return 1
+}
+
+# Check if arguments are integers/floating point values.
+# Parmeters(*):
+#   * *        string/integer to check
+# Returns:
+#   0 if all arguments are integers/floating point values.
+#   1 if one or several of the arguments are strings.
+AreDecimalNumbers() {
+	local argument
+	for argument in "$@"; do
+		expr "$argument" '+' '1' &>/dev/null
+		[ $? -eq 3 ] && return 1
+	done
+	return 0
+}
+
+# Check if arguments are strings.
+# Parmeters(*):
+#   * *        string/integer to check
+# Returns:
+#   0 if all arguments are strings.
+#   1 if one or several of the arguments are integers/floating point values.
+AreStrings() {
+	local argument
+	for argument in "$@"; do
+		expr "$argument" '+' '1' &>/dev/null
+		[ $? -eq 0 ] && return 1
+	done
+	return 0
+}
+
+# Prints a error message.
+# Parmeters:
+#   1       integer  1 = use extra abort line.
+#   2       string     Optional extra abort line.
+#   2 or 3  integer  1 = use kdialog
+#   *       string   error messages
+print_error()	{
+	local extraabortline=""
+	if [ "$1" == "1" ]; then
+		extraabortline="$2"
+		shift 2
+	else
+		shift 1
+	fi
+
+	local i usekdialog="$1"
+	shift 1
+
+	# Now the rest are the error messages.
+	if [ "$usekdialog" == "1" ]; then
+		local errorline="$1"
+		shift 1
+		if [ $# -gt 0 ]; then
+			for i in "$@"; do
+				errorline="${errorline}\n${i}"
+			done
+		fi
+		[ "$extraabortline" ] && errorline="${errorline}\n${extraabortline}"
+		kdialog --error  "$errorline" &> /dev/null
+	else
+		for i in "$@"; do
+			echo -e "${tcRED}ERROR:${tSTD} $i"
+		done
+		[ "$extraabortline" ] && echo -e "${tcRED}${extraabortline}${tSTD}"
+	fi
+}
+
