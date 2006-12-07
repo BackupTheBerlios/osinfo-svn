@@ -14,12 +14,12 @@ source lib/PRINT_UnknownOS
 source lib/xml.functions          # xml tag codes
 source lib/xslt.functions         # xslt generation
 
+source lib/bash.functions         # colour & line functions
 source lib/infostring.functions   # infostring handler functions
 source lib/print.functions        # format output
 source lib/helper.functions       # helperts
 source lib/daemon.functions       # daemon mode functions
 source lib/lanforce.functions     # lanforce xml tag codes
-source lib/bash.functions         # colour & line functions
 
 source lib/update_sidebar         # html function
 

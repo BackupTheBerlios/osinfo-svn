@@ -2,31 +2,20 @@
 # MEMORY
 #
 # this module tells complete information of the memory
-# installed and used on the system.
+# used on the system.
 # THE MODULE IS STILL VERY INCOMPLETE!
 #
-# lshw is used for RAM size evaluation. the size is reported by BIOS
-# and is the most accurate way to detect the physical system memory.
-# 'free' and '/proc/meminfo' would also report free RAM, but slightly
-# incorrectly, since they only detect total ram after kernel allocation.
-#
-# TODO: add support for memory type/speed detection thru lshw
-# TODO: memory usage
 Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"
 
-	print_physical_ram_info
 
-	if [ $isdebug -ge 1 ]; then
-		# meminfo="/proc/meminfo"
+	# meminfo="/proc/meminfo"
 
-		add_attribute     'Available RAM'
-		add_values        "$(get_available_ram)"
+	add_attribute     'Available RAM'
+	add_values        "$(get_available_ram)"
 
-		print_total_usage
-	fi
-
+	#print_total_usage
 
 	flush_values
 }
