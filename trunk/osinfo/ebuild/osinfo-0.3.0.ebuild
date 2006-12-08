@@ -26,7 +26,7 @@ DEPEND="xsl? (dev-libs/libxslt)
               media-video/dvbsnoop)
 		app-shells/bash
 		sys-apps/coreutils
-		sys-apps/grep
+		>=sys-apps/grep-2.5.1
 		sys-apps/sed
 		sys-devel/bc
 		|| (sys-apps/gawk sys-apps/mawk)"
