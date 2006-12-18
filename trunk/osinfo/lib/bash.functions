@@ -294,3 +294,7 @@ print_error() {
 	fi
 }
 
+# prints a message with a green star in the beginning of each line 
+print_info() {
+	echo -e " ${tcGREEN}*${tSTD} ${@}"
+}

@@ -1,11 +1,11 @@
 function PRINT_Debug {
-	echo " * Please note that $appname is still experimental!"
-	echo " * If you find bugs, please send the full backtrace (by using"
-	echo " * the -D switch) to the mailinglist: $bugreport_email."
-	echo
-	echo " * You can extend the existing modules and easily create new"
-	echo " * ones - have a look at the source code. The developers are"
-	echo " * happy to get help from other users. :) You can contact us"
-	echo " * through the email address given above. We would like to hear"
-	echo " * your feedback on $appname!"
+	print_info "Please note that $appname is still experimental!"
+	print_info "If you find bugs, please send the full backtrace (by using"
+	print_info "the -D switch) to the mailinglist: $bugreport_email."
+	print_info
+	print_info "You can extend the existing modules and easily create new"
+	print_info "ones - have a look at the source code. The developers are"
+	print_info "happy to get help from other users. :) You can contact us"
+	print_info "through the email address given above. We would like to hear"
+	print_info "your feedback on $appname!"
 }
