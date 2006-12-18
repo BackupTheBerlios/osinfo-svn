@@ -50,7 +50,8 @@ Modules=()
 INDEXXMLFILE="${rundir}/index.xml"
 XMLFILE="$(get_hostname).xml"
 XSLDEBUGFILE="osinfo.xsl"
-XSLFILE="$(get_hostname).xsl" ; rm "$XSLFILE" -f
+#XSLFILE="$(get_hostname).xsl" ; rm "$XSLFILE" -f
+XSLFILE="/dev/null"
 HTMLFILE="$(get_hostname).html"
 
 rel_hostdir='./hosts'
