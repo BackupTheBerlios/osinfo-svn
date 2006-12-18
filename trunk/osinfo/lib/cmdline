@@ -5,6 +5,8 @@ function parse_arguments() {
 			case "$1" in
 				'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
 					PRINT_Help
+					PRINT_Debug
+					exit 0
 					;;
 
 				'--profile')
@@ -192,6 +194,7 @@ function parse_arguments() {
 					cat index.xml
 					exit 0
 					;;
+
 				*)
 					module_cmds="$module_cmds $1"
 					shift 1;

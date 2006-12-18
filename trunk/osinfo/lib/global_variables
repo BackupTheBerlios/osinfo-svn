@@ -1,36 +1,44 @@
-#############################################################
-## GLOBAL USERSPACE VARIABLES
-isverbose=0
-isdebug=0
-usekdialog=0
-lanforce=0
-usexml=0
-makehtml=0
-fake=0
-dev_code=0
-quiet=0
-tcpdaemon=0
-tcpsend=0
-no_fancy=0
+### VARIABLES ###############################################
+## send bugs and feedback here:
+bugreport_email="osinfo@lists.berlios.de"
 
-prefix="/"  # The root dir. Using a variable allows info on chrooted systems
+## output defaults
 PROFILES="desktop server laptop"
 #profile="desktop"    # default profile is desktop
 profile="undefined"
 #OUTPUT_MODES="stdout xml kdialog"  # this list is not used (yet)
 output_mode="stdout" # default output mode is stdout
+makehtml=0 # by default, do not make html
+usexml=0 # by default, no not make xml 
+tcpsend=0 # by default, no not send via tcp
 
+## GLOBAL USERSPACE VARIABLES
+isverbose=0
+isdebug=0
+usekdialog=0
+lanforce=0
+fake=0
+dev_code=0
+quiet=0
+tcpdaemon=0
+no_fancy=0
+
+## chroot / virtual stuff
+prefix="/"  # The root dir. Using a variable allows info on chrooted systems
+
+## Xorg log file ##
+## this is used by the experimental "video" module
+[ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
+
+### temp file handling ###
+# allocate a universal temp file
+osinfo_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+TempFiles=("${TempFiles[@]}" "$osinfo_tmp")
 
 # Keeps track of open headers, and closes them in the correct order upon flush_values.
 OpenHeaders=()
 TempFiles=()
 Modules=()
-
-
-### XORG LOG FILE ###
-
-[ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
-
 
 ### DAEMON MODE VARIABLES ###
 
@@ -50,22 +58,13 @@ hostdir="${rundir}/hosts"
 xsltdir="${rundir}/xslt"
 
 
+### MISCELLANEOUS VARIABLES ###
 
 # Before we break path hash some binaries so the script can find them (if they exist).
 #hash kdialog &>/dev/null
 
 # PATH here allows normal users to run ifconfig and lsmod
-export PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
-
-# LC_ALL makes is possible to print to stdout, due to support for '' :)
-#[[ ! "$LC_ALL" ]] && export LC_ALL="en_GB"
-
-
-bugreport_email="osinfo@lists.berlios.de"
-
-# allocate a universal temp file
-osinfo_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
-TempFiles=("${TempFiles[@]}" "$osinfo_tmp")
-
+PATH=$PATH:/bin/:/sbin/:/usr/bin/:/usr/sbin/
+TERM=xterm
 
 #############################################################

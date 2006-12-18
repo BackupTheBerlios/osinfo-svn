@@ -17,11 +17,10 @@ function PRINT_Usage {
 	fi
 	echo -e "        all     - list information from all modules"
 	echo
-#	echo 'If arguments is "all" then list information from all modules'
-	echo "    ${tcGREEN}PROFILES${tSTD}:"
-	echo -e "        desktop - limit output to standard desktop essentials"
-	echo -e "        server  - server essentials"
-	echo -e "        laptop  - laptop essentials"
+#	echo "    ${tcGREEN}PROFILES${tSTD}:"
+#	echo -e "        desktop - limit output to standard desktop essentials"
+#	echo -e "        server  - server essentials"
+#	echo -e "        laptop  - laptop essentials"
 	echo
 #	echo "See --help for the full list of options."
 }

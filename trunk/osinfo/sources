@@ -10,6 +10,7 @@ source lib/PRINT_Help             # print --help
 source lib/PRINT_Usage            # usage; if no parameters are given
 source lib/PRINT_Version          # print --version
 source lib/PRINT_UnknownOS
+source lib/PRINT_*
 
 source lib/xml.functions          # xml tag codes
 source lib/xslt.functions         # xslt generation
