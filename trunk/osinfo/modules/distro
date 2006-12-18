@@ -87,7 +87,7 @@ Module_distro() {
 
 			# Begin searching for distro identifying files
 			local found_files="" myfile
-			for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue}; do
+			for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue,rubix-release}; do
 				[ -e $myfile ] && found_files="$found_files $myfile"
 			done
 
@@ -119,6 +119,10 @@ Module_distro() {
 						found_distros="$found_distros Gentoo"
 						break
 						;;
+					"${root_dir}etc/rubix-release")
+						found_distros="$found_distros Rubix"
+						break
+						;;
 					# if nothing previous matches, then use /etc/issue
 					# AnMaster: Inform user that this might be very wrong...
 					"${root_dir}etc/issue")
@@ -136,7 +140,7 @@ Module_distro() {
 			# has not been thoroughly tested. the commented code
 			# may be removed after verifying the new code works.
 			case "$(echo ${found_distros} | tr 'A-Z' 'a-z')" in
-				'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu')
+				'suse'|'fedora core'|'fedora'|'red hat'|'slackware'|'slackware topologilinux'|'gentoo'|'ubuntu'|'rubix')
 				#'SuSE'|'Fedora Core'|'Fedora'|'Red Hat'|'Slackware'|'Slackware Topologilinux'|'Gentoo'|'Ubuntu')
 
 					distro_id="${found_distros}"
