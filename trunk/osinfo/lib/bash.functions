@@ -60,13 +60,15 @@ if [ "$TERM" ]; then
 	else
 		get_cols() { echo -n '80'; }
 	fi
-	altchars="$(tput acsc)"
-	while read -rn 2 chpair; do
-		if [ "${chpair:0:1}" == "q" ]; then
-			graph_got_q=1
-			graph_q="${chpair:1:1}"
-		fi
-	done < <(tput acsc)
+	# BUG: masking this out for the 0.3_rc1 release
+	# since this prevents sudo to work. -Mikael
+	#altchars="$(tput acsc)"
+	#while read -rn 2 chpair; do
+	#	if [ "${chpair:0:1}" == "q" ]; then
+	#		graph_got_q=1
+	#		graph_q="${chpair:1:1}"
+	#	fi
+	#done < <(tput acsc)
 else
 	# Bleh, no $TERM...
 	get_cols() { echo -n '80'; }
