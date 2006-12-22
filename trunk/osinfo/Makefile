@@ -67,7 +67,11 @@ dist: distclean man
 # And then include the output in the paramerter of tar.
 # Bad that it doesn't work in a variable.
 dist-tarbz2: dist
+	######################
+	# make the tarball
+	######################
 	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../lib/version | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}_$${patch_version}).tar.bz2" $(appname)
+	# done!
 
 distclean: clean
 	-rm -rf dist

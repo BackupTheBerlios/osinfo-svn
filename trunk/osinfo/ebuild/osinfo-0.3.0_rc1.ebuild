@@ -13,26 +13,21 @@ S="${WORKDIR}/${PN}"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="html devices hdd tcp" #add later: dvb ddc
+IUSE="html devices hdd tcp"
 
 DEPEND=""
-RDEPEND="html? (dev-libs/libxslt)
-		devices? (sys-apps/lshw
+	# grep 2.5.0 will bug with osinfo
+	#>=sys-apps/grep-2.5.1
+RDEPEND="sys-devel/bc
+		|| ( sys-apps/gawk sys-apps/mawk )
+		html? ( dev-libs/libxslt )
+		devices? ( sys-apps/lshw
 		          sys-apps/pciutils
-		          sys-apps/usbutils)
-		hdd? (sys-apps/hdparm
+		          sys-apps/usbutils )
+		hdd? ( sys-apps/hdparm
 		      app-admin/hddtemp
-		      >=sys-apps/smartmontools-5.36)
-		ddc? (sys-apps/ddcxinfo-knoppix)
-		dvb? (media-tv/dvbtune
-              media-tv/linuxtv-dvb-apps
-              media-video/dvbsnoop)
-		app-shells/bash
-		>=sys-apps/grep-2.5.1
-		sys-devel/bc
-		tcp? ( || (net-analyzer/netcat net-analyzer/netcat6	net-analyzer/gnu-netcat))
-		|| (sys-apps/gawk sys-apps/mawk)"
-
+		      >=sys-apps/smartmontools-5.36 )
+		tcp? ( || ( net-analyzer/netcat net-analyzer/netcat6 net-analyzer/gnu-netcat ))"
 
 src_install() {
 	dobin osinfo
