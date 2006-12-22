@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit eutils
+inherit eutils webapp
 
 DESCRIPTION="OSinfo lists system information available to the OS"
 HOMEPAGE="http://osinfo.berlios.de"

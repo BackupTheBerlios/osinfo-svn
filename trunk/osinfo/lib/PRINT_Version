@@ -1,6 +1,6 @@
 function PRINT_Version {
 	echo "${tBOLD}${appname}${tSTD}-${major_version}.${minor_version}.${micro_version}-${patch_version} ${dev_status}"
-	[ "$dev_status" == "stable" ] && \
+	#[ "$dev_status" == "stable" ] && \
 	echo "Release date: "$(date -d $release_date +%A\ %e\ %B\ %Y)
 	echo 'Copyright (C) 2005-2006 Arvid Norlander'
 	echo 'Copyright (C) 2006 Mikael Lammentausta'

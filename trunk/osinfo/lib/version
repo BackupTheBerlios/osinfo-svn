@@ -11,10 +11,10 @@
 ################################################################################
 appname='osinfo'
 major_version=0
-minor_version=2
-micro_version=12
-patch_version=1
+minor_version=3
+micro_version=0
+patch_version=rc1
 dev_status=beta
-release_date='2006-12-xx'
+release_date='2006-12-22'
 
 

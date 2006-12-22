@@ -63,12 +63,12 @@ dist: distclean man
 	# done!
 
 # Not very elegant
-# It greps the definitons out of osinfo and then evals it.
+# It greps the definitions out of osinfo and then evals it.
 # After that it echos the thing.
 # And then include the output in the paramerter of tar.
 # Bad that it doesn't work in a variable.
 dist-tarbz2: dist
-	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../lib/version | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}-$${patch_version}).tar.bz2" $(appname)
+	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../lib/version | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}_$${patch_version}).tar.bz2" $(appname)
 
 distclean: clean
 	-rm -rf dist
