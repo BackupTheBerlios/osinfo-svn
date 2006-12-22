@@ -1,17 +1,9 @@
-#helpers+=bash.functions
-#helpers+=lib/xml.functions
-#helpers+=lib/lanforce.functions
-#helpers+=lib/print_help
-#helpers+=lib/cmdline
-#helpers+=lib/xslt.functions
-#helpers+=lib/check.functions
-#helpers+=modules/osinfo.modules
+# osinfo Makefile
+#
 mainapp=osinfo
-subdirs=docs conf man init.d lib modules modules/experimental xslt profiles include
+subdirs=docs html html/xslt html/hosts
+src_subdir=conf man init.d lib modules modules/experimental xslt profiles ebuild ebuild/files
 
-#helpers=lib/*
-#helpers+=modules/*
-#helpers+=profiles/*
 # helpers go only to the src/ directory
 helpers=sources
 
@@ -24,45 +16,51 @@ all:
 
 help:
 	@echo "Targets:"
+	@echo "  install         - install the application"
 	@echo "  dist            - makes a dist dir, ready for $(appname) tarball"
 	@echo "  dist-tarbz2     - tar and bzip2 the dist"
 	@echo "  distclean       - remove the dist dir and *~"
 	@echo "  clean           - remove *~"
-	@echo "  dist-all-in-one - makes a huge all in one script. (replaces source foo with foo)"
 
 dist: distclean man
-	mkdir -p dist/$(appname)/src
+	mkdir -p dist/$(appname)
+
+	######################
+	# copy subdirectories
+	######################
 	for dir in $(subdirs); do \
-		mkdir -p dist/$(appname)/src/$$dir ; \
-		cp $$dir/* dist/$(appname)/src/$$dir ; \
+		cp -r $$dir dist/$(appname)/ ; \
+	done
+
+	######################
+	# copy sources
+	######################
+	mkdir -p dist/$(appname)/src
+	for dir in $(src_subdir); do \
+		cp -r $$dir dist/$(appname)/src/ ; \
 	done
 	cp $(helpers) dist/$(appname)/src
 	cp $(mainapp) dist/$(appname)/src
 	cp $(our_dtd) dist/$(appname)/src
 
+	######################
 	# make all-in-one package
-	#@echo "THIS MAY BE BROKEN! Some things have changed...."
-
-	#@echo "WARNING: this is quite untested"
-	#@echo "         therefore the output is saved in \"osinfo-all-in-one\" not \"osinfo\""
-
+	######################
 	cd dist/$(appname) && \
 	for sources in "src/lib/version" "src/profiles/*" "src/modules/*" "src/modules/experimental/*" "src/lib/*[^version]*" ; do \
 		cat $$sources >> osinfo 2>/dev/null ; \
 	done
-
-	# manual
-	cp man/osinfo.1 dist/osinfo
-
-	# finally the mainfile
-	# clear out sourcing external files, since it's now all-in-one
 	cd dist/$(appname) && \
 		sed 's/^source[a-zA-Z. _\/]*//' src/$(mainapp) >> osinfo
-
-	#for sources in "osinfo $$(awk /^source/{'print $$2'} osinfo)"; do cat "$$sources" >> osinfo-all-in-one ; done
-	#cd dist/$(appname) && perl -npe 's/^source (.*)/`cat $1`/e' <$(mainapp) > osinfo-all-in-one
-
+		# clear out sourcing external files, since it's now all-in-one
 	chmod +x dist/$(appname)/osinfo
+
+	######################
+	# copy manual
+	######################
+	cp man/osinfo.1 dist/osinfo
+
+	# done!
 
 # Not very elegant
 # It greps the definitons out of osinfo and then evals it.
@@ -74,6 +72,8 @@ dist-tarbz2: dist
 
 distclean: clean
 	-rm -rf dist
+
+install: dist
 
 man: 
 	cd man

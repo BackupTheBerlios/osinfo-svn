@@ -1,16 +1,16 @@
-# Copyright 2006 Mikael Lammentausta
+# Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
 inherit eutils
 
-DESCRIPTION="osinfo lists system information available to the OS"
+DESCRIPTION="OSinfo lists system information available to the OS"
 HOMEPAGE="http://osinfo.berlios.de"
 SRC_URI="ftp://ftp.berlios.de/pub/osinfo/osinfo.tar.bz2"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~x86 ~amd64 ~x86-fbsd"
+KEYWORDS="~x86 ~amd64"
 IUSE="xsl devices hdd tcp" #add later: dvb ddc
 
 DEPEND=""
@@ -36,11 +36,9 @@ RDEPEND="xsl? (dev-libs/libxslt)
 
 
 src_install() {
-
 	S="${WORKDIR}/${PN}"
 	dobin ${S}/osinfo
 	doman ${S}/osinfo.1
-
 }
 
 pkg_postinst() {
@@ -52,9 +50,9 @@ pkg_postinst() {
 	elog "You can create an HTML document of the computers in your"
 	elog "LAN, and run osinfo in daemon mode on a box with Apache server."
 	elog "Send the xml sheet to the daemon with the --tcpsend option."
+	elog "These features are still incomplete, but you can help to improve them!"
 	elog
 	elog "You can freely add more modules to osinfo. Check the source"
 	elog "code inside the tarball. Thank you for interest."
 	elog 
 }
-
