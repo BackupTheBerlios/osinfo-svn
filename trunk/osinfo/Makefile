@@ -1,8 +1,8 @@
 # osinfo Makefile
 #
 mainapp=osinfo
-subdirs=docs html html/xslt html/hosts
-src_subdir=conf man init.d lib modules modules/experimental xslt profiles ebuild ebuild/files
+subdirs=docs html 
+src_subdir=conf man init.d lib modules xslt profiles ebuild 
 
 # helpers go only to the src/ directory
 helpers=sources
@@ -41,7 +41,6 @@ dist: distclean man
 	done
 	cp $(helpers) dist/$(appname)/src
 	cp $(mainapp) dist/$(appname)/src
-	cp $(our_dtd) dist/$(appname)/src
 
 	######################
 	# make all-in-one package
@@ -58,7 +57,7 @@ dist: distclean man
 	######################
 	# copy manual
 	######################
-	cp man/osinfo.1 dist/osinfo
+	cp -r man dist/$(appname)
 
 	# done!
 
