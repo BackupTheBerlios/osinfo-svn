@@ -1,0 +1,27 @@
+div.kentta
+{
+	border: 1px dashed black;
+	margin-top: 10px;
+	padding: 0px 10px 10px 10px;
+
+	background-color: #e9fbf7;
+}
+
+table.attribuutti
+{
+	width: 100%;	
+}
+
+tr.jepaa
+{
+	border: 1px dashed black;
+	width: 100%;	
+}
+
+td.attribuutti_td
+{
+	margin: 5px 5px 5px 5px;
+	border: 1px dotted black;
+	padding: 7px;
+	background-color: #8db7ae;
+}
