@@ -1,3 +1,4 @@
+#!/bin/bash
 ################################################################################
 ################################################################################
 ## MAIN FUNCTION                                                              ##
@@ -5,7 +6,7 @@
 ################################################################################
 
 ## source the necessary files
-source sources # lines beginning with "source" are removed in the all-in-one package
+source sources # lines beginning with "source" are removed during the Make process
 
 [ -e "/etc/osinfo.conf" ] && \
 . /etc/osinfo.conf                # the configuration file

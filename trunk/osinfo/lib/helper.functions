@@ -50,6 +50,7 @@ dmi_info() {
 #	(2) input file
 #	(3) node closer, the end keyword, defaults to 'node id'
 extr_node() {
+
 	local node_id="${1}"
 	local input_file="${2}"
 	local node_closer="${3}"
@@ -78,17 +79,28 @@ extr_node() {
 		# and end lines, based on indentation level (xml), echoing
 		# the results out
 		for nr in $(seq 1 1 $node_count); do
-			this_node="$(sed -n "$nr{p;q;}" <<< "${all_nodes}")"
+
+			# this sed gives me headache
+			this_node="$( sed -n "$nr{p;q;}" <<< "${all_nodes}" 2>/dev/null)"
 
 			# this gets the line number of the wanted node
 			local begin="$(awk -F: {'print $1'} <<< ${this_node})"
+
+			# this gets the indentation
 			# debug: the line below should work.
 			#local node_indent="$(awk -F: {'print $2'} <<< "${this_node}" | \
 			#		     grep -o '^[ ]*' | wc -m)"
 			# debug: let's debug this line further
-			local node_indent_dbg="$(awk -F: {'print $2'} <<< "${this_node}")"
-			local node_indent_dbg2="$(grep -o '^[ ]*' <<< "$node_indent_dbg")"
-			local node_indent="$(wc -m <<< "$node_indent_dbg2")"
+			local node_indent_dbg="$(awk -F: {'print $2'} <<< ${this_node})"
+			local node_indent_dbg2="$(grep -o '^[ ]*' <<< ${node_indent_dbg})"
+
+			# if the indentation is zero, the echo | wc -m still gives one.
+			# this line tries to override this bug
+			if [ "$node_indent_dbg2" ]; then
+				local node_indent="$(wc -m <<< ${node_indent_dbg2})"
+			else
+				local node_indent=0
+			fi
 
 			# this loop takes care that all subnodes are included, by comparing
 			# the indentation level. not very elegant..
@@ -119,7 +131,7 @@ extr_node() {
 			# then what's between the first node and the closing id
 			# is echoed to whichever function called this
 			echo "%node $nr%"
-			sed -n "$begin,$nigeb{p;}" $input_file
+			sed -n "$begin,$nigeb{p;}" $input_file 2>/dev/null
 
 		done
 	fi
