@@ -49,6 +49,7 @@ CheckReq() {
 		return 0
 	else
 		info    "Please install ${1} to collect this information"
+		Missing=("${Missing[@]}" "${1}" )
 		flush_values
 		return 1
 	fi
@@ -61,6 +62,7 @@ CheckReq() {
 CheckReq_lshw() {
 	if [ ! "$(type -p lshw)" ]; then
 		info    "Please install lshw to collect this information"
+		Missing=("${Missing[@]}" "lshw" )
 		flush_values
 		return 1
 	else
@@ -77,6 +79,7 @@ CheckReq_lshw() {
 CheckReq_dmidecode() {
 	if [ ! "$(type -p dmidecode)" ]; then
 		info    "Please install dmidecode to collect this information"
+		Missing=("${Missing[@]}" "dmidecode" )
 		flush_values
 		return 1
 	else
@@ -140,6 +143,7 @@ CheckReq_smartctl() {
 			return 0
 		else
 			info	"Please install Smartmontools v5.36 or later."
+			Missing=("${Missing[@]}" "smartmontools" )
 			return 1
 		#fi
 	fi

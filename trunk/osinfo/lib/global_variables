@@ -12,6 +12,7 @@ makehtml=0 # by default, do not make html
 usexml=0 # by default, no not make xml 
 tcpsend=0 # by default, no not send via tcp
 
+
 ## GLOBAL USERSPACE VARIABLES
 isverbose=0
 isdebug=0
@@ -23,22 +24,25 @@ quiet=0
 tcpdaemon=0
 no_fancy=0
 
+
 ## chroot / virtual stuff
 prefix="/"  # The root dir. Using a variable allows info on chrooted systems
+
 
 ## Xorg log file ##
 ## this is used by the experimental "video" module
 [ ! "$XORG_LOG" ] && [ -e "/var/log/Xorg.0.log" ] && XORG_LOG="/var/log/Xorg.0.log"
 
-### temp file handling ###
+
+## temp file handling
 # allocate a universal temp file
 osinfo_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 TempFiles=("${TempFiles[@]}" "$osinfo_tmp")
-
 # Keeps track of open headers, and closes them in the correct order upon flush_values.
 OpenHeaders=()
 TempFiles=()
 Modules=()
+Missing=() # helper applications that aren't installed
 
 ### DAEMON MODE VARIABLES ###
 

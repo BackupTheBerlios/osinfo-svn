@@ -12,7 +12,7 @@ Module_applications() {
 	local missing_ERRMSG="if you want to be able to use all modules of ${appname}"
 
 
-	## Applications to look for..
+	## Define the applications to look for
 	if [ "$SYSTEM" == "linux" ] ; then
 
 		APPLICATIONS="Graphical_interface: X kde-config gnome-about xfce4-session \
@@ -163,15 +163,19 @@ Module_applications() {
 				;;
 			'lspci')
 				info "please install pciutils ${missing_ERRMSG}"
+				Missing=("${Missing[@]}" "lspci" )
 				;;
 			'lshw')
 				info "please install lshw ${missing_ERRMSG}"
+				Missing=("${Missing[@]}" "lshw" )
 				;;
 			'smartctl')
 				info "please install smartmontools ${missing_ERRMSG}"
+				Missing=("${Missing[@]}" "smartmontools" )
 				;;
 			'dmidecode')
 				info "please install dmidecode ${missing_ERRMSG}"
+				Missing=("${Missing[@]}" "dmidecode" )
 				;;
 		esac
 	}

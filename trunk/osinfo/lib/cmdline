@@ -71,7 +71,7 @@ function parse_arguments() {
 					fi
 					;;
 
-				'--listen')
+				'--listen'|'daemon')
 					# listen for incoming tcp connections,
 					# receive xml sheet from osinfo clients
 					tcpdaemon=1
