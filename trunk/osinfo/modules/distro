@@ -1,3 +1,4 @@
+#!/bin/bash
 #######################
 # DISTRIBUTION
 #
@@ -10,37 +11,13 @@ Module_distro() {
 	# in other modules
 
 
-
-	# then call the subfunction
+	# call the subfunction
 	identify_Linux_distro
 
 
-	# then output what the was found..
+	# then output what was found..
+	print_distro_id
 
-	add_attribute 'Root dir'
-	add_values    "$root_dir"
-
-	[ "${distro_id}" ] && \
-		add_attribute 'Distro ID'
-		add_values    "${distro_id}"
-
-	[ "${distro_release}" ] && \
-		add_attribute 'Release'
-		add_values    "$distro_release"
-
-	[ "${distro_codename}" ] && \
-		add_attribute 'Codename'
-		add_values    "$distro_codename"
-
-	[ "${distro_description}" ] && \
-		add_attribute 'Description'
-		add_values    "$distro_description"
-
-	[ "$SlackwareBase" ] && \
-		add_values  'Based on Slackware version' \
-		            "$SlackwareBase"
-
-	flush_values
 }
 
 	## DISTRIBUTION SUBFUNCTIONS ##################################
@@ -84,17 +61,26 @@ Module_distro() {
 			distro_description="$(distro_lsb_release 'description')"
 
 		else
-
+			
 			# Begin searching for distro identifying files
 			local found_files="" myfile
-			for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,issue,rubix-release}; do
+			for myfile in ${root_dir}etc/{SuSE-release,fedora-release,redhat-release,slackware-version,Topologilinux-version,gentoo-release,rubix-release,debian_version,issue}; do
 				[ -e $myfile ] && found_files="$found_files $myfile"
 			done
 
 			# Now make a list of distros from the $found_files list above
 			local found_distros="" distro_ident
 			for distro_ident in $found_files; do
+
 				case $distro_ident in
+					"${root_dir}etc/gentoo-release")
+						found_distros="$found_distros Gentoo"
+						break
+						;;
+					"${root_dir}etc/debian_version")
+						found_distros="$found_distros Debian"
+						break
+						;;
 					"${root_dir}etc/SuSE-release")
 						found_distros="$found_distros SuSE"
 						break
@@ -113,10 +99,6 @@ Module_distro() {
 						;;
 					"${root_dir}etc/Topologilinux-version")
 						found_distros="$found_distros Topologilinux"
-						break
-						;;
-					"${root_dir}etc/gentoo-release")
-						found_distros="$found_distros Gentoo"
 						break
 						;;
 					"${root_dir}etc/rubix-release")
@@ -194,29 +176,80 @@ Module_distro() {
 				esac
 
 
-			# Output distro version
+			# Find distro release version
 			case "${found_distros}" in
-				'SuSE')
-					distro_release="$(grep -F 'VERSION = ' ${root_dir}etc/SuSE-release          | sed 's/VERSION = //'    )" ;;
-				'Red Hat')
-					distro_release="$(cat ${root_dir}etc/redhat-release)" ;;
-				'Fedora')
-					distro_release="$(cat ${root_dir}etc/fedora-release)" ;;
-				'Slackware')
-					distro_release="$(grep -F 'Slackware ' ${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
-				'Topologilinux')
-					distro_release="$(grep -F 'Topologilinux ' ${root_dir}etc/Topologilinux-version | sed 's/Topologilinux //')"
-					local  SlackwareBase="$(grep -F 'Slackware  '${root_dir}etc/slackware-version     | sed 's/Slackware //'    )" ;;
 				'Gentoo')
-					# AnMaster: Not sure if readlink is POSIX but it exists on Gentoo and we allready know this is Gentoo.
-					distro_release="$(readlink /etc/make.profile | grep -Eo '[0-9]{4}\.[0-9]')";;
+					# AnMaster: Not sure if readlink is POSIX but it exists on Gentoo,
+					# and we already know this is Gentoo.
+					distro_release="$(readlink /etc/make.profile | grep -Eo '[0-9]{4}\.[0-9]')"
+					;;
+
+				'Debian')
+					distro_release="Debian $(cat ${root_dir}etc/debian_version)"
+					;;
+
+				'SuSE')
+					distro_release="$(grep -F 'VERSION = ' ${root_dir}etc/SuSE-release | \
+					                  sed 's/VERSION = //'    )"
+					;;
+
+				'Red Hat')
+					distro_release="$(cat ${root_dir}etc/redhat-release)"
+					;;
+
+				'Fedora')
+					distro_release="$(cat ${root_dir}etc/fedora-release)"
+					;;
+
+				'Slackware')
+					distro_release="$(grep -F 'Slackware ' ${root_dir}etc/slackware-version | \
+					                  sed 's/Slackware //'    )"
+					;;
+
+				'Topologilinux')
+					distro_release="$(grep -F 'Topologilinux ' ${root_dir}etc/Topologilinux-version | \
+					                  sed 's/Topologilinux //')"
+					local SlackwareBase="$(grep -F 'Slackware  '${root_dir}etc/slackware-version     | \
+					                       sed 's/Slackware //'    )"
+					;;
+
 				'misc')
 					# FIXME: AnMaster: . is a wildcard meaning any single char. Isn't grep -F what you want?
-					distro_release="$(grep '.' "${root_dir}etc/issue" | grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )";;
 					# TODO: improve the grep
+					distro_release="$(grep '.' "${root_dir}etc/issue" | \
+					                  grep -Eo '([A-Za-z0-9 ."])+' | head -n 1 )"
+					;;
+
 			esac
 
 		fi
+	}
+
+	print_distro_id() {
+		add_attribute 'Root dir'
+		add_values    "$root_dir"
+
+		[ "${distro_id}" ] && \
+			add_attribute 'Distro ID'
+			add_values    "${distro_id}"
+
+		[ "${distro_release}" ] && \
+			add_attribute 'Release'
+			add_values    "$distro_release"
+
+		[ "${distro_codename}" ] && \
+			add_attribute 'Codename'
+			add_values    "$distro_codename"
+
+		[ "${distro_description}" ] && \
+			add_attribute 'Description'
+			add_values    "$distro_description"
+
+		[ "$SlackwareBase" ] && \
+			add_values  'Based on Slackware version' \
+				"$SlackwareBase"
+
+		flush_values
 	}
 	#############################################################
 
