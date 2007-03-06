@@ -1,3 +1,4 @@
+#!/bin/bash
 ######################
 # OEM INFORMATION
 # this module is deprecated in favor of module_dmi
