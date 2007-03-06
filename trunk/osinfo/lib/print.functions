@@ -228,7 +228,7 @@ function print_xml {
 		idtag="$(awk -F% {'print $2'} <<< ${item})"
 
 		# nice debugging tool
-		#echo $item
+		echo $item
 
 		# case by the "%identifier%" tag
 		case $idtag in

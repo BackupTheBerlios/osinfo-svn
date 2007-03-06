@@ -54,7 +54,7 @@ Module_devices() {
 	fi
 
 	# output by category
-	print_categories
+#	print_categories
 
 	flush_values
 }
@@ -144,20 +144,20 @@ Module_devices() {
 
 	print_bridges(){
 		add_subheader 'Bridges'
-		add_attribute 'foo'
-		add_values 'bar'
+		grep_lspci_array "bridge"
 		add_footer 'Bridges'
 	}
 
 	print_controllers(){
 		add_subheader 'Controllers'
+		grep_lspci_array "controller"
 		add_footer 'Controllers'
 	}
 
 	print_interfaces(){
 		add_subheader 'Interfaces'
+		grep_lspci_array "interface"
 		add_footer 'Interfaces'
-
 	}
 
 	#####################
@@ -193,34 +193,22 @@ Module_devices() {
 		# grep the wanted nodes from the array into another array
 		for arraynr in $(seq 1 1 ${#devices[@]}); do
 
-			# if we have a hit (grep matches the device_id and we don't
-			# match the DO_NOT_PRINT expressions)
-				if [ "$(grep -i $device_id  <<< ${devices[$arraynr]} )" ] &&
-				[ -z "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$arraynr]} )" ]; then
+			# if we have a hit (grep matches the device_id)
+			if [ "$(grep -i $device_id  <<< ${devices[$arraynr]} )" ]; then
 
-				description[${#description[@]}]="$(
-					awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
-					sed 's/^.// ; s/^ *// ; s/_/ /g')"
+				# if the DO_NOT_OUTPUT is defined, go through the array
+				if [ $DO_NOT_OUTPUT ]; then
+					if [ -z "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$arraynr]} )" ]; then
 
-				found_devices[${#found_devices[@]}]="$(
-					awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | \
-					tr '_' ' ')"
+						catch_device
+					
+					fi
+				else
 
+					catch_device
 
-#				if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
-#
-#					# these values should not be local,
-#					# older bash fails there
-#					eth_adapter[${#eth_adapter[@]}]="$device"
-#
-#				elif [ "$(grep -i 'vga\|display' <<< "$description")" ]; then
-#
-#					video_adapter[${#video_adapter[@]}]="$device"
-#
-#				else
-#					found_devices[${#found_devices[@]}]="$found_device"
-#					unset found_device
-#				fi
+				fi
+
 			fi
 		done
 
@@ -258,8 +246,37 @@ Module_devices() {
 #			done
 #		fi
 
-#set -x
-		flush_values
+	}
+
+	#######################
+	# catch_device
+	#
+	# subroutine used by grep_lspci_array
+	catch_device() {
+		description[${#description[@]}]="$(
+			awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
+			sed 's/^.// ; s/^ *// ; s/_/ /g')"
+
+		found_devices[${#found_devices[@]}]="$(
+			awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | \
+			tr '_' ' ')"
+
+
+# 		if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
+# 
+# 			# these values should not be local,
+# 			# older bash fails there
+# 			eth_adapter[${#eth_adapter[@]}]="$device"
+# 
+# 		elif [ "$(grep -i 'vga\|display' <<< "$description")" ]; then
+# 
+# 			video_adapter[${#video_adapter[@]}]="$device"
+# 
+# 		else
+# 			found_devices[${#found_devices[@]}]="$found_device"
+# 			unset found_device
+# 		fi
+
 	}
 
 	#######################
