@@ -115,21 +115,19 @@ Module_devices() {
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
 
 		add_header    "Motherboard"
+		add_attribute 'Manufacturer' 'mother_board_manufacturer'
 
-		add_attribute ' Manufacturer' \
-				  'mother_board_manufacturer'
 		add_values    "$(get_mobo_manufacturer)"
 		              # these functions are inherited from module_dmi
 
-		add_attribute ' Model' \
-				  'mother_board_model'
+		add_attribute 'Model' 'mother_board_model'
 		add_values    "$(get_mobo_model)"
 
 		# load BIOS info from dmi
 		local handle_desc='BIOS Information'
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
 
-		add_attribute ' BIOS revision'	'bios_version'
+		add_attribute 'BIOS revision' 'bios_version'
 		add_values    "$(get_bios_revision)"
 
 		print_bridges;

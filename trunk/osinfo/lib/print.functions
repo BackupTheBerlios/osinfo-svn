@@ -228,7 +228,7 @@ function print_xml {
 		idtag="$(awk -F% {'print $2'} <<< ${item})"
 
 		# nice debugging tool
-		echo $item
+		# echo $item
 
 		# case by the "%identifier%" tag
 		case $idtag in
@@ -242,7 +242,7 @@ function print_xml {
 				# send the preceding value and the footer to xmlfile.
 				xml_value "$value_item ${item}"
 				unset value_item
-			;;
+				;;
 
 			# add everything else but the footer
 			*)
@@ -264,7 +264,7 @@ function print_xml {
 					value_item="$(sed 's/%value%// ; s/\\[a-z]//g;s/^ *//' <<< "${item}")"
 
 					#xml_value "${item}" >> "${XMLFILE}"
-				;;
+					;;
 
 				*)
 
@@ -276,14 +276,15 @@ function print_xml {
 					case $idtag in
 
 						'attribute')
+							# extract the XML <description> tag
 							iddesc="$(awk -F% {'print $3'} <<< ${item})"
 							iddesc="$(awk -F\; {'print $1'} <<< ${iddesc})"
-							item="$(validate_xml_item "${item}")"
+
 							open_attribute_tag "$item"
 
 							add_indentation
 							xml_description "$iddesc"
-						;;
+							;;
 
 						'header'|'subheader')
 							## add indentation
@@ -304,7 +305,7 @@ function print_xml {
 
 							unset code
 							((XML_INDENT++))
-						;;
+							;;
 
 						'footer')
 							((XML_INDENT--))
@@ -314,7 +315,7 @@ function print_xml {
 							item="$(sed s/%footer%// <<< "${item}")"
 							item="$(validate_xml_item "${item}")"
 							xml_tag_stop "${item}"
-						;;
+							;;
 					esac
 				esac
 			;;
@@ -343,21 +344,23 @@ function print_xml {
 
 	open_attribute_tag() {
 		add_indentation
-
 		# parse item
 		item="$(sed s/%attribute%// <<< "${item}")"
 		code=$(awk -F\; {'print $2'} <<< "${item}")
+
 		# item validation strips away the code
 		item="$(validate_xml_item "${item}")"
-		xml_attribute_start "${item}" "${code}"
+		local tag="$(awk -F\; {'print $1'} <<< "${item}")"
+
+		xml_attribute_start "${tag}" "${code}"
 		((XML_INDENT++))
 		attrib_status="open"
 	}
 
 	validate_xml_item() {
-		# uppercase to lowercase ; spaces to downscores ; trim all leading spaces
-		awk -F\; {'print $1'} <<< "${1}" | \
-			sed 's/\\[a-z]//g; s/\ \|\//_/g ; s/^\ *//' | tr 'A-Z' 'a-z'
+		# trim all leading spaces ; trim all non-alphabetical characters ;
+		# spaces to downscores ; uppercase to lowercase
+		sed 's/^\ *// ; s/\\[a-z]//g; s/\ \|\//_/g ' <<< "${@}"| tr 'A-Z' 'a-z'
 	}
 #######
 
