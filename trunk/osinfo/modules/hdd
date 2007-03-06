@@ -1,3 +1,4 @@
+#!/bin/bash
 #######################
 # HARD DISK DRIVES
 #
@@ -14,14 +15,14 @@ Module_hdd() {
 	local moduleDescription="Information of the hard drives in the system"
 	module_header "${moduleName}"
 
-	# developement status:
+	# development status:
 	# -------------------
 	# IDE/PATA is tested
 	# SATA is tested
 	# USB (flash sticks and hard drives) is tested
 	# SCSI is untested, although works probably as SATA
 	# Software RAID is planned (mdadm only), untested
-	# Logical Volume Management support is planned, untested
+	# Logical Volume Management support is preliminary
 	# FreeBSD is untested
 
 

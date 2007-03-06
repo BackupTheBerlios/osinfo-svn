@@ -75,16 +75,30 @@ function add_header() {
 }
 # same as above, but without color. some modules use this because of
 # a bug in the 'column' program
-#
-# Parameters: (example eth0)
-#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
-#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
 function add_nc_header() {
 	infostring[${#infostring[@]}]="%nc_header%${1};${2}"
 	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
 	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
 }
 
+#################################
+# add_subheader, add_nc_subheader
+#
+# similar to add_header, but with indentation++
+#
+# Parameters: (example eth0)
+#   1 the header. will be printed to stdout and without $2 to xml as <eth0>
+#   2 xml syntax modifier. if "iface name", then xml tag will be <iface name="eth0">
+function add_subheader() {
+	infostring[${#infostring[@]}]="%subheader%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
+}
+function add_nc_subheader() {
+	infostring[${#infostring[@]}]="%nc_subheader%${1};${2}"
+	# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+	OpenHeaders=("${OpenHeaders[@]}" "${1};${2}")
+}
 
 ##############
 # add_footer

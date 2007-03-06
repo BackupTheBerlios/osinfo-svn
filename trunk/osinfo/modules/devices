@@ -1,3 +1,4 @@
+#!/bin/bash
 #######################
 # DEVICES
 #
@@ -45,7 +46,7 @@ Module_devices() {
 	# load lshw xml temp file
 	lshw_xml
 
-	# get entries from lspci to $DEVICE[]
+	# get entries from lspci into the $DEVICE[] array
 	load_lspci_array
 
 	if CheckReq_root "motherboard and BIOS data"; then
@@ -66,7 +67,7 @@ Module_devices() {
 	#
 	# loads the categories to display
 	load_categories() {
-		CATEGORIES="Controllers Enhancements USB"
+		CATEGORIES="Enhancements USB"
 	}
 
 	#####################
@@ -79,10 +80,10 @@ Module_devices() {
 		# load the category definitions
 		load_categories
 
-		# print
+		# print each category
 		for categories in $CATEGORIES; do
 
-			add_header "\n$categories"
+			add_header "$categories"
 
 			case $categories in
 				'Controllers')
@@ -90,6 +91,7 @@ Module_devices() {
 					grep_lspci_array "smb\|bridge\|host\|ide\|isa\|usb"
 					flush_values
 					;;
+
 				'Enhancements')
 					DO_NOT_OUTPUT="^pci\|usb\|smb\|bridge\|ide\|isa\|host"
 					grep_lspci_array "."
@@ -115,12 +117,12 @@ Module_devices() {
 		add_header    "Motherboard"
 
 		add_attribute ' Manufacturer' \
-					  'mother_board_manufacturer'
+				  'mother_board_manufacturer'
 		add_values    "$(get_mobo_manufacturer)"
 		              # these functions are inherited from module_dmi
 
 		add_attribute ' Model' \
-					  'mother_board_model'
+				  'mother_board_model'
 		add_values    "$(get_mobo_model)"
 
 		# load BIOS info from dmi
@@ -130,10 +132,33 @@ Module_devices() {
 		add_attribute ' BIOS revision'	'bios_version'
 		add_values    "$(get_bios_revision)"
 
+		print_bridges;
+		print_interfaces;
+		print_controllers;
+
 		add_footer
 	}
 
+	####################
+	## Motherboard subcategories: bridges, controllers, interfaces
 
+	print_bridges(){
+		add_subheader 'Bridges'
+		add_attribute 'foo'
+		add_values 'bar'
+		add_footer 'Bridges'
+	}
+
+	print_controllers(){
+		add_subheader 'Controllers'
+		add_footer 'Controllers'
+	}
+
+	print_interfaces(){
+		add_subheader 'Interfaces'
+		add_footer 'Interfaces'
+
+	}
 
 	#####################
 	## load_lspci_array

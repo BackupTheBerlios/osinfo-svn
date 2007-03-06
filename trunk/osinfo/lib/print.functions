@@ -103,6 +103,7 @@ function print_stdout {
 	local header_color="${tcMAGENTA}"
 	local info_color="${tcYELLOW}"
 	local item itemnr value_string=""
+	local indentation=""
 
 	for itemnr in $(seq 1 1 ${#infostring[@]} ); do
 		((itemnr--)) # correct offset to start at zero
@@ -114,7 +115,7 @@ function print_stdout {
 				# add item to the value string,
 				# leaving the value identifier in
 				value_string="${value_string}${item}";
-			;;
+				;;
 
 			'value_footer')
 				# strip tag and discard the xml code tag
@@ -122,7 +123,8 @@ function print_stdout {
 				# add item to the value string,
 				# the preceding space is intentional.
 				value_string="${value_string} ${item}";
-			;;
+				indentation=""
+				;;
 
 			'attribute')
 				# strip tag and discard the xml code tag
@@ -130,8 +132,8 @@ function print_stdout {
 				        awk -F\; {'print $1'})"
 				# add item to the value string,
 				# each attribute starts with a newline
-				value_string="${value_string}\n${item}";
-			;;
+				value_string="${value_string}\n${indentation}${item}";
+				;;
 
 			'header')
 				# strip tag, do not care of the xml modifier
@@ -141,7 +143,7 @@ function print_stdout {
 				# each header starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${header_color}${item}${tSTD}";
-			;;
+				;;
 
 			'nc_header')
 				# strip tag
@@ -151,7 +153,35 @@ function print_stdout {
 				# each header starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${item}";
-			;;
+				;;
+
+			'subheader')
+				# strip tag, do not care of the xml modifier
+				item="$(sed 's/%subheader%//' <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
+				# add item to the value string,
+				# each header starts with a newline,
+				# and is printed in special color.
+				# add indentation of two spaces
+				value_string="${value_string}\n \_ ${header_color}${item}${tSTD}";
+				indentation=" \__ "
+				;;
+
+			'nc_subheader')
+				# strip tag
+				item="$(sed s/%nc_subheader%// <<< "${item}" | \
+				        awk -F\; {'print $1'} )"
+				# add item to the value string,
+				# each header starts with a newline,
+				# and is printed in special color.
+				# add indentation of two spaces
+				value_string="${value_string}\n \_ ${item}";
+				indentation=" \__ "
+				;;
+
+			'footer')
+				indentation=""
+				;;
 
 			'info')
 				# strip tag
@@ -160,7 +190,7 @@ function print_stdout {
 				# each info note starts with a newline,
 				# and is printed in special color
 				value_string="${value_string}\n${info_color}${item}${tSTD}";
-			;;
+				;;
 
 		esac
 	done
@@ -196,6 +226,9 @@ function print_xml {
 
 		item="${infostring[$itemnr]}"
 		idtag="$(awk -F% {'print $2'} <<< ${item})"
+
+		# nice debugging tool
+		#echo $item
 
 		# case by the "%identifier%" tag
 		case $idtag in
@@ -245,18 +278,19 @@ function print_xml {
 						'attribute')
 							iddesc="$(awk -F% {'print $3'} <<< ${item})"
 							iddesc="$(awk -F\; {'print $1'} <<< ${iddesc})"
+							item="$(validate_xml_item "${item}")"
 							open_attribute_tag "$item"
 
 							add_indentation
 							xml_description "$iddesc"
 						;;
 
-						'header')
+						'header'|'subheader')
 							## add indentation
 							add_indentation
 
 							# strip tag
-							item="$(sed s/%header%// <<< "${item}")"
+							item="$(sed -r s/%\(sub\)?header%// <<< "${item}")"
 							code="$(awk -F\; {'print $2'} <<< "${item}" )"
 							item="$(awk -F\; {'print $1'} <<< "${item}" )"
 							item="$(validate_xml_item "${item}")"
@@ -321,8 +355,9 @@ function print_xml {
 	}
 
 	validate_xml_item() {
+		# uppercase to lowercase ; spaces to downscores ; trim all leading spaces
 		awk -F\; {'print $1'} <<< "${1}" | \
-			sed 's/\\[a-z]//g; s/\ \|\//_/g' | tr 'A-Z' 'a-z'
+			sed 's/\\[a-z]//g; s/\ \|\//_/g ; s/^\ *//' | tr 'A-Z' 'a-z'
 	}
 #######
 
