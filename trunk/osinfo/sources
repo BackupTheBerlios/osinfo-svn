@@ -1,6 +1,7 @@
 for module in modules/* modules/experimental/*; do
-	[ "$module" != "modules/experimental" ] && \
+	if ( [ "$module" != "modules/experimental" ] && [ "$module" != "modules/deprecated" ] ); then
 		source $module
+	fi
 done
 
 source lib/version                # osinfo version info
