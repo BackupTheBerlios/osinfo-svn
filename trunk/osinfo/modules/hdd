@@ -36,7 +36,7 @@ Module_hdd() {
 		# allocate a temp file
 		fdisk_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$fdisk_info")
-		fdisk -l > $fdisk_info
+		fdisk -l > $fdisk_info 2> /dev/null
 
 		# detect all drives in the system
 		local drives="$(grep -Eo '\/(dev)\/[a-z]+' ${fdisk_info} | uniq )"
@@ -86,13 +86,14 @@ Module_hdd() {
 
 			else
 
-				hdd_type="Unknown drive type"
+				hdd_type="unknown"
 
 			fi
 
 
 			###############################
 			# scan common attributes
+			[ "$hdd_type" != "unknown" ] && \
 			scan_hdd_common ${drvdev}
 
 
@@ -104,11 +105,13 @@ Module_hdd() {
 			# the next run of this function. this would be easily
 			# fixed if bash would support matrices, but no.
 			hdd_pt_ID=0
+			[ "$hdd_type" != "unknown" ] && \
 			scan_hdd_partitions ${drvdev}
 
 
 			##############################################
 			# calculate the total disk capacity of $drvdev
+			[ "$hdd_type" != "unknown" ] && \
 			calculate_hdd_usage
 
 
@@ -154,6 +157,17 @@ Module_hdd() {
 	##############################################
 	# PRINTS DRIVE DATA
 	print_hdd_data() {
+		# if the drive type is unknown, let's get it out of the way first..
+		if [ "$hdd_type" == "unknown" ]; then
+
+			add_header  "${drvdev}"
+			add_attribute "Drive type"
+			add_values    "unknown"
+			add_footer
+
+			break;
+		fi
+		
 		case "$output_mode" in
 			'stdout')	# standard output
 
