@@ -1,3 +1,5 @@
+#!/bin/bash
+
 Module_video() {
 	local moduleName="Video"
 	local moduleDescription="Video components"
@@ -6,54 +8,79 @@ Module_video() {
 	#add_attribute     'Video card'
 	#add_attribute     'Video card chipset'
 
-	add_attribute      'X version'
-	add_values         "$(X -version 2>&1 | grep Revision)"
-
-	#add_attribute     'Available X video overlays'
-
-	add_attribute      '* Found chipset'
-	add_values         "$(get_found_chipset)"
-
-	add_attribute      '* AGP speed'
-	add_values         "$(get_agp_mode)"
-
-	add_header         'Direct rendering'
-
-	add_attribute      "Enabled"
-	add_values         "$(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
-						 awk -F: {'print $2'})"
-
-	add_attribute      "OpenGL renderer"
-	add_values         "$(get_opengl_renderer)"
-
-	add_attribute      "* Dri vendor"
-	add_values         "$(get_dri_vendor)"
-
-	add_attribute      "* Drm vendor"
-	add_values         "$(get_drm_vendor)"
-
-	add_attribute      "* GLX vendor"
-	add_values         "$(get_glx_vendor)"
-
-	add_attribute      "* GLX"
-	add_values         "$(get_glx)"
-
-	add_attribute      "* AIGLX"
-	add_values         "$(get_aiglx)"
-
-	add_footer
-
-	add_header         'Xorg errors'
-	add_values         "$(get_xorg_errors)"
-
-	info "\nData is based on ${XORG_LOG}"
-
-	add_attribute      'Xorg log date*'
-	add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
-
+	print_X_info
+	print_hw_info
+	print_setup
 
 	flush_values
 }
+
+	print_X_info() {
+		add_header         'Windowing system'
+
+		add_attribute      'X version'
+		add_values         "$(X -version 2>&1 | grep Revision)"
+
+		#add_attribute     'Available X video overlays'
+		
+		add_attribute      'log file'
+		add_values         "${XORG_LOG}"
+
+		add_attribute      'log date'
+		add_values         "$(ls -l ${XORG_LOG} | awk {'print $6 " " $7'})"
+
+		add_footer
+	}
+
+	print_hw_info() {
+		add_header         'Hardware'
+
+		add_subheader      'Display adapter'
+		 get_video_card_info
+		 add_attribute      'Found chipset'
+		 add_values         "$(get_found_chipset)"
+		add_footer
+
+		add_subheader      'Capabilities'
+		 add_attribute      'AGP speed'
+		 add_values         "$(get_agp_mode)"
+		add_footer
+
+		add_footer
+	}
+
+	print_setup() {
+		add_header         'Setup'
+		
+		add_attribute      'Direct rendering'
+		add_values         "Enabled: $(glxinfo 2> /dev/null | grep -i 'direct rendering' | \
+		                               awk -F: {'print $2'})"
+
+		add_attribute      "OpenGL renderer"
+		add_values         "$(get_opengl_renderer)"
+
+		add_attribute      "Dri vendor"
+		add_values         "$(get_dri_vendor)"
+
+		add_attribute      "Drm vendor"
+		add_values         "$(get_drm_vendor)"
+
+		add_attribute      "GLX vendor"
+		add_values         "$(get_glx_vendor)"
+
+		add_attribute      "GLX"
+		add_values         "$(get_glx)"
+
+		add_attribute      "AIGLX"
+		add_values         "$(get_aiglx)"
+
+		add_subheader      'Errors'
+		 add_attribute      'X'
+		 #add_values         "$(get_xorg_errors)"
+		add_footer
+
+		add_footer
+	}
 
 	function get_videodev_name () {
 		echo TODO

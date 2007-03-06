@@ -101,6 +101,7 @@ print_xml_computer_overview () {
 # and indentation is formed with the 'column' tool.
 function print_stdout {
 	local header_color="${tcMAGENTA}"
+	local subheader_color="${tcBLUE}"
 	local info_color="${tcYELLOW}"
 	local item itemnr value_string=""
 	local indentation=""
@@ -163,7 +164,7 @@ function print_stdout {
 				# each header starts with a newline,
 				# and is printed in special color.
 				# add indentation of two spaces
-				value_string="${value_string}\n \_ ${header_color}${item}${tSTD}";
+				value_string="${value_string}\n \_ ${subheader_color}${item}${tSTD}";
 				indentation=" \__ "
 				;;
 

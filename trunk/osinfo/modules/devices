@@ -47,7 +47,7 @@ Module_devices() {
 	lshw_xml
 
 	# get entries from lspci into the $DEVICE[] array
-	load_lspci_array
+	load_lspci_arrays
 
 	if CheckReq_root "motherboard and BIOS data"; then
 		print_mobo_info
@@ -159,7 +159,26 @@ Module_devices() {
 	}
 
 	#####################
-	## load_lspci_array
+	## load_lspci_arrays
+	#
+	load_lspci_arrays() {
+		local IFS_bak="$IFS"
+		IFS=$'\n'
+		
+		for DEVICE in $(lspci); do
+
+			busID[${#busID[@]}]="$(awk {' print $1 '} <<< "${DEVICE}" )"
+	
+			func[${#func[@]}]="$(awk -F'.[0-9] |: '  '{ print $2 }' <<< "${DEVICE}" )"
+
+			device[${#device[@]}]="$(awk -F': ' {' print $2 '} <<< ${DEVICE} )"
+		
+		done
+		IFS="$IFS_bak"
+	}	
+
+	#####################
+	## load_lspci_array (deprecated)
 	#
 	# fill up the lspci array to contain ' ' separated entries from lsmod.
 	# [1] device type		# [2] manufacturer		# [3] device name	etc
@@ -189,14 +208,14 @@ Module_devices() {
 		local found_devices arraynr description
 
 		# grep the wanted nodes from the array into another array
-		for arraynr in $(seq 1 1 ${#devices[@]}); do
+		for arraynr in $(seq 1 1 ${#func[@]}); do
 
 			# if we have a hit (grep matches the device_id)
-			if [ "$(grep -i $device_id  <<< ${devices[$arraynr]} )" ]; then
+			if [ "$(grep -i $device_id  <<< ${func[$arraynr]} )" ]; then
 
 				# if the DO_NOT_OUTPUT is defined, go through the array
 				if [ $DO_NOT_OUTPUT ]; then
-					if [ -z "$(grep -i $DO_NOT_OUTPUT <<< ${devices[$arraynr]} )" ]; then
+					if [ -z "$(grep -i $DO_NOT_OUTPUT <<< ${func[$arraynr]} )" ]; then
 
 						catch_device
 					
@@ -211,22 +230,22 @@ Module_devices() {
 		done
 
 
-		# print
-		for arraynr in $(seq 1 1 $((${#found_devices[@]}-1)) ); do
-
-			# add an xml code for ethernet and display adapters
-			if [ "$(grep -i 'network\|ethernet' <<< "${description[$arraynr]}")" ]; then
-				add_attribute ' Ethernet controller(s)'	"network_adapter"
-
-			elif [ "$(grep -i 'vga\|display' <<< "${description[$arraynr]}")" ]; then
-				add_attribute ' Display adapter(s)'		"display_adapter"
-
-			else
-				add_attribute " ${description[$arraynr]}"
-			fi
-
-			add_values    " ${found_devices[$arraynr]}"
-		done
+# 		# print (deprecated)
+# 		for arraynr in $(seq 1 1 $((${#found_devices[@]}-1)) ); do
+# 
+# 			# add an xml code for ethernet and display adapters
+# 			if [ "$(grep -i 'network\|ethernet' <<< "${description[$arraynr]}")" ]; then
+# 				add_attribute ' Ethernet controller(s)' "network_adapter"
+# 
+# 			elif [ "$(grep -i 'vga\|display' <<< "${description[$arraynr]}")" ]; then
+# 				add_attribute ' Display adapter(s)' "display_adapter"
+# 
+# 			else
+# 				add_attribute "${busID[$arraynr]}" # ${description[$arraynr]}"
+# 			fi
+# 
+# 			add_values    " ${found_devices[$arraynr]}"
+# 		done
 
 
 #		#then report the eth and video adapters
@@ -251,14 +270,31 @@ Module_devices() {
 	#
 	# subroutine used by grep_lspci_array
 	catch_device() {
-		description[${#description[@]}]="$(
-			awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
-			sed 's/^.// ; s/^ *// ; s/_/ /g')"
 
-		found_devices[${#found_devices[@]}]="$(
-			awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | \
-			tr '_' ' ')"
+		# add an xml code for ethernet and display adapters
+		if [ "$(grep -i 'network\|ethernet' <<< "${func[$arraynr]}")" ]; then
+			add_attribute ' Ethernet controller(s)' "network_adapter"
 
+		elif [ "$(grep -i 'vga\|display' <<< "${func[$arraynr]}")" ]; then
+			add_attribute ' Display adapter(s)' "display_adapter"
+
+		else
+			add_attribute "${busID[$arraynr]} ${func[$arraynr]}"
+		fi
+
+		add_values    " ${device[$arraynr]}"
+
+# 		busID[${#busID[@]}]="$(
+# 			awk -F_ '{ print $1 }' <<< ${devices[$arraynr]} )"
+# 	
+# 		description[${#description[@]}]="$(
+# 			awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
+# 			sed 's/^.// ; s/^ *// ; s/_/ /g')"
+# 
+# 		found_devices[${#found_devices[@]}]="$(
+# 			awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | \
+# 			tr '_' ' ')"
+# 
 
 # 		if [ "$(grep -i 'network\|ethernet' <<< "$description")" ]; then
 # 
@@ -304,4 +340,29 @@ Module_devices() {
 	#	print_idebusinfo(){}
 	#	print_scsibusinfo(){}
 	#	print_usbbusinfo(){}
+
+	#######################
+	## get_video_card_info
+	#
+	# to be used by other modules; ie video
+	get_video_card_info() {
+		load_lspci_array
+
+		# grep the wanted nodes from the array into another array
+		for arraynr in $(seq 1 1 ${#devices[@]}); do
+
+			if [ "$(grep -i 'vga\|display' <<< "${devices[$arraynr]}")" ]; then
+
+				local attribute="$(awk  '{ print $1 }' <<< ${devices[$arraynr]} | \
+				                   sed 's/^.// ; s/^ *// ; s/_/ /g')"
+
+				local value="$(awk  '{ print $2" "$3 }' <<< ${devices[$arraynr]} | tr '_' ' ')"
+
+				add_attribute "$attribute"
+				add_values    "$value"
+
+			fi
+
+		done
+	}
 

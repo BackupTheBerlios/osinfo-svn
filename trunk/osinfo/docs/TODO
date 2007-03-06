@@ -10,7 +10,6 @@ FEATURES and FIXES for 0.3:
 *	sensors output depends on LC_*, remove [:punct:] dependency
 *	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
 *	complete xsl/html support
-*	add_subheader => intended, blue title
 *	checker to see if netcat is installed
 *	--checkdeps switch
 *	don't leave osinfo.XXXXXX and <hostname>.x?? files around!
