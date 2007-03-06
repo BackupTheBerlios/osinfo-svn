@@ -233,7 +233,7 @@ function print_xml {
 		# case by the "%identifier%" tag
 		case $idtag in
 
-			# adds the footer (value dimension)
+			# adds the value footer (value dimension)
 			'value_footer')
 				add_indentation
 
@@ -313,6 +313,8 @@ function print_xml {
 
 							# strip tag
 							item="$(sed s/%footer%// <<< "${item}")"
+							item="$(awk -F\; {'print $1'} <<< "${item}")"
+							
 							item="$(validate_xml_item "${item}")"
 							xml_tag_stop "${item}"
 							;;
@@ -349,8 +351,9 @@ function print_xml {
 		code=$(awk -F\; {'print $2'} <<< "${item}")
 
 		# item validation strips away the code
-		item="$(validate_xml_item "${item}")"
 		local tag="$(awk -F\; {'print $1'} <<< "${item}")"
+		tag="$(validate_xml_item "${tag}")"
+		code="$(validate_xml_item "${code}")"
 
 		xml_attribute_start "${tag}" "${code}"
 		((XML_INDENT++))
@@ -360,7 +363,7 @@ function print_xml {
 	validate_xml_item() {
 		# trim all leading spaces ; trim all non-alphabetical characters ;
 		# spaces to downscores ; uppercase to lowercase
-		sed 's/^\ *// ; s/\\[a-z]//g; s/\ \|\//_/g ' <<< "${@}"| tr 'A-Z' 'a-z'
+		sed 's/^\ *// ; s/^([a-z]*)//g; s/\ \|\//_/g ' <<< "${@}"| tr 'A-Z' 'a-z'
 	}
 #######
 
