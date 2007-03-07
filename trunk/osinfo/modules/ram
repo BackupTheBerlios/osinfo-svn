@@ -1,3 +1,4 @@
+#!/bin/bash
 #######################
 # RAM
 #
@@ -62,31 +63,47 @@ Module_ram() {
 
 					add_attribute     "RAM bank$bank description"
 					add_values        "$(extr_xml_value \
-					                  $(grep description $banknode))"
+					                   $(grep description $banknode))"
 
 					add_attribute     "RAM bank$bank size"
 					add_values        "$(extr_xml_value \
-					                  $(grep size $banknode))"
+					                   $(grep size $banknode))"
 
-					add_attribute     "RAM bank$bank vendor"
+					add_attribute     "RAM bank$bank type" # DDR
 					add_values        "$(extr_xml_value \
-					                  $(grep vendor $banknode))"
+					                   $(grep type $banknode))" # check DMI
 
-					add_attribute     "RAM bank$bank serial"
+					add_attribute     "RAM bank$bank form factor" # DIMM
 					add_values        "$(extr_xml_value \
-					                  $(grep serial $banknode))"
+					                   $(grep 'form factor' $banknode))" # check DMI
 
-					add_attribute     "RAM bank$bank slot"
+					add_attribute     "RAM bank$bank detail" # syncronous
 					add_values        "$(extr_xml_value \
-					                  $(grep slot $banknode))"
+					                   $(grep 'detail' $banknode))" # check DMI
 
-					add_attribute     "RAM bank$bank width"
+					add_attribute     "RAM bank$bank bit width"
 					add_values        "$(extr_xml_value \
-					                  $(grep width $banknode))"
+					                   $(grep width $banknode))"
 
 					add_attribute     "RAM bank$bank speed"
 					add_values        "$(extr_xml_value \
-					                  $(grep speed $banknode))"
+					                   $(grep speed $banknode))"
+
+					add_attribute     "RAM bank$bank slot"
+					add_values        "$(extr_xml_value \
+					                   $(grep slot $banknode))"
+
+					add_attribute     "RAM bank$bank vendor"
+					add_values        "$(extr_xml_value \
+					                   $(grep vendor $banknode))"
+
+					add_attribute     "RAM bank$bank serial"
+					add_values        "$(extr_xml_value \
+					                   $(grep serial $banknode))"
+
+					add_attribute     "RAM bank$bank asset tag"
+					add_values        "$(extr_xml_value \
+					                   $(grep 'asset tag' $banknode))"
 
 					add_footer        "Bank"
 

@@ -43,24 +43,27 @@ Module_devices() {
 		return 1
 	fi
 
-	# load lshw xml temp file
-	lshw_xml
-
-	# get entries from lspci into the $DEVICE[] array
-	load_lspci_arrays
-
 	if CheckReq_root "motherboard and BIOS data"; then
-		print_mobo_info
+	
+		# load lshw xml temp file
+		lshw_xml
+
+		# get entries from lspci into the $DEVICE[] array
+		load_lspci_arrays
+
+		# print
+		print_internal
+		print_external
+
+		# output by category (deprecated)
+		#print_categories
+
+		flush_values
 	fi
-
-	# output by category
-#	print_categories
-
-	flush_values
 }
 
 ############################################
-# helper functions for to get device data
+# helper functions for to get and display device data
 #
 	###################
 	## load_categories
@@ -71,7 +74,7 @@ Module_devices() {
 	}
 
 	#####################
-	## print_categories
+	## print_categories (deprecated)
 	#
 	# this function defines all categories
 	# and prints the selected ones
@@ -108,8 +111,8 @@ Module_devices() {
 	}
 
 	####################
-	## print_mobo_info
-	print_mobo_info(){
+	## print_internal
+	print_internal(){
 
 		add_header    "Motherboard"
 
@@ -121,6 +124,17 @@ Module_devices() {
 		add_footer
 	}
 
+	####################
+	## print_external
+	print_external(){
+
+		add_header    "External devices"
+
+		print_usbbusinfo;
+
+		add_footer
+	}
+	
 	####################
 	## Motherboard subcategories: bridges, controllers, interfaces
 
@@ -142,6 +156,18 @@ Module_devices() {
 		add_footer 'Interfaces'
 	}
 
+	# some possible future functios
+	#	print_mobobusinfo(){}
+	#	print_pciinfo(){}
+	#	print_apginfo(){}
+	#	print_idebusinfo(){}
+	#	print_scsibusinfo(){}
+	
+
+	#################################
+	### DATA ACQUISATION ROUTINES ###
+	#################################
+	
 	#####################
 	## load_lspci_arrays
 	#
@@ -296,6 +322,21 @@ Module_devices() {
 # 		fi
 
 	}
+	
+	#######################
+	## print_usbbusinfo
+	#
+	# prints information of the USB bus (speed)
+	print_usbbusinfo(){
+		add_subheader      'USB'
+		
+		 add_attribute     'Standard'
+		 add_values        "n/a"
+
+		 print_usb_devices
+
+		add_footer 'USB'
+	}
 
 	#######################
 	## print_usb_devices
@@ -317,13 +358,9 @@ Module_devices() {
 		IFS="$IFS_bak"
 	}
 
-	# some possible future functios
-	#	print_mobobusinfo(){}
-	#	print_pciinfo(){}
-	#	print_apginfo(){}
-	#	print_idebusinfo(){}
-	#	print_scsibusinfo(){}
-	#	print_usbbusinfo(){}
+	print_power_supply(){
+		echo "TODO"
+	}
 
 	#######################
 	## get_video_card_info
