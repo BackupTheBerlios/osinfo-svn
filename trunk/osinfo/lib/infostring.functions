@@ -146,13 +146,12 @@ function add_values {
 	   [ ! "$(grep '[^\ *]' <<< "${@}")" ]; then
 
 		# but only if verbosity does not require extreme explicity (-vv)
-		if [ $isverbose -ge 2 ]; then
+		if [ $isverbose -lt 2 ]; then
 
 			# if the last non-empty item (second to last)
 			# is an attribute or a header, unset it
-			if [ "$(grep 'attribute\|header' <<< ${infostring[$((${#infostring[@]}-1))]} )" ]; then
-				unset infostring[$((${#infostring[@]}-1))]
-				# HACK: As syntax highlighting seems broken in my editor I add this comment hack as a workaround: "
+			if [ "$(grep 'attribute\|header' <<< "${infostring[$((${#infostring[@]}-1))]}" )" ]; then
+				unset infostring[$((${#infostring[@]}-1))];
 			fi
 		fi
 	else # there is an input value

@@ -1,0 +1,5 @@
+Random tidbits for developers:
+
+Q: how can I control whether attributes with no values show up in the list?
+A: check out add_values()
+
