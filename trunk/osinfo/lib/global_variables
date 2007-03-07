@@ -44,6 +44,7 @@ TempFiles=()
 Modules=()
 Missing=() # helper applications that aren't installed
 
+
 ### DAEMON MODE VARIABLES ###
 
 # if the conf file is not available..

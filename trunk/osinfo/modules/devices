@@ -110,29 +110,13 @@ Module_devices() {
 	####################
 	## print_mobo_info
 	print_mobo_info(){
-		# load MOBO info from dmi
-		local handle_desc='Base Board information'
-		extract_dmi ${handle_desc} > ${osinfo_tmp}
 
 		add_header    "Motherboard"
-		add_attribute 'Manufacturer' 'mother_board_manufacturer'
 
-		add_values    "$(get_mobo_manufacturer)"
-		              # these functions are inherited from module_dmi
-
-		add_attribute 'Model' 'mother_board_model'
-		add_values    "$(get_mobo_model)"
-
-		# load BIOS info from dmi
-		local handle_desc='BIOS Information'
-		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_attribute 'BIOS revision' 'bios_version'
-		add_values    "$(get_bios_revision)"
-
-		print_bridges;
-		print_interfaces;
-		print_controllers;
+		print_mobo_dmi;
+		 print_bridges;
+		 print_interfaces;
+		 print_controllers;
 
 		add_footer
 	}
@@ -273,10 +257,10 @@ Module_devices() {
 
 		# add an xml code for ethernet and display adapters
 		if [ "$(grep -i 'network\|ethernet' <<< "${func[$arraynr]}")" ]; then
-			add_attribute ' Ethernet controller(s)' "network_adapter"
+			add_attribute "${busID[$arraynr]} Ethernet controller" "network_adapter"
 
 		elif [ "$(grep -i 'vga\|display' <<< "${func[$arraynr]}")" ]; then
-			add_attribute ' Display adapter(s)' "display_adapter"
+			add_attribute "${busID[$arraynr]} Display adapter" "display_adapter"
 
 		else
 			add_attribute "${busID[$arraynr]} ${func[$arraynr]}"

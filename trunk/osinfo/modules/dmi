@@ -31,10 +31,21 @@ Module_dmi() {
 
 	if CheckReq_dmidecode && CheckReq_root; then
 
-		print_bios_info
-		print_oem_info
-		print_mobo_dmi
-		print_chassis_info
+		add_header    "BIOS"
+		 print_bios_info
+		add_footer
+		
+		add_header    "System info"
+		 print_oem_info
+		add_footer
+		
+		add_header    "Motherboard"
+		 print_mobo_dmi
+		add_footer
+		
+		add_header    'Chassis'
+		 print_chassis_info
+		add_footer
 
 	fi
 
@@ -77,8 +88,6 @@ Module_dmi() {
 		# extract the handle to a temp file
 		extract_dmi "${handle_desc}" > ${osinfo_tmp}
 
-		add_header    "BIOS"
-
 		add_attribute 'Vendor'
 		add_values    "$(grep -i vendor ${osinfo_tmp} | \
 				 awk -F':' {'print $2'} | \
@@ -99,8 +108,6 @@ Module_dmi() {
 		add_values    "$(grep -i serial ${osinfo_tmp} | \
 				 awk -F':' {'print $2'} | \
 				 sed 's/^\ *//')"
-
-		add_footer
 	}
 
 
@@ -109,8 +116,6 @@ Module_dmi() {
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_header  "System info"
 
 		add_attribute 'Manufacturer' \
 				  'system_manufacturer'
@@ -142,8 +147,6 @@ Module_dmi() {
 		add_values    "$(grep -i uuid ${osinfo_tmp} | \
 				 awk -F':' {'print $2'} | \
 				 sed 's/^\ *//')"
-
-		add_footer
 	}
 
 
@@ -152,8 +155,6 @@ Module_dmi() {
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_header    "Motherboard"
 
 		add_attribute 'Manufacturer' \
 				  'mother_board_manufacturer'
@@ -177,8 +178,6 @@ Module_dmi() {
 		add_values    "$(grep -i serial ${osinfo_tmp} | \
 				 awk -F':' {'print $2'} | \
 				 sed 's/^\ *//')"
-
-		add_footer
 	}
 
 
@@ -187,8 +186,6 @@ Module_dmi() {
 
 		# extract the handle to a temp file
 		extract_dmi ${handle_desc} > ${osinfo_tmp}
-
-		add_header    'Chassis'
 
 		add_attribute 'Manufacturer' 	'chassis_manufacturer'
 		add_values    "$(grep -i manufacturer ${osinfo_tmp} | \
@@ -224,8 +221,6 @@ Module_dmi() {
 		add_values    "$(grep -i asset ${osinfo_tmp} | \
 				 awk -F':' {'print $2'} | \
 				 sed 's/^\ *//')"
-
-		add_footer
 	}
 
 		get_mobo_manufacturer() {
