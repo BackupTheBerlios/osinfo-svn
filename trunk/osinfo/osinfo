@@ -29,7 +29,7 @@ main() {
 	# send the resulted xml to the host if the option is set
 	# or generate the html page of the resulted xml file
 	if [ $tcpsend -eq 1 ]; then
-		cat "${XMLFILE}" | netcat "$HOST" "$PORT" -q 1
+		cat "${XMLFILE}" | netcat "$HOST" "$PORT"
 	elif [ $usexml -eq 1 ] && [ $quiet -ne 1 ]; then
 		cat "${XMLFILE}"
 	elif [ $makehtml -eq 1 ]; then
