@@ -30,14 +30,14 @@ listen_tcp() {
 
 	# allocate a temp file
 	inputxml_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
+	echo "XML will be saved to $inputxml_tmp"
 	TempFiles=("${TempFiles[@]}" "$inputxml_tmp")
 
 	# kill other netcat instances (nc often hangs)
 	killall -9 nc 2>/dev/null
 
-
-	# in an eternal loop...
-	while [ a = a ]; do
+	# in an eternal loop listen to incoming data
+	while (true); do
 
 		netcat_instance	> "${inputxml_tmp}"	# which breaks after EOF
 
