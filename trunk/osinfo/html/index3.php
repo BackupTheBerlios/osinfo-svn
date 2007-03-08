@@ -98,7 +98,7 @@ class Index
 		{
 			border: 1px solid black;
 			padding: 5px;
-			padding: 10px;
+			padding: 0px 10px 10px 10px;
 			margin-left: " . $this->_DivResoluutiot[PääFrame][0] . ";
 			margin-top: " . $this->_DivResoluutiot[PääFrame][1] . ";
 			margin-bottom: " . $this->_DivResoluutiot[PääFrame][1] . ";
@@ -176,7 +176,9 @@ class Index
 						"cpu" => $this->_parseri->hae_tieto("computer", "cpu"),
 						"script_version" => $this->_parseri->hae_tieto("script", "version"),
 						"ram" => $this->_parseri->hae_tieto("ram", "Physical RAM"),
-						"drive" => $this->_parseri->hae_tieto("drive", "SATA/SCSI drive")
+						"drive" => $this->_parseri->hae_tieto("drive", "SATA/SCSI drive"),
+						"device" => $this->_parseri->hae_tieto("iface", "Device"),
+						"ip" => $this->_parseri->hae_tieto("iface", "IPv4")
 						);
 					}
 
@@ -250,7 +252,7 @@ class Index
 							elseif($laskuri % $this->_clientteja_rivilla == 0)
  								print "</tr><tr>";
 
-							print "<td class=\"attribuutti_td\" style=\"width: " . round(100 / $this->_clientteja_rivilla, 1) . "%\">";
+							print "<td valign=\"top\" class=\"attribuutti_td\" style=\"width: " . round(100 / $this->_clientteja_rivilla, 1) . "%\">";
 
 							print "<b><a href=\"?target=". $arvot["tiedosto"] . "\">" .
 								$arvot["hostname"] . "</a></b><ul class=\"hostit\">";
@@ -420,8 +422,6 @@ class Index
 		}
 		else
 		{
-			//if(file_exists($this->_index_view))
-			//	include($this->_index_view);
 			$this->nayta_index_view();
 		}
 
@@ -430,7 +430,7 @@ class Index
 
 	private function nayta_index_view()
 	{
-		print "index view";
+		print "<h3>index view</h3>";
 
 		$this->listaa_tiedostot(false);
 	}

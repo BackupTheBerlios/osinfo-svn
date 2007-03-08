@@ -13,24 +13,9 @@ class xmlparseri
     private $_tyyppi = "--tyyppi--";
     private $_sisalto = "--sisalto--";
 
-    // listan tunnistin
-    private $_lista = "lista";
-
     public function __construct()
     {
-/*
-	if(file_exists($tiedoston_nimi))
-	{
-		$this->_parsittava_tiedosto = $tiedoston_nimi;
-		$this->lue_tiedoston_sisalto();
-	
-		$this->_tietotaulu = $this->etsi_tagi("", 0);
-	}
-	else
-	{
-		print "<p>File " . $tiedoston_nimi . " not found</p>";
-	}
-*/
+
     }
 
     public function parsi_tiedosto($tiedoston_nimi)
@@ -263,11 +248,11 @@ class xmlparseri
 	print "<table style=\"width: 100%\">
 		<tr>
 		<td><h2>" . $this->parsi_nimi($this->hae_tieto("computer", "hostname")) . "</h2></td>
-		<td>Quick jump: ";
+		<td>";
 
 	$this->nayta_quick_jump_valikko();
 
-	print "</td><td><p>Script version: <i>" . $this->hae_tieto("script", "version") . "</i><br />" .
+	print "</td><td style=\"text-align: right\"><p>Script version: <i>" . $this->hae_tieto("script", "version") . "</i><br />" .
 		"Scanning date: <i>" . $this->hae_tieto("scanning", "date") . "</i></p></td>";
 
 	print "</td></tr></table>";
@@ -277,8 +262,7 @@ class xmlparseri
 
 	if(is_array($array))
 	{
-		if($array[$this->_lista] == "true") $listatyyppi = true;
-		else $listatyyppi = false;
+		$listatyyppi = false;
 
 		// käy läpi päätaulun kannasta lähtien
 		foreach($array as $avain => $arvo)
@@ -297,14 +281,14 @@ class xmlparseri
 	$div_avattu = false;
 	$attribuutti_suljettu = false;
 	$atrb = false;
-
+/*
 	if(is_array($array[$this->_parametrit]))
 	{
 		$temp_array = $array[$this->_parametrit];
 		if($temp_array[$this->_lista] == "true")
 			$listatyyppi = true;
 	}
-
+*/
 	$listatyyppi = true;
 
 	foreach($array as $avain => $arvo)
@@ -362,7 +346,7 @@ class xmlparseri
 			}
 			else
 			{	
-				if($avain != $this->_tyyppi && !is_array($avain) && !is_array($arvo) && $avain!= $this->_lista && $arvo != "scanning" && $arvo != "script")
+				if($avain != $this->_tyyppi && !is_array($avain) && !is_array($arvo) && $arvo != "scanning" && $arvo != "script")
 				{	
 					if($avain == $this->_nimi)
 					{	
@@ -386,7 +370,8 @@ class xmlparseri
 				}
 				elseif($arvo == "scanning" || $arvo == "script") break;
 
-				$this->esita_sisatiedot($arvo, $avain);
+				if($arvo[$this->_nimi] == "value")
+					$this->esita_sisatiedot($listatyyppi, false, $arvo[$this->_sisalto]);
 				
 				if(is_array($arvo) && $arvo[$this->_nimi] != "value")
 				{
@@ -416,37 +401,112 @@ class xmlparseri
 
     private function esita_attribuutit(&$palautus_array, $array, $listatyyppi = false)
     {
-	$description = false;
-	$sisalto = false;
+	$description_str = "";
+	$code_str = "";
+	$name_str = "";
+	$values = array();
 
 	foreach($array as $avain => $arvo)
 	{
 		if($avain === $this->_parametrit)
-			if($arvo['code'] != "") print "koodi";
-			else
-			{
-			if(!$listatyyppi)
-				print "<h3>" . $arvo['name'] . "</h3>";
-			else 
-				print "<td><b>" . $arvo['name'] . "</b></td>"; }
-
-		$value = $this->esita_sisatiedot($arvo, $avain, $listatyyppi);
-
-		if($value == 2) $sisalto = true;
-		elseif($value == 1) $description = true;
-
-		if($listatyyppi && $description && !$sisalto)
 		{
-			print "<td class=\"lista_value\"><table class=\"value\">";
+			if($arvo['code'] != "") $code_str = $arvo['code'];
+			if($arvo['name'] != "") $name_str = $arvo['name'];
 		}
 
+		$paluutaulu = $this->hae_sisatiedot($arvo, $avain);
+		if($paluutaulu['description'] != "") 
+			$description_str = $paluutaulu['description'];
+
+		if($paluutaulu['value'] != "") {
+			array_push($values, $paluutaulu['value']);
+		}
 	}
 
-	//if(!$sisalto) print "<td>nbsp;</td>";
-	
-	if($listatyyppi && $description && !$sisalto) print "<tr><td>&nbsp;</td></tr>";
+	if($code_str != "")
+		$this->esita_sisatiedot($listatyyppi, $code_str, $values);
+	else {
+		if($description_str != "")
+			$this->esita_sisatiedot($listatyyppi, $description_str, $values);
+		else {
+			if($name_str != "")
+				$this->esita_sisatiedot($listatyyppi, $name_str, $values);
+		}
+	}
+    }
 
-	if($listatyyppi && $description) print "</table></td>";
+    private function esita_sisatiedot($listatyyppi, $eka_kentta = false, $arvot)
+    {
+	if($listatyyppi)
+	{	
+		if(is_array($arvot))
+		{
+			if($eka_kentta)
+				print "<td valign=\"top\" class=\"lista_description\"><b>" . $eka_kentta . "</b></td>";
+	
+			print "<td class=\"lista_value\">";
+
+			if(sizeof($arvot) > 0) 
+			{
+				print "<table class=\"value\">";
+	
+				foreach($arvot as $avain => $arvo)
+					print "<tr><td>" . $arvo . "</td></tr>";
+	
+				print "</table>";
+			}
+			else print "&nbsp;";
+		}
+		else print "<table><tr><td>" . $arvot . "</td></tr></table>";
+
+		if($eka_kentta) print "</td>";
+	}
+	else
+	{	
+		if(is_array($arvot))
+		{
+			if($eka_kentta)
+				print "<h3>" . $eka_kentta . "</h3>";
+	
+			foreach($arvot as $avain => $arvo)
+				print "<p>" . $arvo . "</p>";
+	
+		}
+		else print "<p>" . $arvot . "</p>";
+
+		if($eka_kentta) print "</td>";
+	}
+    }
+
+    private function hae_sisatiedot($array, $avain)
+    {
+	$description = "";
+	$value = "";
+
+	if(is_array($array) && $avain !== $this->_parametrit)
+	{
+		$edellinen_arvo = "";
+
+		foreach($array as $avain2 => $arvo2)
+		{
+			if(!is_array($arvo2))
+			{
+				if($edellinen_arvo == "description")
+					$description = $arvo2;
+				else
+				{
+					if($avain2 == $this->_sisalto)
+						$value = $arvo2;
+				}
+
+				$edellinen_arvo = $arvo2;
+			}
+		}
+	}
+
+	$palautus = array("value" => $value, "description" => $description);
+
+	return $palautus;
     }
 
     private function sulje_attribuutti($listatyyppi = false, $attribuuttilaskuri = 0)
@@ -462,50 +522,6 @@ class xmlparseri
 	{		
 		print "</table>";
 	}
-    }
-
-    private function esita_sisatiedot($array, $avain, $listatyyppi = false)
-    {
-	$arvo = 0;
-
-	if(is_array($array) && $avain !== $this->_parametrit)
-	{
-		$edellinen_arvo = "";
-
-		foreach($array as $avain2 => $arvo2)
-		{
-			if(!is_array($arvo2))
-			{
-				if(!$listatyyppi)
-				{
-					if($edellinen_arvo == "description")
-						//print "<p><i>" . $arvo2 . "</i></p>";
-						print "<h3>" . $arvo2 . "</h3>";
-					else
-						if($avain2 == $this->_sisalto)
-							print "<p>" . $arvo2 . "</p>";
-				}
-				else
-				{
-					if($edellinen_arvo == "description")
-					{
-						print "<td valign=\"top\" class=\"lista_description\"><b>" . $arvo2 . "</b></td>";
-						$arvo = 1;
-					}
-					else
-						if($avain2 == $this->_sisalto)
-						{
-							print "<tr><td>" . $arvo2 . "</td></tr>";
-							$arvo = 2;
-						}
-				}
-
-				$edellinen_arvo = $arvo2;
-			}
-		}
-	}
-
-	return $arvo;
     }
 
     private function hae_array($array, $etsittava, &$pal_array)
@@ -560,7 +576,7 @@ class xmlparseri
 							if($edellinen == "value" && $avain3 == $this->_sisalto)
 								if($loytyi) return $arvo3;
 
-							if($avain3 == $this->_sisalto && $arvo3 == $etsittava_arvo)
+							if($avain3 == $this->_sisalto && $arvo3 === $etsittava_arvo)
 								$loytyi = 1;
 
 							$edellinen = $arvo3;
@@ -578,8 +594,6 @@ class xmlparseri
 		}
 		else
 		{
-			$haettava_paikallistettu = false;
-
 			if(is_array($arvo)) 
 			{
 				$palautus = $this->hae_array2($arvo, $etsittava_nimi, $etsittava_arvo);
@@ -608,9 +622,11 @@ class xmlparseri
     private function nayta_quick_jump_valikko()
     {
 	$taulut = $this->hae_paataulut();
-	
+		
 	print "<script type=\"text/javascript\">
 		<!--
+
+		document.write(\"Quick jump:\")
 
 		function loadPage(pageURL)
 		{
@@ -622,7 +638,10 @@ class xmlparseri
 		}
 
 		//-->
-		</script>";
+		</script>
+		<noscript>	
+		This feature requires JavaScript.
+		</noscript>";
 
 	print "<form name=\"qj_form\">
 		<select name=\"quick_jump\">";
