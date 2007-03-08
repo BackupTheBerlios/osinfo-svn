@@ -114,7 +114,7 @@ Module_ram() {
 
 			fi
 
-			[ $usexml -eq 1 ] && add_footer # RAM
+			[ $usexml -eq 1 ] && add_footer 'RAM'
 			flush_values
 		fi
 	}
