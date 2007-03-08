@@ -207,7 +207,7 @@ update_hostxml() {
 
 	# extract hostname from the xml
 	[ ! "$client_hostname" ] && \
-	client_hostname="$(extract 'computer hostname' ${1} )"
+	client_hostname="$(extract 'hostname' ${1} )"
 
 	# create or update the xml file for the host
 	cat "$inputxml_tmp" > "${hostdir}/${client_hostname}.xml"
@@ -227,7 +227,7 @@ update_hosthtmls() {
 	for clients in ${hostdir}/*.xml; do
 
 		# extract hostname from the xml
-		client_hostname="$(extract 'computer hostname' ${clients} )"
+		client_hostname="$(extract 'hostname' ${clients} )"
 
 		# create or update <hostname>.html.
 		# if the specific <hostname>.xsl is not found, use 'generic-host.xsl'
@@ -255,9 +255,9 @@ update_hosthtmls() {
 
 
 extract() {
-	# $1 is the extract string
+	# $1 is the extract method
 	# $2 is the input file
-	grep -i "${1}" "${2}" | \
+	grep -oi "${1}=\"[a-zA-Z0-9.]*\"" "${2}" | \
 	   sed 's/[^\"]*\"\([^\"]*\)\"[^.]*/\1/'
 }
 

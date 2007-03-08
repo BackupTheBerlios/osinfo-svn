@@ -75,7 +75,6 @@ function parse_arguments() {
 					# listen for incoming tcp connections,
 					# receive xml sheet from osinfo clients
 					tcpdaemon=1
-					makehtml=1
 
 					if [ "$2" ]; then
 						tcp_listening_port="$2"
