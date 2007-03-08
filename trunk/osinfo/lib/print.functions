@@ -363,8 +363,8 @@ function print_xml {
 
 	validate_xml_item() {
 		# trim all leading spaces ; trim all non-alphabetical characters ;
-		# spaces to downscores ; uppercase to lowercase
-		sed 's/^\ *// ; s/^([a-z]*)//g; s/\ \|\//_/g ' <<< "${@}"| tr 'A-Z' 'a-z'
+		# spaces to downscores ; clear all escape characters ; uppercase to lowercase
+		sed 's/^\ *// ; s/^([a-z]*)//g; s/\ \|\//_/g ; s/\\[nt]//g' <<< "${@}"| tr 'A-Z' 'a-z'
 	}
 #######
 

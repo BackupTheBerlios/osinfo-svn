@@ -47,7 +47,7 @@ listen_tcp() {
 	# in an eternal loop listen to incoming data
 	while (true); do
 
-		netcat_instance	> "${inputxml_tmp}"	# which breaks after EOF
+		netcat_instance > "${inputxml_tmp}" # which breaks after EOF
 
 		# notify the user of the received file
 		info "$(date)"
@@ -254,6 +254,10 @@ update_hosthtmls() {
 }
 
 
+# this extracts a value from an attribute in XML, used for hostname detection.
+# may be buggy!! BE WARNED!!
+# example: extract 'hostname' $input_file
+# where $input_file may contain line: <computer profile="desktop" hostname="mayhem"/>
 extract() {
 	# $1 is the extract method
 	# $2 is the input file
