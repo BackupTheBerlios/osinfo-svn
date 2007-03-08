@@ -13,6 +13,8 @@ class xmlparseri
     private $_tyyppi = "--tyyppi--";
     private $_sisalto = "--sisalto--";
 
+    private $_virheet = array();
+
     public function __construct()
     {
 
@@ -20,6 +22,8 @@ class xmlparseri
 
     public function parsi_tiedosto($tiedoston_nimi)
     {
+	unset($this->_virheet);
+
 	if(file_exists($tiedoston_nimi))
 	{
 		$this->_parsittava_tiedosto = $tiedoston_nimi;
@@ -44,6 +48,8 @@ class xmlparseri
 
     public function nayta_tietotaulu()
     {
+	if(sizeof($this->_virheet) > 0) return 0;
+
 	print "<p>--------- KOKO TIETOTAULU:---------</p>";
 	print "<pre>";
 	print_r($this->_tietotaulu);
@@ -239,8 +245,10 @@ class xmlparseri
 
     public function hae_arvot($kanta, $attribuutit = "")
     {
-	  $this->hae_array($this->_tietotaulu, $kanta, $esitettava_array);
-	  $this->esita_tiedot($esitettava_array, $attribuutit);
+	if(sizeof($this->_virheet) > 0) return 0;
+
+	$this->hae_array($this->_tietotaulu, $kanta, $esitettava_array);
+	$this->esita_tiedot($esitettava_array, $attribuutit);
     }
 
     private function esita_tiedot($array, $tarkenne = "")
@@ -551,7 +559,9 @@ class xmlparseri
     }
 
     public function hae_tieto($ryhma, $nimi)
-    {
+    {	
+	if(sizeof($this->_virheet) > 0) return 0;
+
 	return $this->hae_array2($this->_tietotaulu, $ryhma, $nimi);
     }
 

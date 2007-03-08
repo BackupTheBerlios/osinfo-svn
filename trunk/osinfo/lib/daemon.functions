@@ -54,48 +54,57 @@ listen_tcp() {
 		info "$(wc -l $inputxml_tmp | grep -Eo '^[0-9]*') lines caught!"
 		flush_values
 
-		# if the input is (not) valid osinfo xml..
+		# if the input is not osinfo xml, don't go any futher
 		if [ ! "$(grep -i '<!doctype osinfo' ${inputxml_tmp})" ]; then
 			info "Input is not valid osinfo xml!"
 
-		else
-
-			update_hostxml "${inputxml_tmp}" # save input to correct location
-			if [ $makehtml -eq 1 ]; then     # if we want html ...
-
-				# update all host html pages
-				update_hosthtmls
-
-				# update the sidebar html
-				update_sidebar > "${rundir}/sidebar.html"
-
-				# create/update the index (overview) xml
-				create_indexxml > "${INDEXXMLFILE}"
-
-				# update the overview html (the right hand panel)
-				update_index >  "${rundir}/overview.html"
-
-				# inform the user of the generated files
-				if [ $isverbose -ge 1 ]; then
-				    if [ -e "${INDEXXMLFILE}" ]; then
-						info "File '$INDEXXMLFILE' created"
-					fi
-					flush_values
-				fi
+		else # validate xml
+			xmllint -valid ${inputxml_tmp}
+			if [ $? -ne 0 ]; then
+				info "Input is not valid xml!"
+			#else # since the DTD cannot yet be properly always loaded, don't die here
+				process_input_xml
 			fi
 		fi
 
 		flush_values
 		unset client_hostname
 
-		# :)
-
 	done
 
 	cleanup_temp_files
 }
 
+######################
+# process_input_xml ##
+######################
+#
+process_input_xml() {
+	update_hostxml "${inputxml_tmp}" # save input to correct location
+	if [ $makehtml -eq 1 ]; then     # if we want html ...
 
+		# update all host html pages
+		update_hosthtmls
+
+		# update the sidebar html
+		update_sidebar > "${rundir}/sidebar.html"
+
+		# create/update the index (overview) xml
+		create_indexxml > "${INDEXXMLFILE}"
+
+		# update the overview html (the right hand panel)
+		update_index >  "${rundir}/overview.html"
+
+		# inform the user of the generated files
+		if [ $isverbose -ge 1 ]; then
+			if [ -e "${INDEXXMLFILE}" ]; then
+				info "File '$INDEXXMLFILE' created"
+			fi
+			flush_values
+		fi
+	fi
+}
+	
 ####################
 # create_indexxml ##
 ####################
