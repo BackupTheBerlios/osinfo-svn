@@ -31,13 +31,15 @@ listen_tcp() {
 	# allocate a temp file
 	inputxml_tmp="$(mktemp /tmp/osinfo.XXXXXX)"
 
-	# debug output
+	# verbose output for debugging
 	if [ $isdebug -eq 1 ]; then
 		echo "XML will be saved to $inputxml_tmp"
 		chmod 644 $inputxml_tmp
+	else
+		# don't add this temp file to the list, because
+		# we don't want to delete this one!
+		TempFiles=("${TempFiles[@]}" "$inputxml_tmp")
 	fi
-	
-	TempFiles=("${TempFiles[@]}" "$inputxml_tmp")
 
 	# kill other netcat instances (nc often hangs)
 	killall -9 nc 2>/dev/null
