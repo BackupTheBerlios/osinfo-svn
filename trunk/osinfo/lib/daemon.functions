@@ -53,7 +53,7 @@ listen_tcp() {
 		info "$(date)"
 		info "$(wc -l $inputxml_tmp | grep -Eo '^[0-9]*') lines caught!"
 		flush_values
-exit 0
+
 		# if the input is (not) valid osinfo xml..
 		if [ ! "$(grep -i '<!doctype osinfo' ${inputxml_tmp})" ]; then
 			info "Input is not valid osinfo xml!"
