@@ -105,7 +105,7 @@ Module_ram() {
 					add_values        "$(extr_xml_value \
 					                   $(grep 'asset tag' $banknode))"
 
-					add_footer        "Bank"
+					add_footer        "Bank $bank"
 
 					[ $usexml -ne 1 ] && flush_values
 					# xml cannot flush here, as add_footer is defined below
