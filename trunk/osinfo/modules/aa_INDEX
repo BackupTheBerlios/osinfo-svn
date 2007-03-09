@@ -8,13 +8,13 @@
 
 # these are used to control run access and validify against
 
-MODULES_LINUX='system distro kernel processor ram memory hdd network wlan dmi applications terminal devices cdrom users services battery'
+MODULES_LINUX='system distro kernel processor ram memory hdd network wlan dmi applications terminal devices cdrom users services battery firewall'
 MODULES_BSD='system kernel applications terminal network devices dmi'
 MODULES_BROKEN='printers lvm bus sensors nagios samba nfs shares'
-MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus battery ram'
-MODULES_SU_ONLY='cdrom hdd dmi'
+MODULES_REAL_ROOT_ONLY='system memory cdrom processor terminal applications network wlan devices services hdd printers dmi services bus battery ram firewall'
+MODULES_SU_ONLY='cdrom hdd dmi firewall'
 # MUST contain a list of all modules. This is used to find any invalid modules.
-MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network printers processor services system terminal users wlan lvm bus sensors nagios battery video ram samba nfs shares'
+MODULES_ALL='applications cdrom devices distro dmi env hdd kernel memory network printers processor services system terminal users wlan lvm bus sensors nagios battery video ram samba nfs shares firewall'
 
 
 ## META-MODULES

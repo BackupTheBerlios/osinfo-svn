@@ -111,7 +111,6 @@ Module_ram() {
 					# xml cannot flush here, as add_footer is defined below
 
 				done
-
 			fi
 
 			[ $usexml -eq 1 ] && add_footer 'RAM'

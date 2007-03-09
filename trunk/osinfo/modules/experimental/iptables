@@ -1,10 +1,38 @@
+#!/bin/bash
+##########
+# IPTABLES
+#
+
 Module_iptables() {
 	local moduleName="Iptables"
 	local moduleDescription="Linux kernel iptables rule parser"
 	module_header   "${moduleName}"
 
-	iptables -L -v -n
+	add_header  'Prerouting'
+	add_footer  'Prerouting'
+
+	add_header  'Input'
+	get_input_iptables;
+	add_footer  'Input'
+	
+	add_header  'Forward'
+	add_footer  'Forward'
+
+	add_header  'Output'
+	add_footer  'Output'
+
+	add_header  'Postrouting'
+	add_footer  'Postrouting'
+	
+	#iptables -L -v -n
 
 	flush_values
 }
+
+	# helpers
+	get_input_iptables() {
+		add_attribute ''
+		add_values    ""
+
+	}
 

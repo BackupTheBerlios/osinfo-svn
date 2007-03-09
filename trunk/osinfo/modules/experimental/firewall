@@ -1,0 +1,11 @@
+#!/bin/bash
+##########
+# FIREWALL
+#
+
+Module_firewall() {
+	local moduleName="Firewall"
+	local moduleDescription="Firewall setup"
+	module_header   "${moduleName}"
+
+}
