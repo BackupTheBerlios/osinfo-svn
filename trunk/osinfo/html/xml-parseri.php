@@ -2,18 +2,18 @@
 
 class xmlparseri
 {
-	private $_parsittava_tiedosto;
-	private $_tiedoston_sisalto;
-	private $_tietotaulu = array();
-	private $_attribuutteja_rivilla = 3;
+	private $_parsittava_tiedosto; // parsittavan tiedoston tiedostonimi
+	private $_tiedoston_sisalto; // parsitun tiedoston sisältö
+	private $_tietotaulu = array(); // taulukko, jossa on kaikki xml-tiedostosta otetut tiedot
+	private $_attribuutteja_rivilla = 3; // "laatikko"-näkymässä olevien attribuuttien määrä rivillä
 
-	// "koodit"
+	// tagien "koodit" tietotaulussa
 	private $_nimi = "--nimi--";
 	private $_parametrit = "--parametrit--";
 	private $_tyyppi = "--tyyppi--";
 	private $_sisalto = "--sisalto--";
 
-	private $_virheet = array();
+	private $_virheet = array(); // taulukko, jossa on parserin havaitsemat virheet
 
 	public function __construct()
 	{
@@ -26,26 +26,34 @@ class xmlparseri
 
 		if(file_exists($tiedoston_nimi))
 		{
+			// sijoittaa parsittavan tiedoston nimi luokan jäsenmuuttujaan
 			$this->_parsittava_tiedosto = $tiedoston_nimi;
+
+			// lukee tiedoston sisällön luokan _tiedoston_sisalto -jäsenmuuttujaan
 			$this->lue_tiedoston_sisalto();
-		
+
+			// aloittaa tietotaulun muodostamisen aloittamalla ensimmäisestä merkistä
 			$this->_tietotaulu = $this->etsi_tagi("", 0);
 		}
 		else
+			// jos parsittavaa tiedostoa ei ole, annetaan siitä käyttäjälle ilmoitus
 			print "<p class=\"valitus\">File " . $tiedoston_nimi . " not found</p>";
 	}
 
+	// public-funktio, jolla näytetään tiedot halutusta kohdasta
 	public function hae_arvot($kanta, $attribuutit = "")
 	{
 		$this->hae_array($this->_tietotaulu, $kanta, $esitettava_array);
 		$this->esita_tiedot($esitettava_array, $attribuutit);
 	}
 
+	// funktio, jolla voidaan hakea yksittäinen tieto ulos
 	public function hae_tieto($ryhma, $nimi)
 	{
 		return $this->hae_array2($this->_tietotaulu, $ryhma, $nimi);
 	}
 
+	// testauskäyttöön tarkoitettu funktio, joka näyttää koko tietotaulun rakenteen
 	public function nayta_tietotaulu()
 	{
 		print "<p>--------- KOKO TIETOTAULU:---------</p>";
@@ -54,6 +62,7 @@ class xmlparseri
 		print "</pre>";
 	}
 
+	// lukee tiedston sisällön merkki merkiltä läpi
 	private function lue_tiedoston_sisalto()
 	{
 		$fp = fopen($this->_parsittava_tiedosto, "r");
@@ -64,17 +73,25 @@ class xmlparseri
 			$this->_tiedoston_sisalto .= $char;
 	}
 
+	// funktio, joka käy läpi tiedostosta haettua sisältöä rekursiivisesti.
+	// $taso-muuttuja oli vain testikäyttöä varten, mutta on jätetty paikoilleen jos tarvitsee
+	// tehdä muutoksia.
 	private function etsi_tagi($etsittava, $indeksi, $taso = -1)
 	{
 		$taulu = array();
 		$taso++;
 
+		// käy sisältöä läpi indeksistä alkavasta kohdasta
 		for($i=$indeksi; $i < strlen($this->_tiedoston_sisalto); $i++)
 		{
+			// tarkistaa, onko aloittavaa tagia olemassa
 			if($this->_tiedoston_sisalto[$i] == "<")
 			{
 				$tagi = "";
-		
+
+				// jos on tagin aloituskohta on löytynyt, luetaan niin kauan kunnes
+				// lopettava tagi löytyy, tai xml:n syntaksissa on virheitä
+				// ( tai tiedoston sisältö on loppunut )
 				for($j=$i+1; $j < strlen($this->_tiedoston_sisalto); $j++)
 				{
 					if($this->_tiedoston_sisalto[$j] == "<") break;
@@ -82,45 +99,64 @@ class xmlparseri
 						$tagi .= $this->_tiedoston_sisalto[$j];
 					else break;
 				}
-			
+
+				// viedään tagimerkkien sisältö tarkistusfunktiolle, joka tunnistaa sen tyypin
 				$tietue = $this->tarkista_tagi($tagi);
-		
+
+				// tekee haarautumisen tagin tyypistä riippuen
 				switch($tietue[$this->_tyyppi])
 				{
 				case 1:
+					// tagin tyyppi on xml:n metatietoa, mikä lisätään tietotauluun suoraan
 					array_push($taulu, $tietue);
 					break;
 				case 2:
+					// tagin tyyppi on aloittava tagi, jolloin kutsutaan funktiota rekursiivisesti
+					// ja otetaan paluuarvot talteen
 					$paluuarvot = $this->etsi_tagi($tietue[$this->_nimi], $j+1, $taso);
 					
 					if($paluuarvot['indeksi'] > $i)
 						$i = $paluuarvot['indeksi'];
 
+					// lisää haettuun taulukkoon alataulukon tiedot
 					$this->array_lisaa_samaan($tietue, $paluuarvot['taulu']);
 					$sisalto = "";
-			
+
+					// hakee tagien välisen tiedon, esim. "value" ja "description" -arvot
 					for($j += 1; $j < strlen($this->_tiedoston_sisalto); $j++)
 					{
 						$char = ord($this->_tiedoston_sisalto[$j]);
 		
-						if($char != 10 && $char != 13 && $char != 9 && 				$this->_tiedoston_sisalto[$j] != "<")
+						if($char != 10 && $char != 13 && $char != 9 && $this->_tiedoston_sisalto[$j] != "<")
 							$sisalto .= $this->_tiedoston_sisalto[$j];
 						elseif($this->_tiedoston_sisalto[$j] == "<") break;
 					}
-		
+
+					// jos tagien välillä on tietoa, lisätään se tietotaulukkoon
 					if(!empty($sisalto))
 					{
 						$temp_array = array($this->_sisalto => $sisalto);
 						$this->array_lisaa_samaan($tietue, $temp_array);
 					}
-		
+
+					// lisää tietotauluun haetun taulukon sisältö
 					array_push($taulu, $tietue);
 					break;
 				case 3:
+					// tagin tyyppi on lopettava tagi
 					if($etsittava != "")
 					{
+						// jos lopetustagin arvo on sama kuin aloittava tagi,
+						// palautetaan funktiosta taulukko ja indeksi
 						if($tietue[$this->_nimi] == $etsittava)
 							return array("taulu" => $taulu, "indeksi" => $i);
+
+						// jos lopetustagin arvo ei ole sama kuin aloittava tagi,
+						// xml-tiedostossa on virhe ja virhesanoma lisätään myöhempää
+						// käsittelyä varten
+
+						// parseri kuitenkin toipuu virheestä, ja lisää oletettavan
+						// lopetuksen itsestään
 						else
 						{
 							array_push($this->_virheet, "found &lt;/" . $tietue[$this->_nimi] . "&gt;, " . "&lt;/" . $etsittava . "&gt; expected");
@@ -133,6 +169,8 @@ class xmlparseri
 		
 					break;
 				case 4:
+					// tagin tyyppi on jotakin muuta kuin käsiteltävät tyypit, jolloin
+					// sen arvot lisätään suoraan tietotauluun
 					array_push($taulu, $tietue);
 					break;
 				default:
@@ -154,17 +192,20 @@ class xmlparseri
 		//	   2 = aloitustagi
 		//	   3 = lopetustagi
 		//	   4 = yksinäinen tagi
-	
+
+		// tarkistaa, onko tagin tyyppi yksinäinen tagi
 		for($i=strlen($tagi)-1; $i>0; $i--)
 		{
 			if($tagi[$i] == "/" && $i > 0)
 				$parametritagi = true;
 		}
-	
+
+		// tarkistaa, onko tagin tyyppi tiedoston tyyppitagi, ns. metatieto
 		if($tagi[0] == "!" || $tagi[0] == "?")
 			$tyyppi = 1;
 		else
 		{
+			// tarkistaa, onko tagin tyyppi lopettava tagi
 			if($tagi[0] == "/")
 			{
 				$tyyppi = 3;
@@ -174,8 +215,11 @@ class xmlparseri
 			}
 			else
 			{
+				// tarkistaa, onko tagin tyyppi aloittava tagi
 				if($parametritagi) $tyyppi = 4;
 				else $tyyppi = 2;
+
+				// parsii merkki kerrallaan tagin sisällön ja ottaa mahdolliset attribuutit talteen
 		
 				for($i=0; $i < strlen($tagi); $i++)
 				{
@@ -231,12 +275,16 @@ class xmlparseri
 				}
 			}
 		}
+
+		// palauttaa taulukkona tagin nimen ja mahdolliset attribuutit
 		
 		if(empty($parametrit))
 			return array($this->_tyyppi => $tyyppi, $this->_nimi => $nimi);
 		else
 			return array($this->_tyyppi => $tyyppi, $this->_nimi => $nimi, $this->_parametrit => $parametrit);
 	}
+
+	// yleinen taulukon käsittelyfunktio, joka php:stä itsestään puuttuu
 
 	private function array_lisaa_samaan(&$array)
 	{
@@ -258,20 +306,27 @@ class xmlparseri
 		return $paluuarvo;
 	}
 
+	// näyttää parserin antamat tiedot sivulle
+
 	private function esita_tiedot($array, $tarkenne = "")
 	{
+		// hakee koneen nimen ja näyttää sen otsikossa
+
 		print "<table style=\"width: 100%\">
 			<tr>
 			<td><h2>" . $this->parsi_nimi($this->hae_tieto("computer", "hostname")) . "</h2></td>
 			<td>";
-	
+
+		// näyttää quick jump -valikon
 		$this->nayta_quick_jump_valikko();
-	
+
+		// näyttää skriptin versiotiedon ja skannauspäivän
 		print "</td><td style=\"text-align: right\"><p>Script version: <i>" . $this->hae_tieto("script", "version") . "</i><br />" .
 			"Scanning date: <i>" . $this->hae_tieto("scanning", "date") . "</i></p></td>";
 	
 		print "</td></tr></table>";
-	
+
+		// jos xml-tiedostoa parsiessa on havaittu virheitä, ne näytetään käyttäjälle
 		if(sizeof($this->_virheet) > 0)
 		{
 			print "<p class=\"valitus\">";
@@ -282,12 +337,10 @@ class xmlparseri
 			print "</p>";
 		}
 	
-		$this->_attribuutti_avattu = false;
-		$this->_attribuutti_laskuri = 0;
-	
 		if(is_array($array))
 		{
-			$listatyyppi = false;
+			// jos attribuutit halutaan näyttää "laatikoissa", $listatyyppi = false;
+			$listatyyppi = true;
 	
 			// käy läpi päätaulun kannasta lähtien
 			foreach($array as $avain => $arvo)
@@ -301,22 +354,22 @@ class xmlparseri
 		}
 	}
 
+	// funktio, joka esittää alitiedot annetusta taulukosta
 	private function esita_alitiedot($array, $listatyyppi = false, $attribuutti_avattu = false, $tarkenne = "", $paasy_alitauluihin = false, $attribuuttilaskuri = 0)
 	{
 		$div_avattu = false;
 		$attribuutti_suljettu = false;
 		$atrb = false;
-		$listatyyppi = true;
-	
+
 		foreach($array as $avain => $arvo)
-		{	
+		{
 			if($tarkenne != "" && $avain != $this->_tyyppi && $arvo == $tarkenne)
 				$paasy_alitauluihin = true;
 			elseif($tarkenne != "" && is_array($arvo)) 
 				$div = $this->esita_alitiedot($arvo, $listatyyppi, $attribuutti_avattu, $tarkenne);
-	
+
 			if($paasy_alitauluihin || $tarkenne == "")
-			{	
+			{
 				if($arvo == "attribute")
 				{
 					if(is_array($array))
@@ -328,16 +381,16 @@ class xmlparseri
 								print "<table class=\"attribuutti\" cellspacing=\"10\"><tr>";
 								$attribuutti_avattu = true;
 							}
-					
+
 							if($attribuuttilaskuri > 0 && $attribuuttilaskuri % $this->_attribuutteja_rivilla == 0)
 								print "</tr><tr>";
-							
+
 							print "<td valign=\"top\" class=\"attribuutti_td\" style=\"width: " . round(100 / $this->_attribuutteja_rivilla, 1) . "%\">";
-			
+
 							$this->esita_attribuutit($array, $array);
-	
+
 							$attribuuttilaskuri++;
-			
+
 							print "</td>";
 			
 							break;
@@ -349,13 +402,13 @@ class xmlparseri
 								print "<table class=\"lista_attribuutti\">";
 								$attribuutti_avattu = true;
 							}
-	
+
 							print "<tr>";
-			
+
 							$this->esita_attribuutit($array, $array, $listatyyppi);
-			
+
 							print "</tr>";
-			
+
 							break;
 						}
 					}
@@ -413,6 +466,7 @@ class xmlparseri
 		else return false;
 	}
 
+	// näyttää attribuutin sisältämän datan
 	private function esita_attribuutit(&$palautus_array, $array, $listatyyppi = false)
 	{
 		$description_str = "";
@@ -450,7 +504,8 @@ class xmlparseri
 			}
 		}
 	}
-
+	
+	// esittää attribute-tagin sisätiedot
 	private function esita_sisatiedot($listatyyppi, $eka_kentta = false, $arvot)
 	{
 		if($listatyyppi)
@@ -493,6 +548,7 @@ class xmlparseri
 		}
 	}
 
+	// hakee attribute-tagin sisätiedot ja antaa ne paluuarvoina takaisin
 	private function hae_sisatiedot($array, $avain)
 	{
 		$description = "";
@@ -524,6 +580,8 @@ class xmlparseri
 		return $palautus;
 	}
 
+	// sulkee avatun attribuutin, kun sellainen havaitaan loppuvan.
+	// funktio generoi tyhjät <td>-tagit, jotta taulukko pysyy oikean XHTML-syntaksin mukaisena
 	private function sulje_attribuutti($listatyyppi = false, $attribuuttilaskuri = 0)
 	{
 		if(!$listatyyppi)
@@ -551,6 +609,8 @@ class xmlparseri
 		}
 	}
 
+	// parsii näytettävän nimen parempaan muotoon. tässä muuttaa _ -merkin välilyönniksi ja muuttaa
+	// ensimmäisen kirjaimen isoksi
 	private function parsi_nimi($nimi)
 	{
 		$palautus = "";
@@ -564,6 +624,8 @@ class xmlparseri
 		return ucfirst($palautus);
 	}
 
+	// hakee halutun tiedon kohdasta, jossa $etsittava_nimi on haettavan tiedon lähin yläotsikko ja
+	// $etsittava_arvo haettavan tiedon nimi
 	private function hae_array2($array, $etsittava_nimi, $etsittava_arvo)
 	{
 		$haettava_paikallistettu = false;
@@ -616,6 +678,7 @@ class xmlparseri
 		}
 	}
 
+	// hakee tietotaulusta kaikki pääotsikot ja palauttaa ne taulukkona
 	private function hae_paataulut()
 	{
 		$taulut = array();
@@ -631,9 +694,14 @@ class xmlparseri
 		return $taulut;
 	}
 
+	// näyttää pikahyppyvalikon, josta päästään nopesti siirtymään haluttuun pääotsikkoon
 	private function nayta_quick_jump_valikko()
 	{
+
+		// hakee päätaulut
 		$taulut = $this->hae_paataulut();
+
+		// generoi sivulle javascriptin, jolla hyppy totetutetaan
 			
 		print "<script type=\"text/javascript\">
 			<!--
