@@ -1,4 +1,4 @@
-td.lista_description, td.lista_value, div.kentta
+td.lista_description, td.lista_value, div.kentta, div.kentta2
 {
 	background-color: #e9fbf7;
 }
@@ -8,12 +8,21 @@ td.attribuutti_td, table.lista_attribuutti
 	background-color: #8db7ae;
 }
 
-div.kentta
+div.kentta, div.kentta2
 {
 	font-size: 13px;
 	border: 1px dashed black;
 	margin-top: 10px;
+}
+
+div.kentta
+{
 	padding: 0px 10px 10px 10px;
+}
+
+div.kentta2
+{
+	padding: 0px 10px 5px 10px;
 }
 
 table.attribuutti, table.lista_attribuutti
@@ -38,3 +47,4 @@ table.value
 	padding: 0px;
 	margin: 0px;
 }
+
