@@ -248,7 +248,11 @@ class Index
 							print "<td valign=\"top\" class=\"attribuutti_td\" style=\"width: " . round(100 / $this->_clientteja_rivilla, 1) . "%\">";
 
 							print "<b><a href=\"?target=". $arvot["tiedosto"] . "\">" .
-								$arvot["hostname"] . "</a></b><ul class=\"hostit\">";
+								$arvot["hostname"] . "</a></b><p>";
+
+							$this->paivitys($arvot["tiedosto"]);
+
+							print "</p><ul class=\"hostit\">";
 
 							foreach($arvot as $tyyppi => $arvo)
 							{
@@ -371,10 +375,6 @@ class Index
 	
 		print "<hr />";
 
-		$this->paivitys();
-
-		print "<hr />";
-
 		print "<p>Last update:</p>";
 
 		// hakee viimeksi päivitetyn tiedoston aika-arvon
@@ -427,16 +427,18 @@ class Index
 	}
 
 	// tämän funktion alle tulisi xml-tiedostojen päivitys
-	private function paivitys()
+	private function paivitys($tiedosto)
 	{
 		if($_POST['paivitettava_client'])
-			print "<p>-- update " . $_POST['paivitettava_client'] . " --</p>";
+		{
+			// tähän tulee suoritettava osa syötteestä...
 
-		print "<form name=\"paivitysformi\" action=\"" . $PHP_SELF . "\" method=\"post\">
-			<p>Client: 
-				<input type=\"text\" name=\"paivitettava_client\" /><br /><br />
-				<input type=\"submit\" value=\"Update\" />
-			</p>
+			//print "<p>-- update " . $_POST['paivitettava_client'] . " --</p>";
+		}
+
+		print "<form name=\"paivitysformi[" . $tiedosto . "]\" action=\"" . $PHP_SELF . "\" method=\"post\">
+			<input type=\"submit\" value=\"Update\" />
+			<input type=\"submit\" value=\"Delete\" />
 			</form>";
 	}
 }
