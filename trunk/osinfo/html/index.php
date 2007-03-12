@@ -119,7 +119,7 @@ class Index
 				$p_array = explode(".", $tiedosto);
 				$paate = $p_array[sizeof($p_array)-1];
 
-				if($i > 1 && ($paate == "xml"))
+				if($i > 1 && $tiedosto != ".xml" && $paate == "xml")
 				{
 					// parsii käsiteltävän xml-tiedoston
 
