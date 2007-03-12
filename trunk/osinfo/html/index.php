@@ -280,7 +280,6 @@ class Index
 	}
 
 	// lajittelee taulukon halutun arvon mukaan, joka annetaan input-parametriin $nimi
-
 	private function lajittele_array($array, $nimi)
 	{
 		$nimet = array(" ");
@@ -310,7 +309,6 @@ class Index
 	}
 
 	// yleinen taulukon käsittelyfunktio, joka php:stä itsestään puuttuu
-
 	private function array_lisaa_samaan(&$array)
 	{
 		$argumentit = func_get_args();
@@ -332,7 +330,6 @@ class Index
 	}
 
 	// käy läpi tiedostokansion ja palauttaa viimeksi muokatun tiedoston päivämäärän unixin aika-arvona
-
 	private function hae_viimeksi_paivitetty()
 	{
 		if(file_exists($this->_xmlkansio))
@@ -359,8 +356,7 @@ class Index
 		}
 	}
 
-	// näyttää sivuframen sisällön
-	
+	// näyttää sivuframen sisällön	
 	public function nayta_sivuframe()
 	{
 		print "<div class=\"SivuFrame\">";
@@ -396,7 +392,6 @@ class Index
 	}
 	
 	// näyttää pääframen sisällön
-
 	public function nayta_paaframe($sivu = "")
 	{
 		print "<div class=\"PaaFrame\">";
@@ -431,6 +426,7 @@ class Index
 		$this->listaa_tiedostot(false);
 	}
 
+	// tämän funktion alle tulisi xml-tiedostojen päivitys
 	private function paivitys()
 	{
 		if($_POST['paivitettava_client'])
