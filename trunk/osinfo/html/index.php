@@ -79,7 +79,7 @@ class Index
 
 		$varisyote = "r=" . $this->_r . "&g=" . $this->_g . "&b=" . $this->_b;
 
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"xmltyyli.css\" />";
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"tyylit.css\" />";
 		print "<style type=\"text/css\">
 
 		
