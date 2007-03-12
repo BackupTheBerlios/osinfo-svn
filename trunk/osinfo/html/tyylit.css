@@ -1,0 +1,117 @@
+body
+{
+	background-color: #eddcbc;
+}
+
+div.SivuFrame, div.PaaFrame
+{
+	float: left;
+}
+
+div.SivuFrameSisalto
+{
+	padding: 10px;
+}
+
+div.SivuFrame
+{
+	margin-left: 10px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	width: 20%;
+	min-height: 500;
+	min-width: 200;
+	height: auto;
+}
+
+div.PaaFrame
+{
+	border: 1px solid black;
+	padding: 5px;
+	padding: 0px 10px 10px 10px;
+	margin-left: 10px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	width: 70%;
+	min-height: 500;
+	min-width: 600;
+	height: auto;
+	clear: none;
+}
+
+p.valitus
+{
+	color: red;
+}
+
+ul.hostit
+{
+	padding: 0px;
+	padding-left: 10px;
+}
+
+li.kuvaus
+{
+	font-size: 12px;
+}
+
+a:link
+{
+	color: rgb(0,0,255);
+}
+
+a:visited
+{
+	color: rgb(0,0,200);
+}
+
+td.lista_description, td.lista_value, div.kentta, div.kentta2
+{
+	background-color: #e9fbf7;
+}
+
+td.attribuutti_td, table.lista_attribuutti
+{
+	background-color: #8db7ae;
+}
+
+div.kentta, div.kentta2
+{
+	font-size: 13px;
+	border: 1px dashed black;
+	margin-top: 10px;
+}
+
+div.kentta
+{
+	padding: 0px 10px 10px 10px;
+}
+
+div.kentta2
+{
+	padding: 0px 10px 5px 10px;
+}
+
+table.attribuutti, table.lista_attribuutti
+{
+	width: 100%;
+}
+
+td.attribuutti_td
+{
+	margin: 5px 5px 5px 5px;
+	border: 1px dotted black;
+	padding: 7px;
+}
+
+td.lista_description
+{
+	width: 30%;
+}
+
+table.value
+{
+	padding: 0px;
+	margin: 0px;
+}
+
