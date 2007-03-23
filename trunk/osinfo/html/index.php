@@ -38,6 +38,9 @@ class Index
 		$this->_fade_korkeus = $fade_korkeus;
 		$this->_clientteja_rivilla = $clientteja_rivilla;
 
+		// päivitys- ja poistotoiminnot
+		$this->kasittele_lomakkeet();
+
 		// tarkistetaan, xmlparseri on olemassa ja luodaan siitä olio
 
 		if(file_exists($this->_xmlparseri))
@@ -426,20 +429,42 @@ class Index
 		$this->listaa_tiedostot(false);
 	}
 
-	// tämän funktion alle tulisi xml-tiedostojen päivitys
 	private function paivitys($tiedosto)
 	{
+		print "<form name=\"formi\" action=\"" . $PHP_SELF . "\" method=\"post\">
+			<input name=\"paivitettava_client[" . $tiedosto . "]\" type=\"submit\" value=\"Update\" />
+			<input name=\"poistettava_client[" . $tiedosto . "]\" type=\"submit\" value=\"Delete\" />
+			</form>";
+	}
+
+	private function kasittele_lomakkeet()
+	{
+		// $_POST-arvossa on tullut päivitettävän clientin nimi
 		if($_POST['paivitettava_client'])
 		{
-			// tähän tulee suoritettava osa syötteestä...
+			foreach($_POST['paivitettava_client'] as $avain => $arvo)
+			{
+				$tiedosto = $this->_xmlkansio . "/" . $avain;
 
-			//print "<p>-- update " . $_POST['paivitettava_client'] . " --</p>";
+				// tähän tulee päivitys
+				print "update: " . $tiedosto . "<br />";
+			}
 		}
 
-		print "<form name=\"paivitysformi[" . $tiedosto . "]\" action=\"" . $PHP_SELF . "\" method=\"post\">
-			<input type=\"submit\" value=\"Update\" />
-			<input type=\"submit\" value=\"Delete\" />
-			</form>";
+		// $_POST-arvossa on tullut poistettavan clientin nimi
+		if($_POST['poistettava_client'])
+		{
+			foreach($_POST['poistettava_client'] as $avain => $arvo)
+			{
+				$tiedosto = $this->_xmlkansio . "/" . $avain;
+
+				// jos tiedosto on olemassa, yritetään poistaa se
+				if(file_exists($tiedosto))
+					if(unlink($tiedosto))
+						print $tiedosto . " deleted.<br />";
+					else print "<p class=\"valitus\">Couldn't remove \"" . $tiedosto . "\"</p>";
+			}
+		}
 	}
 }
 
