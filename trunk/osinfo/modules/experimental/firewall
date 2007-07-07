@@ -8,4 +8,41 @@ Module_firewall() {
 	local moduleDescription="Firewall setup"
 	module_header   "${moduleName}"
 
+	local fw_ip="127.0.0.1"
+	local fw_ip="192.168.0.1"
+
+	print_bind_info
+	print_nslookup_info
+
+	flush_values
 }
+
+	# helpers
+	print_bind_info() {
+
+		add_subheader   'BIND'
+
+		add_attribute   'BIND version'
+		add_values      "$(dig @$fw_ip version.bind txt chaos | \
+				   grep ANSWER -A 2 | \
+				   awk /version.bind/{'print $NF'} )"
+
+		add_footer      'BIND'
+	}
+
+	print_nslookup_info() {
+		add_subheader   'nslookup'
+
+		add_attribute   'server'
+		add_values      "$(nslookup $fw_ip | grep -i ^server | awk {'print $NF'})"
+
+		add_attribute   'address'
+		add_values      "$(nslookup $fw_ip | grep -i ^address | awk {'print $NF'})"
+
+		add_attribute   'in-addr.arpa'
+		for addr in "$(nslookup $fw_ip )"; do #| grep -i in-addr.arpa | awk -F'\t' {'print $NF'})"; do
+			add_values	"$(grep -i in-addr.arpa <<< "$addr" | awk -F'\t' {'print $NF'})"
+		done
+
+		add_footer      'nslookup'
+	}

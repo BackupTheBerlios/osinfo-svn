@@ -1,3 +1,4 @@
+#!/bin/bash
 #######################
 # MEMORY
 #
@@ -5,6 +6,7 @@
 # used on the system.
 # THE MODULE IS STILL VERY INCOMPLETE!
 #
+# TODO: checkout vmstat
 Module_memory() {
 	local moduleName="System memory"
 	module_header "${moduleName}"

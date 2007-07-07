@@ -298,5 +298,5 @@ print_error() {
 
 # prints a message with a green star in the beginning of each line 
 print_info() {
-	echo -e " ${tcGREEN}*${tSTD} ${@}"
+	echo -e " ${tcGREEN}*${tSTD} ${@}" > /dev/stderr
 }

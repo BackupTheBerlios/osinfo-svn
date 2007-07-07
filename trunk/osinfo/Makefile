@@ -22,7 +22,17 @@ help:
 	@echo "  distclean       - remove the dist dir and *~"
 	@echo "  clean           - remove *~"
 
-dist: distclean man
+info:
+	####################################
+	# Building osinfo for distribution
+	#
+	# (C) 2005-2006 Arvid Norlander
+	# (C) Savonia University of Applied Sciences
+	#     2006-2007 Mikael Lammentausta
+	#          2007 Lauri Miettinen
+	####################################
+
+dist: info distclean man
 	mkdir -p dist/$(appname)
 
 	######################
@@ -59,7 +69,7 @@ dist: distclean man
 	######################
 	cp -r man dist/$(appname)
 
-	# done!
+	# Exited successfully!
 
 # Not very elegant
 # It greps the definitions out of osinfo and then evals it.
@@ -71,7 +81,8 @@ dist-tarbz2: dist
 	# make the tarball
 	######################
 	cd dist && tar -jcf "$$(eval $$(grep appname -A 10 -m 1 ../lib/version | pcregrep 'appname|_version') && echo $${appname}-$${major_version}.$${minor_version}.$${micro_version}_$${patch_version}).tar.bz2" $(appname)
-	# done!
+
+	# Exited successfully!
 
 distclean: clean
 	-rm -rf dist
@@ -92,4 +103,4 @@ checkxml:
 
 tarbz2: dist-tarbz2
 
-.PHONY : all clean dist distclean checkxml
+.PHONY : all clean dist distclean checkxml info

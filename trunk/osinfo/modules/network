@@ -82,6 +82,9 @@ Module_network() {
 				add_attribute 'Device'
 				add_values    "$(get_device_name ${nw_info} ${iw_info})"
 
+				add_attribute 'Bus'
+				add_values    "$(get_device_bus ${nw_info} ${iw_info})"
+
 				add_attribute 'MAC'		"mac_address"
 				add_values    "$(grep -Eo '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' ${nw_info})"
 
@@ -194,6 +197,12 @@ Module_network() {
 			grep ${interface_name} ${2} | awk {'print $2'}
 		fi
 		}
+
+	function get_device_bus() {
+		# parameters:
+		#  1  device node
+		echo
+	}
 
 	function get_device_flags() {
 		# parameters:

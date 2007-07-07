@@ -462,6 +462,8 @@ Module_hdd() {
 
 		# get the activity state of the HDD
 		hdd_state="$(hdparm -C $dev_scan | awk -F\: {'print $NF'})"
+
+		hdd_udevinfo="$(udevinfo -a -p $(udevinfo -q path -n ${dev_scan}) )"
 	}
 
 
@@ -492,7 +494,7 @@ Module_hdd() {
 		smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
 		TempFiles=("${TempFiles[@]}" "$smart_info")
 
-		smartctl -a -d $dev_type ${dev_scan} > $smart_info
+		smartctl -a -d $dev_type ${dev_scan}  2> ${error_log} > $smart_info
 
 		hdd_smart="$(grep 'SMART support' ${smart_info} | \
 		             head -n 1 | awk -F': ' {'print $2'})"
@@ -731,12 +733,15 @@ Module_hdd() {
 			#
 			# this smart scan is not included into the scan_hdd_smart()
 			# because it would break the correct order of the report.
-			hdd_vendor="$(smartctl -i ${dev_scan} | grep '^Model' | \
+			hdd_vendor="$(smartctl -i ${dev_scan} 2> ${error_log} | grep '^Model' | \
 			              awk -F: {'print $2'} | sed 's/^ *//')"
 
 		elif [ "${udev_info}" ]; then
-			hdd_vendor="$(udevinfo -q all -n ${dev_scan} | grep -i vendor | \
+			hdd_vendor="$(grep -i vendor <<< ${hdd_udevinfo} | \
 			              awk -F_ {'print $NF'})"
+
+			#hdd_vendor="$(udevinfo -q all -n ${dev_scan} | grep -i vendor | \
+			#              awk -F_ {'print $NF'})"
 		fi
 
 		# check whether we got anything else than empty $vendor string
@@ -845,7 +850,7 @@ Module_hdd() {
 			# allocate a temp file
 			smart_sata="$(mktemp /tmp/osinfo.XXXXXX)"
 			TempFiles=("${TempFiles[@]}" "$smart_sata")
-			smartctl -a -d ata ${dev_scan} > $smart_sata
+			smartctl -a -d ata ${dev_scan} > $smart_sata 2> ${error_log}
 		fi
 
 		# NOTE:
@@ -970,7 +975,7 @@ Module_hdd() {
 		########
 		# Driver
 		if [ -e "${proc_info}" ]; then
-			hdd_driver="Linux SCSI Generic (sg) v. ${sg_version}"
+			hdd_driver="Linux SCSI Generic (sg) v. $(cat ${sg_version})"
 		fi
 
 
@@ -980,6 +985,17 @@ Module_hdd() {
 		###########
 		# scan for SMART attributes
 		if [ $smart_sata ]; then scan_hdd_smart ${dev_scan} ata; fi
+
+
+		if [ "$hdd_type" == "USB drive" ]; then scan_usb_params ${dev_scan}; fi
+	}
+
+	#######################
+	# detect special USB drive params
+	#
+	scan_usb_params() {
+		#add_attribute      'USB bus'
+		#add_values "n/a"
 	}
 
 

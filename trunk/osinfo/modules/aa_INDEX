@@ -6,7 +6,7 @@
 ################################################################################
 
 
-# these are used to control run access and validify against
+# these are used to control run access and to validate against
 
 MODULES_LINUX='system distro kernel processor ram memory hdd network wlan dmi applications terminal devices cdrom users services battery firewall'
 MODULES_BSD='system kernel applications terminal network devices dmi'
