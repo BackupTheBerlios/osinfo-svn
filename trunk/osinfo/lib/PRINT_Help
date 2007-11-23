@@ -1,27 +1,27 @@
+# Parameters:
+# - 1   exit value (optional)
 function PRINT_Help {
-	echo "${tBOLD}Options:${tSTD}"
-	echo "       --xml               Printout in xml format to <hostname>.xml"
-	echo "       --html              Generates <hostname>.html (via xml -> xsl transformation)"
-	echo
-	echo "  -o   --output [file]     Use this file for xml output"
-	echo "  -v   --verbose           Show more information"
-	echo "  -vv  --veryverbose       Show even more information"
-	echo "  -V   --version           Shows the version of ${tBOLD}${appname}${tSTD} and exits"
-	echo
-	echo "       --tcpsend [port]    Sends the output in xml to the tcp port via netcat"
-	echo "       --listen [port]     Listens to incoming xml in the tcp port via netcat"
-	echo
+	echo "${tBOLD}Outputting options:${tSTD}"
 	echo "       --profile [desktop|server|laptop]"
 	echo "                           Define the computer profile for output mode"
+	echo "  -v   --verbose           Reports more detailed information"
+	echo "  -vv  --veryverbose       Reports all ${appname} can find"
+	echo "       --XML               Printout in XML format to <hostname>.xml"
+	echo "       --html              Generates <hostname>.html (via XML -> xsl transformation)"
+	echo "  -o   --output [xmlfile]  Outputs XML and html to this file"
+	echo "       --no-color          Disable color output (in limited environments)"
+	echo "  -V   --version"
 	echo
-	echo "       --no-color          Disables color output (testing)"
-	echo "  -d   --debug             For testing"
+	echo "${tBOLD}Operating options:${tSTD}"
+	echo "  -P   --prefix [dir]      Use this dir as root. This disables some modules"
+	echo "  -d   --debug             Required for executing experimental modules"
 	echo "  -D   --fulldebug         Print full debugging info, clutters output!"
+	echo "       --tcpsend [port]    Sends the output in XML to the TCP port via netcat"
+	echo "       --listen [port]     Listens to incoming XML in the TCP port via netcat"
 #	echo "       --kdialog           Show the information using KDialog"
 #	echo "                           from KDE. Experimental feature!"
 #	echo "                           Not usable yet!"
-	echo "  -P   --prefix [dir]      Use this dir as root. This disables some modules"
-	echo "       --lanforce          Makes the output to osinfo.xml according to a special DTD"
+	echo "       --lanforce          Formats the XML output according to the LanForce DTD"
 	echo
 	print_line
 

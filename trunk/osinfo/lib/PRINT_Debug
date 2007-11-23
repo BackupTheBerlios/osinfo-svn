@@ -1,11 +1,13 @@
+#!/bin/bash
 function PRINT_Debug {
-	print_info "Please note that $appname is still experimental!"
-	print_info "If you find bugs, please send the full backtrace (by using"
-	print_info "the -D switch) to the mailinglist: $bugreport_email."
-	print_info
-	print_info "You can extend the existing modules and easily create new"
-	print_info "ones - have a look at the source code. The developers are"
-	print_info "happy to get help from other users. :) You can contact us"
-	print_info "through the email address given above. We would like to hear"
-	print_info "your feedback on $appname!"
+  print_info "Please note that $appname is still experimental!"
+  print_info "If you find bugs, please send the full backtrace (by using"
+  print_info "the -D switch) to the mailinglist: $bugreport_email."
+  print_info
+  print_info "You can extend the existing modules and easily create new"
+  print_info "ones - have a look at the source code. The developers are"
+  print_info "happy to get help from other users. :) You can contact us"
+  print_info "through the email address given above."
+  print_info
+  print_info "We would like to hear your feedback on $appname!"
 }

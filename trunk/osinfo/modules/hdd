@@ -994,8 +994,8 @@ Module_hdd() {
 	# detect special USB drive params
 	#
 	scan_usb_params() {
-		#add_attribute      'USB bus'
-		#add_values "n/a"
+		add_attribute      'USB bus'
+		add_values "fix osinfo"
 	}
 
 

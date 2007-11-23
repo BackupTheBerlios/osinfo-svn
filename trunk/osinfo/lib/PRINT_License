@@ -1,0 +1,13 @@
+function PRINT_License {
+  echo 'Copyright (C) 2005, 2006 Arvid Norlander'
+  echo '              2006, 2007 Mikael Lammentausta'
+  echo '                    2007 Lauri Miettinen'
+  echo
+  echo "This is free software; see the source for copying conditions."
+  echo
+  echo 'This program is distributed in the hope that it will be useful,'
+  echo "but ${tBOLD}WITHOUT ANY WARRANTY${tSTD}; without even the implied warranty of"
+  echo "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+  echo 'GNU General Public License for more details.'
+  echo
+}

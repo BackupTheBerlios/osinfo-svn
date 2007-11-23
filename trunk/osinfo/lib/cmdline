@@ -1,9 +1,11 @@
+#!/bin/bash
 ####### PARSE THE COMMAND LINE ARGUMENTS
 function parse_arguments() {
 	if [ "$#" -gt 0 ]; then
 		while [ "$#" -gt 0 ]; do
 			case "$1" in
 				'--help'|'-help'|'--usage'|'-usage'|'-h'|'')
+					PRINT_Version
 					PRINT_Help
 					PRINT_Debug
 					exit 0
