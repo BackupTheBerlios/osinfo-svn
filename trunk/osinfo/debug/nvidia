@@ -1,0 +1,1 @@
+nvidia-settings -q gpucoretemp |grep '):' | cut -c 47-48 = 52C
