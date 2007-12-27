@@ -1,28 +1,22 @@
 FEATURES and FIXES for 0.3:
 --------------------------
 
-*	reorder some given information
-*	fix meta modules?
-*	"vv next line is header" dirty tag to workaround the column bug?
-*	kernel src location
-*	mod_hdd doesn't work on fedora!
 *	custom <value> xml tags, <value name="foo">bar</value>
-*	sensors output depends on LC_*, remove [:punct:] dependency
+?	sensors output depends on LC_*, remove [:punct:] dependency
 *	info message from corresponding modules (eg hdd) when a program is missing (smartctl)
 *	complete xsl/html support
 *	checker to see if netcat is installed
+	check for netcat binary in daemon mode!
 *	--checkdeps switch
 *	don't leave osinfo.XXXXXX and <hostname>.x?? files around!
-*	top 10 memory hoggers :)
 *	apache interface requires osinfo cgi
-*	pdf output sheet of the profile
-*	check for netcat binary in daemon mode!
+*	include module pci
 
 
 FEATURES and FIXES for 0.4:
 ----------------
 
-*	detect system encoding
+*	hdd: part mp size free free% free_inodes fs
 *	fix: user/root problem
 *	su_modules - run only su modules
 *	std_modules - non-su modules
@@ -30,6 +24,8 @@ FEATURES and FIXES for 0.4:
 *	gentoo: total system build time ;-)
 *	mod_cpu: stepping
 *	automatic output filename based on modules and timestamp
+*	top 10 memory hoggers :)
+*	pdf output sheet of the profile
 
 
 FEATURES FOR 0.5:
