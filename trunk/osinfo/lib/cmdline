@@ -14,9 +14,9 @@ function parse_arguments() {
         '--profile')
           # define the output profile
           if [ ! "$2" ]; then
-                  info "Profile not defined!"
-                  flush_values
-                  exit 1
+            info "Profile not defined!"
+            flush_values
+            exit 1
           fi
           profile="${2}"
           shift 2
@@ -41,11 +41,11 @@ function parse_arguments() {
         '-o'|'--output')
           # direct output to a named file
           if [ $2 ]; then
-                  usexml=1
-                  XMLFILE="${2}"
-                  shift 2
+            usexml=1
+            XMLFILE="${2}"
+            shift 2
           else
-                  missing_arg "$1"
+            missing_arg "$1"
           fi
           ;;
 
@@ -60,16 +60,16 @@ function parse_arguments() {
         '--tcpsend'|'--netcat')
           # send xml via tcp to remote osinfo daemon
           if [ "$2" ] && [ "$3" ]; then
-                  usexml=1
-                  makehtml=0
-                  tcpsend=1
-                  output_mode="xml"
-                  HOST="$2"
-                  PORT="$3"
-                  shift 3
+            usexml=1
+            makehtml=0
+            tcpsend=1
+            output_mode="xml"
+            HOST="$2"
+            PORT="$3"
+            shift 3
           else
-                  echo "You must set the target host and port!"
-                  missing_arg "$1" 2
+            echo "You must set the target host and port!"
+            missing_arg "$1" 2
           fi
           ;;
 
@@ -79,17 +79,17 @@ function parse_arguments() {
           tcpdaemon=1
 
           if [ "$2" ]; then
-                  tcp_listening_port="$2"
-                  shift 2
+            tcp_listening_port="$2"
+            shift 2
 
           elif [ ! "$tcp_listening_port" ]; then
-                  info "You must set the listening port!"
-                  flush_values
-                  exit 1
+            info "You must set the listening port!"
+            flush_values
+            exit 1
 
           # the tcp port may be given at the conf file
           else
-                  shift 1
+            shift 1
           fi
           ;;
 
@@ -97,15 +97,15 @@ function parse_arguments() {
           # read Xorg detected values from this file
           # (by default /var/log/Xorg.0.log)
           if [ "$2" ]; then
-                  if [ ! -e "${2}" ]; then
-                          echo "File $2 does not exist!"
-                          exit 1
-                  fi
-                  XORG_LOG="${2}"
-                  shift 2
+            if [ ! -e "${2}" ]; then
+              echo "File $2 does not exist!"
+              exit 1
+            fi
+            XORG_LOG="${2}"
+            shift 2
           else
-                  echo "Please give Xorg log input file!"
-                  missing_arg "$1" 1
+            echo "Please give Xorg log input file!"
+            missing_arg "$1" 1
           fi
           ;;
 
@@ -120,11 +120,11 @@ function parse_arguments() {
         '-P'|'--prefix')
           # define the root dir
           if [ $2 ]; then
-                  # Make sure there is only one ending "/".
-                  prefix="$(echo $2 | sed 's/\/*$/\//')"
-                  shift 2
+            # Make sure there is only one ending "/".
+            prefix="$(echo $2 | sed 's/\/*$/\//')"
+            shift 2
           else
-                  missing_arg "$1"
+            missing_arg "$1"
           fi
           ;;
 
