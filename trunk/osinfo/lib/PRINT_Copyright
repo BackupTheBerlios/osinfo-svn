@@ -1,0 +1,6 @@
+function PRINT_Copyright {
+  echo 'Copyright (C) 2005, 2006 Arvid Norlander'
+  echo '              2006, 2007 Mikael Lammentausta'
+  echo '                    2007 Lauri Miettinen'
+  echo
+}

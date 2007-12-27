@@ -7,7 +7,7 @@ function parse_arguments() {
         '--help'|'-help'|'--usage'|'-usage'|'-h'|'')
           PRINT_Version
           PRINT_Help
-          PRINT_Debug
+          #PRINT_Debug
           exit 0
           ;;
 
@@ -203,6 +203,9 @@ function parse_arguments() {
       esac
     done
   else
+    PRINT_Version
+    PRINT_License
+    PRINT_Copyright
     PRINT_Usage
   fi
 }
