@@ -1,0 +1,120 @@
+#!/bin/bash
+####
+# XML functions for LanForce output.
+####
+
+
+function lanforce_dtd () {
+	echo "<!ELEMENT entityset (entity+)>"
+	echo "<!ELEMENT entity (template, attribute*, note*)>"
+	echo "<!ATTLIST entity id         CDATA #IMPLIED"
+	echo "                 name       CDATA #REQUIRED"
+	echo "                 ip         CDATA #IMPLIED>"
+	echo "<!ELEMENT template EMPTY>"
+	echo "<!ATTLIST template id       CDATA #IMPLIED"
+	echo "                    name    CDATA #IMPLIED"
+	echo "                    code    CDATA #REQUIRED>"
+	echo "<!ELEMENT attribute header?,(value | reference | embeddedreference |"
+	echo "                            externalreference)*, footer?>"
+	echo "<!ATTLIST attribute id      CDATA #IMPLIED"
+	echo "                     name   CDATA #IMPLIED"
+	echo "                     code   CDATA #REQUIRED>"
+	echo "<!ELEMENT header #PCDATA>"
+	echo "<!ELEMENT value #PCDATA>"
+	echo "<!ELEMENT reference EMPTY>"
+	echo "<!ATTLIST reference id      CDATA #IMPLIED"
+	echo "                     type   CDATA #IMPLIED>"
+	echo "<!ELEMENT embeddedreference EMPTY>"
+	echo "<!ATTLIST embeddedreference id         CDATA #IMPLIED"
+	echo "                            type       CDATA #IMPLIED>"
+	echo "<!ELEMENT externalreference EMPTY>"
+	echo "<!ATTLIST externalreference name       CDATA #IMPLIED"
+	echo "                            location   CDATA #IMPLIED>"
+	echo "<!ELEMENT footer #PCDATA>"
+	echo "<!ELEMENT note (name, text)>"
+	echo "<!ATTLIST note   creator               CDATA #REQUIRED"
+	echo "                 timestamp             CDATA #IMPLIED"
+	echo "                 follow-references     CDATA #REQUIRED>"
+	echo "<!ELEMENT name #PCDATA>"
+	echo "<!ELEMENT text #PCDATA>"
+}
+
+function lf_entityset () {
+	id="$1"
+	name="$2"
+	ip="$3"
+
+	echo "<!ELEMENT entityset (entity+)>"
+	echo "<!ELEMENT entity (template, attribute*, note*)>"
+	echo "<!ATTLIST entity id         $id #IMPLIED"
+	echo "                 name       $name #REQUIRED"
+	echo "                 ip         $ip #IMPLIED>"
+}
+
+function lf_entity_start () {
+	hostname="$1"
+	ip="$2"
+	timestamp="$(date +%Y-%m-%d\ %H:%M:%S)"
+
+
+	echo "<entityset>"
+	echo " <entity name=\"$hostname\">"
+	echo "  <template code=\"computer\"\>"
+	lf_attribute_value "computer_name" "${hostname}"
+	lf_attribute_value "scanning_date" "${timestamp}"
+}
+
+function lf_entity_stop () {
+	echo "</entityset>"
+}
+
+function lf_template () {
+	id="$1"
+	name="$2"
+	code="$3"
+
+	echo "<!ELEMENT template EMPTY>"
+	echo "<!ATTLIST template id      $id #IMPLIED"
+	echo "                   name    $name #IMPLIED"
+	echo "                   code    $code #REQUIRED>"
+}
+
+function lf_attributeset () {
+	id="$1"
+	name="$2"
+	code="$3"
+
+	echo "<!ELEMENT attribute header?,(value | reference | embeddedreference |"
+	echo "                            externalreference)*, footer?>"
+	echo "<!ATTLIST attribute id     $id #IMPLIED"
+	echo "                    name   $name #IMPLIED"
+	echo "                    code   $code #REQUIRED>"
+
+}
+
+function lf_attribute_value () {
+	code="$1"
+	value="$2"
+
+	echo "  <attribute code=\"$code\">"
+	echo "   <value>$value</value>"
+	echo "  </attribute>"
+}
+
+function lf_value () {
+	value="$1"
+
+	echo "<!ELEMENT value $value>"
+}
+
+function lf_note () {
+	creator="osinfo alpha"
+	timestamp="$(date +%Y%m%d\ %H:%M)"
+	ref="no"
+
+	echo "<!ELEMENT note (name, text)>"
+	echo "<!ATTLIST note   creator               $creator #REQUIRED"
+	echo "                 timestamp             $timestamp #IMPLIED"
+	echo "                 follow-references     $ref #REQUIRED>"
+#	echo "<!ELEMENT name #PCDATA>"
+}
