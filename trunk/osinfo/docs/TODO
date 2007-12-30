@@ -26,7 +26,7 @@ FEATURES and FIXES for 0.4:
 *	automatic output filename based on modules and timestamp
 *	top 10 memory hoggers :)
 *	pdf output sheet of the profile
-
+*	osinfo hdd /dev/sda --report --pdf
 
 FEATURES FOR 0.5:
 ----------------
@@ -47,7 +47,6 @@ BUGS:
 -----
 
 *	mod_applications: /dev/mem: Permission denied on RH9
-
 
 
 GENERAL NOTES:
@@ -78,5 +77,5 @@ PROGRAMMING TIPS:
 
 *	Get tabsize dynamically: "tput it"
 
-*	sort a file reversely by:
+*	sort a file reversely with `tac`, or 
 	<stdin> | grep -n . | sort -rn | cut -d':' -f 2 | <stdout>
