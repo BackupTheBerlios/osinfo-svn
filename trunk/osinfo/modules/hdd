@@ -585,19 +585,20 @@ scan_hdd_partitions() {
 
     # if partition is mounted (=is in mtab)
     #
-    # FIXME: submounted (=system for automounting usb sticks) partitions
+    # NOTE: submounted (=system for automounting usb sticks) partitions
     # may be considered unmounted, while they are not!
+    # Submount, on the other hand, is deprecated in 2008..
 
     # the partition size is calculated from the value given by df,
     # and the float division is computed by bc.
-    if [ "$(df -Plk | grep ${hdd_pt_node[$ID]})" ]; then
+    if [ "$(df -Plk | grep ^${hdd_pt_node[$ID]}\ )" ]; then
 
       # locate the mountpoint
       hdd_pt_mp[$ID]="$(df -PT ${hdd_pt_node[$ID]} | \
-        grep ^${hdd_pt_node[$ID]} | awk {'print $NF'})"
+        grep ^${hdd_pt_node[$ID]}\  | awk {'print $NF'})"
 
       # get the partition capacity, used and free space in 1 kB blocks
-      local df_output="$(df -Plk | grep ${hdd_pt_node[$ID]})"
+      local df_output="$(df -Plk | grep ^${hdd_pt_node[$ID]}\ )"
       hdd_pt_capacity[$ID]="$(awk {'print $2'} <<< "$df_output")"
       hdd_pt_used[$ID]="$(awk {'print $3'} <<< "$df_output")"
       hdd_pt_free[$ID]="$(awk {'print $4'} <<< "$df_output")"
