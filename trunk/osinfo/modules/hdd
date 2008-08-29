@@ -543,98 +543,98 @@ scan_hdd_smart() {
 #  (1) drive device
 #
 scan_hdd_partitions() {
-        local dev_scan="${1}" part_free=0
-        partitions_on_drive="$(grep ^${dev_scan} ${fdisk_info} | wc -l)"
-        local ID=$hdd_pt_ID
-        #local swap_color="${tcYELLOW}"
-        # marking partitions in different colours would be great, but
-        # the 'column' tool does not allow that. we should rewrite the
-        # column function.
+  local dev_scan="${1}" part_free=0
+  partitions_on_drive="$(grep ^${dev_scan} ${fdisk_info} | wc -l)"
+  local ID=$hdd_pt_ID
+  #local swap_color="${tcYELLOW}"
+  # marking partitions in different colours would be great, but
+  # the 'column' tool does not allow that. we should rewrite the
+  # column function.
 
-        #TODO for version 0.5 or so
-        #hdd_fs_ID=[83] [7] [82] ... #which tells the FS type
-        #hdd_fs_allocated=[1292372032] [28402202] [10284942]
-
-
-        # loop all partitions detected by fdisk
-        for PARTNR in $(seq 1 1 $partitions_on_drive); do
-
-                ((ID++)) # increase the array number
-
-                # get the partition node
-                hdd_pt_node[$ID]="$(grep ^${dev_scan} ${fdisk_info} | \
-                        awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
+  #TODO for version 0.5 or so
+  #hdd_fs_ID=[83] [7] [82] ... #which tells the FS type
+  #hdd_fs_allocated=[1292372032] [28402202] [10284942]
 
 
-                # get the partition size in 1 kB blocks
-                hdd_pt_blocks[$ID]="$(fdisk -s ${hdd_pt_node[$ID]})"
+  # loop all partitions detected by fdisk
+  for PARTNR in $(seq 1 1 $partitions_on_drive); do
+
+    ((ID++)) # increase the array number
+
+    # get the partition node
+    hdd_pt_node[$ID]="$(grep ^${dev_scan} ${fdisk_info} | \
+      awk {'print $1'} | sed -n "${PARTNR}{p;q;}" )"
 
 
-                # detect the filesystem
-                #
-                # fdisk uses spaces, not tabs for indentation.
-                # awk's $NF does not work, as the filesystem name may have spaces.
-                # awk is looped from field 6 onward. while the field 6 is the
-                # FS type integer, it has to be included when fdisk adds a '*'
-                # character to denote bootable partitions. the numbers are removed
-                # from the beginning of string with sed.
-                hdd_pt_fs[$ID]="$(grep ^${hdd_pt_node[$ID]} ${fdisk_info} | \
-                                  awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
-                                  sed 's/^[0-9 ]*//')"
+    # get the partition size in 1 kB blocks
+    hdd_pt_blocks[$ID]="$(fdisk -s ${hdd_pt_node[$ID]})"
 
 
-                # if partition is mounted (=is in mtab)
-                #
-                # FIXME: submounted (=system for automounting usb sticks) partitions
-                # may be considered unmounted, while they are not!
+    # detect the filesystem
+    #
+    # fdisk uses spaces, not tabs for indentation.
+    # awk's $NF does not work, as the filesystem name may have spaces.
+    # awk is looped from field 6 onward. while the field 6 is the
+    # FS type integer, it has to be included when fdisk adds a '*'
+    # character to denote bootable partitions. the numbers are removed
+    # from the beginning of string with sed.
+    hdd_pt_fs[$ID]="$(grep ^${hdd_pt_node[$ID]} ${fdisk_info} | \
+      awk '{for (i=6; i<=NF; i++) printf("%s ",$i);printf ("\n")}' | \
+      sed 's/^[0-9 ]*//')"
 
-                # the partition size is calculated from the value given by df,
-                # and the float division is computed by bc.
-                if [ "$(df -Plk | grep ${hdd_pt_node[$ID]})" ]; then
 
-                        # locate the mountpoint
-                        hdd_pt_mp[$ID]="$(df -PT ${hdd_pt_node[$ID]} | \
-                                grep ^${hdd_pt_node[$ID]} | awk {'print $NF'})"
+    # if partition is mounted (=is in mtab)
+    #
+    # FIXME: submounted (=system for automounting usb sticks) partitions
+    # may be considered unmounted, while they are not!
 
-                        # get the partition capacity, used and free space in 1 kB blocks
-                        local df_output="$(df -Plk | grep ${hdd_pt_node[$ID]})"
-                        hdd_pt_capacity[$ID]="$(awk {'print $2'} <<< "$df_output")"
-                        hdd_pt_used[$ID]="$(awk {'print $3'} <<< "$df_output")"
-                        hdd_pt_free[$ID]="$(awk {'print $4'} <<< "$df_output")"
-                        hdd_pt_used_pc[$ID]="$(awk {'print $5'} <<< "$df_output")"
+    # the partition size is calculated from the value given by df,
+    # and the float division is computed by bc.
+    if [ "$(df -Plk | grep ${hdd_pt_node[$ID]})" ]; then
 
-                        # calculate the space allocated by the filesystem
-                        hdd_pt_fs_size[$ID]="$(bc -s <<< scale=1\;" \
-                                "${hdd_pt_free[$ID]}-${hdd_pt_capacity[$ID]})"
+      # locate the mountpoint
+      hdd_pt_mp[$ID]="$(df -PT ${hdd_pt_node[$ID]} | \
+        grep ^${hdd_pt_node[$ID]} | awk {'print $NF'})"
 
-                        # calculate the percentages of free and used space
-                        hdd_pt_free_pc[$ID]="$(bc -s <<< scale=1\;" \
-                                "${hdd_pt_free[$ID]}/${hdd_pt_capacity[$ID]}*100)%"
+      # get the partition capacity, used and free space in 1 kB blocks
+      local df_output="$(df -Plk | grep ${hdd_pt_node[$ID]})"
+      hdd_pt_capacity[$ID]="$(awk {'print $2'} <<< "$df_output")"
+      hdd_pt_used[$ID]="$(awk {'print $3'} <<< "$df_output")"
+      hdd_pt_free[$ID]="$(awk {'print $4'} <<< "$df_output")"
+      hdd_pt_used_pc[$ID]="$(awk {'print $5'} <<< "$df_output")"
 
-                else # unmounted
+      # calculate the space allocated by the filesystem
+      hdd_pt_fs_size[$ID]="$(bc -s <<< scale=1\;" \
+        "${hdd_pt_free[$ID]}-${hdd_pt_capacity[$ID]})"
 
-                        # it might be swap..
-                        if [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
-                        # mark 'swap' as mountpoint for swap partitions, if they're in use
-                                #hdd_pt_mp[$ID]="${swap_color}swap${tSTD}"
-                                hdd_pt_mp[$ID]="swap"
-                                hdd_pt_used[$ID]="$(swapon -s | \
-                                        grep ^${hdd_pt_node[$ID]} | awk {'print $4'})"
+      # calculate the percentages of free and used space
+      hdd_pt_free_pc[$ID]="$(bc -s <<< scale=1\;" \
+        "${hdd_pt_free[$ID]}/${hdd_pt_capacity[$ID]}*100)%"
 
-                        else
-                                hdd_pt_mp[$ID]="-"
-                                hdd_pt_used[$ID]="n/a"
-                        fi
+    else # unmounted
 
-                        # define the rest to empty values.
-                        hdd_pt_capacity[$ID]=""
-                        hdd_pt_free[$ID]=""
-                        hdd_pt_used_pc[$ID]=""
-                        hdd_pt_fs_size[$ID]=""
+      # it might be swap..
+      if [ "$(swapon -s | grep ${hdd_pt_node[$ID]})" ]; then
+        # mark 'swap' as mountpoint for swap partitions, if they're in use
+        #hdd_pt_mp[$ID]="${swap_color}swap${tSTD}"
+        hdd_pt_mp[$ID]="swap"
+        hdd_pt_used[$ID]="$(swapon -s | \
+          grep ^${hdd_pt_node[$ID]} | awk {'print $4'})"
 
-                fi
+      else
+        hdd_pt_mp[$ID]="-"
+        hdd_pt_used[$ID]="n/a"
+      fi
 
-        done
+      # define the rest to empty values.
+      hdd_pt_capacity[$ID]=""
+      hdd_pt_free[$ID]=""
+      hdd_pt_used_pc[$ID]=""
+      hdd_pt_fs_size[$ID]=""
+
+    fi
+
+  done
 }
 
 
