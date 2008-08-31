@@ -296,11 +296,11 @@ print_hdd_data() {
           " Partition%col%label%col%mountpoint%col%blocks%col%free%col%filesystem\n"
         add_nc_header \
           " ---------%col%-----%col%----------%col%------%col%----%col%----------"
-  
+
         for hdd_pt in $(seq 1 1 $partitions_on_drive); do
           # print the device node
           add_attribute "  ${hdd_pt_node[$hdd_pt]}"
-  
+
           # volume label
           label=$(tune2fs -l ${hdd_pt_node[$hdd_pt]} 2>/dev/null | \
             awk -F': ' /volume\ name/{'print $2'})
@@ -490,40 +490,40 @@ scan_hdd_common() {
 #  (2) device type (man smartctl for details)
 #
 scan_hdd_smart() {
-        local dev_scan="${1}" dev_type smart_info version
-        if [ "$2" ]; then
-                dev_type="$2"
-        else
-                dev_type=ata
-        fi
+  local dev_scan="${1}" dev_type smart_info version
+  if [ "$2" ]; then
+    dev_type="$2"
+  else
+    dev_type=ata
+  fi
 
-        CheckReq_smartctl # allocates temp file $smart_info
-        # allocate a temp file
-        smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
-        TempFiles=("${TempFiles[@]}" "$smart_info")
+  CheckReq_smartctl # allocates temp file $smart_info
+  # allocate a temp file
+  smart_info="$(mktemp /tmp/osinfo.XXXXXX)"
+  TempFiles=("${TempFiles[@]}" "$smart_info")
 
-        smartctl -a -d $dev_type ${dev_scan}  2> ${error_log} > $smart_info
+  smartctl -a -d $dev_type ${dev_scan}  2> ${error_log} > $smart_info
 
-        hdd_smart="$(grep 'SMART support' ${smart_info} | \
-                    head -n 1 | awk -F': ' {'print $2'})"
+  hdd_smart="$(grep 'SMART support' ${smart_info} | \
+    head -n 1 | awk -F': ' {'print $2'})"
 
-        hdd_lifetime="$(grep -i power_on $smart_info | awk {'print $NF'})"
+  hdd_lifetime="$(grep -i power_on $smart_info | awk {'print $NF'})"
 
-        hdd_startup="$(grep -i start_stop $smart_info | awk {'print $NF'})"
+  hdd_startup="$(grep -i start_stop $smart_info | awk {'print $NF'})"
 
-        # prefer hddtemp
-        if [ "$(type -p hddtemp)" ]; then
-                hdd_tempC="$(hddtemp $dev_scan | awk -F: {'print $NF'})"
-        else
-                hdd_tempC="$(grep -i temperature_celsius $smart_info | \
-                    awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
-        fi
+  # prefer hddtemp
+  if [ "$(type -p hddtemp)" ]; then
+    hdd_tempC="$(hddtemp $dev_scan | awk -F: {'print $NF'})"
+  else
+    hdd_tempC="$(grep -i temperature_celsius $smart_info | \
+      awk '{for (i=10; i<=NF; i++) printf("%s ",$i);printf ("\n")}')"
+  fi
 
-        hdd_health="$( grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
+  hdd_health="$(grep -Ei '(health)+' $smart_info | awk {'print $NF'})"
 
-        # ATA Standard
-        hdd_ata_standard="$(grep -i '^ATA Standard' ${smart_info} | \
-                            awk -F: {'print $2'} | sed 's/^ *//') "
+  # ATA Standard
+  hdd_ata_standard="$(grep -i '^ATA Standard' ${smart_info} | \
+    awk -F: {'print $2'} | sed 's/^ *//') "
 }
 
 
@@ -655,52 +655,52 @@ scan_hdd_partitions() {
 #  (2) significant digits _after_ decimal, default 1
 #
 hdd_human_readable() {
-        local value="${1}"
+  local value="${1}"
 
-        # check if the input if proper
-        if [ "$(grep [0-9] <<< $value)" ]; then
+  # check if the input if proper
+  if [ "$(grep [0-9] <<< $value)" ]; then
 
-                if [ ! "$2" ]; then
-                        local digits=1
-                else
-                        local digits="${2}"
-                fi
+    if [ ! "$2" ]; then
+      local digits=1
+    else
+      local digits="${2}"
+    fi
 
-                # dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
-                case $(bc -s <<< ${value}/1024 | wc -m ) in
-                        '1'|'2'|'3'|'4')
-                                local dim='MB'
-                                local denominator="1024"
-                                ;;
-                        '5'|'6'|'7')
-                                local dim='GB'
-                                local denominator='1024^2'
-                                ;;
-                        '8'|'9'|'10')
-                                local dim='TB'
-                                local denominator="1024^3"
-                                ;;
-                        '11'|'12'|'13')
-                                local dim='PB'
-                                local denominator="1024^4"
-                                ;;
-                        *)
-                                local dim='kB'
-                                local denominator="1"
-                                ;;
-                esac
+    # dimension, 10^3 multiple of bytes, e.g. 'GB', defaults to MB
+    case $(bc -s <<< ${value}/1024 | wc -m ) in
+      '1'|'2'|'3'|'4')
+        local dim='MB'
+        local denominator="1024"
+        ;;
+      '5'|'6'|'7')
+        local dim='GB'
+        local denominator='1024^2'
+        ;;
+      '8'|'9'|'10')
+        local dim='TB'
+        local denominator="1024^3"
+        ;;
+      '11'|'12'|'13')
+        local dim='PB'
+        local denominator="1024^4"
+        ;;
+      *)
+        local dim='kB'
+        local denominator="1"
+        ;;
+    esac
 
-                local hdd_val="$(bc -s <<< scale=$digits\;${value}/${denominator}) $dim"
+    local hdd_val="$(bc -s <<< scale=$digits\;${value}/${denominator}) $dim"
 
-                # check if val<1
-                if [ "${hdd_val:0:1}" == "." ]; then
-                        hdd_val="0${hdd_val}"
-                fi
+    # check if val<1
+    if [ "${hdd_val:0:1}" == "." ]; then
+      hdd_val="0${hdd_val}"
+    fi
 
-                echo "${hdd_val}"
-        else
-          echo "n/a"
-        fi
+    echo "${hdd_val}"
+  else
+    echo "n/a"
+  fi
 }
 
 
