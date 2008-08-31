@@ -11,7 +11,7 @@
 # used tools:
 # fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc, tune2fs, file
 Module_hdd() {
-  local moduleName="Hard drive configuration"
+  local moduleName="System hard drives"
   local moduleDescription="Information of the hard drives in the system"
   module_header "${moduleName}"
 
@@ -252,9 +252,12 @@ print_hdd_data() {
       # SMART capability; more verbose
       if [ $isverbose -ge 2 ]; then
         # SMART capability
-        [[ "$hdd_smart" == "" ]] && hdd_smart="Device does not support SMART"
         add_attribute   'S.M.A.R.T.'
-        add_values      "$hdd_smart"
+        if [ "$hdd_smart" == "" ]; then
+          add_values "Device does not support SMART"
+        else
+          add_values      "$hdd_smart"
+        fi
       fi
 
       # S.M.A.R.T DATA
