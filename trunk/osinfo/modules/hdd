@@ -9,7 +9,7 @@
 # due to support in recent smartmontools (version 5.36).
 #
 # used tools:
-# fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc, tune2fs
+# fdisk, df, udev, /proc (deprecated), smartmontools, hdparm, bc, tune2fs, file
 Module_hdd() {
   local moduleName="Hard drive configuration"
   local moduleDescription="Information of the hard drives in the system"
@@ -252,13 +252,14 @@ print_hdd_data() {
       # SMART capability; more verbose
       if [ $isverbose -ge 2 ]; then
         # SMART capability
+        [[ "$hdd_smart" == "" ]] && hdd_smart="Device does not support SMART"
         add_attribute   'S.M.A.R.T.'
         add_values      "$hdd_smart"
       fi
 
       # S.M.A.R.T DATA
       # TODO: use add_subheader
-      if [ "$(type -p smartctl)" ]; then
+      if [ "$(type -p smartctl)" ] && [ "$hdd_smart" ]; then
 
         # TEMPERATURE
         add_attribute   'Temperature'
@@ -314,16 +315,15 @@ print_hdd_data() {
   
             # blocks
             add_values    "$(hdd_human_readable ${hdd_pt_blocks[$hdd_pt]})"
-            # free
-            if [ "${hdd_pt_free[$hdd_pt]}" != "" ]; then
-            add_values    "$(hdd_human_readable ${hdd_pt_free[$hdd_pt]})"
-            #add_values    "${hdd_pt_free_pc[$hdd_pt]})"
-            else
-              add_values '-'
-            fi
 
-            # fs type
-            add_values    "${hdd_pt_fs[$hdd_pt]}"
+            # free
+            add_values    "$(hdd_human_readable ${hdd_pt_free[$hdd_pt]})"
+
+            # filesystem
+            fs="$(file -sL ${hdd_pt_node[$hdd_pt]} 2>/dev/null | awk -F': |\(' {'print $2'})"
+            [[ "$(grep ^ERROR <<< $fs)" ]] && \
+              fs="${hdd_pt_fs[$hdd_pt]}" # detection failed, use fdisk's value
+            add_values "$fs"
 
           else
 
@@ -698,6 +698,8 @@ hdd_human_readable() {
                 fi
 
                 echo "${hdd_val}"
+        else
+          echo "n/a"
         fi
 }
 
